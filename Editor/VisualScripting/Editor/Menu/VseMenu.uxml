@@ -1,0 +1,75 @@
+<UXML xmlns:ui="UnityEngine.UIElements" xmlns:vs="UnityEditor.VisualScripting.Editor" xmlns:vsui="UnityEditor.UIElements" xmlns:vsuiec="UnityEditor.EditorCommon.UIElements">
+    <vsui:ToolbarButton name="saveAllButton">
+        <ui:VisualElement class="icon"/>
+    </vsui:ToolbarButton>
+    <vsui:ToolbarButton name="buildAllButton">
+        <ui:VisualElement class="icon"/>
+    </vsui:ToolbarButton>
+    <vsui:ToolbarButton name="viewInCodeViewerButton">
+        <ui:VisualElement class="icon" />
+    </vsui:ToolbarButton>
+    <vsui:ToolbarButton name="showMiniMapButton">
+        <ui:VisualElement class="icon"/>
+    </vsui:ToolbarButton>
+    <vsui:ToolbarButton name="showBlackboardButton">
+        <ui:VisualElement class="icon" />
+    </vsui:ToolbarButton>
+    <vsui:ToolbarButton name="refreshButton">
+        <ui:VisualElement class="icon" />
+    </vsui:ToolbarButton>
+
+    <vsui:ToolbarSpacer  />
+
+    <vsui:ToolbarButton name="errorIconLabel">
+        <ui:VisualElement class="icon" />
+    </vsui:ToolbarButton>
+    <ui:Label name="errorCounterLabel" />
+    <vsui:ToolbarButton name="previousErrorButton">
+        <ui:VisualElement class="icon" />
+    </vsui:ToolbarButton>
+    <vsui:ToolbarButton name="nextErrorButton">
+        <ui:VisualElement class="icon" />
+    </vsui:ToolbarButton>
+
+    <vsui:ToolbarSpacer />
+
+    <vsui:ToolbarBreadcrumbs name="breadcrumb"/>
+
+    <vsui:ToolbarSpacer class="unity-toolbar-spacer--flexible" />
+
+    <vsui:ToolbarToggle name="enableTracingButton">
+        <ui:VisualElement class="icon"/>
+    </vsui:ToolbarToggle>
+    <vsui:ToolbarButton name="pickTargetButton">
+        <ui:VisualElement class="icon" />
+        <ui:Label name="pickTargetLabel"/>
+    </vsui:ToolbarButton>
+    <vsui:ToolbarButton name="firstFrameTracingButton">
+        <ui:VisualElement class="icon" />
+    </vsui:ToolbarButton>
+    <vsui:ToolbarButton name="previousFrameTracingButton">
+        <ui:VisualElement class="icon" />
+    </vsui:ToolbarButton>
+    <vsui:ToolbarButton name="previousStepTracingButton">
+        <ui:VisualElement class="icon" />
+    </vsui:ToolbarButton>
+    <ui:VisualElement name="frameCounterContainer" class="menuItem">
+        <vsui:IntegerField name="currentFrameTextField"/>
+        <ui:Label name="totalFrameLabel"/>
+    </ui:VisualElement>
+    <vsui:ToolbarButton name="nextStepTracingButton">
+        <ui:VisualElement class="icon" />
+    </vsui:ToolbarButton>
+    <vsui:ToolbarButton name="nextFrameTracingButton">
+        <ui:VisualElement class="icon" />
+    </vsui:ToolbarButton>
+    <vsui:ToolbarButton name="lastFrameTracingButton">
+        <ui:VisualElement class="icon" />
+    </vsui:ToolbarButton>
+
+    <vsui:ToolbarSpacer name="fillerSpacer" />
+
+    <vsui:ToolbarButton name="optionsButton">
+        <ui:VisualElement class="icon" />
+    </vsui:ToolbarButton>
+</UXML>

@@ -1,0 +1,8 @@
+<UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:VisualElement name="lineContainer">
+        <ui:Label name="lineNumber"></ui:Label>
+        <ui:VisualElement name="lineDecorators"></ui:VisualElement>
+        <ui:Label name="lineText"></ui:Label>
+        <ui:Label name="lineText2"></ui:Label>
+    </ui:VisualElement>
+</UXML>

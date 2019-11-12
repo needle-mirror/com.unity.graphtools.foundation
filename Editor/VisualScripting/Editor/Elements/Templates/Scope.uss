@@ -1,0 +1,13 @@
+Scope .mainContainer {
+    border-color: #191919;
+    border-left-width: 1px;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-radius: 8px;
+}
+
+Scope #header {
+    height: 0;
+    padding: 0;
+}

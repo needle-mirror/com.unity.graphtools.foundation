@@ -1,0 +1,14 @@
+<UXML xmlns:ui="UnityEngine.UIElements" xmlns:vs="UnityEditor.VisualScripting.Editor">
+    <ui:VisualElement name="functionHeaderTitleContainer">
+      <ui:VisualElement name="loopPortContainer">
+      </ui:VisualElement>
+      <ui:VisualElement name="functionHeaderIconTitle" pickingMode="Ignore">
+        <ui:Image name="functionHeaderIcon"/>
+        <ui:VisualElement name="functionHeaderTitle">
+            <ui:Label name="titleLabel" />
+        </ui:VisualElement>
+      </ui:VisualElement>
+      <ui:Button name="functionHeaderNewVariableButton" text="+" />
+    </ui:VisualElement>
+    <vs:TokenList name="functionHeaderVariableContainer"/>
+</UXML>

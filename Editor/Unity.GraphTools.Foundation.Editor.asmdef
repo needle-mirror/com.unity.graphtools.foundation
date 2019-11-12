@@ -1,0 +1,48 @@
+{
+    "name": "Unity.GraphTools.Foundation.Editor",
+    "references": [
+        "Unity.GraphTools.Foundation",
+        "Unity.Searcher.Editor",
+        "com.unity.code-analysis",
+        "Unity.InternalAPIEngineBridgeDev.002",
+        "Unity.Properties",
+        "Unity.Properties.Reflection"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Microsoft.CodeAnalysis.CSharp.dll",
+        "Microsoft.CodeAnalysis.CSharp.Workspaces.dll",
+        "Microsoft.CodeAnalysis.CSharp.Scripting.dll",
+        "Microsoft.CodeAnalysis.dll",
+        "Microsoft.CodeAnalysis.Scripting.dll",
+        "Microsoft.CodeAnalysis.Workspaces.dll",
+        "System.Collections.Immutable.dll",
+        "System.Composition.AttributedModel.dll",
+        "System.Composition.Convention.dll",
+        "System.Composition.Hosting.dll",
+        "System.Composition.Runtime.dll",
+        "System.Composition.TypedParts.dll",
+        "System.Reflection.Metadata.dll",
+        "System.Runtime.Loader.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.properties",
+            "expression": "0.5.0-preview",
+            "define": "PROPERTIES"
+        },
+        {
+            "name": "com.unity.properties",
+            "expression": "0.6.0-preview",
+            "define": "NEW_PROPERTIES"
+        }
+    ],
+    "noEngineReferences": false
+}

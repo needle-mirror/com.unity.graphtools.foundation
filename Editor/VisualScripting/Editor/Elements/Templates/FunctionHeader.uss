@@ -1,0 +1,218 @@
+.stack-node > #stackNodeHeaderContainer > #functionHeaderTitleContainer,
+.stack-node.loopHeader.event > #stackNodeHeaderContainer > #functionHeaderTitleContainer {
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 6px;
+    margin-left: 1px;
+    margin-right: 1px;
+    background-color: rgba(24, 24, 24, 0.8);
+    overflow: hidden;
+}
+
+.stack-node.loopHeader > #stackNodeHeaderContainer > #functionHeaderTitleContainer {
+    justify-content: flex-start;
+    align-items: flex-start;
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+
+.stack-node > #stackNodeHeaderContainer > #functionHeaderTitleContainer > #titleEditor {
+    -unity-text-align: middle-center;
+    font-size: 15px;
+    opacity: 1;
+}
+
+.stack-node.function.loopHeader.instance > #stackNodeHeaderContainer > #functionHeaderTitleContainer #functionHeaderIconTitle {
+    padding-left: 16px;
+}
+
+.stack-node.function.loopHeader.instance > #stackNodeHeaderContainer > #functionHeaderTitleContainer #functionHeaderIconTitle {
+    padding-left: 16px;
+}
+
+.stack-node.loopHeader > #stackNodeHeaderContainer > #functionHeaderTitleContainer #functionHeaderIconTitle {
+    position: relative;
+}
+
+.stack-node > #stackNodeHeaderContainer > #functionHeaderTitleContainer #functionHeaderIconTitle,
+.stack-node.loopHeader.event > #stackNodeHeaderContainer > #functionHeaderTitleContainer #functionHeaderIconTitle {
+    flex-direction: row;
+    position: absolute;
+    margin-left: 6px;
+    left: 0;
+}
+
+.stack-node > #stackNodeHeaderContainer > #functionHeaderTitleContainer > #functionHeaderIconTitle > #functionHeaderIcon {
+    width: 12px;
+    height: 12px;
+    align-self: center;
+    flex: 0 0 auto;
+}
+
+.stack-node > #stackNodeHeaderContainer > #functionHeaderTitleContainer > #functionHeaderIconTitle > #functionHeaderIcon.typeFunction {
+    --unity-image: resource("Icons/Function@x3");
+}
+
+.stack-node > #stackNodeHeaderContainer > #functionHeaderTitleContainer > #functionHeaderIconTitle > #functionHeaderIcon.typeEventFunction {
+    --unity-image: resource("Icons/EventFunction@x3");
+    --unity-image-tint-color: rgba(0.129, 0.604, 0.835, 1);
+}
+
+.stack-node > #stackNodeHeaderContainer > #functionHeaderTitleContainer > #functionHeaderIconTitle > #functionHeaderIcon.typeLoop,
+.stack-node > #stackNodeHeaderContainer > #functionHeaderTitleContainer > #functionHeaderIconTitle > #functionHeaderIcon.typeForEachLoop {
+    --unity-image: resource("Icons/ForEachLoop@x3");
+}
+
+.stack-node > #stackNodeHeaderContainer > #functionHeaderTitleContainer > #functionHeaderIconTitle > #functionHeaderIcon.typeWhileLoop {
+    --unity-image: resource("Icons/WhileLoop@x3");
+}
+
+.stack-node > #stackNodeHeaderContainer > #functionHeaderTitleContainer > #functionHeaderIconTitle > #functionHeaderIcon.typeArray {
+    --unity-image: resource("Icons/Array@x3");
+}
+
+.stack-node > #stackNodeHeaderContainer > #functionHeaderTitleContainer > #functionHeaderIconTitle > #functionHeaderIcon.typeBoolean {
+    --unity-image: resource("Icons/Boolean@x3");
+}
+
+.stack-node > #stackNodeHeaderContainer > #functionHeaderTitleContainer > #functionHeaderIconTitle > #functionHeaderTitle {
+    align-self: center;
+    max-width: 250px;
+    padding-left: 5px;
+    flex-direction: row;
+    overflow: hidden;
+}
+
+.stack-node > #stackNodeHeaderContainer > #functionHeaderTitleContainer > #functionHeaderIconTitle > #functionHeaderTitle > #titleEditor {
+    -unity-text-align: middle-left;
+    font-size: 16px;
+    margin-top: -3px;
+    opacity: 1;
+    height: 23px;
+}
+
+.stack-node > #stackNodeHeaderContainer > #functionHeaderTitleContainer > #functionHeaderNewVariableButton {
+    width: 0;
+    height: 0;
+}
+
+.stack-node.function:hover > #stackNodeHeaderContainer > #functionHeaderTitleContainer > #functionHeaderNewVariableButton,
+.stack-node.function:hover:active > #stackNodeHeaderContainer > #functionHeaderTitleContainer > #functionHeaderNewVariableButton,
+.stack-node.function:active > #stackNodeHeaderContainer > #functionHeaderTitleContainer > #functionHeaderNewVariableButton {
+    visibility: visible;
+}
+
+.stack-node.function > #stackNodeHeaderContainer > #functionHeaderTitleContainer > #functionHeaderNewVariableButton {
+    width: 26px;
+    height: 26px;
+    visibility: hidden;
+    align-self: flex-end;
+    font-size: 20px;
+    background-color: rgba(0, 0, 0, 0);
+    background-image: none;
+    padding: 0;
+    border-radius: 12px;
+}
+
+.stack-node.function > #stackNodeHeaderContainer > #functionHeaderTitleContainer > #functionHeaderNewVariableButton:hover:active {
+    background-color: #222222;
+}
+
+.stack-node.function > #stackNodeHeaderContainer > #functionHeaderVariableContainer {
+    flex: 1 1 auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    padding: 8px;
+    border-radius: 6px;
+    background-color: #272727;
+    margin-top: 4px;
+    margin-left: 1px;
+    margin-right: 1px;
+    align-self: stretch;
+}
+
+.stack-node.function > #stackNodeHeaderContainer > #functionHeaderVariableContainer.empty {
+    margin-top: 0;
+    height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.stack-node.function > #stackNodeHeaderContainer > #functionHeaderVariableContainer > * > #titleEditor {
+    font-size: 12px;
+    opacity: 1;
+    margin-top: 0;
+    position: absolute;
+    top: 1px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin-bottom: 0;
+}
+
+.stack-node.function > #stackNodeHeaderContainer > #functionHeaderVariableContainer > * > #titleEditor > #unity-text-input {
+    -unity-text-align: middle-center;
+    padding-bottom: 0;
+}
+
+.stack-node.function.loopHeader > #stackNodeHeaderContainer.FunctionHeader > #functionHeaderTitleContainer > functionHeaderIconTitle > #functionHeaderTitle {
+    align-self: flex-start;
+    padding-left: 16px;
+    padding-top: 0;
+}
+
+.stack-node > #stackNodeHeaderContainer > #functionHeaderTitleContainer > #functionHeaderIconTitle > #functionHeaderTitle > Title.functionHeaderTitle > #titleLabel {
+    margin-left: 0;
+    padding-left: 1px;
+}
+
+.stack-node.function.loopHeader > #functionHeaderTitleContainer {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 4px 18px;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    background-color: rgba(57, 57, 57, 0.5);
+}
+
+.stack-node.function.loopHeader > * > #functionHeaderTitleContainer > * > #functionHeaderTitle > #titleContainerElement {
+    flex-direction: row;
+}
+
+.stack-node.function.loopHeader > * > #functionHeaderTitleContainer > * > #functionHeaderTitle > #titleContainerElement > #titleLabel {
+    padding-left: 3px;
+    padding-right: 3px;
+}
+
+.stack-node.function.loopHeader > * > * > #loopPortContainer {
+    position: absolute;
+}
+
+.stack-node.function.loopHeader.event.instance > * > * > #loopPortContainer {
+    position: absolute;
+    left: 0;
+}
+
+.stack-node.function.loopHeader > * > * > #loopPortContainer > .port.instance {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+.stack-node.function.loopHeader > * > * > #loopPortContainer > .port.instance > #connector {
+    margin-left: 7px;
+    margin-top: 20px;
+    margin-bottom: 0;
+}
+
+.stack-node.function.loopHeader.event.instance > * > * > #loopPortContainer > .port.instance > #connector {
+    margin-top: 0;
+}
+
+.stack-node.function.loopHeader > * > * > #loopPortContainer > .port.instance > Label {
+    display: none;
+}

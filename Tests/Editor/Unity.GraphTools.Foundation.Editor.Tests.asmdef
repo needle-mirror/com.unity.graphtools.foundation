@@ -1,0 +1,24 @@
+{
+    "name": "Unity.GraphTools.Foundation.Editor.Tests",
+    "references": [
+        "Unity.GraphTools.Foundation",
+        "Unity.GraphTools.Foundation.Editor",
+        "Unity.Searcher.Editor",
+        "Unity.PureCSharpTests"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll",
+        "Moq.dll",
+        "Microsoft.CodeAnalysis.CSharp.dll",
+        "Microsoft.CodeAnalysis.dll"
+    ]
+}

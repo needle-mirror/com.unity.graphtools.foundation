@@ -1,0 +1,79 @@
+.declaration.functionParameter > Pill.pill > TemplateContainer > #node-border {
+    background-image: resource("Images/PillBackgroundParameter");
+}
+
+.stack-node.function.loopHeader > * > #functionHeaderTitleContainer > * > #functionHeaderTitle > #titleContainerElement > .token.declaration {
+    top: 2px;
+}
+
+VseGraphView .token > .pill,
+VseGraphView .token.declaration > .pill {
+    min-width: 52px;
+}
+
+*:selected .token .pill > * > #selection-border {
+    border-color: transparent;
+}
+
+.token:selected .pill > * > #selection-border {
+    border-color: #44C0FF;
+}
+
+
+VseGraphView .token > .pill #contents > #top > #title-label,
+VseGraphView .token.declaration > .pill #contents > #top > #title-label {
+    -unity-text-align: middle-center;
+    flex-grow: 1;
+}
+
+VseGraphView .token > .pill #contents > #top > #icon,
+VseGraphView .token.declaration > .pill #contents > #top > #icon,
+.stack-node.function.loopHeader > * > #functionHeaderTitleContainer > * > #functionHeaderTitle > #titleContainerElement > .token.declaration #icon,
+.stack-node.function.loopHeader > * > #functionHeaderVariableContainer > .token.declaration > .pill #contents > #top > #icon {
+    width: 0;
+    height: 10px;
+}
+
+VseGraphView .token > .pill #contents > #top > #icon.typeArray,
+VseGraphView .token.declaration > .pill #contents > #top > #icon.typeArray,
+.stack-node.function.loopHeader > * > #functionHeaderTitleContainer > * > #functionHeaderTitle > #titleContainerElement > .token.declaration #icon.typeArray,
+.stack-node.function.loopHeader > * > #functionHeaderVariableContainer > .token.declaration > .pill #contents > #top > #icon.typeArray {
+    width: 10px;
+    --unity-image: resource("Icons/Array@x3");
+}
+
+VseGraphView .token > .pill #contents > #top > #icon.typeBoolean,
+VseGraphView .token.declaration > .pill #contents > #top > #icon.typeBoolean,
+.stack-node.function.loopHeader > * > #functionHeaderTitleContainer > * > #functionHeaderTitle > #titleContainerElement > .token.declaration #icon.typeBoolean,
+.stack-node.function.loopHeader > * > #functionHeaderVariableContainer > .token.declaration > .pill #contents > #top > #icon.typeBoolean {
+    width: 10px;
+    --unity-image: resource("Icons/Boolean@x3");
+}
+
+VseGraphView .token > .pill #contents > #top > #icon.typeCount,
+VseGraphView .token.declaration > .pill #contents > #top > #icon.typeCount,
+.stack-node.function.loopHeader > * > #functionHeaderTitleContainer > * > #functionHeaderTitle > #titleContainerElement > .token.declaration #icon.typeCount,
+.stack-node.function.loopHeader > * > #functionHeaderVariableContainer > .token.declaration > .pill #contents > #top > #icon.typeCount {
+    width: 10px;
+    --unity-image: resource("Icons/Dots_n@x3");
+}
+
+VseGraphView .token > .pill #contents > #top > #icon.typeIndex,
+VseGraphView .token.declaration > .pill #contents > #top > #icon.typeIndex,
+.stack-node.function.loopHeader > * > #functionHeaderTitleContainer > * > #functionHeaderTitle > #titleContainerElement > .token.declaration #icon.typeIndex,
+.stack-node.function.loopHeader > * > #functionHeaderVariableContainer > .token.declaration > .pill #contents > #top > #icon.typeIndex {
+    width: 10px;
+    --unity-image: resource("Icons/Dots_i@x3");
+}
+
+VseGraphView .token > .pill #contents > #top > #icon.typeItem,
+VseGraphView .token.declaration > .pill #contents > #top > #icon.typeItem,
+.stack-node.function.loopHeader > * > #functionHeaderTitleContainer > * > #functionHeaderTitle > #titleContainerElement > .token.declaration #icon.typeItem,
+.stack-node.function.loopHeader > * > #functionHeaderVariableContainer > .token.declaration > .pill #contents > #top > #icon.typeItem {
+    width: 10px;
+    --unity-image: resource("Icons/Dots_item@x3");
+}
+
+VseGraphView .token-node .unity-text-field > #unity-text-input {
+    -unity-text-align: middle-center;
+}

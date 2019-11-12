@@ -1,0 +1,8 @@
+<UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:VisualElement name="documentMenu">
+        <ui:VisualElement name="optionsButton">
+            <ui:VisualElement name="optionsButtonIcon"></ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+    <ui:ListView name="documentListView"/>
+</UXML>

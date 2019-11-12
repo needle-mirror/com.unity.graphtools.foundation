@@ -1,0 +1,5 @@
+<UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:VisualElement name="lineDecorator">
+        <ui:VisualElement name="lineDecoratorIcon"></ui:VisualElement>
+    </ui:VisualElement>
+</UXML>

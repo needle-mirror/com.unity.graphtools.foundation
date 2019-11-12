@@ -1,0 +1,11 @@
+/* TODO: Remove this section when GraphView Styling Bug issues 1155047, 1155050, 1155057, 1155058 are fixed in editor */
+/* Section starts here */
+
+VseGraphView .node .unity-button {
+    border-left-width: initial;
+    border-top-width: initial;
+    border-right-width: initial;
+    border-bottom-width: initial;
+    padding: initial;
+}
+/* Section ends here */

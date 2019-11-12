@@ -1,0 +1,160 @@
+/**************/
+/* Port icons */
+/**************/
+
+.token-node .port.output > #connector {
+    margin-left: 4px;
+}
+
+#portIcon {
+    width: 12px;
+    height: 12px;
+    --unity-image: resource("Icons/Advanced@x3");
+}
+
+#portIcon.typeObject {
+    --unity-image: resource("Icons/GraphicScript@x3");
+}
+
+#portIcon.typeTexture2D {
+    --unity-image: resource("Icons/2DTexture@x3");
+}
+
+#portIcon.typefloat4,
+#portIcon.typeVector4 {
+    --unity-image: resource("Icons/Vector4@x3");
+}
+
+#portIcon.typeQuaternion {
+    --unity-image: resource("Icons/Quaternion@x3");
+}
+
+#portIcon.typeColor {
+    --unity-image: resource("Icons/Color@x3");
+}
+
+#portIcon.typeInt {
+    --unity-image: resource("Icons/Integer1@x3");
+}
+
+#portIcon.typeInt32 {
+    --unity-image: resource("Icons/Integer32@x3");
+}
+
+#portIcon.typeInt64 {
+    --unity-image: resource("Icons/Integer64@x3");
+}
+
+#portIcon.typeBoolean {
+    --unity-image: resource("Icons/Boolean@x3");
+}
+
+#portIcon.typeMatrix,
+#portIcon.typeMatrix4x4 {
+    --unity-image: resource("Icons/Matrix@x3");
+}
+
+#portIcon.typeGameObject {
+    --unity-image: resource("Icons/GameObject@x3");
+}
+
+#portIcon.typeFloat,
+#portIcon.typeFloat1,
+#portIcon.typeSingle,
+#portIcon.typeDouble {
+    --unity-image: resource("Icons/Double@x3");
+}
+
+#portIcon.typefloat2,
+#portIcon.typeVector2 {
+    --unity-image: resource("Icons/Vector2@x3");
+}
+
+#portIcon.typeArray {
+    --unity-image: resource("Icons/Array@x3");
+}
+
+#portIcon.typeComponent {
+    --unity-image: resource("Icons/Component@x3");
+}
+
+#portIcon.typeRaycastHit {
+    --unity-image: resource("Icons/RaycastHit@x3");
+}
+
+#portIcon.typeAdvanced {
+    --unity-image: resource("Icons/Advanced@x3");
+}
+
+#portIcon.typefloat3,
+#portIcon.typeVector3 {
+    --unity-image: resource("Icons/Vector3@x3");
+}
+
+#portIcon.typeRigidBody {
+    --unity-image: resource("Icons/RigidBody@x3");
+}
+
+#portIcon.typeString {
+    --unity-image: resource("Icons/String@x3");
+}
+
+#portIcon.typeKeyCode {
+    --unity-image: resource("Icons/Keycode@x3");
+}
+
+#portIcon.typeText {
+    --unity-image: resource("Icons/Text@x3");
+}
+
+#portIcon.typeTransform {
+    --unity-image: resource("Icons/Transform@x3");
+}
+
+#portIcon.typeMaterial {
+    --unity-image: resource("Icons/Material@x3");
+}
+
+VseGraphView .stack-node .port.execution #connector #cap {
+    width: 8px;
+    height: 8px;
+    --port-color: #393939;
+    border-color: #393939;
+}
+
+VseGraphView .stack-node .port.execution #type {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+VseGraphView .node .port.loop {
+    --port-color: #999;
+}
+
+VseGraphView .node .port.loop #connector {
+    width: 12px;
+    height: 12px;
+}
+
+VseGraphView .node .port.loop #connector #cap {
+    width: 8px;
+    height: 8px;
+}
+
+VseGraphView .node .port.loop #type {
+    width: 0;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+VseGraphView .node .port.drop-highlighted {
+    border-color: var(--dragndrop-highlight-color);
+    background-color: var(--dragndrop-highlight-background-color);
+    border-radius: 4px;
+    border-width: 1px;
+}
+
+VseGraphView .node .port.drop-highlighted.denied {
+    border-color: var(--dragndrop-denied-color);
+    background-color: var(--dragndrop-denied-background-color);
+}

@@ -1,0 +1,258 @@
+.node .floating {
+    border-radius: 8px;
+    border-left-width: 2px;
+    border-top-width: 2px;
+    border-right-width: 2px;
+    border-bottom-width: 2px;
+    border-color: #A081E6;
+    background-color: #1B1B1B;
+    min-width: 200px;
+}
+
+.stack-node #node-border,
+.stackable-node.floating #node-border {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.insertLoopNode #collapse-button {
+    width: 0;
+}
+
+.insertLoopNode #collapse-button #icon {
+    width: 0;
+}
+
+.stack-node .insertLoopNode #node-border #title.hasDataInputPorts {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.stack-node .insertLoopNode #node-border #title {
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+}
+
+.node.standalone {
+    margin: 0;
+}
+
+.node.highlighted #title {
+    background-color: #784B65;
+}
+
+.node.highlighted #title-label {
+    color: #F7ADD7
+}
+
+FakeNode > * {
+    -unity-text-align: middle-center;
+    color: rgba(153, 153, 153, .5);
+    border-color: rgba(63, 63, 63, .4);
+    margin: 1px;
+    border-radius: 6px;
+    /* The proper opacity of the node border is 0.8 but transparent
+    border are not working properly so it's fully opaque.*/
+    border-left-width: 1px;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+}
+
+FakeNode #fakeText {
+    padding: 8px 16px;
+}
+
+FakeNode:hover > * {
+    border-color: rgba(68,192,255, .5);
+}
+
+.node #loopIconContainer {
+    flex-direction: row;
+    margin-right: 7px;
+}
+
+.node #loopIcon {
+    background-image: resource("Images/loop@64");
+    width: 12px;
+    height: 12px;
+    margin-right: 6px;
+    align-self: center;
+}
+
+#insertLoopPortContainer {
+    position: absolute;
+    right: -26px;
+    top: 0;
+    bottom: 0;
+    margin: auto;
+    align-items: center;
+    flex-direction: row;
+    justify-content: center;
+}
+
+#insertLoopPortContainer Port.loop {
+    left: 12px;
+}
+
+.node.stackable-node,
+.stackable-node.floating {
+    min-width: 172px;
+}
+
+.stack-node .stackable-node #node-border,
+.stackable-node.floating #node-border {
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.node .port.input {
+    min-width: 80px;
+}
+
+.node > #node-border > #title > #titleContainer {
+    flex-direction: row;
+    padding-left: 8px;
+    justify-content: space-between;
+}
+
+.node.instance > #node-border > #title > #titleContainer > #nodeIcon {
+    width: 0;
+}
+
+.node > #node-border > #title > #titleContainer > #nodeIcon {
+    width: 12px;
+    height: 12px;
+    align-self: center;
+    margin-top: 1px;
+}
+
+.node > #node-border > #title > #titleContainer > #title-label {
+    padding-left: 0;
+    margin-left: 4px;
+}
+
+.node > #node-border > #title > #titleContainer > #nodeIcon.typeNode {
+    --unity-image: resource("Icons/Function@x3"); /* TODO: Is this right? */
+}
+
+.node > #node-border > #title > #titleContainer > #nodeIcon.typeIfCondition {
+    --unity-image: resource("Icons/IfCondition@x3");
+}
+
+.node > #node-border > #title > #titleContainer > #nodeIcon.typeObject,
+.node > #node-border > #title > #titleContainer > #nodeIcon.typeGraphScript,
+.node > #node-border > #title > #titleContainer > #nodeIcon.typeUnknown {
+    --unity-image: resource("Icons/GraphicScript@x3");
+}
+
+.node > #node-border > #title > #titleContainer > #nodeIcon.typeThisType {
+    --unity-image: resource("Icons/GraphScript@x3");
+}
+
+.node > #node-border > #title > #titleContainer > #nodeIcon.typeSetVariable {
+    --unity-image: resource("Icons/SetVariable@x3");
+}
+
+.node > #node-border > #title > #titleContainer > #nodeIcon.typeMacro {
+    --unity-image: resource("Icons/Macro@x3");
+}
+
+.node > #node-border > #title > #titleContainer > #nodeIcon.typeCondition {
+    --unity-image: resource("Icons/Condition@x3");
+}
+
+.node > #node-border > #title > #titleContainer > #nodeIcon.typeLoop,
+.node > #node-border > #title > #titleContainer > #nodeIcon.typeForEachLoop {
+    --unity-image: resource("Icons/ForEachLoop@x3");
+}
+
+.node > #node-border > #title > #titleContainer > #nodeIcon.typeWhileLoop {
+    --unity-image: resource("Icons/WhileLoop@x3");
+}
+
+.node #contents > #top > #input,
+.node #contents > #top > #output {
+    padding-top: 2px;
+    padding-bottom: 2px;
+}
+
+.stack-node .node #node-border,
+.stackable-node.floating #node-border {
+    border-radius: 0;
+    border-color: rgba(0, 0, 0, 0);
+}
+
+.stack-node .node #node-border #title,
+.stackable-node.floating #node-border #title {
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    height: 28px;
+    background-color: #272727;
+}
+
+.stack-node .node #node-border #contents,
+.stackable-node.floating #node-border #contents {
+    background-color: #393939;
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+    margin-top: 0;
+    flex-direction: column;
+}
+
+.stack-node .node #node-border #contents #divider,
+.stackable-node.floating #node-border #contents #divider {
+    background-color: rgba(0, 0, 0, 0);
+    border-color: rgba(0, 0, 0, 0);
+    margin-bottom: 0;
+}
+
+.stack-node .node #node-border #contents #top #input,
+.stackable-node.floating #node-border #contents #top #input {
+    background-color: rgba(0, 0, 0, 0);
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.node > #node-border > #title > #titleContainer {
+    flex-direction: row;
+    padding-left: 8px;
+    justify-content: space-between;
+}
+
+.node.instance > #node-border > #title > #titleContainer > #nodeIcon {
+    width: 0;
+}
+
+.node > #node-border > #title > #titleContainer > #nodeIcon {
+    width: 12px;
+    height: 12px;
+    align-self: center;
+    margin-top: 1px;
+    flex-shrink: 0; /* icon should not shrink and disappear */
+}
+
+.node > #node-border > #title > #titleContainer > #title-label {
+    padding-left: 0;
+    margin-left: 4px;
+}
+
+/* TODO: Specialize nodeIcons */
+.node > #node-border > #title > #titleContainer > #nodeIcon.typeObject {
+    background-image: resource("Images/ErrorIcon");
+}
+
+.node.invalid #node-border {
+    border-color: var(--invalid-color);
+    border-width: 2px;
+}
+
+.node ProgressBar > * > * {
+    height: 6px;
+}
+
+.node ProgressBar {
+    width: 100px;
+    align-self: center;
+}

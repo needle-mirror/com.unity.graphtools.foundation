@@ -1,0 +1,165 @@
+.stack-node {
+    min-width: 200px;
+    max-width: 600px;
+    background-color: rgba(0,0,0,0);
+    padding: 6px;
+    --separator-height: 2;
+    --separator-extent: 4;
+}
+
+.stack-node #borderItem,
+.stack-node:hover #borderItem,
+.stack-node:selected #borderItem {
+    border-top-width: 1.5px;
+    border-left-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 1.5px;
+}
+
+.stack-node:selected:hover #borderItem {
+    border-top-width: 2.5px;
+    border-left-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 2.5px;
+}
+
+.stack-node > #stackNodeContainers > #stackNodeContentContainerPlaceholder.empty {
+    height: 0;
+}
+
+.stack-node > #stackNodeContainers > #stackPlaceholderContainer {
+    margin-left: 1px;
+    margin-right: 1px;
+    justify-content: center;
+}
+
+.stack-node > #stackNodeContainers {
+    margin-top: 2px;
+}
+
+.stack-node > #stackNodeContainers > #stackPlaceholderContainer > .stack-node-placeholder {
+    position: relative;
+    border-left-width: 0;
+    border-top-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 0;
+    background-color: #272727;
+}
+
+.stack-node > #stackNodeContainers > #stackPlaceholderContainer > .stack-node-placeholder > .unity-text-element {
+    align-self: center;
+    border-color: rgba(63, 63, 63, .4);
+    background-color: #1D1E20;
+    border-radius: 6px;
+    border-left-width: 1px;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    padding: 5px 22px;
+}
+
+.stack-node #stackNodeContainers #stackSeparatorContainer .stack-node-separator #highlight {
+    height: 2px;
+}
+
+.stack-node:selected:hover #borderItem {
+    border-top-width: 2.5px;
+    border-left-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 2.5px;
+}
+
+.stack-node > #stackNodeContainers > #stackNodeContentContainerPlaceholder.empty {
+    height: 0;
+}
+
+.stack-node > #stackNodeContainers > #stackPlaceholderContainer {
+    margin-left: 1px;
+    margin-right: 1px;
+    justify-content: center;
+}
+
+.stack-node > #stackNodeContainers {
+    margin-top: 2px;
+}
+
+.stack-node > #stackNodeContainers > #stackPlaceholderContainer > .stack-node-placeholder {
+    position: relative;
+    border-left-width: 0;
+    border-top-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 0;
+    background-color: #272727;
+}
+
+.stack-node > #stackNodeContainers > #stackPlaceholderContainer > .stack-node-placeholder > .unity-text-element {
+    align-self: auto;
+    -unity-text-align: middle-center;
+    border-color: rgba(63, 63, 63, .4);
+    background-color: #1D1E20;
+    border-radius: 6px;
+    border-left-width: 1px;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    padding: 5px 22px;
+}
+
+.stack-node #stackNodeContainers #stackSeparatorContainer .stack-node-separator #highlight {
+    height: 2px;
+}
+
+.stack-node .port.execution {
+    --port-color: #999;
+}
+
+.stack-node > #input {
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.stack-node > #input {
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.stack-node > #input > .port > #connector {
+    background-color: #212121;
+}
+
+.stack-node .port.execution:hover {
+    --port-color: #999999;
+}
+
+.stack-node .port.execution #connector {
+    width: 12px;
+    height: 12px;
+    border-color: #393939;
+}
+
+#stackNodeSeparatorAddLabel {
+    position: relative;
+    font-size: 9px;
+    width: 8px;
+    height: 8px;
+    min-height: 8px;
+    max-width: 8px;
+    max-height: 8px;
+    border-width: 2px;
+    border-radius: 4px;
+    color: rgba(180, 180, 180, 0.85);
+    background-color: #327090;
+    -unity-text-align: middle-center;
+    align-self: center;
+    padding: 0 0 2px;
+}
+
+.stack-node .stack-node-separator > #highlight {
+    visibility: hidden;
+    justify-content: center;
+    flex-direction: row;
+}
+
+.stack-node .stack-node-separator:hover > #highlight {
+    visibility: visible;
+}

@@ -1,0 +1,204 @@
+.sticky-note {
+    --unity-resizer-min-x: 80;
+    --unity-resizer-min-y: 100;
+    position: absolute;
+    flex-direction: column;
+    align-items: stretch;
+    --layer: -100;
+    margin-bottom: 0;
+    border-left-width: 0;
+    border-top-width: 0;
+    border-bottom-width: 0;
+    border-right-width: 0;
+    padding: 0;
+    border-radius: 2px;
+}
+
+.sticky-note #selection-border {
+    border-radius: 2px;
+}
+
+.sticky-note .resizer {
+    margin-bottom: 6px;
+    margin-right: 6px;
+}
+
+* > #node-border {
+    flex: 1;
+    flex-direction: column;
+    align-items: stretch;
+    border-left-width: 2px;
+    border-top-width: 2px;
+    border-bottom-width: 2px;
+    border-right-width: 2px;
+}
+
+#title-field {
+    position: absolute;
+}
+
+#contents-field {
+    position: absolute;
+}
+
+#title,
+#title-field * {
+    font-size: 20px;
+    white-space: normal;
+    min-height: 25px;
+}
+
+#contents {
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    overflow: hidden;
+}
+
+#contents,
+#contents-field * {
+    font-size: 11px;
+    white-space: normal;
+}
+
+#title {
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    white-space: normal;
+    overflow: hidden;
+}
+
+#contents {
+    flex:1;
+}
+
+.sticky-note * TextField {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    margin: 0;
+    padding: 0;
+    background-image: none;
+}
+
+.sticky-note Label {
+    border-width: 1px;
+    margin: 1px 6px;
+    padding-left: 0;
+    padding-right: 0;
+    border-color: rgba(0, 0, 0, 0);
+}
+
+.size-medium #title,
+.size-medium #title-field * {
+    font-size: 40px;
+}
+.size-medium #contents,
+.size-medium #contents-field * {
+    font-size: 24px;
+}
+
+.size-large #title,
+.size-large #title-field * {
+    font-size: 60px;
+}
+
+.size-large #contents,
+.size-large #contents-field * {
+    font-size: 36px;
+}
+
+.size-huge #title,
+.size-huge #title-field * {
+    font-size: 80px;
+}
+
+.size-huge #contents,
+.size-huge #contents-field * {
+    font-size: 56px;
+}
+
+* Label:hover {
+    border-color: rgba(68,192,255, 0.5);
+}
+
+* TextField:hover {
+    background-image: none;
+}
+
+* TextField:focus {
+    background-image: none;
+}
+
+* TextField:focus:hover {
+    background-image: none;
+}
+
+/* Themes*/
+
+.sticky-note * {
+    color: #1E1D15;
+    -unity-text-align: upper-left;
+}
+
+.sticky-note, * TextField TextInput {
+    background-color: #F8EBA9;
+}
+
+.theme-dark * {
+    color: #918963;
+}
+
+.theme-dark > #node-border {
+    border-color: #918963;
+    border-radius: 8px;
+}
+
+.sticky-note.theme-orange #node-border,
+.sticky-note.theme-red #node-border,
+.sticky-note.theme-green #node-border,
+.sticky-note.theme-blue #node-border,
+.sticky-note.theme-teal #node-border,
+.sticky-note.theme-purple #node-border {
+    border-color: rgba(0, 0, 0, 0);
+}
+
+.sticky-note.theme-dark,
+.theme-dark TextField TextInput{
+    background-color: #222018;
+}
+
+.sticky-note.theme-orange,
+.theme-orange TextField TextInput{
+    background-color:#FCB250;
+}
+
+.sticky-note.theme-red,
+.theme-red TextField TextInput{
+    background-color:#FF8B8B;
+}
+
+.sticky-note.theme-green,
+.theme-green TextField TextInput{
+    background-color:#6BE6B0;
+}
+
+.sticky-note.theme-blue,
+.theme-blue TextField TextInput{
+    background-color:#8FC1DF;
+}
+
+.sticky-note.theme-teal,
+.theme-teal TextField TextInput{
+    background-color:#84E4E7;
+}
+
+.sticky-note.theme-purple,
+.theme-purple TextField TextInput {
+    background-color:#FBCBF4;
+}

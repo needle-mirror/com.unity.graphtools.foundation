@@ -1,0 +1,12 @@
+/* TODO: Remove this section when GraphView Styling Bug issues 1155047, 1155050, 1155057, 1155058 are fixed in editor */
+/* Section starts here */
+
+VseGraphView .stack-node {
+    font-size: 16px;
+}
+
+VseGraphView .stack-node #titleLabel, VseGraphView .stack-node .titleLabel {
+    padding: 1px 2px 2px;
+    margin-bottom: 2px;
+}
+/* Section ends here */

@@ -1,0 +1,92 @@
+.unity-base-field__input {
+    -unity-text-align: middle-left;
+    padding-right: 3px;
+    flex: 1 0 auto;
+}
+
+.unity-property-field {
+    font-size: 11px;
+    margin: 0 3px 3px 3px;
+    padding: 0 4px 1px;
+    flex: 1 0 auto;
+}
+
+.unity-property-field .unity-text-element {
+    -unity-text-align: middle-center;
+}
+
+.unity-property-field FloatField {
+    min-width: 40px;
+    min-height: 18px;
+    padding-left: 4px;
+    padding-top: 3px;
+    padding-right: 4px;
+    border-radius: 5px;
+    border-width: 2px;
+    margin-bottom: 0;
+    background-image: none;
+}
+
+.unity-property-field > FloatField {
+    padding-left: 0;
+    padding-right: 0;
+    margin-left: 2px;
+    margin-right: 2px;
+}
+
+.unity-property-field Toggle {
+    margin-left: 4px;
+    margin-top: 4px;
+    padding-top: 3px;
+    padding-bottom: 0;
+}
+
+.unity-property-field Toggle .unity-toggle__input {
+    margin-top: 0;
+}
+
+.unity-property-field TextField {
+    min-width: 40px;
+    margin-top: 2px;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.unity-property-field ColorField {
+    width: 35px;
+    margin-top: 2px;
+    padding-top: 2px;
+    margin-left: 0;
+    margin-bottom: 0;
+}
+
+.stack-node #criteriaSection #sortableExpandableRow #expandableRowTitleContainer #rowFieldContainer .unity-property-field ColorField {
+    margin-left: 10px;
+}
+
+.unity-property-field EnumField {
+    min-width: 80px;
+    margin-left: 4px;
+    padding-right: 15px;
+}
+
+.unity-property-field Vector3Field {
+    min-width: 100px;
+    min-height: 18px;
+    margin-left: 0;
+}
+
+.unity-property-field Vector3Field FloatField {
+    min-width: 40px;
+    top: 1px;
+    flex: 1 1 auto;
+}
+
+.unity-property-field Vector3Field FloatField .unity-base-field__input {
+    width: 60px;
+    flex: 1 1 0;
+}
+
+.unity-property-field.unity-disabled {
+    visibility: hidden;
+}

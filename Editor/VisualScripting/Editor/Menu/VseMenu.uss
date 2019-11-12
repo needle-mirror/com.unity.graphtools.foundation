@@ -1,0 +1,188 @@
+#vseMenu .unity-toolbar-toggle, #vseMenu .unity-toolbar-button, #vseMenu .menuItem, #vseMenu #breadcrumbButton {
+    width: 36px;
+    justify-content: center;
+    align-items: center;
+}
+
+#vseMenu .unity-toolbar-button {
+    padding-top: 2px;
+    border-left-width: 0;
+}
+
+/* the frameCounterContainer would need a right border, but using the env variables for its color doesn't work. */
+/* patching the next button on the right instead */
+#vseMenu .unity-toolbar-button#nextStepTracingButton {
+    border-left-width: 1px;
+}
+
+#vseMenu #errorIconLabel, #vseMenu #previousErrorButton {
+    border-left-width: 1px;
+}
+
+#vseMenu .unity-toolbar-button .icon {
+    width: 16px;
+    height: 16px;
+}
+
+#vseMenu .unity-toolbar-toggle .icon {
+    position: absolute; /* otherwise icon hides the toggle */
+}
+
+#vseMenu .unity-toolbar-toggle .unity-base-field__input {
+    height: 18px; /* since icon is absolute, force inner toggle height */
+}
+
+#vseMenu #saveAllButton .icon {
+    background-image: resource("SaveActive");
+}
+
+#vseMenu #buildAllButton .icon {
+    background-image: resource("Images/BuildAll");
+    width: 14px;
+    height: 12px;
+}
+
+#vseMenu #viewInCodeViewerButton .icon {
+    background-image: resource("Images/CodeViewer");
+    width: 14px;
+    height: 12px;
+}
+
+#vseMenu #refreshButton .icon {
+    background-image: resource("Images/Refresh");
+}
+
+#vseMenu #enableTracingButton .icon {
+    background-image: resource("Animation.Record");
+    width: 16px;
+    height: 16px;
+}
+
+#vseMenu #optionsButton .icon {
+    background-image: resource("Images/Options");
+    width: 15px;
+    height: 14px;
+}
+
+#vseMenu #showMiniMapButton .icon {
+    background-image: resource("Images/MiniMap");
+    width: 14px;
+    height: 12px;
+}
+
+#vseMenu #showBlackboardButton .icon {
+    background-image: resource("Images/Blackboard");
+    width: 14px;
+    height: 12px;
+}
+
+#vseMenu #errorIconLabel {
+    width: 20px;
+}
+
+#vseMenu #errorIconLabel .icon {
+    background-image: resource("Images/ErrorIcon");
+    width: 12px;
+    height: 12px;
+}
+
+#vseMenu #previousErrorButton, #vseMenu #nextErrorButton {
+    width: 18px;
+}
+
+#vseMenu #previousErrorButton .icon {
+    background-image: resource("Images/PreviousError");
+    width: 7px;
+    height: 12px;
+}
+
+#vseMenu #nextErrorButton .icon {
+    background-image: resource("Images/NextError");
+    width: 7px;
+    height: 12px;
+}
+
+#vseMenu #errorCounterLabel {
+    min-width: 10px;
+    padding-left: 3px;
+    padding-right: 3px;
+    -unity-text-align: middle-center;
+    opacity: 1;
+}
+
+#vseMenu #breadcrumbButton .popupIcon {
+    background-image: resource("IN pulldown");
+    width: 8px;
+    height: 13px;
+}
+
+#vseMenu #firstFrameTracingButton .icon {
+    background-image: resource("d_beginButton");
+}
+
+#vseMenu #pickTargetButton .icon {
+    background-image: resource("Images/ScriptSelector");
+}
+
+#vseMenu #previousFrameTracingButton .icon {
+    background-image: resource("d_Animation.PrevKey");
+}
+
+#vseMenu #previousStepTracingButton .icon {
+    background-image: resource("d_back");
+    width: 12px;
+    height: 12px;
+}
+
+#vseMenu #lastFrameTracingButton .icon {
+    background-image: resource("d_endButton");
+}
+
+#vseMenu #nextFrameTracingButton .icon {
+    background-image: resource("d_Animation.NextKey");
+}
+
+#vseMenu #nextStepTracingButton .icon {
+    background-image: resource("d_forward");
+    width: 12px;
+    height: 12px;
+}
+
+#vseMenu #breadcrumbButton .icon {
+    background-image: resource("Images/ScriptSelector");
+    width: 14px;
+    height: 12px;
+}
+
+#vseMenu #breadcrumbButton {
+    flex-direction: row;
+    -unity-slice-left: 1;
+    -unity-slice-right: 1;
+    -unity-slice-top: 1;
+    -unity-slice-bottom: 1;
+}
+
+#vseMenu .frameCounterLabel {
+    height: 15px;
+    min-width: 20px;
+    padding-left: 3px;
+    padding-right: 3px;
+    color: #B4B4B4;
+    -unity-text-align: middle-center;
+}
+
+#vseMenu #totalFrameLabel {
+    min-height: 15px;
+    margin-left: 0;
+    padding-bottom: 0;
+    -unity-text-align: middle-center;
+}
+
+#vseMenu #currentFrameTextField {
+    margin-right: 0;
+}
+
+#vseMenu #frameCounterContainer {
+    flex-direction: row;
+    width: 150px;
+}

@@ -1,0 +1,6 @@
+.autoDim * {
+    --unity-min-opacity: .5;
+    --unity-max-opacity: 1;
+    --unity-opacity-step: .05;
+    --unity-opacity-delay: 850;
+}

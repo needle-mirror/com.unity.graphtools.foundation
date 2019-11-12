@@ -1,0 +1,15 @@
+#titleLabel {
+    -unity-text-align: middle-left;
+    color: #C1C1C1;
+    font-size: 16px;
+    padding-bottom: 0;
+    max-width: 200px;
+}
+
+FunctionNode.event #titleLabel {
+    color: #219AD6;
+}
+
+.stack-node.function.loopHeader {
+    min-width: 225px;
+}

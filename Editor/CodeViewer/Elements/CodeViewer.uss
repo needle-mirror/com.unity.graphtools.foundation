@@ -1,0 +1,105 @@
+DocumentContainer {
+    background-color: #1F1F1F;
+    --unity-item-height: 20;
+    --unity-item-inter-padding: 6px;
+    --unity-digit-width: 10px;
+    flex-direction: column;
+}
+
+DocumentContainer * {
+    -unity-font: resource("Inconsolata-Regular");
+    font-size: 16px;
+    color: #CDCDCD;
+    margin: 0;
+    padding: 0;
+}
+
+DocumentContainer > #documentListView > ScrollView > #unity-content-viewport > #unity-content-container {
+    width: 3500px;
+}
+
+DocumentContainer #documentListView {
+    flex: 1;
+}
+
+DocumentContainer #lineContainer {
+    flex-direction: row;
+    justify-content: flex-start;
+}
+
+DocumentContainer #lineContainer > #lineNumber {
+    -unity-text-align: upper-right;
+}
+
+DocumentContainer #lineContainer > #lineDecorators {
+    flex-direction: row;
+    width: 32px;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+DocumentContainer #lineContainer > #lineText {
+    position: absolute;
+    margin-left: 52px;
+    flex-wrap: nowrap;
+    -unity-text-align: upper-left;
+    overflow: hidden;
+    border-color: #393939;
+    border-left-width: 1px;
+}
+
+DocumentContainer #lineContainer > #lineText2 {
+    position: absolute;
+    margin-left: 52px;
+    flex-wrap: nowrap;
+    flex-shrink: 1;
+    -unity-text-align: upper-left;
+    overflow: hidden;
+    border-color: #393939;
+    border-left-width: 1px;
+    color: #44C0FF;
+}
+
+DocumentContainer #lineContainer:selected {
+    background-color: #44C0FF;
+    color: #ff0000;
+}
+
+DocumentContainer #lineContainer:selected > #lineNumber {
+    color: #000000;
+}
+
+DocumentContainer #lineContainer:selected > #lineText,
+DocumentContainer #lineContainer:selected > #lineText2 {
+    color: #000000;
+}
+
+DocumentContainer #documentMenu {
+    height: 18px;
+    flex-direction: row-reverse;
+    align-items: stretch;
+    background-image: resource("toolbar");
+}
+
+DocumentContainer #documentMenu > #optionsButton {
+    height: 18px;
+    width: 36px;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    -unity-slice-left: 1;
+    -unity-slice-right: 1;
+    -unity-slice-top: 1;
+    -unity-slice-bottom: 1;
+    background-image: resource("toolbar button");
+}
+
+DocumentContainer #documentMenu > #optionsButton:active {
+    background-image: resource("toolbar button act");
+}
+
+DocumentContainer #documentMenu #optionsButtonIcon {
+    background-image: resource("Images/Options");
+    width: 15px;
+    height: 14px;
+}

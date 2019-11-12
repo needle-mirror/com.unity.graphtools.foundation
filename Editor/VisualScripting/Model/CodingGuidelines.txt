@@ -1,0 +1,32 @@
+=========================================================================
+                            VISUAL SCRIPTING
+                            CODING GUIDELINES
+=========================================================================
+
+ACTIONS
+- Action name should follow the pattern:
+    <Verb><Target><Modifier(if needed)>Action
+- Action should be as reusable as possible, without making them cumbersome.
+- Always use the following verbs if they match your action
+    - 'Create'
+        An action that creates a totally new object.
+    - 'Delete'
+        An action that totally destroys an existing object.
+    - 'Add'
+        An action that adds an already existing object to another existing object.
+    - 'Remove'
+        An action that removes an already existing object from another existing object, without destroying any of those
+        objects
+    - 'Move'
+        An action that changes the spatial coordinate of an object.
+    - 'Set'
+        Assign a value
+
+REDUCERS
+- Reducer name should follow the pattern:
+    Same name as the Action, without the 'Action' suffix.
+- When possible, a reducer should call a method of the matching name on the model.
+
+MODELS
+
+INSPECTORS
