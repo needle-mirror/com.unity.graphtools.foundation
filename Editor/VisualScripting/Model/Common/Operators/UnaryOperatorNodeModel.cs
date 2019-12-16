@@ -5,29 +5,29 @@ using UnityEditor.VisualScripting.Model.Stencils;
 
 namespace UnityEditor.VisualScripting.Model
 {
+    // ReSharper disable once ClassWithVirtualMembersNeverInherited.Global
     [Serializable]
     public class UnaryOperatorNodeModel : NodeModel, IOperationValidator
     {
-        public UnaryOperatorKind kind;
+        public UnaryOperatorKind Kind;
 
-        public override string Title => kind.ToString();
-
+        public override string Title => Kind.ToString();
         public IPortModel InputPort { get; private set; }
         public IPortModel OutputPort { get; private set; }
 
         protected override void OnDefineNode()
         {
-            InputPort = AddDataInput<float>("A");
-            if (kind == UnaryOperatorKind.LogicalNot || kind == UnaryOperatorKind.Minus)
-            {
-                OutputPort = AddDataOutputPort<float>("Out");
-            }
+            var portType = Kind == UnaryOperatorKind.LogicalNot ? TypeHandle.Bool : TypeHandle.Float;
+            InputPort = AddDataInput("A", portType);
+
+            if (Kind == UnaryOperatorKind.LogicalNot || Kind == UnaryOperatorKind.Minus)
+                OutputPort = AddDataOutputPort("Out", portType);
         }
 
         public virtual bool HasValidOperationForInput(IPortModel _, TypeHandle typeHandle)
         {
             var type = typeHandle.Resolve(Stencil);
-            return TypeSystem.GetOverloadedUnaryOperators(type).Contains(kind);
+            return TypeSystem.GetOverloadedUnaryOperators(type).Contains(Kind);
         }
     }
 }

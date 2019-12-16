@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using JetBrains.Annotations;
 using UnityEditor.Experimental.GraphView;
 using UnityEditor.VisualScripting.Editor;
 using UnityEditor.VisualScripting.Model;
@@ -20,21 +21,23 @@ namespace UnityEditor.VisualScripting.GraphViewModel
     {
         [SerializeField]
         string m_GuidAsString; // serialize m_Guid
+
         GUID m_Guid; // serialized as m_GuidAsString
 
         [SerializeField]
         GraphAssetModel m_GraphAssetModel;
 
-        GraphModel m_GraphModel;
-
         IStackModel m_ParentStackModel;
 
         [SerializeField]
         Vector2 m_Position;
+
         [SerializeField, HideInInspector]
         Color m_Color;
+
         [SerializeField, HideInInspector]
         bool m_HasUserColor;
+
         [SerializeField]
         string m_Title;
 
@@ -45,6 +48,7 @@ namespace UnityEditor.VisualScripting.GraphViewModel
         // Serialize m_InputConstantsById dictionary Values
         [SerializeReference, HideInInspector]
         protected List<ConstantNodeModel> m_InputConstantsValues;
+
         [SerializeField]
         ModelState m_State;
 
@@ -54,7 +58,7 @@ namespace UnityEditor.VisualScripting.GraphViewModel
             internal set => m_Guid = value;
         }
 
-        protected Stencil Stencil => m_GraphModel?.Stencil;
+        protected Stencil Stencil => m_GraphAssetModel != null ? m_GraphAssetModel.GraphModel.Stencil : null;
 
         public virtual string IconTypeString => "typeNode";
 
@@ -76,21 +80,21 @@ namespace UnityEditor.VisualScripting.GraphViewModel
             }
         }
 
-        // Capabilities
         public virtual CapabilityFlags Capabilities => CapabilityFlags.Selectable | CapabilityFlags.Deletable | CapabilityFlags.Movable | CapabilityFlags.Droppable;
 
         public ScriptableObject SerializableAsset => (ScriptableObject)GraphModel.AssetModel;
-        public IGraphAssetModel AssetModel => m_GraphAssetModel;
 
-        public IGraphModel GraphModel
+        public IGraphAssetModel AssetModel
         {
-            get => m_GraphModel;
+            get => m_GraphAssetModel;
             set
             {
-                m_GraphModel = (GraphModel)value;
-                m_GraphAssetModel = m_GraphModel?.AssetModel as GraphAssetModel;
+                Assert.IsNotNull(value);
+                m_GraphAssetModel = (GraphAssetModel)value;
             }
         }
+
+        public IGraphModel GraphModel => AssetModel?.GraphModel;
 
         public ModelState State
         {
@@ -131,6 +135,7 @@ namespace UnityEditor.VisualScripting.GraphViewModel
         // Allows maintaining a ports both by order and by their ids
         // IReadOnlyList<IPortModel> gives access to ports by display order
         // IReadOnlyDictionary<string, IPortModel> gives access to ports by Ids
+        [PublicAPI]
         class OrderedPorts : IReadOnlyDictionary<string, IPortModel>, IReadOnlyList<IPortModel>
         {
             Dictionary<string, IPortModel> m_Dictionary;
@@ -345,9 +350,9 @@ namespace UnityEditor.VisualScripting.GraphViewModel
             m_Color = color;
         }
 
-        protected virtual PortModel MakePortForNode(Direction direction, string portName, PortType portType, TypeHandle dataType, string portId)
+        protected virtual PortModel MakePortForNode(Direction direction, string portName, PortType portType, TypeHandle dataType, string portId, PortModel.PortModelOptions options)
         {
-            return new PortModel(portName ?? "", portId)
+            return new PortModel(portName ?? "", portId, options)
             {
                 Direction = direction,
                 PortType = portType,
@@ -356,14 +361,14 @@ namespace UnityEditor.VisualScripting.GraphViewModel
             };
         }
 
-        protected PortModel AddDataInput<TDataType>(string portName, string portId = null)
+        protected PortModel AddDataInput<TDataType>(string portName, string portId = null, PortModel.PortModelOptions options = PortModel.PortModelOptions.Default)
         {
-            return AddDataInput(portName, typeof(TDataType).GenerateTypeHandle(Stencil), portId);
+            return AddDataInput(portName, typeof(TDataType).GenerateTypeHandle(Stencil), portId, options);
         }
 
-        protected PortModel AddDataInput(string portName, TypeHandle typeHandle, string portId = null)
+        protected PortModel AddDataInput(string portName, TypeHandle typeHandle, string portId = null, PortModel.PortModelOptions options = PortModel.PortModelOptions.Default)
         {
-            return AddInputPort(portName, PortType.Data, typeHandle, portId);
+            return AddInputPort(portName, PortType.Data, typeHandle, portId, options);
         }
 
         protected PortModel AddDataOutputPort<TDataType>(string portName, string portId = null)
@@ -401,35 +406,40 @@ namespace UnityEditor.VisualScripting.GraphViewModel
             return AddOutputPort(portName, PortType.Loop, TypeHandle.ExecutionFlow, portId);
         }
 
-        protected virtual PortModel AddInputPort(string portName, PortType portType, TypeHandle dataType, string portId = null)
+        protected virtual PortModel AddInputPort(string portName, PortType portType, TypeHandle dataType, string portId = null, PortModel.PortModelOptions options = PortModel.PortModelOptions.Default)
         {
-            var portModel = MakePortForNode(Direction.Input, portName, portType, dataType, portId);
+            var portModel = MakePortForNode(Direction.Input, portName, portType, dataType, portId, options);
             portModel = ReuseOrCreatePortModel(portModel, m_PreviousInputs, m_InputsById);
             UpdateConstantForInput(portModel);
             return portModel;
         }
 
-        protected virtual PortModel AddOutputPort(string portName, PortType portType, TypeHandle dataType, string portId = null)
+        protected virtual PortModel AddOutputPort(string portName, PortType portType, TypeHandle dataType, string portId = null, PortModel.PortModelOptions options = PortModel.PortModelOptions.Default)
         {
-            var portModel = MakePortForNode(Direction.Output, portName, portType, dataType, portId);
+            var portModel = MakePortForNode(Direction.Output, portName, portType, dataType, portId, options);
             return ReuseOrCreatePortModel(portModel, m_PreviousOutputs, m_OutputsById);
         }
 
         void UpdateConstantForInput(PortModel inputPort)
         {
+            var id = inputPort.UniqueId;
+            if ((inputPort.Options & PortModel.PortModelOptions.NoEmbeddedConstant) != 0)
+            {
+                m_InputConstantsById?.Remove(id);
+                return;
+            }
             if (m_InputConstantsById == null)
             {
                 m_InputConstantsById = new Dictionary<string, ConstantNodeModel>();
                 m_InputConstantsById.DeserializeDictionaryFromLists(m_InputConstantKeys, m_InputConstantsValues);
             }
 
-            var id = inputPort.UniqueId;
             if (m_InputConstantsById.TryGetValue(id, out var constant))
             {
                 // Destroy existing constant if not compatible
                 Type type = inputPort.DataType.Resolve(Stencil);
-                constant.GraphModel = m_GraphModel;
-                if (constant != null && constant.Type != type)
+                constant.AssetModel = m_GraphAssetModel;
+                if (constant.Type != type)
                 {
                     m_InputConstantsById.Remove(id);
                 }

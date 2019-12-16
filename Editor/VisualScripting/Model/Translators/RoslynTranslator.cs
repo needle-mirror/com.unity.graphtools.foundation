@@ -10,6 +10,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Formatting;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Formatting;
+using UnityEditor.EditorCommon.Utility;
 using UnityEditor.VisualScripting.Editor;
 using UnityEditor.VisualScripting.GraphViewModel;
 using UnityEditor.VisualScripting.Model.Stencils;
@@ -26,19 +27,50 @@ namespace UnityEditor.VisualScripting.Model.Translators
 {
     public class RoslynTranslator : ITranslator
     {
+        static readonly IEnumerable<string> k_DefaultNamespaces = new[]
+        {
+            "System",
+            "System.Collections.Generic",
+            "UnityEngine",
+        };
+
         static int s_LastSyntaxTreeHashCode;
         static CompilationResult s_LastCompilationResult;
-        public StackBaseModel EndStack { get; set; }
-        public readonly Stack<MacroRefNodeModel> InMacro = new Stack<MacroRefNodeModel>();
+
         int m_BuiltStackCounter;
         StackExitStrategy m_StackExitStrategy = StackExitStrategy.Return;
-        public HashSet<IStackModel> BuiltStacks = new HashSet<IStackModel>();
+        protected virtual HashSet<string> UsingDirectives { get; } = new HashSet<string>
+        {
+            "System",
+            "System.Collections",
+            "System.Collections.Generic",
+            "System.Dynamic",
+            "System.Linq",
+            "Microsoft.CSharp",
+            "UnityEngine",
+            "UnityEngine.SceneManagement",
+            "UnityEngine.VisualScripting"
+        };
 
-        public static bool logCompileTimeStats { get; set; }
+        protected virtual Dictionary<string, string> UsingAliases { get; } = new Dictionary<string, string>
+        {
+            { "UnityEngine.Object", "Object" },
+            { "UnityEngine.Random", "Random" },
+            { "UnityEngine.Debug", "Debug" },
+            { "UnityEngine.SceneManagement.SceneManager", "SceneManager" }
+        };
+
+        public readonly Stack<MacroRefNodeModel> InMacro = new Stack<MacroRefNodeModel>();
+        public HashSet<IStackModel> BuiltStacks = new HashSet<IStackModel>();
+        public static LanguageVersion LanguageVersion => LanguageVersion.Latest;
+
+        public StackBaseModel EndStack { get; set; }
+        public static bool LogCompileTimeStats { get; set; }
+        public Stencil Stencil { get; }
 
         static RoslynTranslator()
         {
-            logCompileTimeStats = false;
+            LogCompileTimeStats = false;
         }
 
         public RoslynTranslator(Stencil stencil)
@@ -46,15 +78,18 @@ namespace UnityEditor.VisualScripting.Model.Translators
             Stencil = stencil;
         }
 
-        public Stencil Stencil { get; }
-
-        static readonly IEnumerable<string> k_DefaultNamespaces =
-            new[]
+        public void AddUsingDirectives(params string[] namespaces)
         {
-            "System",
-            "System.Collections.Generic",
-            "UnityEngine",
-        };
+            UsingDirectives.AddRange(namespaces.Where(n => !string.IsNullOrEmpty(n)));
+        }
+
+        public void AddUsingAlias(string alias, string aliasNamespace)
+        {
+            if (UsingAliases.ContainsKey(aliasNamespace))
+                return;
+
+            UsingAliases.Add(aliasNamespace, alias);
+        }
 
         public bool SupportsCompilation() => true;
 
@@ -109,9 +144,13 @@ namespace UnityEditor.VisualScripting.Model.Translators
                 .WithChangedOption(CSharpFormattingOptions.NewLinesForBracesInObjectCollectionArrayInitializers, true)
                 .WithChangedOption(FormattingOptions.NewLine, LanguageNames.CSharp, preferredLineEndings);
 
-            string codeText = Formatter.Format(syntaxTree.GetCompilationUnitRoot(), adHocWorkspace, options).GetText().ToString();
+            compilationResult.sourceCode[(int)SourceCodePhases.Initial] = syntaxTree.GetText().ToString();
 
-            compilationResult.sourceCode[(int)SourceCodePhases.Initial] = codeText;
+            var formattedTree = Formatter.Format(syntaxTree.GetCompilationUnitRoot(), adHocWorkspace, options);
+            formattedTree = new VisualScriptingCSharpFormatter().Visit(formattedTree);
+            string codeText = formattedTree.GetText().ToString();
+
+            compilationResult.sourceCode[(int)SourceCodePhases.Final] = codeText;
 
             return syntaxTree;
         }
@@ -159,14 +198,14 @@ namespace UnityEditor.VisualScripting.Model.Translators
                     if (s_LastSyntaxTreeHashCode == syntaxTreeHashCode)
                     {
                         compilationResult = s_LastCompilationResult;
-                        if (logCompileTimeStats)
+                        if (LogCompileTimeStats)
                             Debug.Log("Reused cached compilation result");
                     }
                     else
                     {
                         try
                         {
-                            if (logCompileTimeStats)
+                            if (LogCompileTimeStats)
                                 Debug.Log("Compute new compilation result");
                             compilationResult = CheckSemanticModel(syntaxTree, compilationResult);
                         }
@@ -191,7 +230,9 @@ namespace UnityEditor.VisualScripting.Model.Translators
                         string sourceCode = compilationResult.sourceCode[(int)SourceCodePhases.Final];
 
                         if (compilationResult.status == CompilationStatus.Succeeded)
+                        {
                             File.WriteAllText(graphModelSourceFilePath, sourceCode);
+                        }
                     }
                     Profiler.EndSample();
                 }
@@ -201,12 +242,12 @@ namespace UnityEditor.VisualScripting.Model.Translators
 
             // needs to be done on the main thread
             foreach (CompilerError error in compilationResult.errors)
-                if (error.sourceNodeGuid == default && !error.sourceNode.Destroyed)
+                if (error.sourceNodeGuid == default && error.sourceNode != null && !error.sourceNode.Destroyed)
                     error.sourceNodeGuid = error.sourceNode.Guid;
                 else
                     graphModel.NodesByGuid.TryGetValue(error.sourceNodeGuid, out error.sourceNode);
 
-            if (logCompileTimeStats)
+            if (LogCompileTimeStats)
             {
                 Debug.Log($"Validation: {validationTime}ms Translation: {translationTime}ms Code Analysis: {analysisTime}ms Compilation: {compilationTime}ms");
             }
@@ -231,6 +272,11 @@ namespace UnityEditor.VisualScripting.Model.Translators
             Profiler.BeginSample("Translation");
             Microsoft.CodeAnalysis.SyntaxTree syntaxTree = ToSyntaxTree(graphModel, options);
             Profiler.EndSample();
+            if (syntaxTree is CSharpSyntaxTree cSharpSyntaxTree && syntaxTree.TryGetRoot(out var treeRoot))
+            {
+                var treeOptions = cSharpSyntaxTree.Options.WithLanguageVersion(LanguageVersion);
+                return syntaxTree.WithRootAndOptions(treeRoot, treeOptions);
+            }
             return syntaxTree;
         }
 
@@ -319,13 +365,6 @@ namespace UnityEditor.VisualScripting.Model.Translators
             ProcessDiagnostics(rawDiagnostics, diagnostics);
             Profiler.EndSample();
 
-            Profiler.BeginSample("Format");
-
-            var codeText = syntaxTree.GetText().ToString();
-            compilationResult.sourceCode[(int)SourceCodePhases.Final] = codeText;
-
-            Profiler.EndSample();
-
             if (diagnostics.Any())
             {
                 compilationResult.errors = diagnostics;
@@ -370,13 +409,12 @@ namespace UnityEditor.VisualScripting.Model.Translators
                 if (firstAncestorWithAnnotation != null)
                     smAnnotation = firstAncestorWithAnnotation.GetAnnotations(Annotations.VSNodeMetadata).FirstOrDefault();
 
+                var compilerError = new CompilerError { description = diagnostic.ToString() };
+
                 if (smAnnotation != null)
-                {
-                    var compilerError = new CompilerError();
-                    compilerError.description = diagnostic.ToString();
                     GUID.TryParse(smAnnotation.Data, out compilerError.sourceNodeGuid);
-                    diagnostics.Add(compilerError);
-                }
+
+                diagnostics.Add(compilerError);
             }
         }
 
@@ -488,35 +526,14 @@ namespace UnityEditor.VisualScripting.Model.Translators
             }
 
             allMembers.AddRange(declaredMethods.Values);
-
             classDeclaration = classDeclaration.AddMembers(allMembers.ToArray());
 
-            var referencedNamespaces = new[]
-            {
-                "System",
-                "System.Collections",
-                "System.Collections.Generic",
-                "System.Dynamic",
-                "System.Linq",
-                "Microsoft.CSharp",
-                "UnityEngine",
-                "UnityEngine.SceneManagement",
-                "UnityEngine.VisualScripting"
-            }.Select(namespaceName => UsingDirective(ParseName(namespaceName)));
-
-            var namespaceAliases = new Dictionary<string, string>
-            {
-                { "UnityEngine.Object", "Object" },
-                { "UnityEngine.Random", "Random" },
-                { "UnityEngine.Debug", "Debug" },
-                { "UnityEngine.SceneManagement.SceneManager", "SceneManager" },
-            }.Select(pair =>
+            var referencedNamespaces = UsingDirectives.OrderBy(n => n).Select(ns => UsingDirective(ParseName(ns)));
+            var namespaceAliases = UsingAliases.OrderBy(n => n.Key).Select(pair =>
                 UsingDirective(ParseName(pair.Key))
                     .WithAlias(NameEquals(
                     IdentifierName(pair.Value))));
-
-            UsingDirectiveSyntax[] usings = referencedNamespaces.Concat(namespaceAliases).ToArray();
-
+            var usings = referencedNamespaces.Concat(namespaceAliases).ToArray();
             var compilationUnit = CompilationUnit()
                 .WithUsings(
                 List(usings))
@@ -569,7 +586,10 @@ namespace UnityEditor.VisualScripting.Model.Translators
                     // TODO: RecordValue codegen counter instead of counting them after the fact
                     if ((Options & UnityEngine.VisualScripting.CompilationOptions.Tracing) != 0)
                     {
-                        int recordedValuesCount = syntaxNode.GetAnnotatedNodes(Annotations.RecordValueKind).Count();
+                        var recordValueCount = syntaxNode.GetAnnotations(Annotations.RecordValueCountKind).FirstOrDefault();
+                        int recordedValuesCount = recordValueCount == null
+                            ? syntaxNode.GetAnnotatedNodes(Annotations.RecordValueKind).Count()
+                            : int.Parse(recordValueCount.Data);
                         statements.Add(InstrumentForInEditorDebugging.BuildLastCallFrameExpression(recordedValuesCount, statement.Guid, this.GetRecorderName()));
                     }
                     statements.Add(resultingStatement);
@@ -684,7 +704,7 @@ namespace UnityEditor.VisualScripting.Model.Translators
         {
             var buildPortInner = BuildPortInner(portModel, out var builtNode).ToList();
             if (portSemantic == PortSemantic.Read && (Options & UnityEngine.VisualScripting.CompilationOptions.Tracing) != 0 &&
-                builtNode != null && buildPortInner.Count() == 1 && buildPortInner.First() is ExpressionSyntax exp)
+                builtNode != null && buildPortInner.Count == 1 && buildPortInner.First() is ExpressionSyntax exp)
                 return Enumerable.Repeat(InstrumentForInEditorDebugging.RecordValue(GetRecorderName(), exp, null, (NodeModel)builtNode), 1);
             return buildPortInner;
         }
@@ -706,7 +726,7 @@ namespace UnityEditor.VisualScripting.Model.Translators
             var defaultValue = RoslynBuilder.GetDefault(portModel.DataType.Resolve(Stencil));
             return Enumerable.Repeat(defaultValue == null
                 ? LiteralExpression(SyntaxKind.NullLiteralExpression)
-                : (LiteralExpressionSyntax)Constant(defaultValue, Stencil), 1);
+                : Constant(defaultValue, Stencil), 1);
         }
 
         public IEnumerable<SyntaxNode> BuildNode(INodeModel inputNode)

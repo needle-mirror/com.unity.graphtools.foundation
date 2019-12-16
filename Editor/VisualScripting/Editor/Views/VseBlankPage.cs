@@ -40,7 +40,7 @@ namespace UnityEditor.VisualScripting.Editor
             m_Store = store;
         }
 
-        public void UpdateUI()
+        public virtual void UpdateUI()
         {
             Clear();
 

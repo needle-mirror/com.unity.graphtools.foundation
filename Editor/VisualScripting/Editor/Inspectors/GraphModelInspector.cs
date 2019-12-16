@@ -2,14 +2,9 @@ using System;
 using System.Linq;
 using NUnit.Framework.Constraints;
 
-#if PROPERTIES
-using Unity.Properties;
-#endif
-
 using UnityEditor.VisualScripting.GraphViewModel;
 using UnityEditor.VisualScripting.Model;
 using UnityEditor.VisualScripting.Model.Stencils;
-using UnityEditor.VisualScripting.Model.Translators;
 using UnityEditorInternal;
 using UnityEngine;
 
@@ -31,14 +26,7 @@ namespace UnityEditor.VisualScripting.Editor
 
 
             var graphStencil = graph.Stencil;
-
-#if PROPERTIES
-            var stencilVisitor = new StencilImguiVisitor(graphStencil.PropertiesVisibleInGraphInspector());
-            var changeTracker = new ChangeTracker();
-            PropertyContainer.Visit(ref graphStencil, stencilVisitor, ref changeTracker);
-            if (changeTracker.IsChanged())
-                graphStencil.RecompilationRequested = true;
-#endif
+            graphStencil.OnInspectorGUI();
 
             EditorGUI.indentLevel--;
 

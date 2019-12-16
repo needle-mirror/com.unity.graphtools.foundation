@@ -20,13 +20,12 @@ namespace UnityEditor.VisualScripting.Model
             public TypeHandle Type;
         }
 
-        public override string Title => m_Graph?.AssetModel?.Name ?? $"<{base.Title}>";
+        public override string Title => m_GraphAsset != null ? m_GraphAsset.Name : $"<{base.Title}>";
 
         public override string IconTypeString => "typeMacro";
 
         [SerializeField]
         GraphAssetModel m_GraphAsset;
-        GraphModel m_Graph;
 
         List<IVariableDeclarationModel> m_DefinedInputVariables = new List<IVariableDeclarationModel>();
         List<IVariableDeclarationModel> m_DefinedOutputVariables = new List<IVariableDeclarationModel>();
@@ -62,7 +61,7 @@ namespace UnityEditor.VisualScripting.Model
         {
             get
             {
-                return m_Graph != null
+                return m_GraphAsset != null
                     ? DefinedInputVariables.Select(v => InputsById[v.VariableName])
                     : m_CachedInputVariables.Select(v => InputsById[v.Name]);
             }
@@ -72,37 +71,26 @@ namespace UnityEditor.VisualScripting.Model
         {
             get
             {
-                return m_Graph != null
+                return m_GraphAsset != null
                     ? DefinedOutputVariables.Select(v => OutputsById[v.VariableName])
                     : m_CachedOutputVariables.Select(v => OutputsById[v.Name]);
             }
         }
 
-        public GraphModel Macro
+        public GraphAssetModel GraphAssetModel
         {
-            get
-            {
-                if (m_Graph == null && m_GraphAsset?.GraphModel != null)
-                    m_Graph = m_GraphAsset?.GraphModel as GraphModel;
-                return m_Graph;
-            }
-            set
-            {
-                m_Graph = value;
-                m_GraphAsset = m_Graph?.AssetModel as GraphAssetModel;
-            }
+            get => m_GraphAsset;
+            set => m_GraphAsset = value;
         }
 
         [CanBeNull]
-        public Object ReferencedObject => (m_Graph != null && m_Graph.AssetModel != null)
-        ? (Object)m_Graph.AssetModel
-        : null;
+        public Object ReferencedObject => m_GraphAsset != null ? m_GraphAsset : null;
 
         public string TitlePropertyName => "m_Name";
 
         protected override void OnDefineNode()
         {
-            if (m_Graph == null)
+            if (m_GraphAsset == null)
             {
                 foreach (var cachedVariableInfos in m_CachedInputVariables)
                     AddDataInput(cachedVariableInfos.Name, cachedVariableInfos.Type);
@@ -125,7 +113,7 @@ namespace UnityEditor.VisualScripting.Model
             m_CachedInputVariables.Clear();
             m_CachedOutputVariables.Clear();
 
-            foreach (var declaration in m_Graph.VariableDeclarations)
+            foreach (var declaration in ((GraphModel)m_GraphAsset.GraphModel).VariableDeclarations)
             {
                 switch (declaration.Modifiers)
                 {
@@ -155,8 +143,8 @@ namespace UnityEditor.VisualScripting.Model
             unchecked
             {
                 int hashCode = base.GetHashCode();
-                if (m_Graph != null)
-                    hashCode = (hashCode * 777) ^ (m_Graph.GetHashCode());
+                if (m_GraphAsset != null)
+                    hashCode = (hashCode * 777) ^ (m_GraphAsset.GetHashCode());
                 return hashCode;
             }
         }
@@ -164,12 +152,12 @@ namespace UnityEditor.VisualScripting.Model
         public void Rename(string newName)
         {
             //TODO The Undo should be handled by a reducer and not the rename operation itself
-            Undo.RegisterCompleteObjectUndo(Macro.AssetModel as VSGraphAssetModel, "Rename Macro");
-            var assetPath = AssetDatabase.GetAssetPath(Macro.AssetModel as VSGraphAssetModel);
+            Undo.RegisterCompleteObjectUndo(GraphAssetModel.GraphModel.AssetModel as VSGraphAssetModel, "Rename Macro");
+            var assetPath = AssetDatabase.GetAssetPath(GraphAssetModel.GraphModel.AssetModel as VSGraphAssetModel);
             AssetDatabase.RenameAsset(assetPath, ((VSGraphModel)GraphModel).GetUniqueName(newName));
         }
 
-        public override CapabilityFlags Capabilities => m_Graph != null
+        public override CapabilityFlags Capabilities => m_GraphAsset != null
         ? base.Capabilities | CapabilityFlags.Renamable
         : base.Capabilities;
     }

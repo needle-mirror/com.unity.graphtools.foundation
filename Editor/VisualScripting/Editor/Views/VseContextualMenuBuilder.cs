@@ -83,7 +83,7 @@ namespace UnityEditor.VisualScripting.Editor
             if (originatesFromBlackboard && !(m_Evt.target is IHasGraphElementModel))
             {
                 var currentGraphModel = m_Store.GetState().CurrentGraphModel;
-                currentGraphModel.Stencil.GetBlackboardProvider()
+                currentGraphModel?.Stencil.GetBlackboardProvider()
                     .BuildContextualMenu(m_Evt.menu,
                         (VisualElement)m_Evt.target,
                         m_Store,
@@ -131,19 +131,10 @@ namespace UnityEditor.VisualScripting.Editor
 
         void BuildBlackboardContextualMenu()
         {
-            var blackboard = (m_Evt.target as VisualElement)?.GetFirstOfType<Blackboard>();
-            if (blackboard == null)
-                return;
-
-            m_Evt.menu.AppendAction("Blackboard/Auto Fade", menuAction =>
-            {
-                blackboard.ToggleAutoDimOpacity(VisualElementExtensions.StartingOpacity.Max);
-                blackboard.UpdatePersistedProperties();
-            },
-                x => blackboard.IsAutoDimOpacityEnabled()
-                ? DropdownMenuAction.Status.Checked
-                : DropdownMenuAction.Status.Normal);
-            m_Evt.menu.AppendSeparator();
+            // Nothing at the moment.
+//            var blackboard = (m_Evt.target as VisualElement)?.GetFirstOfType<Blackboard>();
+//            if (blackboard == null)
+//                return;
         }
 
         void BuildNodeContextualMenu(Dictionary<IGraphElementModel, IHasGraphElementModel> selectedModels)

@@ -300,16 +300,16 @@ namespace UnityEditor.VisualScripting.Editor
 
             foreach (var error in lastCompilationResult.errors)
             {
-                if (error.sourceNode == null || error.sourceNode.Destroyed)
-                    continue;
+                if (error.sourceNode != null && !error.sourceNode.Destroyed)
+                {
+                    var alignment = error.sourceNode is IStackModel
+                        ? SpriteAlignment.TopCenter
+                        : SpriteAlignment.RightCenter;
 
-                var alignment = error.sourceNode is IStackModel
-                    ? SpriteAlignment.TopCenter
-                    : SpriteAlignment.RightCenter;
-
-                ModelsToNodeMapping.TryGetValue(error.sourceNode, out var graphElement);
-                if (graphElement != null)
-                    AttachErrorBadge(graphElement, error.description, alignment, m_Store, error.quickFix);
+                    ModelsToNodeMapping.TryGetValue(error.sourceNode, out var graphElement);
+                    if (graphElement != null)
+                        AttachErrorBadge(graphElement, error.description, alignment, m_Store, error.quickFix);
+                }
 
                 var graphAsset = (GraphAssetModel)m_Store.GetState().CurrentGraphModel?.AssetModel;
                 var graphAssetPath = graphAsset ? AssetDatabase.GetAssetPath(graphAsset) : "<unknown>";
@@ -333,8 +333,6 @@ namespace UnityEditor.VisualScripting.Editor
 
         internal void Clear()
         {
-//            blackboard.ClearContents();
-
             List<GraphElement> elements = m_GraphView.graphElements.ToList();
 
             m_GraphView.PositionDependenciesManagers.Clear();
@@ -347,6 +345,12 @@ namespace UnityEditor.VisualScripting.Editor
 
             if (m_GraphView.contentViewContainer.Contains(m_IconsParent))
                 m_GraphView.contentViewContainer.Remove(m_IconsParent);
+        }
+
+        internal void ResetBlackboard()
+        {
+            Blackboard.ClearContents();
+            Blackboard.Clear();
         }
 
         internal void AttachValue(IBadgeContainer badgeContainer, VisualElement visualElement, string value, Color portPos, SpriteAlignment alignment)

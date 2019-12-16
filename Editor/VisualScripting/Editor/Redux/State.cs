@@ -30,7 +30,6 @@ namespace UnityEditor.VisualScripting.Editor
         public int currentTracingFrame;
         public int currentTracingStep;
         public int maxTracingStep;
-        public bool requestNodeAlignment;
 
         public enum UIRebuildType                             // for performance debugging purposes
         {
@@ -65,8 +64,7 @@ namespace UnityEditor.VisualScripting.Editor
         {
             clearRegistrations();
             store.RegisterReducers();
-            if (CurrentGraphModel?.Stencil != null)
-                CurrentGraphModel?.Stencil.RegisterReducers(store);
+            CurrentGraphModel?.Stencil?.RegisterReducers(store);
         }
     }
 }

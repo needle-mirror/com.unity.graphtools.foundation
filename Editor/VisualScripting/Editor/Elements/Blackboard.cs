@@ -49,6 +49,8 @@ namespace UnityEditor.VisualScripting.Editor
 
         public const string k_PersistenceKey = "Blackboard";
 
+        Button m_AddButton;
+
         public Blackboard(Store store, VseGraphView graphView, bool windowed)
         {
             Store = store;
@@ -59,6 +61,8 @@ namespace UnityEditor.VisualScripting.Editor
 
             scrollable = true;
             base.title = k_ClassLibraryTitle;
+            subTitle = "";
+
             viewDataKey = string.Empty;
 
             addItemRequested = OnAddItemRequested;
@@ -90,6 +94,11 @@ namespace UnityEditor.VisualScripting.Editor
 
                 RebuildSections();
             };
+
+            var header = this.Query("header").First();
+            m_AddButton = header?.Query<Button>("addButton").First();
+            if (m_AddButton != null)
+                m_AddButton.style.visibility = Visibility.Hidden;
 
             this.windowed = windowed;
             this.graphView = graphView;
@@ -129,13 +138,14 @@ namespace UnityEditor.VisualScripting.Editor
             UnregisterCallback<DragPerformEvent>(OnDragPerform);
 
             UnregisterCallback<KeyDownEvent>(DisplayAppropriateSearcher);
-
-            ClearContents();
         }
 
         void OnDragUpdated(DragUpdatedEvent e)
         {
-            var stencil = Store.GetState().CurrentGraphModel.Stencil;
+            IGraphModel currentGraphModel = Store.GetState().CurrentGraphModel;
+            if (currentGraphModel == null)
+                return;
+            var stencil = currentGraphModel.Stencil;
             var dragNDropHandler = stencil.DragNDropHandler;
             dragNDropHandler?.HandleDragUpdated(e, DragNDropContext.Blackboard);
             e.StopPropagation();
@@ -143,7 +153,10 @@ namespace UnityEditor.VisualScripting.Editor
 
         void OnDragPerform(DragPerformEvent e)
         {
-            var stencil = Store.GetState().CurrentGraphModel.Stencil;
+            IGraphModel currentGraphModel = Store.GetState().CurrentGraphModel;
+            if (currentGraphModel == null)
+                return;
+            var stencil = currentGraphModel.Stencil;
             var dragNDropHandler = stencil.DragNDropHandler;
             dragNDropHandler?.HandleDragPerform(e, Store, DragNDropContext.Blackboard, this);
             e.StopPropagation();
@@ -152,7 +165,7 @@ namespace UnityEditor.VisualScripting.Editor
         void OnSelectionChange()
         {
             IGraphModel currentGraphModel = Store.GetState().CurrentGraphModel;
-            if (!(currentGraphModel.AssetModel as Object))
+            if (currentGraphModel == null || !(currentGraphModel.AssetModel as Object))
                 return;
 
             if (currentGraphModel == GraphView.UIController.LastGraphModel &&
@@ -177,6 +190,24 @@ namespace UnityEditor.VisualScripting.Editor
             }
 
             GraphVariables.Clear();
+
+            IGraphModel currentGraphModel = null;
+            if (!(Store.GetState().AssetModel as ScriptableObject))
+            {
+                title = k_ClassLibraryTitle;
+                subTitle = "";
+            }
+            else
+            {
+                currentGraphModel = Store.GetState().CurrentGraphModel;
+                title = currentGraphModel.FriendlyScriptName;
+                subTitle = currentGraphModel.Stencil.GetBlackboardProvider().GetSubTitle();
+            }
+
+            var blackboardProvider = currentGraphModel?.Stencil.GetBlackboardProvider();
+            if (m_AddButton != null)
+                if (blackboardProvider == null || blackboardProvider.CanAddItems == false)
+                    m_AddButton.style.visibility = Visibility.Hidden;
         }
 
         public void UpdatePersistedProperties()
@@ -296,13 +327,11 @@ namespace UnityEditor.VisualScripting.Editor
             subTitle = currentGraphModel.Stencil.GetBlackboardProvider().GetSubTitle();
 
             var blackboardProvider = currentGraphModel.Stencil.GetBlackboardProvider();
-            if (!blackboardProvider.CanAddItems)
-            {
-                var header = this.Query("header").First();
-                var addButton = header?.Query("addButton").First();
-                if (addButton != null)
-                    addButton.style.visibility = Visibility.Hidden;
-            }
+            if (m_AddButton != null)
+                if (!blackboardProvider.CanAddItems)
+                    m_AddButton.style.visibility = Visibility.Hidden;
+                else
+                    m_AddButton.style.visibility = StyleKeyword.Null;
 
             RebuildSections();
 

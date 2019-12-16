@@ -27,7 +27,7 @@ namespace UnityEditor.VisualScripting.Editor
             optionsButton.tooltip = "Options";
             optionsButton.RemoveManipulator(optionsButton.clickable);
             optionsButton.AddManipulator(new Clickable(OnOptionsButton));
-            RoslynTranslator.logCompileTimeStats = EditorPrefs.GetBool(k_VisualScriptingLogCompileTimeStats, false);
+            RoslynTranslator.LogCompileTimeStats = EditorPrefs.GetBool(k_VisualScriptingLogCompileTimeStats, false);
         }
 
         void OnOptionsButton()
@@ -179,11 +179,11 @@ namespace UnityEditor.VisualScripting.Editor
 
         static bool LogCompileTimeStats
         {
-            get => RoslynTranslator.logCompileTimeStats;
+            get => RoslynTranslator.LogCompileTimeStats;
             set
             {
                 EditorPrefs.SetBool(k_VisualScriptingLogCompileTimeStats, value);
-                RoslynTranslator.logCompileTimeStats = value;
+                RoslynTranslator.LogCompileTimeStats = value;
             }
         }
 

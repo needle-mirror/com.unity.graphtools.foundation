@@ -31,9 +31,6 @@ namespace UnityEditor.VisualScriptingTests.UI
 
             yield return MakeActionTest(new CreateFunctionAction("foo", Vector2.zero));
 
-            var methodInfo = TypeSystem.GetMethod(typeof(Debug), nameof(Debug.Log), true);
-            yield return MakeActionTest(new CreateEventFunctionAction(methodInfo, Vector2.zero));
-
             yield return MakeActionSetup(ctx.FunctionModels, 2, MakeDummyFunction,
                 g => new DeleteElementsAction(ctx.FunctionModels[0], ctx.FunctionModels[1]));
 

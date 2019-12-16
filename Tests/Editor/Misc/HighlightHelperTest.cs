@@ -9,7 +9,6 @@ using UnityEditor.VisualScripting.GraphViewModel;
 using UnityEditor.VisualScripting.Model;
 using UnityEditor.VisualScripting.Model.Stencils;
 using UnityEngine;
-using Object = UnityEngine.Object;
 using Port = UnityEditor.VisualScripting.Editor.Port;
 
 namespace UnityEditor.VisualScriptingTests.Misc
@@ -31,8 +30,8 @@ namespace UnityEditor.VisualScriptingTests.Misc
             m_Window = EditorWindow.GetWindowWithRect<VseWindow>(new Rect(Vector2.zero, new Vector2(800, 600)));
             m_Stencil = new ClassStencil();
 
-            var AssetModel = ScriptableObject.CreateInstance<VSGraphAssetModel>();
-            var graphModel = AssetModel.CreateGraph<VSGraphModel>("test", typeof(ClassStencil), false);
+            var assetModel = ScriptableObject.CreateInstance<VSGraphAssetModel>();
+            var graphModel = assetModel.CreateGraph<VSGraphModel>("test", typeof(ClassStencil), false);
 
             var portModelMock = new Mock<IPortModel>();
             portModelMock.Setup(x => x.GraphModel).Returns(graphModel);
@@ -54,11 +53,11 @@ namespace UnityEditor.VisualScriptingTests.Misc
 
             m_IntTokenModel = Activator.CreateInstance<VariableNodeModel>();
             m_IntTokenModel.DeclarationModel = intVariableModel;
-            m_IntTokenModel.GraphModel = graphModel;
+            m_IntTokenModel.AssetModel = assetModel;
 
             m_StringTokenModel = Activator.CreateInstance<VariableNodeModel>();
             m_StringTokenModel.DeclarationModel = stringVariableModel;
-            m_StringTokenModel.GraphModel = graphModel;
+            m_StringTokenModel.AssetModel = assetModel;
         }
 
         [TearDown]

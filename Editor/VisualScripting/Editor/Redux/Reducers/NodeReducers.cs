@@ -28,8 +28,11 @@ namespace UnityEditor.VisualScripting.Editor
 
         static State CreateNodeFromSearcher(State previousState, CreateNodeFromSearcherAction action)
         {
-            action.SelectedItem.CreateElements.Invoke(
+            var nodes = action.SelectedItem.CreateElements.Invoke(
                 new GraphNodeCreationData(action.GraphModel, action.Position, guids: action.Guids));
+
+            if (nodes.Any(n => n is EdgeModel))
+                previousState.CurrentGraphModel.LastChanges.ModelsToAutoAlign.AddRange(nodes);
 
             previousState.MarkForUpdate(UpdateFlags.GraphTopology);
             return previousState;

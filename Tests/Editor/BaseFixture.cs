@@ -173,7 +173,7 @@ namespace UnityEditor.VisualScriptingTests
             }
             catch (AssertionException e)
             {
-                var inconclusiveException = new InconclusiveException(e.Message, e);
+                var inconclusiveException = new InconclusiveException(e.Message + "Delegate stack trace:\n" + e.StackTrace, e);
                 throw inconclusiveException;
             }
         }
@@ -186,7 +186,7 @@ namespace UnityEditor.VisualScriptingTests
             }
             catch (InconclusiveException e)
             {
-                var inconclusiveException = new AssertionException(e.Message, e);
+                var inconclusiveException = new AssertionException(e.Message + "Delegate stack trace:\n" + e.StackTrace, e);
                 throw inconclusiveException;
             }
         }
@@ -452,6 +452,13 @@ namespace UnityEditor.VisualScriptingTests
             var orig = model;
 
             model = orig == null ? null : GraphModel.EdgeModels.FirstOrDefault(e => e.InputNodeGuid == orig.InputNodeGuid && e.OutputNodeGuid == orig.OutputNodeGuid && e.InputId == orig.InputId && e.OutputId == orig.OutputId);
+        }
+
+        public void RefreshReference(ref IStickyNoteModel model)
+        {
+            var orig = model;
+
+            model = orig == null ? null : GraphModel.StickyNoteModels.FirstOrDefault(m => m.GetId() == orig.GetId());
         }
 
         protected void DebugLogAllEdges()

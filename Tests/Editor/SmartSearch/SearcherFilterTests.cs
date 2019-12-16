@@ -23,6 +23,7 @@ namespace UnityEditor.VisualScriptingTests.SmartSearch
         [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
         internal class FakeObject : BaseFakeObject
         {
+            public const int I = 0;
             public readonly FakeObject Child;
             public int Index = 1;
             public static int Max = 10;
@@ -412,6 +413,29 @@ namespace UnityEditor.VisualScriptingTests.SmartSearch
         {
             var filter = new SearcherFilter(SearcherContext.Graph).WithMethods();
             var data = new MethodSearcherItemData(typeof(FakeObject).GetMethod(name));
+
+            Assert.AreEqual(result, filter.ApplyFilters(data));
+        }
+
+        [TestCase("I", typeof(int), true)]
+        [TestCase("I", typeof(string), false)]
+        [TestCase("Child", typeof(int), false)]
+        [TestCase("", typeof(int), false)]
+        public void TestWithConstantFieldsOfType(string name, Type fieldType, bool result)
+        {
+            var filter = new SearcherFilter(SearcherContext.Graph).WithConstantFields(fieldType);
+            var data = new FieldSearcherItemData(typeof(FakeObject).GetField(name));
+
+            Assert.AreEqual(result, filter.ApplyFilters(data));
+        }
+
+        [TestCase("I", true)]
+        [TestCase("Child", false)]
+        [TestCase("", false)]
+        public void TestWithConstantFields(string name, bool result)
+        {
+            var filter = new SearcherFilter(SearcherContext.Graph).WithConstantFields();
+            var data = new FieldSearcherItemData(typeof(FakeObject).GetField(name));
 
             Assert.AreEqual(result, filter.ApplyFilters(data));
         }

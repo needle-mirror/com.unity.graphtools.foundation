@@ -136,7 +136,7 @@ namespace UnityEditor.VisualScriptingTests.UI
         public IEnumerator MovingAStackMovesStackedNodeConnectedFloatingNode([Values] TestingMode mode)
         {
             var stackModel0 = GraphModel.CreateStack(string.Empty, new Vector2(-100, -100));
-            UnaryOperatorNodeModel unary = stackModel0.CreateStackedNode<UnaryOperatorNodeModel>("postDecr", setup: n => n.kind = UnaryOperatorKind.PostDecrement);
+            UnaryOperatorNodeModel unary = stackModel0.CreateStackedNode<UnaryOperatorNodeModel>("postDecr", setup: n => n.Kind = UnaryOperatorKind.PostDecrement);
             BinaryOperatorNodeModel operatorModel = GraphModel.CreateBinaryOperatorNode(BinaryOperatorKind.Add, new Vector2(-100, -100));
             IConstantNodeModel intModel = GraphModel.CreateConstantNode("int", typeof(int).GenerateTypeHandle(GraphModel.Stencil), new Vector2(-150, -100));
             GraphModel.CreateEdge(unary.InputPort, operatorModel.OutputPort);
@@ -193,6 +193,8 @@ namespace UnityEditor.VisualScriptingTests.UI
             INodeModel[] expectedMovedDependencies,
             INodeModel[] expectedUnmovedDependencies = null)
         {
+            const float epsilon = 0.000001f;
+
             Vector2 startMousePos = new Vector2(42, 13);
             List<Vector2> initPositions = expectedMovedDependencies.Select(x => x.Position).ToList();
             List<Vector2> initUnmovedPositions = expectedUnmovedDependencies != null ? expectedUnmovedDependencies.Select(x => x.Position).ToList() : new List<Vector2>();
@@ -205,8 +207,10 @@ namespace UnityEditor.VisualScriptingTests.UI
                         INodeModel model = GraphModel.NodesByGuid[expectedMovedDependencies[i].Guid];
                         GraphElement element = GraphView.UIController.ModelsToNodeMapping[model];
 
-                        Assert.That(model.Position, Is.EqualTo(initPositions[i]));
-                        Assert.That(element.GetPosition().position, Is.EqualTo(initPositions[i]));
+                        Assert.That(model.Position.x, Is.EqualTo(initPositions[i].x).Within(epsilon));
+                        Assert.That(model.Position.y, Is.EqualTo(initPositions[i].y).Within(epsilon));
+                        Assert.That(element.GetPosition().position.x, Is.EqualTo(initPositions[i].x).Within(epsilon));
+                        Assert.That(element.GetPosition().position.y, Is.EqualTo(initPositions[i].y).Within(epsilon));
                     }
                 },
                 frame =>
@@ -221,8 +225,10 @@ namespace UnityEditor.VisualScriptingTests.UI
                             {
                                 INodeModel model = expectedMovedDependencies[i];
                                 GraphElement element = GraphView.UIController.ModelsToNodeMapping[model];
-                                Assert.That(model.Position, Is.EqualTo(initPositions[i]));
-                                Assert.That(element.GetPosition().position, Is.EqualTo(initPositions[i]));
+                                Assert.That(model.Position.x, Is.EqualTo(initPositions[i].x).Within(epsilon));
+                                Assert.That(model.Position.y, Is.EqualTo(initPositions[i].y).Within(epsilon));
+                                Assert.That(element.GetPosition().position.x, Is.EqualTo(initPositions[i].x).Within(epsilon));
+                                Assert.That(element.GetPosition().position.y, Is.EqualTo(initPositions[i].y).Within(epsilon));
                             }
                             return TestPhase.WaitForNextFrame;
                         default:
@@ -236,8 +242,10 @@ namespace UnityEditor.VisualScriptingTests.UI
                     {
                         INodeModel model = GraphModel.NodesByGuid[expectedMovedDependencies[i].Guid];
                         GraphElement element = GraphView.UIController.ModelsToNodeMapping[model];
-                        Assert.That(model.Position, Is.EqualTo(initPositions[i] + mouseDelta), () => $"Model {model} was expected to have moved");
-                        Assert.That(element.GetPosition().position, Is.EqualTo(initPositions[i] + mouseDelta));
+                        Assert.That(model.Position.x, Is.EqualTo(initPositions[i].x + mouseDelta.x).Within(epsilon), () => $"Model {model} was expected to have moved");
+                        Assert.That(model.Position.y, Is.EqualTo(initPositions[i].y + mouseDelta.y).Within(epsilon), () => $"Model {model} was expected to have moved");
+                        Assert.That(element.GetPosition().position.x, Is.EqualTo(initPositions[i].x + mouseDelta.x).Within(epsilon));
+                        Assert.That(element.GetPosition().position.y, Is.EqualTo(initPositions[i].y + mouseDelta.y).Within(epsilon));
                     }
 
                     if (expectedUnmovedDependencies != null)
@@ -246,8 +254,10 @@ namespace UnityEditor.VisualScriptingTests.UI
                         {
                             INodeModel model = GraphModel.NodesByGuid[expectedUnmovedDependencies[i].Guid];
                             GraphElement element = GraphView.UIController.ModelsToNodeMapping[model];
-                            Assert.That(model.Position, Is.EqualTo(initUnmovedPositions[i]));
-                            Assert.That(element.GetPosition().position, Is.EqualTo(initUnmovedPositions[i]));
+                            Assert.That(model.Position.x, Is.EqualTo(initUnmovedPositions[i].x).Within(epsilon));
+                            Assert.That(model.Position.y, Is.EqualTo(initUnmovedPositions[i].y).Within(epsilon));
+                            Assert.That(element.GetPosition().position.x, Is.EqualTo(initUnmovedPositions[i].x).Within(epsilon));
+                            Assert.That(element.GetPosition().position.y, Is.EqualTo(initUnmovedPositions[i].y).Within(epsilon));
                         }
                     }
                 }

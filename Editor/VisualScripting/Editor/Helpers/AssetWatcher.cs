@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using UnityEditor.EditorCommon.Utility;
+using UnityEditor.VisualScripting.GraphViewModel;
 using UnityEditor.VisualScripting.Model;
 using UnityEngine;
 
@@ -31,9 +31,25 @@ namespace UnityEditor.VisualScripting.Editor
 
         public static bool disabled;
         static AssetWatcher s_Instance;
-        static AssetWatcher Instance => s_Instance;
+        public static AssetWatcher Instance => s_Instance;
 
         Dictionary<string, string> m_ProjectAssetPaths;
+
+        public void WatchGraphAssetAtPath(string path, GraphAssetModel graphAssetModel)
+        {
+            if (graphAssetModel != null)
+            {
+                if (Instance.m_ProjectAssetPaths.ContainsKey(path))
+                    Instance.m_ProjectAssetPaths[path] = (graphAssetModel.GraphModel as VSGraphModel)?.SourceFilePath;
+                else
+                    Instance.m_ProjectAssetPaths.Add(path, (graphAssetModel.GraphModel as VSGraphModel)?.SourceFilePath);
+            }
+        }
+
+        public void UnwatchGraphAssetAtPath(string path)
+        {
+            Instance.m_ProjectAssetPaths.Remove(path);
+        }
 
         static AssetWatcher()
         {
@@ -43,12 +59,9 @@ namespace UnityEditor.VisualScripting.Editor
             var graphAssetGUIDs = AssetDatabase.FindAssets("t:" + typeof(VSGraphAssetModel).Name);
             foreach (var guid in graphAssetGUIDs)
             {
-                var assetPath = AssetDatabase.GUIDToAssetPath(guid);
-                var graphAssetModel = AssetDatabase.LoadMainAssetAtPath(assetPath) as VSGraphAssetModel;
-                if (graphAssetModel)
-                {
-                    Instance.m_ProjectAssetPaths.Add(assetPath, (graphAssetModel.GraphModel as VSGraphModel)?.SourceFilePath);
-                }
+                var path = AssetDatabase.GUIDToAssetPath(guid);
+                var graphAssetModel = AssetDatabase.LoadMainAssetAtPath(path) as GraphAssetModel;
+                s_Instance.WatchGraphAssetAtPath(path, graphAssetModel);
             }
             // TODO: be smarter
             AssetDatabase.importPackageCompleted += name =>
@@ -101,7 +114,7 @@ namespace UnityEditor.VisualScripting.Editor
                         if (!string.IsNullOrEmpty(newGraphName) && newGraphName != oldGraphName)
                         {
                             AssetDatabase.DeleteAsset(path);
-                            var newAssetModel = AssetDatabase.LoadAssetAtPath<VSGraphAssetModel>(newAsset);
+                            var newAssetModel = AssetDatabase.LoadAssetAtPath<GraphAssetModel>(newAsset);
                             newAssetModel.name = newGraphName;
                             ((VSGraphModel)newAssetModel.GraphModel).name = newGraphName;
                             foreach (var vseWindow in vseWindows.Where(w => w.CurrentGraphModel == newAssetModel.GraphModel))
@@ -111,10 +124,10 @@ namespace UnityEditor.VisualScripting.Editor
                 }
             }
 
-            var importedGraphAssets = importedAssets.Where(AssetAtPathIsVsGraphAsset).ToList();
+            var importedGraphAssets = importedAssets.Where(AssetAtPathIsGraphAsset).ToList();
             foreach (var importedGraphAsset in importedGraphAssets)
             {
-                var path = (AssetDatabase.LoadAssetAtPath<VSGraphAssetModel>(importedGraphAsset)?.GraphModel as VSGraphModel)?.SourceFilePath;
+                var path = (AssetDatabase.LoadAssetAtPath<GraphAssetModel>(importedGraphAsset)?.GraphModel as VSGraphModel)?.SourceFilePath;
                 if (path != null)
                     Instance.m_ProjectAssetPaths[importedGraphAsset] = path;
                 else
@@ -124,12 +137,12 @@ namespace UnityEditor.VisualScripting.Editor
                 Version++;
         }
 
-        public static bool AssetAtPathIsVsGraphAsset(string path)
+        public static bool AssetAtPathIsGraphAsset(string path)
         {
             if (Path.GetExtension(path) != ".asset")
                 return false;
 
-            return AssetDatabase.GetMainAssetTypeAtPath(path) == typeof(VSGraphAssetModel);
+            return typeof(GraphAssetModel).IsAssignableFrom(AssetDatabase.GetMainAssetTypeAtPath(path));
         }
     }
 
@@ -145,7 +158,7 @@ namespace UnityEditor.VisualScripting.Editor
                 // Build All VS, before returning.
                 EditorReducers.BuildAll(null);
             }
-            if (paths.Any(AssetWatcher.AssetAtPathIsVsGraphAsset))
+            if (paths.Any(AssetWatcher.AssetAtPathIsGraphAsset))
                 Version++;
 
             return paths;
@@ -153,14 +166,14 @@ namespace UnityEditor.VisualScripting.Editor
 
         static AssetDeleteResult OnWillDeleteAsset(string assetPath, RemoveAssetOptions options)
         {
-            if (AssetWatcher.AssetAtPathIsVsGraphAsset(assetPath))
+            if (AssetWatcher.AssetAtPathIsGraphAsset(assetPath))
                 Version++;
             return AssetDeleteResult.DidNotDelete;
         }
 
         static AssetMoveResult OnWillMoveAsset(string sourcePath, string destinationPath)
         {
-            if (AssetWatcher.AssetAtPathIsVsGraphAsset(sourcePath))
+            if (AssetWatcher.AssetAtPathIsGraphAsset(sourcePath))
                 Version++;
             return AssetMoveResult.DidNotMove;
         }

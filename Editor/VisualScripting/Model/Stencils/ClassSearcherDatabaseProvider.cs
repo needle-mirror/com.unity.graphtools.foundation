@@ -2,13 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using UnityEditor;
 using UnityEditor.Searcher;
 using UnityEditor.VisualScripting.Editor;
 using UnityEditor.VisualScripting.Editor.SmartSearch;
 using UnityEditor.VisualScripting.GraphViewModel;
-using UnityEditor.VisualScripting.Model;
-using UnityEditor.VisualScripting.Model.Stencils;
 using UnityEngine;
 using UnityEngine.VisualScripting;
 
@@ -41,7 +38,6 @@ namespace UnityEditor.VisualScripting.Model.Stencils
         List<SearcherDatabase> m_ReferenceItemsSearcherDatabases;
         SearcherDatabase m_StaticTypesSearcherDatabase;
         List<ITypeMetadata> m_PrimitiveTypes;
-        IEnumerable<Type> m_CustomTypes;
         int m_AssetVersion = AssetWatcher.Version;
         int m_AssetModificationVersion = AssetModificationWatcher.Version;
 
@@ -66,17 +62,19 @@ namespace UnityEditor.VisualScripting.Model.Stencils
                     .AddStickyNote()
                     .AddEmptyFunction()
                     .AddStack()
-                    .AddConstants(k_ConstantTypes)
+                    .AddConstants(k_ConstantTypes.Concat(GetCustomConstantVariables()))
                     .AddInlineExpression()
                     .AddUnaryOperators()
                     .AddBinaryOperators()
                     .AddControlFlows()
-                    .AddMembers(GetCustomTypes(), MemberFlags.Method, BindingFlags.Static | BindingFlags.Public)
                     .AddMembers(
-                        k_PredefinedSearcherTypes,
+                        k_PredefinedSearcherTypes.Concat(GetCustomTypeMembers()),
                         MemberFlags.Constructor | MemberFlags.Field | MemberFlags.Method | MemberFlags.Property | MemberFlags.Extension,
                         BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public
                     )
+                    .AddFields(GetCustomFields())
+                    .AddProperties(GetCustomProperties())
+                    .AddMethods(GetCustomMethods())
                     .AddMacros()
                     .Build()
             });
@@ -159,11 +157,57 @@ namespace UnityEditor.VisualScripting.Model.Stencils
 
         public virtual void ClearGraphVariablesSearcherDatabases() {}
 
-        IEnumerable<Type> GetCustomTypes()
+        protected IEnumerable<Type> GetCustomTypeMembers()
         {
-            return m_CustomTypes ?? (m_CustomTypes = TypeCache.GetTypesWithAttribute<NodeAttribute>()
-                    .Where(t => !t.IsInterface)
-                    .ToList());
+            return TypeCache.GetTypesWithAttribute<NodeAttribute>()
+                .Where(t =>
+                {
+                    if (t.IsInterface)
+                        return false;
+
+                    var attributes = t.GetCustomAttributes<NodeAttribute>();
+                    return attributes.Any(attribute => attribute.StencilReferenceType == null
+                        || attribute.StencilReferenceType.IsInstanceOfType(m_Stencil.RuntimeReference));
+                })
+                .Concat(TypeCache.GetMethodsWithAttribute<TypeMembersNodeAttribute>()
+                    .Where(FilterMethodsByStencil<TypeMembersNodeAttribute>)
+                    .SelectMany(m => (IEnumerable<Type>)m.Invoke(null, new object[] {}))
+                    .Where(t => !t.IsInterface));
+        }
+
+        protected IEnumerable<MethodInfo> GetCustomMethods()
+        {
+            return TypeCache.GetMethodsWithAttribute<MethodNodeAttribute>()
+                .Where(FilterMethodsByStencil<MethodNodeAttribute>)
+                .SelectMany(m => (IEnumerable<MethodInfo>)m.Invoke(null, new object[] {}));
+        }
+
+        protected IEnumerable<PropertyInfo> GetCustomProperties()
+        {
+            return TypeCache.GetMethodsWithAttribute<PropertyNodeAttribute>()
+                .Where(FilterMethodsByStencil<PropertyNodeAttribute>)
+                .SelectMany(m => (IEnumerable<PropertyInfo>)m.Invoke(null, new object[] {}));
+        }
+
+        protected IEnumerable<FieldInfo> GetCustomFields()
+        {
+            return TypeCache.GetMethodsWithAttribute<FieldNodeAttribute>()
+                .Where(FilterMethodsByStencil<FieldNodeAttribute>)
+                .SelectMany(m => (IEnumerable<FieldInfo>)m.Invoke(null, new object[] {}));
+        }
+
+        protected IEnumerable<Type> GetCustomConstantVariables()
+        {
+            return TypeCache.GetMethodsWithAttribute<ConstantVariableNodeAttribute>()
+                .Where(FilterMethodsByStencil<ConstantVariableNodeAttribute>)
+                .SelectMany(m => (IEnumerable<Type>)m.Invoke(null, new object[] {}));
+        }
+
+        bool FilterMethodsByStencil<T>(MemberInfo methodInfo) where T : AbstractNodeAttribute
+        {
+            var attributes = methodInfo.GetCustomAttributes<T>();
+            return attributes.Any(attribute => attribute.StencilReferenceType == null
+                || attribute.StencilReferenceType.IsInstanceOfType(m_Stencil.RuntimeReference));
         }
     }
 }

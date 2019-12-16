@@ -11,7 +11,6 @@ using UnityEditor.VisualScripting.Model;
 using UnityEditor.VisualScripting.Model.Stencils;
 using UnityEngine;
 using UnityEngine.VisualScripting;
-using Object = UnityEngine.Object;
 
 namespace UnityEditor.VisualScripting.Editor.SmartSearch
 {
@@ -55,7 +54,6 @@ namespace UnityEditor.VisualScripting.Editor.SmartSearch
         const string k_Macros = "Macros";
         const string k_Macro = "Macro";
 
-        static readonly Vector2 k_StackOffset = new Vector2(320, 120);
         static readonly Vector2 k_ThenStackOffset = new Vector2(-220, 300);
         static readonly Vector2 k_ElseStackOffset = new Vector2(170, 300);
         static readonly Vector2 k_ClosedFlowStackOffset = new Vector2(-25, 450);
@@ -132,10 +130,8 @@ namespace UnityEditor.VisualScripting.Editor.SmartSearch
 
             TypeHandle voidTypeHandle = typeof(void).GenerateTypeHandle(Stencil);
 
-            foreach (Tuple<IGraphModel, FunctionModel> method in methods)
+            foreach (var(graphModel, functionModel) in methods)
             {
-                IGraphModel graphModel = method.Item1;
-                FunctionModel functionModel = method.Item2;
                 string graphName = graphModel.AssetModel.Name;
                 SearcherItem graphRoot = SearcherItemUtility.GetItemFromPath(Items, $"{k_Graphs}/{graphName}");
 
@@ -364,12 +360,11 @@ namespace UnityEditor.VisualScripting.Editor.SmartSearch
                         var stackModel = (StackBaseModel)data.StackModel;
                         var elements = new List<IGraphElementModel>();
                         var graphModel = (VSGraphModel)stackModel.GraphModel;
-                        var stackPosition = stackModel.Position + k_StackOffset;
                         int guidIndex = 0;
 
                         var loopStack = graphModel.CreateLoopStack(
                             loopType,
-                            stackPosition,
+                            stackModel.Position,
                             data.SpawnFlags,
                             data.GuidAt(guidIndex++));
 
@@ -447,7 +442,7 @@ namespace UnityEditor.VisualScripting.Editor.SmartSearch
                     var completeStackPosition = new Vector2(stackModel.Position.x + k_ClosedFlowStackOffset.x,
                         stackModel.Position.y + k_ClosedFlowStackOffset.y);
 
-                    var completeFlowStack = graphModel.CreateStack("", completeStackPosition, data.SpawnFlags, data.GuidAt(guidIndex++));
+                    var completeFlowStack = graphModel.CreateStack("", completeStackPosition, data.SpawnFlags, data.GuidAt(guidIndex));
                     elements.Add(completeFlowStack);
 
                     // Connect to Then and Else stacks
@@ -500,30 +495,29 @@ namespace UnityEditor.VisualScripting.Editor.SmartSearch
         public GraphElementSearcherDatabase AddMembers(
             IEnumerable<Type> types,
             MemberFlags memberFlags,
-            BindingFlags bindingFlags,
-            Dictionary<string, List<Type>> blackList = null
+            BindingFlags bindingFlags
         )
         {
             foreach (Type type in types)
             {
                 if (memberFlags.HasFlag(MemberFlags.Constructor))
                 {
-                    AddConstructors(type, bindingFlags);
+                    AddConstructors(type.GetConstructors(bindingFlags));
                 }
 
                 if (memberFlags.HasFlag(MemberFlags.Field))
                 {
-                    AddFields(type, bindingFlags);
+                    AddFields(type.GetFields(bindingFlags));
                 }
 
                 if (memberFlags.HasFlag(MemberFlags.Property))
                 {
-                    AddProperties(type, bindingFlags);
+                    AddProperties(type.GetProperties(bindingFlags));
                 }
 
                 if (memberFlags.HasFlag(MemberFlags.Method))
                 {
-                    AddMethods(type, bindingFlags, blackList);
+                    AddMethods(type.GetMethods(bindingFlags));
                 }
 
                 if (memberFlags.HasFlag(MemberFlags.Extension))
@@ -576,21 +570,15 @@ namespace UnityEditor.VisualScripting.Editor.SmartSearch
             return this;
         }
 
-        public GraphElementSearcherDatabase AddConstructors(Type type, BindingFlags bindingFlags)
+        public GraphElementSearcherDatabase AddConstructors(IEnumerable<ConstructorInfo> constructors)
         {
-            SearcherItem parent = null;
-
-            foreach (ConstructorInfo constructorInfo in type.GetConstructors(bindingFlags))
+            foreach (var constructor in constructors)
             {
-                if (parent == null)
-                {
-                    parent = SearcherItemUtility.GetItemFromPath(Items, type.FriendlyName(false));
-                }
-
-                MethodDetails details = constructorInfo.GetMethodDetails();
+                var parent = SearcherItemUtility.GetItemFromPath(Items, constructor.ReflectedType.FriendlyName(false));
+                MethodDetails details = constructor.GetMethodDetails();
                 parent.AddChild(new GraphNodeModelSearcherItem(
-                    new ConstructorSearcherItemData(constructorInfo),
-                    data => data.CreateFunctionCallNode(constructorInfo),
+                    new ConstructorSearcherItemData(constructor),
+                    data => data.CreateFunctionCallNode(constructor),
                     details.MethodName,
                     details.Details
                 ));
@@ -602,15 +590,16 @@ namespace UnityEditor.VisualScripting.Editor.SmartSearch
         public GraphElementSearcherDatabase AddMethods(IEnumerable<MethodInfo> methods)
         {
             SearcherItem parent = null;
-
             foreach (var method in methods.Where(m => !m.IsSpecialName
                 && !m.Name.StartsWith("get_", StringComparison.Ordinal)
                 && !m.Name.StartsWith("set_", StringComparison.Ordinal)
-                && !m.GetParameters().Any(p => p.ParameterType.IsByRef || p.IsOut || p.ParameterType.IsPointer)))
+                && !m.GetParameters().Any(p => p.ParameterType.IsByRef || p.IsOut || p.ParameterType.IsPointer)
+                && m.GetCustomAttribute<ObsoleteAttribute>() == null
+                && m.GetCustomAttribute<HiddenAttribute>() == null))
             {
                 if (parent == null)
                 {
-                    parent = SearcherItemUtility.GetItemFromPath(Items, method.DeclaringType.FriendlyName(false));
+                    parent = SearcherItemUtility.GetItemFromPath(Items, method.ReflectedType.FriendlyName(false));
                 }
 
                 MethodDetails details = method.GetMethodDetails();
@@ -640,151 +629,125 @@ namespace UnityEditor.VisualScripting.Editor.SmartSearch
             return this;
         }
 
-        public GraphElementSearcherDatabase AddMethods(
-            Type type,
-            BindingFlags bindingFlags,
-            Dictionary<string, List<Type>> blackList = null
-        )
+        public GraphElementSearcherDatabase AddProperties(IEnumerable<PropertyInfo> properties)
         {
-            var methods = type.GetMethods(bindingFlags)
-                .Where(m => m.GetCustomAttribute<ObsoleteAttribute>() == null
-                    && m.GetCustomAttribute<HiddenAttribute>() == null
-                    && !SearcherItemCollectionUtility.IsMethodBlackListed(m, blackList))
-                .OrderBy(m => m.Name);
-            AddMethods(methods);
-
-            return this;
-        }
-
-        public GraphElementSearcherDatabase AddProperties(Type type, BindingFlags bindingFlags)
-        {
-            SearcherItem parent = null;
-
-            foreach (PropertyInfo propertyInfo in type.GetProperties(bindingFlags)
-                     .OrderBy(p => p.Name)
+            foreach (var property in properties
                      .Where(p => p.GetCustomAttribute<ObsoleteAttribute>() == null
-                         && p.GetCustomAttribute<HiddenAttribute>() == null))
+                         && p.GetCustomAttribute<HiddenAttribute>() == null)
+                     .OrderBy(p => p.Name))
             {
-                var children = new List<SearcherItem>();
+                var parent = SearcherItemUtility.GetItemFromPath(Items, property.ReflectedType.FriendlyName(false));
 
-                if (propertyInfo.GetIndexParameters().Length > 0) // i.e : Vector2.this[int]
+                if (property.GetIndexParameters().Length > 0) // i.e : Vector2.this[int]
                 {
-                    children.Add(new GraphNodeModelSearcherItem(
-                        new PropertySearcherItemData(propertyInfo),
-                        data => data.CreateFunctionCallNode(propertyInfo.GetMethod),
-                        propertyInfo.Name
+                    parent.AddChild(new GraphNodeModelSearcherItem(
+                        new PropertySearcherItemData(property),
+                        data => data.CreateFunctionCallNode(property.GetMethod),
+                        property.Name
                     ));
                 }
                 else
                 {
-                    if (propertyInfo.CanRead)
+                    if (property.CanRead)
                     {
-                        if (propertyInfo.GetMethod.IsStatic)
+                        if (property.GetMethod.IsStatic)
                         {
-                            if (propertyInfo.CanWrite)
+                            if (property.CanWrite)
                             {
-                                children.Add(new GraphNodeModelSearcherItem(
-                                    new PropertySearcherItemData(propertyInfo),
-                                    data => data.CreateFunctionCallNode(propertyInfo.GetMethod),
-                                    propertyInfo.Name
+                                parent.AddChild(new GraphNodeModelSearcherItem(
+                                    new PropertySearcherItemData(property),
+                                    data => data.CreateFunctionCallNode(property.GetMethod),
+                                    property.Name
                                 ));
                             }
                             else
                             {
-                                children.Add(new GraphNodeModelSearcherItem(
-                                    new PropertySearcherItemData(propertyInfo),
-                                    data => data.CreateSystemConstantNode(type, propertyInfo),
-                                    propertyInfo.Name
+                                parent.AddChild(new GraphNodeModelSearcherItem(
+                                    new PropertySearcherItemData(property),
+                                    data => data.CreateSystemConstantNode(
+                                        property.ReflectedType,
+                                        property.PropertyType,
+                                        property.Name),
+                                    property.Name
                                 ));
                             }
                         }
                         else
                         {
-                            children.Add(new GraphNodeModelSearcherItem(
-                                new PropertySearcherItemData(propertyInfo),
+                            parent.AddChild(new GraphNodeModelSearcherItem(
+                                new PropertySearcherItemData(property),
                                 data =>
                                 {
                                     var getPropertyGroupModel = data.CreateGetPropertyGroupNode();
                                     Undo.RegisterCompleteObjectUndo(getPropertyGroupModel.SerializableAsset, "Add Member");
-                                    getPropertyGroupModel.AddMember(propertyInfo.GetUnderlyingType(), propertyInfo.Name);
+                                    getPropertyGroupModel.AddMember(property.GetUnderlyingType(), property.Name);
                                     EditorUtility.SetDirty(getPropertyGroupModel.SerializableAsset);
 
                                     return getPropertyGroupModel;
                                 },
-                                propertyInfo.Name
+                                property.Name
                             ));
                         }
                     }
 
-                    if (propertyInfo.CanWrite)
+                    if (property.CanWrite)
                     {
-                        children.Add(new StackNodeModelSearcherItem(
-                            new PropertySearcherItemData(propertyInfo),
-                            data => data.CreateFunctionCallNode(propertyInfo.SetMethod),
-                            propertyInfo.Name
+                        parent.AddChild(new StackNodeModelSearcherItem(
+                            new PropertySearcherItemData(property),
+                            data => data.CreateFunctionCallNode(property.SetMethod),
+                            property.Name
                         ));
                     }
-                }
-
-                if (children.Count == 0)
-                {
-                    continue;
-                }
-
-                if (parent == null)
-                {
-                    parent = SearcherItemUtility.GetItemFromPath(Items, type.FriendlyName(false));
-                }
-
-                foreach (SearcherItem child in children)
-                {
-                    parent.AddChild(child);
                 }
             }
 
             return this;
         }
 
-        public GraphElementSearcherDatabase AddFields(Type type, BindingFlags bindingFlags)
+        public GraphElementSearcherDatabase AddFields(IEnumerable<FieldInfo> fields)
         {
-            SearcherItem parent = null;
-
-            foreach (FieldInfo fieldInfo in type.GetFields(bindingFlags)
-                     .OrderBy(f => f.Name)
+            foreach (FieldInfo field in fields
                      .Where(f => f.GetCustomAttribute<ObsoleteAttribute>() == null
-                         && f.GetCustomAttribute<HiddenAttribute>() == null))
+                         && f.GetCustomAttribute<HiddenAttribute>() == null)
+                     .OrderBy(f => f.Name))
             {
-                if (parent == null)
-                {
-                    parent = SearcherItemUtility.GetItemFromPath(Items, type.FriendlyName(false));
-                }
+                var parent = SearcherItemUtility.GetItemFromPath(Items, field.ReflectedType.FriendlyName(false));
 
+                if (field.IsLiteral && !field.IsInitOnly)
+                {
+                    parent.AddChild(new GraphNodeModelSearcherItem(
+                        new FieldSearcherItemData(field),
+                        data => data.CreateSystemConstantNode(field.DeclaringType, field.FieldType, field.Name),
+                        field.Name
+                    ));
+                    continue;
+                }
                 parent.AddChild(new GraphNodeModelSearcherItem(
-                    new FieldSearcherItemData(fieldInfo),
+                    new FieldSearcherItemData(field),
                     data =>
                     {
                         var getPropertyGroupModel = data.CreateGetPropertyGroupNode();
                         Undo.RegisterCompleteObjectUndo(getPropertyGroupModel.SerializableAsset, "Add Member");
-                        getPropertyGroupModel.AddMember(fieldInfo.GetUnderlyingType(), fieldInfo.Name);
+                        getPropertyGroupModel.AddMember(field.GetUnderlyingType(), field.Name);
                         EditorUtility.SetDirty(getPropertyGroupModel.SerializableAsset);
                         return getPropertyGroupModel;
                     },
-                    fieldInfo.Name
+                    field.Name
                 ));
 
-                if (fieldInfo.CanWrite())
+                if (field.CanWrite())
                 {
                     parent.AddChild(new StackNodeModelSearcherItem(
-                        new FieldSearcherItemData(fieldInfo),
+                        new FieldSearcherItemData(field),
                         data =>
                         {
                             SetPropertyGroupNodeModel nodeModel = data.CreateSetPropertyGroupNode();
                             Undo.RegisterCompleteObjectUndo(nodeModel.SerializableAsset, "Add Member");
-                            nodeModel.AddMember(fieldInfo.GetUnderlyingType(), fieldInfo.Name);
+                            nodeModel.AddMember(field.GetUnderlyingType(), field.Name);
                             EditorUtility.SetDirty(nodeModel.SerializableAsset);
                             return nodeModel;
                         },
-                        fieldInfo.Name
+                        field.Name
                     ));
                 }
             }

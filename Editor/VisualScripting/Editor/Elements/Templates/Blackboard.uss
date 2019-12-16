@@ -1,3 +1,14 @@
+.blackboard {
+    background-color: #1F1F1F;
+    font-size: 12px;
+}
+
+.mainContainer > #content > #header {
+    border-radius: 6px;
+    margin: 4px 4px 2px;
+    padding: 0;
+}
+
 .blackboardFieldPropertyView .row {
     flex-direction: row;
     padding: 0 2px 0 10px;

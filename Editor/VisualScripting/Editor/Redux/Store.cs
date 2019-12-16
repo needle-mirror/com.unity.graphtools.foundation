@@ -129,8 +129,6 @@ namespace UnityEditor.VisualScripting.Editor
             State state = GetState();
 
             state.EditorDataModel?.SetUpdateFlag(UpdateFlags.None);
-            state.requestNodeAlignment = false;
-
             state.RegisterReducers(this, ClearRegistrations);
         }
 

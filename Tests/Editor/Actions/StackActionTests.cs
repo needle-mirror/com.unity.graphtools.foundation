@@ -322,7 +322,7 @@ namespace UnityEditor.VisualScriptingTests.Actions
                     Assert.That(newNode, Is.InstanceOf<UnaryOperatorNodeModel>());
 
                     var newUnaryNode = (UnaryOperatorNodeModel)newNode;
-                    Assert.That(newUnaryNode.kind, Is.EqualTo(UnaryOperatorKind.PostIncrement));
+                    Assert.That(newUnaryNode.Kind, Is.EqualTo(UnaryOperatorKind.PostIncrement));
                     Assert.That(variableNode.OutputPort, Is.ConnectedTo(newUnaryNode.InputPort));
                 });
         }
@@ -868,6 +868,59 @@ namespace UnityEditor.VisualScriptingTests.Actions
                     Assert.That(stackedNode, Is.TypeOf<IfConditionNodeModel>());
                     var ifNode = (IfConditionNodeModel)stackedNode;
                     Assert.That(ifNode.ThenPort, Is.ConnectedTo(s3.InputPorts[0]));
+                });
+        }
+
+        [Test]
+        public void Test_AddIfToConnectedStackTransfersConnection2([Values] TestingMode mode)
+        {
+            {
+                var s1 = GraphModel.CreateStack("stack1", Vector2.up);
+                var s2 = GraphModel.CreateStack("stack2", Vector2.zero);
+                GraphModel.CreateEdge(s2.InputPorts[0], s1.OutputPorts[0]);
+
+                var sIf = GraphModel.CreateStack("stackIf", Vector2.down);
+                var sThen = GraphModel.CreateStack("stackThen", Vector2.down);
+                var sElse = GraphModel.CreateStack("stackElse", Vector2.down);
+                sIf.CreateStackedNode<IfConditionNodeModel>();
+                GraphModel.CreateEdge(sThen.InputPorts[0], sIf.OutputPorts[0]);
+                GraphModel.CreateEdge(sElse.InputPorts[0], sIf.OutputPorts[1]);
+            }
+            TestPrereqActionPostreq(mode,
+                () =>
+                {
+                    Assert.That(GetEdgeCount(), Is.EqualTo(3));
+                    Assert.That(GetStackCount(), Is.EqualTo(5));
+                    var s1 = GetStack(0);
+                    var s2 = GetStack(1);
+                    var sIf = GetStack(2);
+                    var sThen = GetStack(3);
+                    var sElse = GetStack(4);
+                    Assert.That(s1.OutputPorts.Single().ConnectionPortModels.Count(), Is.EqualTo(1));
+
+                    var ifNode = sIf.NodeModels.OfType<IfConditionNodeModel>().Single();
+                    Assert.That(s1.OutputPorts[0], Is.ConnectedTo(s2.InputPorts[0]));
+                    Assert.That(sIf.OutputPorts[0], Is.ConnectedTo(sThen.InputPorts[0]));
+                    Assert.That(sIf.OutputPorts[1], Is.ConnectedTo(sElse.InputPorts[0]));
+                    Assert.That(ifNode.ThenPort, Is.ConnectedTo(sThen.InputPorts[0]));
+                    Assert.That(ifNode.ElsePort, Is.ConnectedTo(sElse.InputPorts[0]));
+                    return new MoveStackedNodesAction(new[] {ifNode}, s1, 0);
+                },
+                () =>
+                {
+                    Assert.That(GetEdgeCount(), Is.EqualTo(2));
+                    Assert.That(GetStackCount(), Is.EqualTo(4));
+                    var s1 = GetStack(0);
+                    var s2 = GetStack(1);
+                    var sThen = GetStack(2);
+                    var sElse = GetStack(3);
+                    var stackedNode = s1.NodeModels.OfType<IfConditionNodeModel>().Single();
+                    var ifNode = (IfConditionNodeModel)stackedNode;
+                    Assert.That(s1.OutputPorts[0], Is.Not.ConnectedTo(s2.InputPorts[0]));
+                    Assert.That(s1.OutputPorts[0], Is.ConnectedTo(sThen.InputPorts[0]));
+                    Assert.That(s1.OutputPorts[1], Is.ConnectedTo(sElse.InputPorts[0]));
+                    Assert.That(ifNode.ThenPort, Is.ConnectedTo(sThen.InputPorts[0]));
+                    Assert.That(ifNode.ElsePort, Is.ConnectedTo(sElse.InputPorts[0]));
                 });
         }
 

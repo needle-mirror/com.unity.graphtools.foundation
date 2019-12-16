@@ -651,7 +651,7 @@ namespace UnityEditor.VisualScripting.Editor
             Undo.RegisterCompleteObjectUndo((Object)graph.AssetModel, "Duplicate node");
             var pastedNodeModel = (NodeModel)copiedNode.Clone();
             // Set graphmodel BEFORE define node as it is commonly use during Define
-            pastedNodeModel.GraphModel = graph;
+            pastedNodeModel.AssetModel = graph.AssetModel;
             pastedNodeModel.Title = copiedNode.Title;
             pastedNodeModel.AssignNewGuid();
             pastedNodeModel.OriginalInstanceId = copiedNode.OriginalInstanceId;

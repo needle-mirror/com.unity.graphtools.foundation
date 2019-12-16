@@ -125,28 +125,29 @@ namespace UnityEditor.VisualScripting.GraphViewModel
                 AddStackedNode(nodeModel, actionNewIndex == -1 ? -1 : actionNewIndex + i++);
         }
 
-        public void AddStackedNode(INodeModel nodeModelInterface, int index)
+        public virtual void AddStackedNode(INodeModel nodeModelInterface, int index)
         {
             if (!AcceptNode(nodeModelInterface.GetType()))
                 return;
 
             var nodeModel = (NodeModel)nodeModelInterface;
-
-            nodeModel.GraphModel = GraphModel;
+            nodeModel.AssetModel = AssetModel;
             nodeModel.ParentStackModel = this;
+
             if (index == -1)
                 m_StackedNodeModels.Add(nodeModel);
             else
                 m_StackedNodeModels.Insert(index, nodeModel);
 
+            VSGraphModel vsGraphModel = (VSGraphModel)GraphModel;
+            // We need to register before calling TransferConnections(), as edge models rely on the guid to node mapping to resolve ports
+            vsGraphModel.UnregisterNodeGuid(nodeModel.Guid);
+            vsGraphModel.RegisterNodeGuid(nodeModel);
+
             bool insertedLast = index == -1 || m_StackedNodeModels.Count == 1 || index == m_StackedNodeModels.Count;
             if (insertedLast && ModelDelegatesOutputs(nodeModelInterface))
                 TransferConnections(GraphModel, m_OutputPorts, OutputPorts);
-            VSGraphModel vsGraphModel = (VSGraphModel)GraphModel;
 
-            // theor: why is that needed ?
-            vsGraphModel.UnregisterNodeGuid(nodeModel.Guid);
-            vsGraphModel.RegisterNodeGuid(nodeModel);
 
             vsGraphModel.LastChanges.ChangedElements.Add(nodeModel);
 
@@ -154,7 +155,7 @@ namespace UnityEditor.VisualScripting.GraphViewModel
             nodeModel.DefineNode();
         }
 
-        static void TransferConnections(IGraphModel graphModel, IReadOnlyList<IPortModel> oldOutputPorts, IReadOnlyList<IPortModel> newOutputPorts)
+        protected static void TransferConnections(IGraphModel graphModel, IReadOnlyList<IPortModel> oldOutputPorts, IReadOnlyList<IPortModel> newOutputPorts)
         {
             var edgesToDelete = new List<IEdgeModel>(oldOutputPorts.Count);
             for (var i = 0; i < oldOutputPorts.Count; i++)
@@ -165,7 +166,7 @@ namespace UnityEditor.VisualScripting.GraphViewModel
                 foreach (IEdgeModel edge in connections)
                 {
                     edgesToDelete.Add(edge);
-                    if (newPort != null)
+                    if (newPort != null && !newPort.Connected)
                     {
                         ((GraphModel)graphModel).CreateEdge(edge.InputPortModel, newPort);
                     }
@@ -175,7 +176,7 @@ namespace UnityEditor.VisualScripting.GraphViewModel
             ((GraphModel)graphModel).DeleteEdges(edgesToDelete);
         }
 
-        public void RemoveStackedNode(INodeModel nodeModel, EdgeBehaviourOnRemove edgeBehaviour = EdgeBehaviourOnRemove.Ignore)
+        public virtual void RemoveStackedNode(INodeModel nodeModel, EdgeBehaviourOnRemove edgeBehaviour = EdgeBehaviourOnRemove.Ignore)
         {
             ((NodeModel)nodeModel).ParentStackModel = null;
             int index = m_StackedNodeModels.IndexOf(nodeModel);
@@ -222,16 +223,16 @@ namespace UnityEditor.VisualScripting.GraphViewModel
             m_StackedNodeModels.Clear();
         }
 
-        protected override PortModel AddInputPort(string portName, PortType portType, TypeHandle dataType, string portId = null)
+        protected override PortModel AddInputPort(string portName, PortType portType, TypeHandle dataType, string portId = null, PortModel.PortModelOptions options = PortModel.PortModelOptions.Default)
         {
-            var inputPort = base.AddInputPort(portName, portType, dataType, portId);
+            var inputPort = base.AddInputPort(portName, portType, dataType, portId, options);
             m_InputPorts.Add(inputPort);
             return inputPort;
         }
 
-        protected override PortModel AddOutputPort(string portName, PortType portType, TypeHandle dataType, string portId = null)
+        protected override PortModel AddOutputPort(string portName, PortType portType, TypeHandle dataType, string portId = null, PortModel.PortModelOptions options = PortModel.PortModelOptions.Default)
         {
-            var outputPort = base.AddOutputPort(portName, portType, dataType, portId);
+            var outputPort = base.AddOutputPort(portName, portType, dataType, portId, options);
             m_OutputPorts.Add(outputPort);
             return outputPort;
         }

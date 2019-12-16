@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Moq;
 using NUnit.Framework;
@@ -11,14 +12,59 @@ using UnityEditor.VisualScripting.Model.Stencils;
 using UnityEditor.VisualScripting.Model.Translators;
 using UnityEngine;
 using CompilationOptions = UnityEngine.VisualScripting.CompilationOptions;
+using Debug = UnityEngine.Debug;
 
 // ReSharper disable AccessToStaticMemberViaDerivedType
-
 namespace UnityEditor.VisualScriptingTests.Roslyn
 {
+    class TestObject
+    {
+        public static void DoStuff() {}
+    }
+
     class RoslynBuilderTests : BaseFixture
     {
         protected override bool CreateGraphOnStartup => true;
+
+        [Test]
+        public void Test_Translate_UsingAlias()
+        {
+            var b = new RoslynTranslator(Stencil);
+            b.AddUsingAlias("TestAlias", "UnityEditor.VisualScriptingTests.Roslyn.TestAlias");
+            var c = b.Translate(GraphModel, CompilationOptions.Default);
+            var d = c.GetRoot();
+
+            var ud = d.DescendantNodes().OfType<UsingDirectiveSyntax>().Where(n => n.Alias != null).ToList();
+            Assert.That(ud.Count, Is.EqualTo(5));
+            Assert.That(ud.Count(u => u.Alias.Name.Identifier.Text == "TestAlias"), Is.EqualTo(1));
+        }
+
+        [Test]
+        public void Test_Translate_UsingDirective()
+        {
+            var type = typeof(TestObject);
+            var a = GraphModel.CreateFunction("A", Vector2.zero);
+            var i = typeof(TestObject).GetMethod(nameof(TestObject.DoStuff));
+            a.CreateStackedNode<FunctionCallNodeModel>("Do", 0, SpawnFlags.Default, n => n.MethodInfo = i);
+
+            var b = new RoslynTranslator(Stencil);
+            var c = b.Translate(GraphModel, CompilationOptions.Default);
+            var d = c.GetRoot();
+
+            var ud = d.DescendantNodes().OfType<UsingDirectiveSyntax>();
+            Assert.That(ud.Count(n => n.Name.ToString() == type.Namespace), Is.EqualTo(1));
+        }
+
+        [Test]
+        public void Test_CodeAnalysisCSharpVersionIsSameAsUnity()
+        {
+            var unityCsVersionStr = UnityCompilerTestHelper.GetCompilerVersion();
+            Assert.That(unityCsVersionStr, Is.Not.Null, "something went wrong with unity_csc");
+            var couldParse = LanguageVersionFacts.TryParse(unityCsVersionStr, out var unityCsVersion);
+            Assert.That(couldParse, Is.True, $"unable to parse unity C# version: '{unityCsVersionStr}'");
+            var roslynTranslatorCsVersion = RoslynTranslator.LanguageVersion.MapSpecifiedToEffectiveVersion();
+            Assert.That(roslynTranslatorCsVersion, Is.EqualTo(unityCsVersion));
+        }
 
         [Test]
         public void Test_Translate_Constructor()

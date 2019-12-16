@@ -158,7 +158,7 @@ namespace UnityEditor.VisualScriptingTests.Models
         {
             Type methodDeclaringType = t == ClassType.Plain ? typeof(C) : typeof(D<>);
             FunctionCallNodeModel call = GraphModel.CreateNode<FunctionCallNodeModel>("funcNode", Vector2.zero);
-            call.GraphModel = GraphModel;
+            call.AssetModel = GraphModel.AssetModel;
             call.MethodInfo = methodDeclaringType.GetMethod(methodName);
             Assert.That(call.MethodInfo, Is.Not.Null);
             call.DefineNode();
@@ -205,7 +205,7 @@ namespace UnityEditor.VisualScriptingTests.Models
         {
             Type methodDeclaringType = t == ClassType.Plain ? typeof(C) : typeof(D<>);
             FunctionCallNodeModel call = GraphModel.CreateNode<FunctionCallNodeModel>("funcNode", Vector2.zero);
-            call.GraphModel = GraphModel;
+            call.AssetModel = GraphModel.AssetModel;
             call.MethodInfo = methodDeclaringType.GetMethod(methodName);
             Assert.NotNull(call.MethodInfo);
             var param = call.MethodInfo.GetParameters()[methodParameterIndex];

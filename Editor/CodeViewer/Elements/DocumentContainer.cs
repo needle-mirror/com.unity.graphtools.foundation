@@ -29,6 +29,7 @@ namespace UnityEditor.CodeViewer
 
         static readonly CustomStyleProperty<int> k_ItemHeight = new CustomStyleProperty<int>("--unity-item-height");
         static readonly CustomStyleProperty<float> k_ItemInterPadding = new CustomStyleProperty<float>("--unity-item-inter-padding");
+        static readonly CustomStyleProperty<float> k_DigitWidth = new CustomStyleProperty<float>("--unity-digit-width");
 
         const string k_DocumentListViewName = "documentListView";
 
@@ -119,7 +120,7 @@ namespace UnityEditor.CodeViewer
             if (evt.customStyle.TryGetValue(k_ItemInterPadding, out var newItemInterPadding))
                 m_ItemInterPadding = newItemInterPadding;
 
-            if (evt.customStyle.TryGetValue(k_ItemHeight, out var newDigitWidth))
+            if (evt.customStyle.TryGetValue(k_DigitWidth, out var newDigitWidth))
                 m_DigitWidth = newDigitWidth;
         }
 

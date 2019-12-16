@@ -292,6 +292,24 @@ namespace UnityEditor.VisualScripting.Editor.SmartSearch
             return this;
         }
 
+        public SearcherFilter WithConstantFields(Type fieldType)
+        {
+            this.RegisterField(data => data.FieldInfo != null
+                && data.FieldInfo.IsLiteral
+                && !data.FieldInfo.IsInitOnly
+                && data.FieldInfo.FieldType == fieldType);
+            return this;
+        }
+
+        public SearcherFilter WithConstantFields()
+        {
+            this.RegisterField(data => data.FieldInfo != null
+                && data.FieldInfo.IsLiteral
+                && !data.FieldInfo.IsInitOnly);
+
+            return this;
+        }
+
         public SearcherFilter WithFields(Type declaringType)
         {
             this.RegisterField(data => data.FieldInfo != null

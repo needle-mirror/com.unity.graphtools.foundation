@@ -17,8 +17,7 @@ namespace UnityEditor.VisualScripting.GraphViewModel
         ModelState m_State;
         [SerializeField]
         GraphAssetModel m_AssetModel;
-//        [SerializeField]
-//        protected List<AbstractNodeAsset> m_NodeModels;
+
         [SerializeReference]
         protected List<INodeModel> m_GraphNodeModels;
         [SerializeField]
@@ -125,7 +124,7 @@ namespace UnityEditor.VisualScripting.GraphViewModel
             nodeModel.Title = nodeName ?? nodeTypeToCreate.Name;
             nodeModel.Position = position;
             nodeModel.Guid = guid ?? GUID.Generate();
-            nodeModel.GraphModel = this;
+            nodeModel.AssetModel = AssetModel;
             preDefineSetup?.Invoke(nodeModel);
             nodeModel.DefineNode();
             if (!spawnFlags.IsOrphan())
@@ -155,7 +154,7 @@ namespace UnityEditor.VisualScripting.GraphViewModel
 
         void AddNodeInternal(INodeModel nodeModel)
         {
-            ((NodeModel)nodeModel).GraphModel = this;
+            ((NodeModel)nodeModel).AssetModel = AssetModel;
             m_GraphNodeModels.Add(nodeModel);
             if (m_NodesByGuid == null)
                 m_NodesByGuid = new Dictionary<GUID, INodeModel>();
@@ -337,6 +336,14 @@ namespace UnityEditor.VisualScripting.GraphViewModel
             model.Destroy();
         }
 
+        void DeleteStickyNotes(IEnumerable<IStickyNoteModel> stickyNoteModels)
+        {
+            foreach (var stickyNoteModel in stickyNoteModels)
+            {
+                DeleteStickyNote(stickyNoteModel);
+            }
+        }
+
         protected internal virtual void OnEnable()
         {
             if (m_GraphNodeModels == null)
@@ -345,7 +352,7 @@ namespace UnityEditor.VisualScripting.GraphViewModel
 
             foreach (var model in GetAllNodes())
             {
-                ((NodeModel)model).GraphModel = this;
+                ((NodeModel)model).AssetModel = AssetModel;
                 model.PostGraphLoad();
                 m_NodesByGuid.Add(model.Guid, model);
             }
@@ -536,7 +543,7 @@ namespace UnityEditor.VisualScripting.GraphViewModel
             Action<MacroRefNodeModel> preDefineSetup = n =>
             {
                 MacroRefNodeModel macroNode = n;
-                macroNode.Macro = macroGraphModel;
+                macroNode.GraphAssetModel = macroGraphModel.m_AssetModel;
             };
             MacroRefNodeModel macroRefNodeModel =
                 CreateNode("MyMacro", position, SpawnFlags.Default, preDefineSetup);
@@ -575,6 +582,7 @@ namespace UnityEditor.VisualScripting.GraphViewModel
 
             // delete selected nodes
             DeleteNodes(models, DeleteConnections.True);
+            DeleteStickyNotes(elementModelList.OfType<IStickyNoteModel>());
 
             return macroRefNodeModel;
         }

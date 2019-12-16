@@ -69,19 +69,19 @@ namespace UnityEditor.VisualScripting.Model
         public static UnaryOperatorNodeModel CreateUnaryStatementNode(this IStackModel stackModel,
             UnaryOperatorKind kind, int index, SpawnFlags spawnFlags = SpawnFlags.Default, GUID? guid = null)
         {
-            return stackModel.CreateStackedNode<UnaryOperatorNodeModel>(kind.ToString(), index, spawnFlags, n => n.kind = kind, guid);
+            return stackModel.CreateStackedNode<UnaryOperatorNodeModel>(kind.ToString(), index, spawnFlags, n => n.Kind = kind, guid);
         }
 
         public static UnaryOperatorNodeModel CreateUnaryOperatorNode(this IGraphModel graphModel,
             UnaryOperatorKind kind, Vector2 position, SpawnFlags spawnFlags = SpawnFlags.Default, GUID? guid = null)
         {
-            return graphModel.CreateNode<UnaryOperatorNodeModel>(kind.ToString(), position, spawnFlags, n => n.kind = kind, guid);
+            return graphModel.CreateNode<UnaryOperatorNodeModel>(kind.ToString(), position, spawnFlags, n => n.Kind = kind, guid);
         }
 
         public static BinaryOperatorNodeModel CreateBinaryOperatorNode(this IGraphModel graphModel,
             BinaryOperatorKind kind, Vector2 position, SpawnFlags spawnFlags = SpawnFlags.Default, GUID? guid = null)
         {
-            return graphModel.CreateNode<BinaryOperatorNodeModel>(kind.ToString(), position, spawnFlags, n => n.kind = kind, guid);
+            return graphModel.CreateNode<BinaryOperatorNodeModel>(kind.ToString(), position, spawnFlags, n => n.Kind = kind, guid);
         }
 
         public static IVariableModel CreateVariableNode(this IGraphModel graphModel,
@@ -104,16 +104,6 @@ namespace UnityEditor.VisualScripting.Model
             return (ConstantNodeModel)graphModel.CreateNode(nodeType, constantName, position, spawnFlags, PreDefineSetup, guid);
         }
 
-        public static EventFunctionModel CreateEventFunction(this IGraphModel graphModel, MethodInfo methodInfo,
-            Vector2 position, SpawnFlags spawnFlags = SpawnFlags.Default, GUID? guid = null)
-        {
-            graphModel.Stencil.GetSearcherDatabaseProvider().ClearReferenceItemsSearcherDatabases();
-
-            void Setup(EventFunctionModel e) => e.EventType = methodInfo.DeclaringType.GenerateTypeHandle(graphModel.Stencil);
-
-            return graphModel.CreateNode<EventFunctionModel>(methodInfo.Name, position, spawnFlags, Setup, guid);
-        }
-
         public static SetPropertyGroupNodeModel CreateSetPropertyGroupNode(this IStackModel stackModel, int index, SpawnFlags spawnFlags = SpawnFlags.Default, GUID? guid = null)
         {
             var nodeModel = stackModel.CreateStackedNode<SetPropertyGroupNodeModel>(SetPropertyGroupNodeModel.k_Title, index, spawnFlags, guid: guid);
@@ -129,7 +119,7 @@ namespace UnityEditor.VisualScripting.Model
         public static MacroRefNodeModel CreateMacroRefNode(this IGraphModel graphModel, GraphModel macroGraphModel,
             Vector2 position, SpawnFlags spawnFlags = SpawnFlags.Default, GUID? guid = null)
         {
-            return graphModel.CreateNode<MacroRefNodeModel>(graphModel.AssetModel.Name, position, spawnFlags, n => n.Macro = macroGraphModel, guid);
+            return graphModel.CreateNode<MacroRefNodeModel>(graphModel.AssetModel.Name, position, spawnFlags, n => n.GraphAssetModel = (GraphAssetModel)macroGraphModel.AssetModel, guid);
         }
     }
 
@@ -215,16 +205,16 @@ namespace UnityEditor.VisualScripting.Model
             return data.GraphModel.CreateConstantNode(constantName, typeHandle, data.Position, data.SpawnFlags, data.Guid);
         }
 
-        public static ISystemConstantNodeModel CreateSystemConstantNode(this IGraphNodeCreationData data, Type type, PropertyInfo propertyInfo)
+        public static ISystemConstantNodeModel CreateSystemConstantNode(this IGraphNodeCreationData data, Type declaringType, Type constantType, string constantName)
         {
             void Setup(SystemConstantNodeModel n)
             {
-                n.ReturnType = propertyInfo.PropertyType.GenerateTypeHandle(data.GraphModel.Stencil);
-                n.DeclaringType = propertyInfo.DeclaringType.GenerateTypeHandle(data.GraphModel.Stencil);
-                n.Identifier = propertyInfo.Name;
+                n.ReturnType = constantType.GenerateTypeHandle(data.GraphModel.Stencil);
+                n.DeclaringType = declaringType.GenerateTypeHandle(data.GraphModel.Stencil);
+                n.Identifier = constantName;
             }
 
-            var name = $"{type.FriendlyName(false)} > {propertyInfo.Name}";
+            var name = $"{declaringType.FriendlyName(false)} > {constantName}";
             return data.GraphModel.CreateNode<SystemConstantNodeModel>(name, data.Position, data.SpawnFlags, Setup, data.Guid);
         }
 

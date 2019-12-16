@@ -3,7 +3,8 @@
     "references": [
         "Unity.GraphTools.Foundation",
         "Unity.GraphTools.Foundation.Editor",
-        "Unity.Searcher.Editor"
+        "Unity.Searcher.Editor",
+        "UnityEditor.Utils"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"

@@ -1,7 +1,7 @@
 DocumentContainer {
     background-color: #1F1F1F;
     --unity-item-height: 20;
-    --unity-item-inter-padding: 6px;
+    --unity-item-inter-padding: 6;
     --unity-digit-width: 10px;
     flex-direction: column;
 }

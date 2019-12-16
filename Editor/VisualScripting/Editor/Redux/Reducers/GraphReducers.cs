@@ -14,7 +14,6 @@ namespace UnityEditor.VisualScripting.Editor
         public static void Register(Store store)
         {
             store.Register<CreateFunctionAction>(CreateFunction);
-            store.Register<CreateEventFunctionAction>(CreateEventFunction);
             store.Register<RenameElementAction>(RenameElement);
             store.Register<DeleteElementsAction>(DeleteElements);
             store.Register<RemoveNodesAction>(BypassAndDeleteElements);
@@ -111,15 +110,6 @@ namespace UnityEditor.VisualScripting.Editor
 
             FunctionModel functionModel = graphModel.CreateFunction(action.Name, action.Position);
             previousState.EditorDataModel.ElementModelToRename = functionModel;
-            previousState.MarkForUpdate(UpdateFlags.RequestRebuild);
-
-            return previousState;
-        }
-
-        static State CreateEventFunction(State previousState, CreateEventFunctionAction action)
-        {
-            VSGraphModel graphModel = (VSGraphModel)previousState.CurrentGraphModel;
-            graphModel.CreateEventFunction(action.MethodInfo, action.Position);
             previousState.MarkForUpdate(UpdateFlags.RequestRebuild);
 
             return previousState;

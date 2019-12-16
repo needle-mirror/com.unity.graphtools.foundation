@@ -27,7 +27,7 @@ namespace UnityEditor.VisualScripting.Editor
                 if (action.GraphTemplate != null)
                 {
                     action.GraphTemplate.InitBasicGraph(graphModel as VSGraphModel);
-                    previousState.requestNodeAlignment = true;
+                    graphModel.LastChanges.ModelsToAutoAlign.AddRange(graphModel.Stencil.GetEntryPoints((VSGraphModel)graphModel));
                 }
 
                 previousState.AssetModel = graphAssetModel;
@@ -37,7 +37,9 @@ namespace UnityEditor.VisualScripting.Editor
             if (action.WriteOnDisk)
                 AssetDatabase.SaveAssets();
 
+            AssetWatcher.Instance.WatchGraphAssetAtPath(action.AssetPath, (GraphAssetModel)previousState.AssetModel);
             previousState.MarkForUpdate(UpdateFlags.All);
+
 
             return previousState;
         }
@@ -97,6 +99,7 @@ namespace UnityEditor.VisualScripting.Editor
                 Debug.LogError($"Could not load visual scripting asset at path '{action.AssetPath}'");
                 return previousState;
             }
+            AssetWatcher.Instance.WatchGraphAssetAtPath(action.AssetPath, asset);
 
             switch (action.LoadType)
             {
@@ -113,10 +116,13 @@ namespace UnityEditor.VisualScripting.Editor
             previousState.AssetModel = asset;
             previousState.MarkForUpdate(UpdateFlags.All);
 
-            if (previousState.CurrentGraphModel?.Stencil != null)
-                previousState.CurrentGraphModel.Stencil.PreProcessGraph((VSGraphModel)previousState.CurrentGraphModel);
-
-            previousState.requestNodeAlignment = action.AlignAfterLoad;
+            var graphModel = previousState.CurrentGraphModel;
+            if (graphModel?.Stencil != null)
+            {
+                graphModel.Stencil.PreProcessGraph((VSGraphModel)previousState.CurrentGraphModel);
+                if (action.AlignAfterLoad)
+                    graphModel.LastChanges.ModelsToAutoAlign.AddRange(graphModel.Stencil.GetEntryPoints((VSGraphModel)graphModel));
+            }
 
             CheckGraphIntegrity(previousState);
 
@@ -125,6 +131,8 @@ namespace UnityEditor.VisualScripting.Editor
 
         static State UnloadGraphAsset(State previousState, UnloadGraphAssetAction action)
         {
+            if (previousState.CurrentGraphModel != null)
+                AssetWatcher.Instance.UnwatchGraphAssetAtPath(previousState.CurrentGraphModel.GetAssetPath());
             previousState.UnloadCurrentGraphAsset();
             previousState.MarkForUpdate(UpdateFlags.All);
 

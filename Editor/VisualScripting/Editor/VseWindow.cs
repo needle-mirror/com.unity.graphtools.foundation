@@ -227,6 +227,7 @@ namespace UnityEditor.VisualScripting.Editor
             var iGraphModel = m_Store.GetState().CurrentGraphModel as ScriptableObject;
             if (!iGraphModel)
             {
+                m_GraphView.UIController.ResetBlackboard();
                 m_GraphView.UIController.Clear();
                 m_Store.GetState().UnloadCurrentGraphAsset();
                 m_LastGraphFilePath = null;
@@ -516,7 +517,7 @@ namespace UnityEditor.VisualScripting.Editor
             }
 
             State state = m_Store.GetState();
-            VseUtility.UpdateCodeViewer(show: false, sourceIndex: SourceCodePhases.Initial,
+            VseUtility.UpdateCodeViewer(show: false, sourceIndex: SourceCodePhases.Final,
                 compilationResult: results,
                 selectionDelegate: lineMetadata =>
                 {
@@ -571,15 +572,6 @@ namespace UnityEditor.VisualScripting.Editor
             IGraphModel graphModel = m_Store.GetState()?.CurrentGraphModel;
 
             m_LastGraphFilePath = graphModel?.GetAssetPath();
-
-            if (m_Store.GetState().requestNodeAlignment)
-            {
-                if (graphModel is VSGraphModel vsGraphModel)
-                {
-                    IEnumerable<INodeModel> entryPoints = vsGraphModel.Stencil.GetEntryPoints(vsGraphModel);
-                    vsGraphModel.LastChanges.ModelsToAutoAlign.AddRange(entryPoints);
-                }
-            }
 
             if (currentUpdateFlags.HasFlag(UpdateFlags.RequestCompilation))
             {

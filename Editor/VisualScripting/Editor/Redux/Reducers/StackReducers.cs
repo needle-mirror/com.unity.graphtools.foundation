@@ -1,7 +1,5 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.EditorCommon.Extensions;
 using UnityEditor.VisualScripting.Editor.SmartSearch;
 using UnityEditor.VisualScripting.GraphViewModel;
 using UnityEditor.VisualScripting.Model;
@@ -47,8 +45,11 @@ namespace UnityEditor.VisualScripting.Editor
         {
             Undo.RegisterCompleteObjectUndo((Object)previousState.AssetModel, "Create Stacked Node(s)");
 
-            action.SelectedItem.CreateElements.Invoke(
+            var nodes = action.SelectedItem.CreateElements.Invoke(
                 new StackNodeCreationData(action.StackModel, action.Index, guids: action.Guids));
+
+            if (nodes.Any(n => n is EdgeModel))
+                previousState.CurrentGraphModel.LastChanges.ModelsToAutoAlign.AddRange(nodes);
 
             return previousState;
         }

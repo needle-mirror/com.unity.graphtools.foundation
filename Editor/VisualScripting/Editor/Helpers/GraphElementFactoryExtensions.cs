@@ -53,7 +53,7 @@ namespace UnityEditor.VisualScripting.Editor
                     {
                         if (pickedEnum != null)
                         {
-                            ((BinaryOperatorNodeModel)node.model).kind = (BinaryOperatorKind)pickedEnum;
+                            ((BinaryOperatorNodeModel)node.model).Kind = (BinaryOperatorKind)pickedEnum;
                             nStore.Dispatch(new RefreshUIAction(UpdateFlags.GraphTopology));
                         }
                     });
@@ -72,7 +72,7 @@ namespace UnityEditor.VisualScripting.Editor
                     {
                         if (pickedEnum != null)
                         {
-                            ((UnaryOperatorNodeModel)node.model).kind = (UnaryOperatorKind)pickedEnum;
+                            ((UnaryOperatorNodeModel)node.model).Kind = (UnaryOperatorKind)pickedEnum;
                             nStore.Dispatch(new RefreshUIAction(UpdateFlags.GraphTopology));
                         }
                     });

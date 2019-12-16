@@ -31,7 +31,8 @@ namespace UnityEditor.VisualScripting.Model.Stencils
                 .WithProperties()
                 .WithFunctionReferences()
                 .WithMacros()
-                .WithStickyNote();
+                .WithStickyNote()
+                .WithConstantFields();
         }
 
         public virtual SearcherFilter GetStackSearcherFilter(IStackModel stackModel)
@@ -89,7 +90,8 @@ namespace UnityEditor.VisualScripting.Model.Stencils
                 .WithConstants(m_Stencil, portModel)
                 .WithProperties(m_Stencil, portModel)
                 .WithUnaryOperators(dataType)
-                .WithBinaryOperators(dataType);
+                .WithBinaryOperators(dataType)
+                .WithConstantFields(dataType);
         }
 
         public virtual SearcherFilter GetEdgeSearcherFilter(IEdgeModel edgeModel)

@@ -58,9 +58,9 @@ namespace UnityEditor.VisualScripting.Model.Stencils
             }
         }
 
-        public bool RecompilationRequested { get; set; }
+        public virtual IRuntimeStencilReference RuntimeReference => null;
 
-        public virtual IEnumerable<string> PropertiesVisibleInGraphInspector() { yield break; }
+        public bool RecompilationRequested { get; set; }
 
         List<ITypeMetadata> m_AssembliesTypes;
 
@@ -315,5 +315,8 @@ namespace UnityEditor.VisualScripting.Model.Stencils
         {
             return vsGraphModel.StackModels.OfType<IFunctionModel>().Where(x => x.IsEntryPoint && x.State == ModelState.Enabled);
         }
+
+        public virtual void OnInspectorGUI()
+        {}
     }
 }

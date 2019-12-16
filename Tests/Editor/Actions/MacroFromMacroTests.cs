@@ -32,9 +32,9 @@ namespace UnityEditor.VisualScriptingTests.Actions
 
             var macroRef = GraphModel.NodeModels.OfType<MacroRefNodeModel>().Single();
             Assert.That(macroRef, Is.Not.Null);
-            Assert.That(macroRef.Macro.Stencil, Is.TypeOf<MacroStencil>());
-            Assert.That(((MacroStencil)macroRef.Macro.Stencil).ParentType, Is.EqualTo(((MacroStencil)GraphModel.Stencil).ParentType));
-            Assert.That(((MacroStencil)macroRef.Macro.Stencil).ParentType, Is.EqualTo(typeof(ClassStencil)));
+            Assert.That(macroRef.GraphAssetModel.GraphModel.Stencil, Is.TypeOf<MacroStencil>());
+            Assert.That(((MacroStencil)macroRef.GraphAssetModel.GraphModel.Stencil).ParentType, Is.EqualTo(((MacroStencil)GraphModel.Stencil).ParentType));
+            Assert.That(((MacroStencil)macroRef.GraphAssetModel.GraphModel.Stencil).ParentType, Is.EqualTo(typeof(ClassStencil)));
         }
     }
 }

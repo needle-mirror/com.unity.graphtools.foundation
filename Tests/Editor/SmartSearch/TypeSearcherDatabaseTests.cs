@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using JetBrains.Annotations;
 using NUnit.Framework;
 using UnityEditor.Searcher;
-using UnityEditor.VisualScripting.Editor;
 using UnityEditor.VisualScripting.Editor.SmartSearch;
 using UnityEditor.VisualScripting.Model;
 using UnityEditor.VisualScripting.Model.Stencils;

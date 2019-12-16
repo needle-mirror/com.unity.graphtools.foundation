@@ -4,6 +4,11 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.1.3-preview] - 2019-12-16
+Drop 6
+## [0.1.2-preview.8] - 2019-12-10
+## [0.1.2-preview.7] - 2019-12-09
+## [0.1.2-preview.6] - 2019-11-25
 ## [0.1.2-preview.5] - 2019-11-12
 ## [0.1.2-preview.4] - 2019-11-11
 ## [0.1.2-preview.3] - 2019-10-28

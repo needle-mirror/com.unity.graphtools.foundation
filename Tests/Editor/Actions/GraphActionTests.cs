@@ -40,25 +40,6 @@ namespace UnityEditor.VisualScriptingTests.Actions
         }
 
         [Test]
-        public void Test_CreateEventFunctionAction([Values] TestingMode mode)
-        {
-            TestPrereqActionPostreq(mode,
-                () =>
-                {
-                    Assert.That(GetNodeCount(), Is.EqualTo(0));
-                    Assert.That(GetEdgeCount(), Is.EqualTo(0));
-                    var methodInfo = TypeSystem.GetMethod(typeof(Debug), nameof(Debug.Log), true);
-                    return new CreateEventFunctionAction(methodInfo, Vector2.zero);
-                },
-                () =>
-                {
-                    Assert.That(GetNodeCount(), Is.EqualTo(1));
-                    Assert.That(GetStackCount(), Is.EqualTo(1));
-                    Assert.That(GetEdgeCount(), Is.EqualTo(0));
-                });
-        }
-
-        [Test]
         public void Test_DeleteElementsAction_MiniGraph([Values] TestingMode mode)
         {
             var method = GraphModel.CreateFunction("TestFunction", Vector2.zero);

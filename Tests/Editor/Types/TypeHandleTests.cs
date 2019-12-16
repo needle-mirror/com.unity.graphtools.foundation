@@ -7,7 +7,6 @@ using UnityEditor.VisualScripting.Model;
 using UnityEditor.VisualScripting.Model.Stencils;
 using UnityEditor.VisualScripting.Model.Compilation;
 using UnityEngine;
-using Object = UnityEngine.Object;
 
 // ReSharper disable AccessToStaticMemberViaDerivedType
 

@@ -6,6 +6,7 @@ namespace UnityEditor.VisualScripting.Model.Translators
     {
         // TODO: delete
         public const string RecordValueKind = "RecordValue";
+        public const string RecordValueCountKind = "RecordValueCount";
 
         public const string VSNodeMetadata = "SemanticModelNode";
         public const string VariableAnnotationKind = "SemanticModelVariableDeclaration";

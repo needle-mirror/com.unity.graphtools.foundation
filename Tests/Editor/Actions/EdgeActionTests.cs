@@ -346,8 +346,9 @@ namespace UnityEditor.VisualScriptingTests.Actions
         [Test, TestCaseSource(nameof(GetCreateTestCases))]
         public void Test_CreateNodeFromOutputPort_NoConnection(TestingMode testingMode)
         {
-            var db = new GraphElementSearcherDatabase(Stencil).AddMethods(typeof(Vector2),
-                BindingFlags.Static | BindingFlags.Public).Build();
+            var db = new GraphElementSearcherDatabase(Stencil)
+                .AddMethods(typeof(Vector2).GetMethods(BindingFlags.Static | BindingFlags.Public))
+                .Build();
             var item = (GraphNodeModelSearcherItem)db.Search("distance", out _).First();
 
             var node0 = GraphModel.CreateNode<Type1FakeNodeModel>("Node0", Vector2.zero);

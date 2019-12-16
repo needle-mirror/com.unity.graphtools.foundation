@@ -14,8 +14,6 @@ namespace UnityEditor.VisualScripting.Model
         IFunctionCallModel
     {
         [SerializeField]
-        GraphModel m_FunctionGraphModel;
-        [SerializeField]
         SerializableGUID m_FunctionModelGuid;
 
         List<string> m_LastParametersAdded;
@@ -37,13 +35,13 @@ namespace UnityEditor.VisualScripting.Model
         {
             get
             {
-                if (m_FunctionGraphModel != null && m_FunctionGraphModel.NodesByGuid.TryGetValue(m_FunctionModelGuid, out var functionModel))
+                if (GraphModel != null && GraphModel.NodesByGuid.TryGetValue(m_FunctionModelGuid, out var functionModel))
                     return functionModel as FunctionModel;
                 return null;
             }
             set
             {
-                m_FunctionGraphModel = (GraphModel)value?.GraphModel;
+                AssetModel = (GraphAssetModel)value?.AssetModel;
                 m_FunctionModelGuid = value?.Guid ?? default;
             }
         }

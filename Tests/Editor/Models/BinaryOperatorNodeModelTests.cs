@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using JetBrains.Annotations;
 using Moq;
 using NUnit.Framework;
@@ -20,8 +19,8 @@ namespace UnityEditor.VisualScriptingTests.Models
             Func<INodeModel, IPortModel> makePortA, Func<INodeModel, IPortModel> makePortB)
         {
             var model = new Mock<BinaryOperatorNodeModel>();
-            model.Object.GraphModel = graphModel;
-            model.Object.kind = kind;
+            model.Object.AssetModel = graphModel.AssetModel;
+            model.Object.Kind = kind;
             model.Setup(p => p.InputPortA).Returns(makePortA.Invoke(model.Object));
             model.Setup(p => p.InputPortB).Returns(makePortB.Invoke(model.Object));
 
@@ -71,8 +70,7 @@ namespace UnityEditor.VisualScriptingTests.Models
         {
             var nodeModel = createBinaryNodeModel.Invoke(GraphModel);
 
-            Assert.AreEqual(result, nodeModel.HasValidOperationForInput(nodeModel.GetPort(portName), Stencil.GenerateTypeHandle(dataType))
-            );
+            Assert.AreEqual(result, nodeModel.HasValidOperationForInput(nodeModel.GetPort(portName), Stencil.GenerateTypeHandle(dataType)));
         }
     }
 }

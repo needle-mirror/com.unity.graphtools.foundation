@@ -7,7 +7,7 @@ using System.Linq;
 namespace UnityEditor.EditorCommon.Extensions
 {
     [SuppressMessage("ReSharper", "InconsistentNaming")]
-    static class IEnumerableExtensions
+    public static class IEnumerableExtensions
     {
         internal static IEnumerable<T> OfExactType<T>(this IEnumerable source)
         {
@@ -36,6 +36,11 @@ namespace UnityEditor.EditorCommon.Extensions
             }
 
             return -1;
+        }
+
+        public static HashSet<T> ToHashSet<T>(this IEnumerable<T> source, IEqualityComparer<T> comparer = null)
+        {
+            return new HashSet<T>(source, comparer);
         }
     }
 }

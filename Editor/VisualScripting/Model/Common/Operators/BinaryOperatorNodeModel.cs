@@ -14,7 +14,8 @@ namespace UnityEditor.VisualScripting.Model
     // virtual PortModel getters to allow for Moq
     public class BinaryOperatorNodeModel : NodeModel, IOperationValidator, IHasMainOutputPort
     {
-        public BinaryOperatorKind kind;
+        public BinaryOperatorKind Kind;
+
         static Type[] s_SortedNumericTypes =
         {
             typeof(byte),
@@ -30,7 +31,7 @@ namespace UnityEditor.VisualScripting.Model
             typeof(decimal)
         };
 
-        public override string Title => kind.ToString();
+        public override string Title => Kind.ToString();
 
         public enum PortName
         {
@@ -53,9 +54,24 @@ namespace UnityEditor.VisualScripting.Model
 
         protected override void OnDefineNode()
         {
+            var portsType = TypeHandle.Float;
+            switch (Kind)
+            {
+                case BinaryOperatorKind.BitwiseAnd:
+                case BinaryOperatorKind.BitwiseOr:
+                    portsType = TypeHandle.Int;
+                    break;
+
+                case BinaryOperatorKind.LogicalAnd:
+                case BinaryOperatorKind.LogicalOr:
+                case BinaryOperatorKind.Xor:
+                    portsType = TypeHandle.Bool;
+                    break;
+            }
+
             if (m_InputAPort == null) // node was never defined
             {
-                DefinePorts(TypeHandle.Float, TypeHandle.Float, TypeHandle.Float);
+                DefinePorts(portsType, portsType, portsType);
             }
             else // we might have redefined types already
             {
@@ -149,7 +165,7 @@ namespace UnityEditor.VisualScripting.Model
             Type portBType = InputPortB?.DataType.Resolve(Stencil);
 
             //TODO A bit ugly of a hack... evaluate a better approach?
-            m_MainOutputPort.DataType = GetOutputTypeFromInputs(kind, portAType, portBType).GenerateTypeHandle(Stencil);
+            m_MainOutputPort.DataType = GetOutputTypeFromInputs(Kind, portAType, portBType).GenerateTypeHandle(Stencil);
         }
 
         public bool HasValidOperationForInput(IPortModel port, TypeHandle typeHandle)
@@ -163,11 +179,11 @@ namespace UnityEditor.VisualScripting.Model
                 Type otherPortType = otherPort.DataType.Resolve(Stencil);
 
                 return portName == PortName.PortB
-                    ? TypeSystem.IsBinaryOperationPossible(otherPortType, dataType, kind)
-                    : TypeSystem.IsBinaryOperationPossible(dataType, otherPortType, kind);
+                    ? TypeSystem.IsBinaryOperationPossible(otherPortType, dataType, Kind)
+                    : TypeSystem.IsBinaryOperationPossible(dataType, otherPortType, Kind);
             }
 
-            return TypeSystem.GetOverloadedBinaryOperators(dataType).Contains(kind);
+            return TypeSystem.GetOverloadedBinaryOperators(dataType).Contains(Kind);
         }
     }
 }

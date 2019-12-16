@@ -6,6 +6,7 @@ using UnityEditor.EditorCommon.Extensions;
 using UnityEditor.VisualScripting.Editor.SmartSearch;
 using UnityEditor.VisualScripting.Model.Compilation;
 using UnityEngine;
+using UnityEngine.VisualScripting;
 
 namespace UnityEditor.VisualScripting.Model.Stencils
 {
@@ -14,6 +15,7 @@ namespace UnityEditor.VisualScripting.Model.Stencils
         ISearcherFilterProvider m_SearcherFilterProvider;
         ISearcherDatabaseProvider m_SearcherDatabaseProvider;
         List<ITypeMetadata> m_AssembliesTypes;
+        IRuntimeStencilReference m_RuntimeReference;
 
         static readonly string[] k_BlackListedNamespaces =
         {
@@ -46,6 +48,9 @@ namespace UnityEditor.VisualScripting.Model.Stencils
         {
             return m_SearcherDatabaseProvider ?? (m_SearcherDatabaseProvider = new ClassSearcherDatabaseProvider(this));
         }
+
+        public override IRuntimeStencilReference RuntimeReference =>
+            m_RuntimeReference ?? (m_RuntimeReference = new RuntimeClassStencilReference());
 
         public override List<ITypeMetadata> GetAssembliesTypesMetadata()
         {

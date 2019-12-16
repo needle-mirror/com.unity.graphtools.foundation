@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using JetBrains.Annotations;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -43,14 +42,18 @@ namespace UnityEditor.VisualScripting.Model.Translators
 
         public static IEnumerable<SyntaxNode> BuildBinaryOperator(this RoslynTranslator translator, BinaryOperatorNodeModel model, IPortModel portModel)
         {
-            yield return RoslynBuilder.BinaryOperator(model.kind,
+            yield return RoslynBuilder.BinaryOperator(model.Kind,
                 translator.BuildPort(model.InputPortA).SingleOrDefault(),
                 translator.BuildPort(model.InputPortB).SingleOrDefault());
         }
 
         public static IEnumerable<SyntaxNode> BuildUnaryOperator(this RoslynTranslator translator, UnaryOperatorNodeModel model, IPortModel portModel)
         {
-            yield return RoslynBuilder.UnaryOperator(model.kind, translator.BuildPort(model.InputPort).SingleOrDefault());
+            var semantic = model.Kind == UnaryOperatorKind.PostDecrement ||
+                model.Kind == UnaryOperatorKind.PostIncrement
+                ? RoslynTranslator.PortSemantic.Write
+                : RoslynTranslator.PortSemantic.Read;
+            yield return RoslynBuilder.UnaryOperator(model.Kind, translator.BuildPort(model.InputPort, semantic).SingleOrDefault());
         }
 
         public static IEnumerable<SyntaxNode> BuildReturn(this RoslynTranslator translator, ReturnNodeModel returnModel, IPortModel portModel)
@@ -316,24 +319,20 @@ namespace UnityEditor.VisualScripting.Model.Translators
             ExpressionSyntax instance = BuildArgumentList(translator, call, out var argumentList);
             if (!call.Function.IsInstanceMethod)
                 instance = SyntaxFactory.IdentifierName(((VSGraphModel)call.Function.GraphModel).TypeName);
-            InvocationExpressionSyntax invocationExpressionSyntax = null;
-            // not a VisualBehaviour reference method call
-            if (invocationExpressionSyntax == null)
-            {
-                invocationExpressionSyntax = instance == null ||
-                    (instance is LiteralExpressionSyntax &&
-                        (instance).IsKind(SyntaxKind.NullLiteralExpression))
-                    ? SyntaxFactory.InvocationExpression(SyntaxFactory.IdentifierName(call.Function.CodeTitle))
-                    : SyntaxFactory.InvocationExpression(
-                    SyntaxFactory.MemberAccessExpression(
-                        SyntaxKind.SimpleMemberAccessExpression,
-                        instance,
-                        SyntaxFactory.IdentifierName(call.Function.CodeTitle)))
-                ;
 
-                invocationExpressionSyntax = invocationExpressionSyntax.WithArgumentList(
-                    SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList(argumentList)));
-            }
+            var  invocationExpressionSyntax = instance == null ||
+                instance is LiteralExpressionSyntax &&
+                instance.IsKind(SyntaxKind.NullLiteralExpression)
+                ? SyntaxFactory.InvocationExpression(SyntaxFactory.IdentifierName(call.Function.CodeTitle))
+                : SyntaxFactory.InvocationExpression(
+                SyntaxFactory.MemberAccessExpression(
+                    SyntaxKind.SimpleMemberAccessExpression,
+                    instance,
+                    SyntaxFactory.IdentifierName(call.Function.CodeTitle)))
+            ;
+
+            invocationExpressionSyntax = invocationExpressionSyntax.WithArgumentList(
+                SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList(argumentList)));
 
             if (portModel == null)
                 yield return SyntaxFactory.ExpressionStatement(
@@ -347,6 +346,9 @@ namespace UnityEditor.VisualScripting.Model.Translators
         {
             if (call.MethodInfo == null)
                 yield break;
+
+            if (call.MethodInfo.ReflectedType != null)
+                translator.AddUsingDirectives(call.MethodInfo.ReflectedType.Namespace);
 
             var instance = BuildArgumentList(translator, call, out var argumentList);
 
@@ -419,7 +421,7 @@ namespace UnityEditor.VisualScripting.Model.Translators
             }
         }
 
-        public static IEnumerable<SyntaxNode> BuildMethod(this RoslynTranslator roslynTranslator, KeyDownEventModel stack, IPortModel portModel)
+        public static IEnumerable<SyntaxNode> BuildOnKeyDownNode(this RoslynTranslator roslynTranslator, KeyDownEventModel stack, IPortModel portModel)
         {
             BlockSyntax block = SyntaxFactory.Block();
             roslynTranslator.BuildStack(stack, ref block);
@@ -528,7 +530,7 @@ namespace UnityEditor.VisualScripting.Model.Translators
         public static IEnumerable<SyntaxNode> BuildMacroRefNode(this RoslynTranslator translator,
             MacroRefNodeModel model, IPortModel portModel)
         {
-            if (model.Macro == null)
+            if (model.GraphAssetModel == null)
             {
                 translator.AddError(
                     model,

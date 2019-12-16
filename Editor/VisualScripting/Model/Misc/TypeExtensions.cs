@@ -74,7 +74,8 @@ namespace UnityEditor.VisualScripting.Model
             if (type.IsGenericType)
                 foreach (var a in type.GetGenericArguments())
                     namespaces.AddRange(a.ReferenceNamespaces());
-            namespaces.Add(type.Namespace);
+            if (!string.IsNullOrEmpty(type.Namespace))
+                namespaces.Add(type.Namespace);
             return namespaces;
         }
 

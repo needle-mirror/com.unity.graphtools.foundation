@@ -25,11 +25,11 @@ namespace UnityEditor.VisualScripting.Editor
         Store m_Store;
         VisualElement PortIcon { get; set; }
 
-        VseGraphView m_GraphView;
+        VseGraphView m_VseGraphView;
 
         Rect m_BoxRect = Rect.zero;
 
-        VseGraphView GraphView => m_GraphView ?? (m_GraphView = GetFirstAncestorOfType<VseGraphView>());
+        VseGraphView GraphView => m_VseGraphView ?? (m_VseGraphView = GetFirstAncestorOfType<VseGraphView>());
 
         // TODO: Weird that ContainsPoint does not work out of the box (with the default implementation)
         public override bool ContainsPoint(Vector2 localPoint)

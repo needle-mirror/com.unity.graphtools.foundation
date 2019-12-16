@@ -14,8 +14,8 @@ namespace UnityEditor.VisualScriptingTests.Models
         public void TestHasValidOperationForInput(Type dataType, UnaryOperatorKind kind, bool result)
         {
             var node = Activator.CreateInstance<UnaryOperatorNodeModel>();
-            node.GraphModel = GraphModel;
-            node.kind = kind;
+            node.AssetModel = GraphModel.AssetModel;
+            node.Kind = kind;
 
             Assert.AreEqual(result, node.HasValidOperationForInput(null, Stencil.GenerateTypeHandle(dataType)));
         }

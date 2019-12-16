@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
-using UnityEditor.VisualScripting.Editor;
 using UnityEditor.VisualScripting.GraphViewModel;
 using UnityEditor.VisualScripting.Model.Stencils;
 using UnityEditor.VisualScripting.Model.Translators;

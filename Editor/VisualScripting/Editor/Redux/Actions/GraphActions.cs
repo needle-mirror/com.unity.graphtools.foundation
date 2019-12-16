@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using UnityEditor.EditorCommon.Redux;
 using UnityEditor.VisualScripting.GraphViewModel;
 using UnityEngine;
@@ -15,18 +14,6 @@ namespace UnityEditor.VisualScripting.Editor
         public CreateFunctionAction(string name, Vector2 position)
         {
             Name = name;
-            Position = position;
-        }
-    }
-
-    public class CreateEventFunctionAction : IAction
-    {
-        public readonly MethodInfo MethodInfo;
-        public readonly Vector2 Position;
-
-        public CreateEventFunctionAction(MethodInfo methodInfo, Vector2 position)
-        {
-            MethodInfo = methodInfo;
             Position = position;
         }
     }

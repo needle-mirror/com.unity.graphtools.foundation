@@ -155,7 +155,7 @@ namespace UnityEditor.VisualScriptingTests.Actions
                     Assert.That(GetEdgeCount(), Is.EqualTo(0));
                     Assert.That(method.NodeModels.Count(), Is.EqualTo(1));
                     Assert.That(GetStackedNode(0, 0), Is.TypeOf<SetPropertyGroupNodeModel>());
-                    Assert.That(setters.InstancePort.DataType, Is.EqualTo(TypeHandle.ThisType));
+                    Assert.That(setters.InstancePort.DataType, Is.EqualTo(TypeHandle.Unknown));
                     Assert.That(setters.GetPortsForMembers().First().DataType, Is.EqualTo(typeof(Transform).GenerateTypeHandle(Stencil)));
                 });
         }

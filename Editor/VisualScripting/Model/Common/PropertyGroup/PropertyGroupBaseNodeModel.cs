@@ -30,7 +30,7 @@ namespace UnityEditor.VisualScripting.Model
 
         protected override void OnDefineNode()
         {
-            InstancePort = AddInstanceInput(TypeHandle.ThisType);
+            InstancePort = AddInstanceInput(TypeHandle.Unknown);
 
             foreach (var member in Members)
             {
@@ -44,7 +44,7 @@ namespace UnityEditor.VisualScripting.Model
         public TypeHandle GetConnectedInstanceType()
         {
             if (InstancePort == null || !InstancePort.Connected)
-                return TypeHandle.ThisType;
+                return TypeHandle.Unknown;
 
             return InstancePort.DataType;
         }
@@ -77,7 +77,7 @@ namespace UnityEditor.VisualScripting.Model
             if (selfConnectedPortModel.Direction != Direction.Input || selfConnectedPortModel.PortType != PortType.Instance)
                 return;
 
-            ((PortModel)selfConnectedPortModel).DataType = TypeHandle.ThisType;
+            ((PortModel)selfConnectedPortModel).DataType = TypeHandle.Unknown;
         }
 
         public void AddMember(TypeMember member)

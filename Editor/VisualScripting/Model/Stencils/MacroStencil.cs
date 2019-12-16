@@ -8,6 +8,7 @@ using UnityEditor.VisualScripting.Model.Translators;
 using UnityEditor.VisualScripting.Model.Compilation;
 using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.VisualScripting;
 
 namespace UnityEditor.VisualScripting.Model.Stencils
 {
@@ -19,7 +20,8 @@ namespace UnityEditor.VisualScripting.Model.Stencils
         ISearcherFilterProvider m_MacroSearcherFilterProvider;
 
         public override StencilCapabilityFlags Capabilities => StencilCapabilityFlags.SupportsMacros;
-        public override IBuilder Builder => m_Parent == null ? null : m_Parent.Builder;
+        public override IBuilder Builder => m_Parent?.Builder;
+        public override IRuntimeStencilReference RuntimeReference => m_Parent.RuntimeReference;
 
         public override void PreProcessGraph(VSGraphModel graphModel)
         {

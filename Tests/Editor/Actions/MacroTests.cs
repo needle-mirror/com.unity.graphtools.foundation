@@ -86,7 +86,7 @@ namespace UnityEditor.VisualScriptingTests.Actions
                     Assert.That(GraphModel.NodeModels.Count, Is.EqualTo(3));
 
                     var macroRef = GraphModel.NodeModels.OfType<MacroRefNodeModel>().Single();
-                    macroRef.Macro = null;
+                    macroRef.GraphAssetModel = null;
                     macroRef.DefineNode();
 
                     Assert.That(macroRef, Is.Not.Null);
@@ -157,8 +157,8 @@ namespace UnityEditor.VisualScriptingTests.Actions
                     Assert.That(macroRefOutputPorts.Count, Is.EqualTo(2));
                     Assert.That(macroRefOutputPorts[0], Is.ConnectedTo(set.InstancePort));
                     Assert.That(macroRefOutputPorts[1], Is.ConnectedTo(set.ValuePort));
-                    Assert.That(macroRef.Macro.Stencil, Is.TypeOf<MacroStencil>());
-                    Assert.That(((MacroStencil)macroRef.Macro.Stencil).ParentType, Is.EqualTo(GraphModel.Stencil.GetType()));
+                    Assert.That(macroRef.GraphAssetModel.GraphModel.Stencil, Is.TypeOf<MacroStencil>());
+                    Assert.That(((MacroStencil)macroRef.GraphAssetModel.GraphModel.Stencil).ParentType, Is.EqualTo(GraphModel.Stencil.GetType()));
                 });
 
             void Refresh()
@@ -167,6 +167,37 @@ namespace UnityEditor.VisualScriptingTests.Actions
                 RefreshReference(ref set);
                 RefreshReference(ref varA);
                 RefreshReference(ref varB);
+            }
+        }
+
+        [Test]
+        public void ExtractSticky([Values] TestingMode mode)
+        {
+            IStickyNoteModel sticky = GraphModel.CreateStickyNote(new Rect()) as StickyNoteModel;
+            Undo.IncrementCurrentGroup();
+
+            TestPrereqActionPostreq(mode, () =>
+            {
+                Refresh();
+                Assert.That(GraphModel.NodeModels.OfType<MacroRefNodeModel>().Count(), Is.Zero);
+                Assert.That(GraphModel.StickyNoteModels.Count(), Is.EqualTo(1));
+                return new RefactorExtractMacroAction(new List<IGraphElementModel> { sticky }, Vector2.zero, null);
+            }, () =>
+                {
+                    Refresh();
+                    var macroRef = GraphModel.NodeModels.OfType<MacroRefNodeModel>().Single();
+                    Assert.That(macroRef, Is.Not.Null);
+                    Assert.That(macroRef.GraphAssetModel.GraphModel.Stencil, Is.TypeOf<MacroStencil>());
+                    Assert.That(((VSGraphModel)macroRef.GraphAssetModel.GraphModel).StickyNoteModels.Count(), Is.EqualTo(1));
+                    Assert.That(((MacroStencil)macroRef.GraphAssetModel.GraphModel.Stencil).ParentType, Is.EqualTo(GraphModel.Stencil.GetType()));
+
+                    // Assert Sticky has been removed from GraphModel
+                    Assert.That(GraphModel.StickyNoteModels.Count(), Is.EqualTo(0));
+                });
+
+            void Refresh()
+            {
+                RefreshReference(ref sticky);
             }
         }
 
@@ -268,7 +299,7 @@ namespace UnityEditor.VisualScriptingTests.Actions
         {
             MacroRefNodeModel macroRef = GraphModel.ExtractNodesAsMacro(m_MacroGraphModel, Vector2.zero, toExtract);
 
-            Assert.That(macroRef.Macro, Is.EqualTo(m_MacroGraphModel));
+            Assert.That(macroRef.GraphAssetModel.GraphModel, Is.EqualTo(m_MacroGraphModel));
 
             inputs.Check(m_MacroGraphModel, macroRef.InputVariablePorts.ToList(), ModifierFlags.ReadOnly);
             outputs.Check(m_MacroGraphModel, macroRef.OutputVariablePorts.ToList(), ModifierFlags.WriteOnly);

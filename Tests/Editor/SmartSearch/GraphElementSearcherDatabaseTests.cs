@@ -256,7 +256,7 @@ namespace UnityEditor.VisualScriptingTests.SmartSearch
             {
                 var node = GraphModel.NodeModels.OfType<BinaryOperatorNodeModel>().FirstOrDefault();
                 Assert.IsNotNull(node);
-                Assert.AreEqual(node.kind, BinaryOperatorKind.Subtract);
+                Assert.AreEqual(node.Kind, BinaryOperatorKind.Subtract);
                 Assert.AreEqual(initialNodes.Count + 1, GraphModel.NodeModels.Count);
             });
         }
@@ -294,7 +294,7 @@ namespace UnityEditor.VisualScriptingTests.SmartSearch
                 {
                     var node = GraphModel.NodeModels.OfType<UnaryOperatorNodeModel>().FirstOrDefault();
                     Assert.IsNotNull(node);
-                    Assert.AreEqual(kind, node.kind);
+                    Assert.AreEqual(kind, node.Kind);
                     Assert.AreEqual(initialNodes.Count + 1, GraphModel.NodeModels.Count);
                 });
             }
@@ -306,7 +306,7 @@ namespace UnityEditor.VisualScriptingTests.SmartSearch
                 {
                     var node = stack.NodeModels.OfType<UnaryOperatorNodeModel>().FirstOrDefault();
                     Assert.IsNotNull(node);
-                    Assert.AreEqual(kind, node.kind);
+                    Assert.AreEqual(kind, node.Kind);
                     Assert.AreEqual(1, stack.NodeModels.Count());
                     Assert.AreEqual(initialGraphNodes.Count, GraphModel.NodeModels.Count);
                 });
@@ -465,7 +465,7 @@ namespace UnityEditor.VisualScriptingTests.SmartSearch
         public void TestConstructors(int index, int parameterLength)
         {
             var db = new GraphElementSearcherDatabase(Stencil)
-                .AddConstructors(typeof(FakeObject), BindingFlags.Public | BindingFlags.Instance)
+                .AddConstructors(typeof(FakeObject).GetConstructors(BindingFlags.Public | BindingFlags.Instance))
                 .Build();
 
             var results = db.Search("fake", out _);
@@ -485,7 +485,7 @@ namespace UnityEditor.VisualScriptingTests.SmartSearch
         public void TestFields(SearcherContext context, string query, string fieldName, int index, int count)
         {
             var db = new GraphElementSearcherDatabase(Stencil)
-                .AddFields(typeof(FakeObject), BindingFlags.Public | BindingFlags.Instance)
+                .AddFields(typeof(FakeObject).GetFields(BindingFlags.Public | BindingFlags.Instance))
                 .Build();
 
             var results = db.Search(query, out _);
@@ -512,7 +512,7 @@ namespace UnityEditor.VisualScriptingTests.SmartSearch
         public void TestProperties(SearcherContext context, string query, string propertyName, int index, int count)
         {
             var db = new GraphElementSearcherDatabase(Stencil)
-                .AddProperties(typeof(FakeObject), BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static)
+                .AddProperties(typeof(FakeObject).GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static))
                 .Build();
 
             var results = db.Search(query, out _);
@@ -536,7 +536,7 @@ namespace UnityEditor.VisualScriptingTests.SmartSearch
         public void TestMethods(SearcherContext context, string query, string methodName)
         {
             var db = new GraphElementSearcherDatabase(Stencil)
-                .AddMethods(typeof(FakeObject), BindingFlags.Public | BindingFlags.Instance)
+                .AddMethods(typeof(FakeObject).GetMethods(BindingFlags.Public | BindingFlags.Instance))
                 .Build();
 
             var results = db.Search(query, out _);

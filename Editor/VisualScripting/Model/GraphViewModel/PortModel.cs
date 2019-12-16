@@ -12,6 +12,14 @@ namespace UnityEditor.VisualScripting.GraphViewModel
 {
     public class PortModel : IPortModel
     {
+        [Flags]
+        public enum PortModelOptions
+        {
+            None = 0,
+            NoEmbeddedConstant = 1,
+            Default = None,
+        }
+
         public static bool Equivalent(IPortModel a, IPortModel b)
         {
             if (a == null || b == null)
@@ -19,12 +27,15 @@ namespace UnityEditor.VisualScripting.GraphViewModel
             return a.Direction == b.Direction && a.NodeModel.Guid == b.NodeModel.Guid && a.UniqueId == b.UniqueId;
         }
 
+        public PortModelOptions Options { get; protected set; }
+
         TypeHandle m_DataType;
 
-        public PortModel(string name = null, string uniqueId = null)
+        public PortModel(string name = null, string uniqueId = null, PortModelOptions options = PortModelOptions.Default)
         {
             m_Name = name;
             m_UniqueId = uniqueId;
+            Options = options;
         }
 
         public ScriptableObject SerializableAsset => (ScriptableObject)NodeModel.GraphModel.AssetModel;
