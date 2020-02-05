@@ -2,11 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.Experimental.GraphView;
+using UnityEditor.VisualScripting.Editor;
 using UnityEditor.VisualScripting.Model;
 using UnityEditor.VisualScripting.Model.Stencils;
 using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.UIElements;
 using Object = System.Object;
+using Port = UnityEditor.Experimental.GraphView.Port;
 
 namespace UnityEditor.VisualScripting.GraphViewModel
 {
@@ -87,6 +90,10 @@ namespace UnityEditor.VisualScripting.GraphViewModel
                 return null;
             }
         }
+
+        public Action<IChangeEvent, Store, IPortModel> EmbeddedValueEditorValueChangedOverride { get; set; }
+
+        public virtual bool CreateEmbeddedValueIfNeeded => PortType == PortType.Data;
 
         public IEnumerable<IPortModel> ConnectionPortModels
         {
@@ -205,6 +212,34 @@ namespace UnityEditor.VisualScripting.GraphViewModel
                 if (thisPortType == typeof(Object))
                     return "typeObject";
                 return "type" + thisPortType.Name;
+            }
+        }
+
+        public virtual string ToolTip
+        {
+            get
+            {
+                string newTooltip = Direction == Direction.Output ? "Output" : "Input";
+                switch (PortType)
+                {
+                    case PortType.Execution:
+                        newTooltip += " execution flow";
+                        if (NodeModel.IsCondition)
+                            newTooltip += $" ({Name.ToLower()} condition)";
+                        break;
+                    case PortType.Loop:
+                        newTooltip += " loop";
+                        break;
+                    case PortType.Data:
+                    case PortType.Instance:
+                        var stencil = GraphModel.Stencil;
+                        newTooltip += $" of type {(DataType == TypeHandle.ThisType ? (NodeModel?.GraphModel)?.FriendlyScriptName : DataType.GetMetadata(stencil).FriendlyName)}";
+                        break;
+                    case PortType.Event:
+                        newTooltip += " event";
+                        break;
+                }
+                return newTooltip;
             }
         }
     }

@@ -158,3 +158,14 @@ VseGraphView .node .port.drop-highlighted.denied {
     border-color: var(--dragndrop-denied-color);
     background-color: var(--dragndrop-denied-background-color);
 }
+
+Port .unity-enum-field__text
+{
+   flex-grow: initial;
+}
+
+Port > .unity-property-field > FloatField
+{
+    margin: 0;
+    padding: 0;
+}

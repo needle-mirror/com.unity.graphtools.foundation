@@ -13,6 +13,7 @@ namespace UnityEditor.VisualScripting.GraphViewModel
     {
         IGraphElementModel Clone();
     }
+
     public interface IGraphElementModel : ICapabilitiesModel
     {
         ScriptableObject SerializableAsset { get; }

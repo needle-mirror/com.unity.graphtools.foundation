@@ -30,7 +30,8 @@ namespace UnityEditor.VisualScripting.Editor.SmartSearch
 
             return xRoot.HasChildren ? 1 : -1;
         };
-        public static readonly Comparison<SearcherItem> k_TypeSort = (x, y) =>
+
+        public static readonly Comparison<SearcherItem> TypeComparison = (x, y) =>
         {
             var xRoot = GetRoot(x);
             var yRoot = GetRoot(y);
@@ -63,7 +64,7 @@ namespace UnityEditor.VisualScripting.Editor.SmartSearch
             var stencil = state.CurrentGraphModel.Stencil;
             var stackModel = portModel.NodeModel.ParentStackModel;
             var filter = stencil.GetSearcherFilterProvider()?.GetInputToGraphSearcherFilter(portModel);
-            var adapter = new GraphNodeSearcherAdapter(state.CurrentGraphModel, "Pick a data member for this input port");
+            var adapter = stencil.GetSearcherAdapter(state.CurrentGraphModel, "Add an input node");
             var dbProvider = stencil.GetSearcherDatabaseProvider();
             var dbs = dbProvider.GetGraphElementsSearcherDatabases()
                 .Concat(dbProvider.GetGraphVariablesSearcherDatabases(
@@ -79,7 +80,7 @@ namespace UnityEditor.VisualScripting.Editor.SmartSearch
         {
             var stencil = state.CurrentGraphModel.Stencil;
             var filter = stencil.GetSearcherFilterProvider()?.GetOutputToStackSearcherFilter(portModel, stackModel);
-            var adapter = new StackNodeSearcherAdapter(stackModel, "Add a stack Node");
+            var adapter = stencil.GetSearcherAdapter(stackModel, "Add a stack Node");
             var dbProvider = stencil.GetSearcherDatabaseProvider();
             var dbs = dbProvider.GetGraphElementsSearcherDatabases()
                 .Concat(dbProvider.GetTypeMembersSearcherDatabases(portModel.DataType))
@@ -93,10 +94,7 @@ namespace UnityEditor.VisualScripting.Editor.SmartSearch
         {
             var stencil = state.CurrentGraphModel.Stencil;
             var filter = stencil.GetSearcherFilterProvider()?.GetOutputToGraphSearcherFilter(portModel);
-            var adapter = new GraphNodeSearcherAdapter(
-                state.CurrentGraphModel,
-                $"Choose an action for {portModel.DataType.GetMetadata(stencil).FriendlyName}"
-            );
+            var adapter = stencil.GetSearcherAdapter(state.CurrentGraphModel, $"Choose an action for {portModel.DataType.GetMetadata(stencil).FriendlyName}");
             var dbProvider = stencil.GetSearcherDatabaseProvider();
             var dbs = dbProvider.GetGraphElementsSearcherDatabases()
                 .Concat(dbProvider.GetTypeMembersSearcherDatabases(portModel.DataType))
@@ -110,7 +108,7 @@ namespace UnityEditor.VisualScripting.Editor.SmartSearch
         {
             var stencil = state.CurrentGraphModel.Stencil;
             var filter = stencil.GetSearcherFilterProvider()?.GetEdgeSearcherFilter(edgeModel);
-            var adapter = new GraphNodeSearcherAdapter(state.CurrentGraphModel, "Insert Node");
+            var adapter = stencil.GetSearcherAdapter(state.CurrentGraphModel, "Insert Node");
             var dbProvider = stencil.GetSearcherDatabaseProvider();
             var dbs = dbProvider.GetGraphElementsSearcherDatabases()
                 .Concat(dbProvider.GetTypeMembersSearcherDatabases(edgeModel.OutputPortModel.DataType))
@@ -123,7 +121,7 @@ namespace UnityEditor.VisualScripting.Editor.SmartSearch
         {
             var stencil = state.CurrentGraphModel.Stencil;
             var filter = stencil.GetSearcherFilterProvider()?.GetGraphSearcherFilter();
-            var adapter = new GraphNodeSearcherAdapter(state.CurrentGraphModel, "Add a graph node");
+            var adapter = stencil.GetSearcherAdapter(state.CurrentGraphModel, "Add a graph node");
             var dbProvider = stencil.GetSearcherDatabaseProvider();
             var dbs = dbProvider.GetGraphElementsSearcherDatabases()
                 .Concat(dbProvider.GetReferenceItemsSearcherDatabases())
@@ -138,7 +136,7 @@ namespace UnityEditor.VisualScripting.Editor.SmartSearch
         {
             var stencil = state.CurrentGraphModel.Stencil;
             var filter = stencil.GetSearcherFilterProvider()?.GetStackSearcherFilter(stackModel);
-            var adapter = searcherAdapter ?? new StackNodeSearcherAdapter(stackModel, "Add a stack node");
+            var adapter = searcherAdapter ?? stencil.GetSearcherAdapter(stackModel, "Add a stack node");
             var dbProvider = stencil.GetSearcherDatabaseProvider();
             var dbs = dbProvider.GetGraphElementsSearcherDatabases()
                 .Concat(dbProvider.GetReferenceItemsSearcherDatabases())
@@ -300,7 +298,7 @@ namespace UnityEditor.VisualScripting.Editor.SmartSearch
                 };
             }
 
-            var searcher = new Searcher.Searcher(databases, k_TypeAdapter) { SortComparison = k_TypeSort };
+            var searcher = new Searcher.Searcher(databases, k_TypeAdapter) { SortComparison = TypeComparison };
             SearcherWindow.Show(EditorWindow.focusedWindow, searcher, item =>
             {
                 if (!(item is TypeSearcherItem typeItem))

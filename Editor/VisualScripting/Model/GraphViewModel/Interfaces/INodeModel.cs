@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using UnityEditor.VisualScripting.Editor;
-using UnityEditor.VisualScripting.Model;
 using UnityEngine;
 using Port = UnityEditor.Experimental.GraphView.Port;
 
@@ -36,6 +35,7 @@ namespace UnityEditor.VisualScripting.GraphViewModel
         bool HasUserColor { get; set; }
         GUID OriginalInstanceId { get; set; }
         bool Destroyed { get; }
+        string ToolTip { get; }
 
         void OnConnection(IPortModel selfConnectedPortModel, IPortModel otherConnectedPortModel);
         void OnDisconnection(IPortModel selfConnectedPortModel, IPortModel otherConnectedPortModel);

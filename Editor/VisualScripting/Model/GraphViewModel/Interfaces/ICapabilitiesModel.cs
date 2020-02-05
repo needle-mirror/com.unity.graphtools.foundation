@@ -16,6 +16,9 @@ namespace UnityEditor.VisualScripting.GraphViewModel
         Renamable          = 1 << 7,
         Modifiable         = 1 << 8,
         DeletableWhenEmpty = 1 << 9,
+#if UNITY_2020_1_OR_NEWER
+        Copiable           = 1 << 10
+#endif
     }
 
     public interface ICapabilitiesModel

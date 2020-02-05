@@ -32,16 +32,6 @@ namespace UnityEditor.VisualScripting.Editor
         }
     }
 
-    public class BypassNodeAction : IAction
-    {
-        public readonly INodeModel[] NodeModels;
-
-        public BypassNodeAction(params INodeModel[] nodeModels)
-        {
-            NodeModels = nodeModels;
-        }
-    }
-
     public class RemoveNodesAction : IAction
     {
         public readonly INodeModel[] ElementsToRemove;
@@ -51,28 +41,6 @@ namespace UnityEditor.VisualScripting.Editor
         {
             ElementsToRemove = elementsToRemove;
             NodesToBypass = nodesToBypass;
-        }
-    }
-
-    public class ResetNodeColorAction : IAction
-    {
-        public readonly INodeModel[] NodeModels;
-
-        public ResetNodeColorAction(params INodeModel[] nodeModels)
-        {
-            NodeModels = nodeModels;
-        }
-    }
-
-    public class ChangeNodeColorAction : IAction
-    {
-        public readonly INodeModel[] NodeModels;
-        public readonly Color Color;
-
-        public ChangeNodeColorAction(Color color, params INodeModel[] nodeModels)
-        {
-            NodeModels = nodeModels;
-            Color = color;
         }
     }
 

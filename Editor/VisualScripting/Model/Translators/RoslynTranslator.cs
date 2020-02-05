@@ -194,7 +194,27 @@ namespace UnityEditor.VisualScripting.Model.Translators
 
                 if (compilationResult.status == CompilationStatus.Succeeded)
                 {
-                    int syntaxTreeHashCode = syntaxTree.ToString().GetHashCode();
+                    int syntaxTreeHashCode = compilationResult.sourceCode[(int)SourceCodePhases.Final].GetHashCode();
+                    if (s_LastSyntaxTreeHashCode == 0 && File.Exists(graphModelSourceFilePath))
+                    {
+                        var diskSourceCode = File.ReadAllText(graphModelSourceFilePath);
+                        s_LastSyntaxTreeHashCode = diskSourceCode.GetHashCode();
+                        if (s_LastSyntaxTreeHashCode == syntaxTreeHashCode)
+                        {
+                            s_LastCompilationResult = new CompilationResult
+                            {
+                                errors = new List<CompilerError>(),
+                                sourceCode = new string[]
+                                {
+                                    diskSourceCode,
+                                    diskSourceCode,
+                                }
+                            };
+                        }
+                        if (LogCompileTimeStats)
+                            Debug.Log($"Found Graph version on disk with hash {s_LastSyntaxTreeHashCode}");
+                    }
+
                     if (s_LastSyntaxTreeHashCode == syntaxTreeHashCode)
                     {
                         compilationResult = s_LastCompilationResult;
@@ -206,7 +226,7 @@ namespace UnityEditor.VisualScripting.Model.Translators
                         try
                         {
                             if (LogCompileTimeStats)
-                                Debug.Log("Compute new compilation result");
+                                Debug.Log($"Compute new compilation result (last hash {s_LastSyntaxTreeHashCode}, current: {syntaxTreeHashCode}");
                             compilationResult = CheckSemanticModel(syntaxTree, compilationResult);
                         }
                         catch (LoopDetectedException e)

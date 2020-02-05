@@ -75,7 +75,7 @@ namespace UnityEditor.VisualScripting.Editor.SmartSearch
                 AssetDatabase.LoadAssetAtPath<VSGraphAssetModel>(AssetDatabase.GUIDToAssetPath(assetGuid)))
                 .Where(x =>
                 {
-                    if (x.GraphModel == null)
+                    if (x?.GraphModel == null)
                     {
                         Debug.Log("No GraphModel");
                     }
@@ -713,7 +713,7 @@ namespace UnityEditor.VisualScripting.Editor.SmartSearch
             {
                 var parent = SearcherItemUtility.GetItemFromPath(Items, field.ReflectedType.FriendlyName(false));
 
-                if (field.IsLiteral && !field.IsInitOnly)
+                if (field.IsConstantOrStatic())
                 {
                     parent.AddChild(new GraphNodeModelSearcherItem(
                         new FieldSearcherItemData(field),
@@ -722,6 +722,7 @@ namespace UnityEditor.VisualScripting.Editor.SmartSearch
                     ));
                     continue;
                 }
+
                 parent.AddChild(new GraphNodeModelSearcherItem(
                     new FieldSearcherItemData(field),
                     data =>

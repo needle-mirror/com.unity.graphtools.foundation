@@ -46,6 +46,21 @@ namespace UnityEditor.VisualScripting.Editor
         public readonly IReadOnlyCollection<StickyNoteModel> StickyModels;
         public readonly Vector2 Delta;
 
+#if UNITY_2020_1_OR_NEWER
+        public readonly IReadOnlyCollection<PlacematModel> PlacematModels;
+
+        public MoveElementsAction(Vector2 delta,
+                                  IReadOnlyCollection<NodeModel> nodeModels,
+                                  IReadOnlyCollection<PlacematModel> placematModels,
+                                  IReadOnlyCollection<StickyNoteModel> stickyModels)
+        {
+            NodeModels = nodeModels;
+            PlacematModels = placematModels;
+            StickyModels = stickyModels;
+            Delta = delta;
+        }
+
+#else
         public MoveElementsAction(Vector2 delta,
                                   IReadOnlyCollection<NodeModel> nodeModels,
                                   IReadOnlyCollection<StickyNoteModel> stickyModels)
@@ -54,6 +69,8 @@ namespace UnityEditor.VisualScripting.Editor
             StickyModels = stickyModels;
             Delta = delta;
         }
+
+#endif
     }
 
     public class PanToNodeAction : IAction
@@ -65,4 +82,60 @@ namespace UnityEditor.VisualScripting.Editor
             this.nodeGuid = nodeGuid;
         }
     }
+
+#if UNITY_2020_1_OR_NEWER
+    public class ResetElementColorAction : IAction
+    {
+        public readonly IReadOnlyCollection<NodeModel> NodeModels;
+        public readonly IReadOnlyCollection<PlacematModel> PlacematModels;
+
+        public ResetElementColorAction(
+            IReadOnlyCollection<NodeModel> nodeModels,
+            IReadOnlyCollection<PlacematModel> placematModels)
+        {
+            NodeModels = nodeModels;
+            PlacematModels = placematModels;
+        }
+    }
+
+    public class ChangeElementColorAction : IAction
+    {
+        public readonly IReadOnlyCollection<NodeModel> NodeModels;
+        public readonly IReadOnlyCollection<PlacematModel> PlacematModels;
+        public readonly Color Color;
+
+        public ChangeElementColorAction(Color color,
+                                        IReadOnlyCollection<NodeModel> nodeModels,
+                                        IReadOnlyCollection<PlacematModel> placematModels)
+        {
+            NodeModels = nodeModels;
+            PlacematModels = placematModels;
+            Color = color;
+        }
+    }
+#else
+    public class ResetElementColorAction : IAction
+    {
+        public readonly IReadOnlyCollection<NodeModel> NodeModels;
+
+        public ResetElementColorAction(
+            IReadOnlyCollection<NodeModel> nodeModels)
+        {
+            NodeModels = nodeModels;
+        }
+    }
+
+    public class ChangeElementColorAction : IAction
+    {
+        public readonly IReadOnlyCollection<NodeModel> NodeModels;
+        public readonly Color Color;
+
+        public ChangeElementColorAction(Color color,
+                                        IReadOnlyCollection<NodeModel> nodeModels)
+        {
+            NodeModels = nodeModels;
+            Color = color;
+        }
+    }
+#endif
 }

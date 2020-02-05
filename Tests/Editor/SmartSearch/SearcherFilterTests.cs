@@ -23,6 +23,7 @@ namespace UnityEditor.VisualScriptingTests.SmartSearch
         [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
         internal class FakeObject : BaseFakeObject
         {
+            public static readonly int S = 1;
             public const int I = 0;
             public readonly FakeObject Child;
             public int Index = 1;
@@ -417,6 +418,8 @@ namespace UnityEditor.VisualScriptingTests.SmartSearch
             Assert.AreEqual(result, filter.ApplyFilters(data));
         }
 
+        [TestCase("S", typeof(int), true)]
+        [TestCase("S", typeof(string), false)]
         [TestCase("I", typeof(int), true)]
         [TestCase("I", typeof(string), false)]
         [TestCase("Child", typeof(int), false)]
@@ -430,6 +433,7 @@ namespace UnityEditor.VisualScriptingTests.SmartSearch
         }
 
         [TestCase("I", true)]
+        [TestCase("S", true)]
         [TestCase("Child", false)]
         [TestCase("", false)]
         public void TestWithConstantFields(string name, bool result)
@@ -485,11 +489,13 @@ namespace UnityEditor.VisualScriptingTests.SmartSearch
             Assert.AreEqual(result, filter.ApplyFilters(data));
         }
 
-        [TestCase(typeof(FakeObject), "Name", true)]
-        [TestCase(typeof(string), "Name", false)]
-        public void TestWithPropertiesOfType(Type type, string name, bool result)
+        [TestCase(typeof(FakeObject), nameof(FakeObject.Name), false, true)]
+        [TestCase(typeof(string), nameof(FakeObject.Name), false, false)]
+        [TestCase(typeof(FakeObject), nameof(FakeObject.Zero), false, false)]
+        [TestCase(typeof(FakeObject), nameof(FakeObject.Zero), true, true)]
+        public void TestWithPropertiesOfDeclaringType(Type type, string name, bool allowConstant, bool result)
         {
-            var filter = new SearcherFilter(SearcherContext.Graph).WithProperties(type);
+            var filter = new SearcherFilter(SearcherContext.Graph).WithProperties(type, allowConstant);
             var data = new PropertySearcherItemData(typeof(FakeObject).GetProperty(name));
 
             Assert.AreEqual(result, filter.ApplyFilters(data));

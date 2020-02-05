@@ -39,11 +39,7 @@ namespace UnityEditor.VisualScripting.Editor
         public Store Store => m_Store;
         TextField m_TitleTextfield;
 
-#if UNITY_2019_3_OR_NEWER
         Label m_TitleLabel;
-#else
-        BoundLabel m_TitleLabel;
-#endif
 
         public override string title
         {
@@ -88,11 +84,7 @@ namespace UnityEditor.VisualScripting.Editor
 
             this.EnableRename();
 
-#if UNITY_2019_3_OR_NEWER
             m_TitleLabel = this.Q<Label>(name: "titleLabel");
-#else
-            m_TitleLabel = this.Q<Label>(name: "titleLabel").ReplaceWithBoundLabel();
-#endif
 
             if (functionModel is LoopStackModel loopStackModel)
             {

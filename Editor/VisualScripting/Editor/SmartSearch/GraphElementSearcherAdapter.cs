@@ -8,10 +8,10 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.VisualScripting.Editor.SmartSearch
 {
-    abstract class GraphElementSearcherAdapter : SearcherAdapter
+    public abstract class GraphElementSearcherAdapter : SearcherAdapter
     {
-        VisualElement m_DetailsPanel;
-        Label m_DetailsTitle;
+        protected VisualElement m_DetailsPanel;
+        protected Label m_DetailsTitle;
 
         protected GraphElementSearcherAdapter(string title) : base(title) {}
 
@@ -61,7 +61,7 @@ namespace UnityEditor.VisualScripting.Editor.SmartSearch
         }
     }
 
-    class GraphNodeSearcherAdapter : GraphElementSearcherAdapter
+    public class GraphNodeSearcherAdapter : GraphElementSearcherAdapter
     {
         readonly IGraphModel m_GraphModel;
 
@@ -80,7 +80,7 @@ namespace UnityEditor.VisualScripting.Editor.SmartSearch
         }
     }
 
-    class StackNodeSearcherAdapter : GraphElementSearcherAdapter
+    public class StackNodeSearcherAdapter : GraphElementSearcherAdapter
     {
         readonly IStackModel m_StackModel;
 

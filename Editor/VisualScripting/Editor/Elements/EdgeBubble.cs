@@ -70,7 +70,7 @@ namespace UnityEditor.VisualScripting.Editor
 
             Detach();
 
-            RegisterCallback<GeometryChangedEvent>((evt) => ComputeTextSize());
+            RegisterCallback<GeometryChangedEvent>(OnGeometryChanged);
             m_Attacher = new Attacher(this, edgeControlTarget, align);
         }
 
@@ -79,8 +79,14 @@ namespace UnityEditor.VisualScripting.Editor
             if (m_Attacher == null)
                 return;
 
+            UnregisterCallback<GeometryChangedEvent>(OnGeometryChanged);
             m_Attacher.Detach();
             m_Attacher = null;
+        }
+
+        void OnGeometryChanged(GeometryChangedEvent evt)
+        {
+            ComputeTextSize();
         }
 
         void ComputeTextSize()

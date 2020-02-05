@@ -1,7 +1,7 @@
 {
   "name": "com.unity.graphtools.foundation",
   "displayName": "Graph Tools Foundation",
-  "version": "0.1.3-preview",
+  "version": "0.2.0-preview",
   "unity": "2019.3",
   "description": "A framework for node based tools including a graph data model, a UI foundation and graph-to-asset pipeline. It is not meant to be used by itself, but as a dependency of public-facing packages",
   "keywords": [
@@ -19,7 +19,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:Unity-Technologies/visualscripting-dev.git",
-    "revision": "3a3a05d197bec500bcddd434cdd59c5ff7e709d1"
+    "url": "https://github.com/Unity-Technologies/visualscripting-dev.git",
+    "revision": "9416828c734c97dda9a63f44da0b103ea018e1f2"
   }
 }

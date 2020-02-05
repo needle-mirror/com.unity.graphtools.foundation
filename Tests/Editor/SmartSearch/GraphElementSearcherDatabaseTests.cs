@@ -31,6 +31,8 @@ namespace UnityEditor.VisualScriptingTests.SmartSearch
         [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
         sealed class FakeObject
         {
+            public const string Value = "";
+            public static readonly string Blah = "";
             public readonly string Details = "";
             public float Num;
 
@@ -479,13 +481,16 @@ namespace UnityEditor.VisualScriptingTests.SmartSearch
             Assert.AreEqual(parameterLength, data.ConstructorInfo.GetParameters().Length);
         }
 
-        [TestCase(SearcherContext.Graph, "de", "Details", 0, 1)]
-        [TestCase(SearcherContext.Graph, "nu", "Num", 0, 2)]
-        [TestCase(SearcherContext.Stack, "nu", "Num", 1, 2)]
-        public void TestFields(SearcherContext context, string query, string fieldName, int index, int count)
+        [TestCase(SearcherContext.Graph, "val", "Value", 0, 1, true)]
+        [TestCase(SearcherContext.Graph, "blah", "Blah", 0, 1, true)]
+        [TestCase(SearcherContext.Graph, "de", "Details", 0, 1, false)]
+        [TestCase(SearcherContext.Graph, "nu", "Num", 0, 2, false)]
+        [TestCase(SearcherContext.Stack, "nu", "Num", 1, 2, false)]
+        public void TestFields(SearcherContext context, string query, string fieldName, int index, int count,
+            bool isConstant)
         {
             var db = new GraphElementSearcherDatabase(Stencil)
-                .AddFields(typeof(FakeObject).GetFields(BindingFlags.Public | BindingFlags.Instance))
+                .AddFields(typeof(FakeObject).GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static))
                 .Build();
 
             var results = db.Search(query, out _);
@@ -495,9 +500,17 @@ namespace UnityEditor.VisualScriptingTests.SmartSearch
             Assert.NotNull(item);
 
             if (context == SearcherContext.Graph)
+            {
                 Assert.IsTrue(results[index] is GraphNodeModelSearcherItem);
+
+                var graphItem = (GraphNodeModelSearcherItem)results[index];
+                var node = graphItem.CreateElements.Invoke(new GraphNodeCreationData(GraphModel, Vector2.down)).First();
+                Assert.That(node is ISystemConstantNodeModel, NUnit.Framework.Is.EqualTo(isConstant));
+            }
             else
+            {
                 Assert.IsTrue(results[index] is StackNodeModelSearcherItem);
+            }
 
             var data = (FieldSearcherItemData)item.Data;
             Assert.AreEqual(SearcherItemTarget.Field, data.Target);

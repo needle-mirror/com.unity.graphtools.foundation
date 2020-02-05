@@ -33,10 +33,11 @@
 }
 
 .stack-node.loopHeader > #stackNodeHeaderContainer > #functionHeaderTitleContainer #functionHeaderIconTitle {
-    position: relative;
+    flex-direction: row;
+    flex-grow: 1;
+    margin-left: 6px;
 }
 
-.stack-node > #stackNodeHeaderContainer > #functionHeaderTitleContainer #functionHeaderIconTitle,
 .stack-node.loopHeader.event > #stackNodeHeaderContainer > #functionHeaderTitleContainer #functionHeaderIconTitle {
     flex-direction: row;
     position: absolute;
@@ -47,7 +48,7 @@
 .stack-node > #stackNodeHeaderContainer > #functionHeaderTitleContainer > #functionHeaderIconTitle > #functionHeaderIcon {
     width: 12px;
     height: 12px;
-    align-self: center;
+    margin-top: 4px;
     flex: 0 0 auto;
 }
 
@@ -79,7 +80,6 @@
 
 .stack-node > #stackNodeHeaderContainer > #functionHeaderTitleContainer > #functionHeaderIconTitle > #functionHeaderTitle {
     align-self: center;
-    max-width: 250px;
     padding-left: 5px;
     flex-direction: row;
     overflow: hidden;
@@ -108,7 +108,7 @@
     width: 26px;
     height: 26px;
     visibility: hidden;
-    align-self: flex-end;
+    align-self: center;
     font-size: 20px;
     background-color: rgba(0, 0, 0, 0);
     background-image: none;
@@ -181,11 +181,13 @@
 
 .stack-node.function.loopHeader > * > #functionHeaderTitleContainer > * > #functionHeaderTitle > #titleContainerElement {
     flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
 }
 
 .stack-node.function.loopHeader > * > #functionHeaderTitleContainer > * > #functionHeaderTitle > #titleContainerElement > #titleLabel {
-    padding-left: 3px;
-    padding-right: 3px;
+    padding: 0 3px;
+    margin: 0;
 }
 
 .stack-node.function.loopHeader > * > * > #loopPortContainer {

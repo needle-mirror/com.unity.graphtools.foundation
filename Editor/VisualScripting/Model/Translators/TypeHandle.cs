@@ -28,6 +28,7 @@ namespace UnityEditor.VisualScripting.Model.Stencils
         public static TypeHandle Double { get; } = GenerateTypeHandle(typeof(double));
         public static TypeHandle Float { get; } = GenerateTypeHandle(typeof(float));
         public static TypeHandle Int { get; } = GenerateTypeHandle(typeof(int));
+        public static TypeHandle UInt { get; } = GenerateTypeHandle(typeof(uint));
         public static TypeHandle Long { get; } = GenerateTypeHandle(typeof(long));
         public static TypeHandle Object { get; } = GenerateTypeHandle(typeof(object));
         public static TypeHandle String { get; } = GenerateTypeHandle(typeof(string));

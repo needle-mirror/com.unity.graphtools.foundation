@@ -91,14 +91,17 @@ namespace UnityEditor.VisualScripting.Model
         }
 
         public static IConstantNodeModel CreateConstantNode(this IGraphModel graphModel, string constantName,
-            TypeHandle constantTypeHandle, Vector2 position, SpawnFlags spawnFlags = SpawnFlags.Default, GUID? guid = null)
+            TypeHandle constantTypeHandle, Vector2 position, SpawnFlags spawnFlags = SpawnFlags.Default, GUID? guid = null, Action<ConstantNodeModel> preDefine = null)
         {
             var nodeType = graphModel.Stencil.GetConstantNodeModelType(constantTypeHandle);
 
             void PreDefineSetup(NodeModel model)
             {
                 if (model is ConstantNodeModel constantModel)
+                {
                     constantModel.PredefineSetup(constantTypeHandle);
+                    preDefine?.Invoke(constantModel);
+                }
             }
 
             return (ConstantNodeModel)graphModel.CreateNode(nodeType, constantName, position, spawnFlags, PreDefineSetup, guid);

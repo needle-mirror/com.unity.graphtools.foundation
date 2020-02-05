@@ -2,10 +2,6 @@
     background-image: resource("Images/PillBackgroundParameter");
 }
 
-.stack-node.function.loopHeader > * > #functionHeaderTitleContainer > * > #functionHeaderTitle > #titleContainerElement > .token.declaration {
-    top: 2px;
-}
-
 VseGraphView .token > .pill,
 VseGraphView .token.declaration > .pill {
     min-width: 52px;

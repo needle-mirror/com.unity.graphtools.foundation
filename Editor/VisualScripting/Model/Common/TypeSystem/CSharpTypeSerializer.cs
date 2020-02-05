@@ -1,11 +1,48 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine.Scripting.APIUpdating;
 
 namespace UnityEditor.VisualScripting.Model.Stencils
 {
     public class CSharpTypeSerializer
     {
         public readonly Dictionary<string, string> typeRenames;
+
+        static Dictionary<string, Type> s_MovedFromTypes;
+        static Dictionary<string, Type> MovedFromTypes
+        {
+            get
+            {
+                if (s_MovedFromTypes == null)
+                {
+                    s_MovedFromTypes = new Dictionary<string, Type>();
+                    var movedFromTypes = TypeCache.GetTypesWithAttribute<MovedFromAttribute>();
+                    foreach (var t in movedFromTypes)
+                    {
+                        var attributes = Attribute.GetCustomAttributes(t, typeof(MovedFromAttribute));
+                        foreach (var attribute in attributes)
+                        {
+                            var movedFromAttribute = (MovedFromAttribute)attribute;
+                            movedFromAttribute.GetData(out _, out var nameSpace, out var assembly, out var className);
+
+                            var currentClassName = t.Name;
+                            var currentNamespace = t.Namespace;
+                            var currentAssembly = t.Assembly.FullName;
+
+                            var newNamespace = string.IsNullOrEmpty(nameSpace) ? currentNamespace : nameSpace;
+                            var newClassName = string.IsNullOrEmpty(className) ? currentClassName : className;
+                            var newAssembly = string.IsNullOrEmpty(assembly) ? currentAssembly : assembly;
+
+                            var str = $"{newNamespace}.{newClassName}, {newAssembly}";
+
+                            s_MovedFromTypes.Add(str, t);
+                        }
+                    }
+                }
+
+                return s_MovedFromTypes;
+            }
+        }
 
         public CSharpTypeSerializer(Dictionary<string, string> typeRenames = null)
         {
@@ -53,7 +90,18 @@ namespace UnityEditor.VisualScripting.Model.Stencils
             {
                 if (typeRenames != null && typeRenames.TryGetValue(assemblyQualifiedName, out var newName))
                     assemblyQualifiedName = newName;
-                retType = Type.GetType(assemblyQualifiedName) ?? retType;
+
+                var type = Type.GetType(assemblyQualifiedName);
+                if (type == null)
+                {
+                    // check if the type has moved
+                    if (MovedFromTypes.ContainsKey(assemblyQualifiedName))
+                    {
+                        type = MovedFromTypes[assemblyQualifiedName];
+                    }
+                }
+
+                retType = type ?? retType;
             }
             return retType;
         }

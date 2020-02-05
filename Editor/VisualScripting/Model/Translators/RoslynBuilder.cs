@@ -78,17 +78,22 @@ namespace UnityEditor.VisualScripting.Model.Translators
         }
 
         public static FieldDeclarationSyntax DeclareField(Type fieldType, string name,
-            AccessibilityFlags accessibility = AccessibilityFlags.Default)
+            AccessibilityFlags accessibility = AccessibilityFlags.Default, EqualsValueClauseSyntax defaultValue = null)
         {
             var typeSyntax = fieldType.ToTypeSyntax();
 
-            return DeclareField(typeSyntax, name, accessibility);
+            return DeclareField(typeSyntax, name, accessibility, defaultValue);
         }
 
-        public static FieldDeclarationSyntax DeclareField(TypeSyntax typeSyntax, string name, AccessibilityFlags accessibility)
+        public static FieldDeclarationSyntax DeclareField(TypeSyntax typeSyntax, string name, AccessibilityFlags accessibility, EqualsValueClauseSyntax defaultValue = null)
         {
             VariableDeclarationSyntax varDeclaration = SyntaxFactory.VariableDeclaration(typeSyntax);
             var varDeclarator = SyntaxFactory.VariableDeclarator(SyntaxFactory.Identifier(name));
+
+            if (defaultValue != null)
+            {
+                varDeclarator = varDeclarator.WithInitializer(defaultValue);
+            }
 
             FieldDeclarationSyntax fieldDeclaration = SyntaxFactory.FieldDeclaration(
                 varDeclaration.WithVariables(SyntaxFactory.SingletonSeparatedList(varDeclarator)))
@@ -159,12 +164,25 @@ namespace UnityEditor.VisualScripting.Model.Translators
             return modifiers;
         }
 
-        public static MemberAccessExpressionSyntax MemberReference(SyntaxNode leftHand, string name)
+        public static ExpressionSyntax MemberReference(string name, params string[] names)
+        {
+            return MemberReference(SyntaxFactory.IdentifierName(name), names);
+        }
+
+        public static ExpressionSyntax MemberReference(SyntaxNode leftHand, params string[] names)
+        {
+            return names.Aggregate(leftHand as ExpressionSyntax, (syntax, s) => SyntaxFactory.MemberAccessExpression(
+                SyntaxKind.SimpleMemberAccessExpression,
+                syntax,
+                SyntaxFactory.IdentifierName(s)));
+        }
+
+        public static MemberAccessExpressionSyntax EnumSyntax<T>(T value) where T : Enum
         {
             return SyntaxFactory.MemberAccessExpression(
                 SyntaxKind.SimpleMemberAccessExpression,
-                leftHand as ExpressionSyntax,
-                SyntaxFactory.IdentifierName(name ?? ""));
+                SyntaxFactory.IdentifierName(typeof(T).Name),
+                SyntaxFactory.IdentifierName(Enum.GetName(typeof(T), value)));
         }
 
         public static SyntaxNode ArgumentReference(string name)
@@ -180,6 +198,30 @@ namespace UnityEditor.VisualScripting.Model.Translators
         public static LiteralExpressionSyntax EmptyStringLiteralExpression()
         {
             return SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(string.Empty));
+        }
+
+        public static LiteralExpressionSyntax BoolExpression(bool value)
+        {
+            return SyntaxFactory.LiteralExpression(value
+                ? SyntaxKind.TrueLiteralExpression
+                : SyntaxKind.FalseLiteralExpression);
+        }
+
+        public static FieldDeclarationSyntax AddAttributes(this FieldDeclarationSyntax field, params string[] attributeNames)
+        {
+            return field.AddAttributeLists(MakeAttributes(attributeNames));
+        }
+
+        public static ParameterSyntax AddAttributes(this ParameterSyntax parameter, params string[] attributeNames)
+        {
+            return parameter.AddAttributeLists(MakeAttributes(attributeNames));
+        }
+
+        static AttributeListSyntax MakeAttributes(params string[] attributeNames)
+        {
+            return SyntaxFactory.AttributeList(
+                SyntaxFactory.SeparatedList(
+                    attributeNames.Select(a => SyntaxFactory.Attribute(SyntaxFactory.IdentifierName(a)))));
         }
 
         internal static ObjectCreationExpressionSyntax CreateConstantInitializationExpression(object value, Type generatedType)
@@ -272,9 +314,9 @@ namespace UnityEditor.VisualScripting.Model.Translators
             return statement;
         }
 
-        public static IfStatementSyntax IfStatement(SyntaxNode condition, BlockSyntax thenBlock, BlockSyntax elseBlock)
+        public static IfStatementSyntax IfStatement(SyntaxNode condition, BlockSyntax thenBlock, StatementSyntax elseBlock = null)
         {
-            if (!elseBlock.Statements.Any())
+            if (elseBlock == null)
                 return SyntaxFactory.IfStatement(condition as ExpressionSyntax, thenBlock);
 
             return SyntaxFactory.IfStatement(condition as ExpressionSyntax, thenBlock).WithElse(SyntaxFactory.ElseClause(elseBlock));
@@ -288,7 +330,22 @@ namespace UnityEditor.VisualScripting.Model.Translators
                 value as ExpressionSyntax);
         }
 
-        public static ExpressionSyntax MethodInvocation(string methodName, ExpressionSyntax instance, IEnumerable<ArgumentSyntax> argumentList, IEnumerable<TypeSyntax> typeArgumentList)
+        public static ExpressionSyntax MethodInvocation(string methodName, ExpressionSyntax instance, params TypeSyntax[] types)
+        {
+            return MethodInvocation(methodName, instance, Enumerable.Empty<ArgumentSyntax>(), types);
+        }
+
+        public static ExpressionSyntax MethodInvocation(string methodName, ExpressionSyntax instance, TypeSyntax typeSyntax, params ArgumentSyntax[] arguments)
+        {
+            return MethodInvocation(methodName, instance, arguments, Enumerable.Repeat(typeSyntax, 1));
+        }
+
+        public static ExpressionSyntax MethodInvocation(string methodName, ExpressionSyntax instance, params ArgumentSyntax[] arguments)
+        {
+            return MethodInvocation(methodName, instance, arguments, Enumerable.Empty<TypeSyntax>());
+        }
+
+        public static InvocationExpressionSyntax MethodInvocation(string methodName, ExpressionSyntax instance, IEnumerable<ArgumentSyntax> argumentList = null, IEnumerable<TypeSyntax> typeArgumentList = null)
         {
             var sepList = SyntaxFactory.SeparatedList(argumentList);
 
@@ -312,10 +369,8 @@ namespace UnityEditor.VisualScripting.Model.Translators
                 instance,
                 method);
 
-            ExpressionSyntax invocationSyntax = SyntaxFactory.InvocationExpression(memberAccessExpression)
+            return SyntaxFactory.InvocationExpression(memberAccessExpression)
                 .WithArgumentList(SyntaxFactory.ArgumentList(sepList));
-
-            return invocationSyntax;
         }
 
         public static SyntaxNode MethodInvocation(string name, MethodBase methodInfo, SyntaxNode instance, List<ArgumentSyntax> argumentList, TypeArgumentListSyntax typeArgumentList)
@@ -404,6 +459,37 @@ namespace UnityEditor.VisualScripting.Model.Translators
             return finalExpressionSyntax;
         }
 
+        // for (int indexName = initValue ; indexName < maxValue; ++indexName) { block }
+        public static ForStatementSyntax ForIntStatement(string indexName, int initValue, ExpressionSyntax maxValue, BlockSyntax block)
+        {
+            return ForIntStatement(indexName, SyntaxFactory.LiteralExpression(
+                SyntaxKind.NumericLiteralExpression,
+                SyntaxFactory.Literal(initValue)), maxValue, block);
+        }
+
+        // for (int indexName = initValue ; indexName < maxValue; ++indexName) { block }
+        public static ForStatementSyntax ForIntStatement(string indexName, ExpressionSyntax initValue, ExpressionSyntax maxValue, BlockSyntax block)
+        {
+            return SyntaxFactory.ForStatement(block)
+                .WithDeclaration(SyntaxFactory.VariableDeclaration(
+                    SyntaxFactory.PredefinedType(
+                        SyntaxFactory.Token(SyntaxKind.IntKeyword)))
+                    .WithVariables(
+                        SyntaxFactory.SingletonSeparatedList(
+                            SyntaxFactory.VariableDeclarator(
+                                SyntaxFactory.Identifier(indexName))
+                                .WithInitializer(
+                                    SyntaxFactory.EqualsValueClause(initValue)))))
+                .WithCondition(SyntaxFactory.BinaryExpression(
+                    SyntaxKind.LessThanExpression,
+                    SyntaxFactory.IdentifierName(indexName),
+                    maxValue))
+                .WithIncrementors(SyntaxFactory.SingletonSeparatedList<ExpressionSyntax>(
+                    SyntaxFactory.PrefixUnaryExpression(
+                        SyntaxKind.PreIncrementExpression,
+                        SyntaxFactory.IdentifierName(indexName))));
+        }
+
         public static object GetDefault(Type type)
         {
             return type.IsValueType ? Activator.CreateInstance(type) : null;
@@ -430,6 +516,12 @@ namespace UnityEditor.VisualScripting.Model.Translators
                 : SyntaxFactory.ThisExpression();
 
             return GetProperty(instance, members);
+        }
+
+        public static CastExpressionSyntax Cast(this ExpressionSyntax e, SyntaxKind castKind)
+        {
+            return SyntaxFactory.CastExpression(
+                SyntaxFactory.PredefinedType(SyntaxFactory.Token(castKind)), e);
         }
 
         public static SyntaxNode GetProperty(ExpressionSyntax instance, params string[] members)

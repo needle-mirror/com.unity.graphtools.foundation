@@ -60,7 +60,7 @@ namespace UnityEditor.VisualScripting.Model.Stencils
                 .WithUnaryOperators(type, portModel.NodeModel is IConstantNodeModel)
                 .WithBinaryOperators(type)
                 .WithMethods(type)
-                .WithProperties(type)
+                .WithProperties(type, false)
                 .WithGraphAsset(assetModel);
         }
 
@@ -77,7 +77,7 @@ namespace UnityEditor.VisualScripting.Model.Stencils
                 .WithUnaryOperators(type)
                 .WithIfConditions(typeHandle, stackModel)
                 .WithMethods(type)
-                .WithProperties(type)
+                .WithProperties(type, false)
                 .WithGraphAsset(assetModel);
         }
 

@@ -16,6 +16,7 @@ using UnityEngine;
 using UnityEngine.VisualScripting;
 using Object = UnityEngine.Object;
 using UnityEditor.Experimental.GraphView;
+using UnityEditor.Searcher;
 
 namespace UnityEditor.VisualScripting.Model.Stencils
 {
@@ -140,6 +141,18 @@ namespace UnityEditor.VisualScripting.Model.Stencils
             return null;
         }
 
+        [CanBeNull]
+        public virtual ISearcherAdapter GetSearcherAdapter(IStackModel stackModel, string title)
+        {
+            return new StackNodeSearcherAdapter(stackModel, title);
+        }
+
+        [CanBeNull]
+        public virtual ISearcherAdapter GetSearcherAdapter(IGraphModel graphModel, string title)
+        {
+            return new GraphNodeSearcherAdapter(graphModel, title);
+        }
+
         public abstract ISearcherDatabaseProvider GetSearcherDatabaseProvider();
 
         public virtual void OnCompilationSucceeded(VSGraphModel graphModel, CompilationResult results) {}
@@ -214,31 +227,6 @@ namespace UnityEditor.VisualScripting.Model.Stencils
                 return typeof(EnumConstantNodeModel);
 
             return null;
-        }
-
-        public virtual string GetTooltipForPortModel(IPortModel portModel)
-        {
-            string newTooltip = portModel.Direction == Direction.Output ? "Output" : "Input";
-            switch (portModel.PortType)
-            {
-                case PortType.Execution:
-                    newTooltip += " execution flow";
-                    if (portModel.NodeModel.IsCondition)
-                        newTooltip += $" ({portModel.Name.ToLower()} condition)";
-                    break;
-                case PortType.Loop:
-                    newTooltip += " loop";
-                    break;
-                case PortType.Data:
-                case PortType.Instance:
-                    var stencil = portModel.GraphModel.Stencil;
-                    newTooltip += $" of type {(portModel.DataType == TypeHandle.ThisType ? (portModel.NodeModel?.GraphModel)?.FriendlyScriptName : portModel.DataType.GetMetadata(stencil).FriendlyName)}";
-                    break;
-                case PortType.Event:
-                    newTooltip += " event";
-                    break;
-            }
-            return newTooltip;
         }
 
         public virtual void CreateNodesFromPort(Store store, IPortModel portModel, Vector2 position,

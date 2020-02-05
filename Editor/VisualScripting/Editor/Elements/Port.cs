@@ -25,11 +25,13 @@ namespace UnityEditor.VisualScripting.Editor
         Store m_Store;
         VisualElement PortIcon { get; set; }
 
-        VseGraphView m_VseGraphView;
-
         Rect m_BoxRect = Rect.zero;
 
-        VseGraphView GraphView => m_VseGraphView ?? (m_VseGraphView = GetFirstAncestorOfType<VseGraphView>());
+#if !UNITY_2020_1_OR_NEWER
+        VseGraphView m_GraphView;
+#endif
+        GraphView GraphView => m_GraphView ?? (m_GraphView = GetFirstAncestorOfType<VseGraphView>());
+        VseGraphView VseGraphView => GraphView as VseGraphView;
 
         // TODO: Weird that ContainsPoint does not work out of the box (with the default implementation)
         public override bool ContainsPoint(Vector2 localPoint)
@@ -180,19 +182,18 @@ namespace UnityEditor.VisualScripting.Editor
             }
             else
             {
-                VisualElement innerContainer = new VisualElement {name = "innerContainer"};
-                innerContainer.style.flexDirection = FlexDirection.Row;
-                innerContainer.Add(port);
-                dataContainer.Add(innerContainer);
+                dataContainer.Add(port);
 
                 IConstantNodeModel modelToShow = port.GetModelToWatch();
 
                 if (modelToShow != null)
                 {
-                    VisualElement editor = port.CreateEditorForNodeModel(modelToShow, _ => store.Dispatch(new RefreshUIAction(UpdateFlags.RequestCompilation)));
+                    var embeddedValueEditorValueChangedOverride = inputPortModel.EmbeddedValueEditorValueChangedOverride;
+                    var localInputPortModel = inputPortModel;
+                    VisualElement editor = port.CreateEditorForNodeModel(modelToShow, embeddedValueEditorValueChangedOverride != null ? new Action<IChangeEvent>(x => embeddedValueEditorValueChangedOverride.Invoke(x, store, localInputPortModel)) : (_ => store.Dispatch(new RefreshUIAction(UpdateFlags.RequestCompilation))));
                     if (editor != null)
                     {
-                        innerContainer.Add(editor);
+                        port.Add(editor);
                         port.m_InputEditor = editor;
                         port.m_InputEditor.SetEnabled(!port.Model.Connected || port.Model.ConnectionPortModels.All(p => p.NodeModel.State == ModelState.Disabled));
                     }
@@ -352,19 +353,19 @@ namespace UnityEditor.VisualScripting.Editor
                 return true;
             }
 
-            List<Tuple<IVariableDeclarationModel, Vector2>> variablesToCreate = DragAndDropHelper.ExtractVariablesFromDroppedElements(dropElements, GraphView, evt.mousePosition);
+            List<Tuple<IVariableDeclarationModel, Vector2>> variablesToCreate = DragAndDropHelper.ExtractVariablesFromDroppedElements(dropElements, VseGraphView, evt.mousePosition);
 
             PortType type = ((IPortModel)userData).PortType;
             if (type != PortType.Data && type != PortType.Instance) // do not connect loop/exec ports to variables
             {
-                return GraphView.DragPerform(evt, selectionList, dropTarget, dragSource);
+                return VseGraphView.DragPerform(evt, selectionList, dropTarget, dragSource);
             }
 
             IVariableDeclarationModel varModelToCreate = variablesToCreate.Single().Item1;
 
             m_Store.Dispatch(new CreateVariableNodesAction(varModelToCreate, evt.mousePosition, edgesToDelete, (IPortModel)userData, autoAlign: true));
 
-            GraphView.ClearPlaceholdersAfterDrag();
+            VseGraphView.ClearPlaceholdersAfterDrag();
 
             return true;
         }
@@ -391,15 +392,14 @@ namespace UnityEditor.VisualScripting.Editor
         public bool DragExited()
         {
             RemoveFromClassList(k_DropHighlightClass);
-            GraphView?.ClearPlaceholdersAfterDrag();
+            VseGraphView?.ClearPlaceholdersAfterDrag();
             return false;
         }
 
-        // TODO: once we have partial ui rebuild, fix that
         [PublicAPI]
         public void UpdateTooltip(IPortModel portModel)
         {
-            tooltip = m_Store.GetState().CurrentGraphModel?.Stencil.GetTooltipForPortModel(portModel);
+            tooltip = portModel.ToolTip;
         }
     }
 }

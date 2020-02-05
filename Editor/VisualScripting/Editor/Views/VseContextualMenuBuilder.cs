@@ -113,10 +113,21 @@ namespace UnityEditor.VisualScripting.Editor
             if (!(m_Evt.target is GraphView))
                 return;
 
-            m_Evt.menu.InsertAction(0, "Create Node", menuAction =>
+            m_Evt.menu.AppendAction("Create Node", menuAction =>
             {
                 m_GraphView.window.DisplaySmartSearch(menuAction);
-            }, DropdownMenuAction.AlwaysEnabled);
+            });
+
+#if UNITY_2020_1_OR_NEWER
+            m_Evt.menu.AppendAction("Create Placemat", menuAction =>
+            {
+                Vector2 mousePosition = menuAction?.eventInfo?.mousePosition ?? Event.current.mousePosition;
+                Vector2 graphPosition = m_GraphView.contentViewContainer.WorldToLocal(mousePosition);
+
+                m_Store.Dispatch(new CreatePlacematAction(null, new Rect(graphPosition.x, graphPosition.y, 200, 200)));
+            });
+#endif
+
             m_Evt.menu.AppendSeparator();
 
             m_Evt.menu.AppendAction("Cut", menuAction => m_GraphView.InvokeCutSelectionCallback(),
@@ -143,12 +154,28 @@ namespace UnityEditor.VisualScripting.Editor
             if (!selectedModelsKeys.Any())
                 return;
 
-            var models = selectedModelsKeys.OfType<INodeModel>().ToArray();
+            var models = selectedModelsKeys.OfType<NodeModel>().ToArray();
             var connectedModels = models.Where(x => x.InputsByDisplayOrder.Any(y => y.Connected) && x.OutputsByDisplayOrder.Any(y => y.Connected)).ToArray();
             bool canSelectionBeBypassed = connectedModels.Any();
 
-            m_Evt.menu.AppendAction("Align Item (Q)", menuAction => m_GraphView.AlignSelection(false), x => DropdownMenuAction.Status.Normal);
-            m_Evt.menu.AppendAction("Align Hierarchy (Shift+Q)", menuAction => m_GraphView.AlignSelection(true), x => DropdownMenuAction.Status.Normal);
+            m_Evt.menu.AppendSeparator();
+
+            m_Evt.menu.AppendAction("Align Item (Q)", menuAction => m_GraphView.AlignSelection(false));
+            m_Evt.menu.AppendAction("Align Hierarchy (Shift+Q)", menuAction => m_GraphView.AlignSelection(true));
+
+#if UNITY_2020_1_OR_NEWER
+            var content = selectedModels.Values.OfType<GraphElement>().Where(e => (e.parent is GraphView.Layer) && (e is Experimental.GraphView.Node || e is StickyNote)).ToList();
+            m_Evt.menu.AppendAction("Create Placemat Under Selection", menuAction =>
+            {
+                Rect bounds = new Rect();
+                if (Experimental.GraphView.Placemat.ComputeElementBounds(ref bounds, content))
+                {
+                    m_Store.Dispatch(new CreatePlacematAction(null, bounds));
+                }
+            }, action => (content.Count == 0) ? DropdownMenuAction.Status.Disabled : DropdownMenuAction.Status.Normal);
+#endif
+
+            m_Evt.menu.AppendSeparator();
 
             m_Evt.menu.AppendAction("Cut", menuAction => m_GraphView.InvokeCutSelectionCallback(),
                 x => m_GraphView.CanCutSelection() ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
@@ -161,15 +188,20 @@ namespace UnityEditor.VisualScripting.Editor
 
             m_Evt.menu.AppendSeparator();
 
-            m_Evt.menu.AppendAction("Disconnect", menuAction =>
-            {
-                m_Store.Dispatch(new DisconnectNodeAction(models));
-            },  eventBase => models.Any() ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
-
             m_Evt.menu.AppendAction("Delete", menuAction =>
             {
                 m_Store.Dispatch(new DeleteElementsAction(selectedModelsKeys));
             }, eventBase => DropdownMenuAction.Status.Normal);
+
+            m_Evt.menu.AppendSeparator();
+
+            if (models.Any())
+            {
+                m_Evt.menu.AppendAction("Disconnect", menuAction =>
+                {
+                    m_Store.Dispatch(new DisconnectNodeAction(models));
+                });
+            }
 
             if (canSelectionBeBypassed)
             {
@@ -185,6 +217,49 @@ namespace UnityEditor.VisualScripting.Editor
 //                    m_Store.Dispatch(new OpenDocumentationAction(models));
 //                }, x => DropdownMenuAction.Status.Normal);
 
+#if UNITY_2020_1_OR_NEWER
+            var placemats = selectedModelsKeys.OfType<PlacematModel>().ToArray();
+            if (models.Any() || placemats.Any())
+            {
+                m_Evt.menu.AppendAction("Color/Change...", menuAction =>
+                {
+                    // TODO: make ColorPicker.Show(...) public in trunk
+                    Type t = typeof(EditorWindow).Assembly.GetTypes().FirstOrDefault(ty => ty.Name == "ColorPicker");
+                    MethodInfo m = t?.GetMethod("Show", new[] { typeof(Action<Color>), typeof(Color), typeof(bool), typeof(bool) });
+
+                    void ChangeNodesColor(Color pickedColor)
+                    {
+                        foreach (ICustomColor node in selectedModels.Values.OfType<ICustomColor>())
+                            node.SetColor(pickedColor);
+                        m_Store.Dispatch(new ChangeElementColorAction(pickedColor, models, placemats));
+                    }
+
+                    var defaultColor = new Color(0.5f, 0.5f, 0.5f);
+                    if (!models.Any() && placemats.Length == 1)
+                    {
+                        defaultColor = placemats[0].Color;
+                    }
+                    else if (models.Length == 1 && !placemats.Any())
+                    {
+                        defaultColor = models[0].Color;
+                    }
+
+                    m?.Invoke(null, new object[] { (Action<Color>)ChangeNodesColor, defaultColor, true, false});
+                }, eventBase => DropdownMenuAction.Status.Normal);
+
+                m_Evt.menu.AppendAction("Color/Reset", menuAction =>
+                {
+                    foreach (ICustomColor node in selectedModels.Values.OfType<ICustomColor>())
+                        node.ResetColor();
+
+                    m_Store.Dispatch(new ResetElementColorAction(models, placemats));
+                }, eventBase => DropdownMenuAction.Status.Normal);
+            }
+            else
+            {
+                m_Evt.menu.AppendAction("Color", menuAction => {}, eventBase => DropdownMenuAction.Status.Disabled);
+            }
+#else
             if (models.Any())
             {
                 m_Evt.menu.AppendAction("Color/Change...", menuAction =>
@@ -197,29 +272,31 @@ namespace UnityEditor.VisualScripting.Editor
                     {
                         foreach (ICustomColor node in selectedModels.Values.OfType<ICustomColor>())
                             node.SetColor(pickedColor);
-                        m_Store.Dispatch(new ChangeNodeColorAction(pickedColor, models));
+                        m_Store.Dispatch(new ChangeElementColorAction(pickedColor, models));
                     }
 
-                    m?.Invoke(null, new object[] { (Action<Color>)ChangeNodesColor,
-                                                   models[0].HasUserColor ? models[0].Color : new Color(0.5f, 0f, 0.32f), true, false});
+                    var defaultColor = new Color(0.5f, 0.5f, 0.5f);
+                    if (models.Length == 1)
+                    {
+                        defaultColor = models[0].Color;
+                    }
+
+                    m?.Invoke(null, new object[] { (Action<Color>)ChangeNodesColor, defaultColor, true, false});
                 }, eventBase => DropdownMenuAction.Status.Normal);
 
                 m_Evt.menu.AppendAction("Color/Reset", menuAction =>
                 {
-                    m_Store.Dispatch(new ResetNodeColorAction(models));
+                    foreach (ICustomColor node in selectedModels.Values.OfType<ICustomColor>())
+                        node.ResetColor();
+
+                    m_Store.Dispatch(new ResetElementColorAction(models));
                 }, eventBase => DropdownMenuAction.Status.Normal);
             }
             else
             {
                 m_Evt.menu.AppendAction("Color", menuAction => {}, eventBase => DropdownMenuAction.Status.Disabled);
             }
-
-            if (canSelectionBeBypassed)
-            {
-                m_Evt.menu.AppendAction("Bypass", menuAction => m_Store.Dispatch(new BypassNodeAction(connectedModels)),
-                    eventBase => DropdownMenuAction.Status.Normal);
-                m_Evt.menu.AppendSeparator();
-            }
+#endif
         }
 
         void BuildStackContextualMenu(IReadOnlyCollection<IGraphElementModel> selectedModels)

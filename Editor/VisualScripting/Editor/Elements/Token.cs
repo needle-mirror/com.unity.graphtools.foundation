@@ -22,11 +22,7 @@ namespace UnityEditor.VisualScripting.Editor
         SerializedObject m_SerializedObject;
 
         TextField m_TitleTextfield;
-#if UNITY_2019_3_OR_NEWER
         Label m_TitleLabel;
-#else
-        BoundLabel m_TitleLabel;
-#endif
 
         public string TitleValue => Model.Title.Nicify();
 
@@ -99,11 +95,7 @@ namespace UnityEditor.VisualScripting.Editor
             {
                 if (modelReference is IExposeTitleProperty titleProperty)
                 {
-#if UNITY_2019_3_OR_NEWER
                     m_TitleLabel = this.Q<Label>("title-label");
-#else
-                    m_TitleLabel = this.Q<Label>("title-label").ReplaceWithBoundLabel();
-#endif
                     m_TitleLabel.bindingPath = titleProperty.TitlePropertyName;
                 }
             }
@@ -195,6 +187,13 @@ namespace UnityEditor.VisualScripting.Editor
             }
 
             return false;
+        }
+
+        public void ResetColor()
+        {
+            var border = this.MandatoryQ("node-border");
+            border.style.backgroundColor = StyleKeyword.Null;
+            border.style.backgroundImage = StyleKeyword.Null;
         }
 
         public void SetColor(Color c)

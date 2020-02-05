@@ -80,7 +80,11 @@ namespace UnityEditor.VisualScripting.GraphViewModel
             }
         }
 
+#if UNITY_2020_1_OR_NEWER
+        public virtual CapabilityFlags Capabilities => CapabilityFlags.Selectable | CapabilityFlags.Deletable | CapabilityFlags.Movable | CapabilityFlags.Droppable | CapabilityFlags.Copiable;
+#else
         public virtual CapabilityFlags Capabilities => CapabilityFlags.Selectable | CapabilityFlags.Deletable | CapabilityFlags.Movable | CapabilityFlags.Droppable;
+#endif
 
         public ScriptableObject SerializableAsset => (ScriptableObject)GraphModel.AssetModel;
 
@@ -154,6 +158,25 @@ namespace UnityEditor.VisualScripting.GraphViewModel
                 m_Dictionary.Add(portModel.UniqueId, portModel);
                 m_PortModels.Add(portModel);
                 m_Order.Add(m_Order.Count);
+            }
+
+            public bool Remove(IPortModel portModel)
+            {
+                bool found = false;
+                if (m_Dictionary.ContainsKey(portModel.UniqueId))
+                {
+                    m_Dictionary.Remove(portModel.UniqueId);
+                    found = true;
+                    int index = m_PortModels.FindIndex(x => x == portModel);
+                    m_PortModels.Remove(portModel);
+                    m_Order.Remove(index);
+                    for (int i = 0; i < m_Order.Count; ++i)
+                    {
+                        if (m_Order[i] > index)
+                            --m_Order[i];
+                    }
+                }
+                return found;
             }
 
             public void SwapPortsOrder(IPortModel a, IPortModel b)
@@ -350,7 +373,7 @@ namespace UnityEditor.VisualScripting.GraphViewModel
             m_Color = color;
         }
 
-        protected virtual PortModel MakePortForNode(Direction direction, string portName, PortType portType, TypeHandle dataType, string portId, PortModel.PortModelOptions options)
+        protected virtual PortModel MakePortForNode(Direction direction, string portName, PortType portType, TypeHandle dataType, string portId, PortModel.PortModelOptions options, object portCreationdata)
         {
             return new PortModel(portName ?? "", portId, options)
             {
@@ -361,14 +384,19 @@ namespace UnityEditor.VisualScripting.GraphViewModel
             };
         }
 
-        protected PortModel AddDataInput<TDataType>(string portName, string portId = null, PortModel.PortModelOptions options = PortModel.PortModelOptions.Default)
+        protected PortModel AddDataInput<TDataType>(string portName, string portId = null, PortModel.PortModelOptions options = PortModel.PortModelOptions.Default, TDataType defaultValue = default)
         {
-            return AddDataInput(portName, typeof(TDataType).GenerateTypeHandle(Stencil), portId, options);
+            Action<ConstantNodeModel> preDefine = null;
+
+            if (!EqualityComparer<TDataType>.Default.Equals(defaultValue, default))
+                preDefine = constantModel => constantModel.SetValue(defaultValue);
+
+            return AddDataInput(portName, typeof(TDataType).GenerateTypeHandle(Stencil), portId, options, preDefine);
         }
 
-        protected PortModel AddDataInput(string portName, TypeHandle typeHandle, string portId = null, PortModel.PortModelOptions options = PortModel.PortModelOptions.Default)
+        protected PortModel AddDataInput(string portName, TypeHandle typeHandle, string portId = null, PortModel.PortModelOptions options = PortModel.PortModelOptions.Default, Action<ConstantNodeModel> preDefine = null)
         {
-            return AddInputPort(portName, PortType.Data, typeHandle, portId, options);
+            return AddInputPort(portName, PortType.Data, typeHandle, portId, options, preDefine);
         }
 
         protected PortModel AddDataOutputPort<TDataType>(string portName, string portId = null)
@@ -406,21 +434,21 @@ namespace UnityEditor.VisualScripting.GraphViewModel
             return AddOutputPort(portName, PortType.Loop, TypeHandle.ExecutionFlow, portId);
         }
 
-        protected virtual PortModel AddInputPort(string portName, PortType portType, TypeHandle dataType, string portId = null, PortModel.PortModelOptions options = PortModel.PortModelOptions.Default)
+        protected virtual PortModel AddInputPort(string portName, PortType portType, TypeHandle dataType, string portId = null, PortModel.PortModelOptions options = PortModel.PortModelOptions.Default, Action<ConstantNodeModel> preDefine = null, object portCreationData = null)
         {
-            var portModel = MakePortForNode(Direction.Input, portName, portType, dataType, portId, options);
+            var portModel = MakePortForNode(Direction.Input, portName, portType, dataType, portId, options, portCreationData);
             portModel = ReuseOrCreatePortModel(portModel, m_PreviousInputs, m_InputsById);
-            UpdateConstantForInput(portModel);
+            UpdateConstantForInput(portModel, preDefine);
             return portModel;
         }
 
-        protected virtual PortModel AddOutputPort(string portName, PortType portType, TypeHandle dataType, string portId = null, PortModel.PortModelOptions options = PortModel.PortModelOptions.Default)
+        protected virtual PortModel AddOutputPort(string portName, PortType portType, TypeHandle dataType, string portId = null, PortModel.PortModelOptions options = PortModel.PortModelOptions.Default, object portCreationData = null)
         {
-            var portModel = MakePortForNode(Direction.Output, portName, portType, dataType, portId, options);
+            var portModel = MakePortForNode(Direction.Output, portName, portType, dataType, portId, options, portCreationData);
             return ReuseOrCreatePortModel(portModel, m_PreviousOutputs, m_OutputsById);
         }
 
-        void UpdateConstantForInput(PortModel inputPort)
+        void UpdateConstantForInput(PortModel inputPort, Action<ConstantNodeModel> preDefine = null)
         {
             var id = inputPort.UniqueId;
             if ((inputPort.Options & PortModel.PortModelOptions.NoEmbeddedConstant) != 0)
@@ -439,7 +467,7 @@ namespace UnityEditor.VisualScripting.GraphViewModel
                 // Destroy existing constant if not compatible
                 Type type = inputPort.DataType.Resolve(Stencil);
                 constant.AssetModel = m_GraphAssetModel;
-                if (constant.Type != type)
+                if (!constant.Type.IsAssignableFrom(type))
                 {
                     m_InputConstantsById.Remove(id);
                 }
@@ -447,7 +475,7 @@ namespace UnityEditor.VisualScripting.GraphViewModel
 
             // Create new constant if needed
             if (!m_InputConstantsById.ContainsKey(id)
-                && inputPort.PortType == PortType.Data
+                && inputPort.CreateEmbeddedValueIfNeeded
                 && inputPort.DataType != TypeHandle.Unknown
                 && Stencil.GetConstantNodeModelType(inputPort.DataType) != null)
             {
@@ -455,7 +483,8 @@ namespace UnityEditor.VisualScripting.GraphViewModel
                     inputPort.Name,
                     inputPort.DataType,
                     Vector2.zero,
-                    SpawnFlags.Default | SpawnFlags.Orphan);
+                    SpawnFlags.Default | SpawnFlags.Orphan,
+                    preDefine: preDefine);
                 Utility.SaveAssetIntoObject(embeddedConstant, (Object)AssetModel);
                 m_InputConstantsById[id] = embeddedConstant;
             }
@@ -482,15 +511,28 @@ namespace UnityEditor.VisualScripting.GraphViewModel
             DeletePort(portModel);
         }
 
-        protected void DeletePort(IPortModel portModel)
+        protected void DeletePort(IPortModel portModel, bool removeFromOrderedPorts = false)
         {
             var edgeModels = GraphModel.GetEdgesConnections(portModel);
             ((GraphModel)GraphModel).DeleteEdges(edgeModels);
+            if (removeFromOrderedPorts)
+            {
+                if (m_InputsById.Remove(portModel))
+                {
+                    m_PreviousInputs.Remove(portModel);
+                }
+                else if (m_OutputsById.Remove(portModel))
+                {
+                    m_PreviousOutputs.Remove(portModel);
+                }
+            }
         }
 
         public bool Destroyed { get; private set; }
 
         public void Destroy() => Destroyed = true;
+
+        public virtual string ToolTip => string.Empty;
 
         public virtual void OnBeforeSerialize()
         {

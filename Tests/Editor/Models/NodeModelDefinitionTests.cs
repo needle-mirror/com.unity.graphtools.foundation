@@ -128,5 +128,49 @@ namespace UnityEditor.VisualScriptingTests.Models
 
             Assert.That(invalidNodeModelTypes, Is.Empty);
         }
+
+        [Serializable]
+        public class TestNodeModelWithCustomPorts : NodeModel
+        {
+            public Func<IPortModel> CreatePortFunc { get; set; } = null;
+
+            public Func<IPortModel> CreatePort<T>(T value = default)
+            {
+                return () => AddDataInput(typeof(T).Name, defaultValue: value);
+            }
+
+            protected override void OnDefineNode()
+            {
+                CreatePortFunc?.Invoke();
+            }
+        }
+
+        static IEnumerable<object[]> GetPortModelDefaultValueTestCases()
+        {
+            yield return PortValueTestCase<int>();
+            yield return PortValueTestCase(42);
+            yield return PortValueTestCase<KeyCode>();
+            yield return PortValueTestCase(KeyCode.Escape);
+        }
+
+        [Test, TestCaseSource(nameof(GetPortModelDefaultValueTestCases))]
+        public void PortModelsCanHaveDefaultValues(object expectedValue, Func<TestNodeModelWithCustomPorts, Func<IPortModel>> createPort, Func<ConstantNodeModel, object> getValue)
+        {
+            VSGraphAssetModel asset = ScriptableObject.CreateInstance<VSGraphAssetModel>();
+            VSGraphModel g = asset.CreateVSGraph<ClassStencil>("asd");
+
+            m_Node = g.CreateNode<TestNodeModelWithCustomPorts>("test", Vector2.zero, preDefineSetup: ports => ports.CreatePortFunc = createPort(ports));
+            Assert.That(getValue(m_Node.InputsByDisplayOrder.Single().EmbeddedValue), Is.EqualTo(expectedValue));
+        }
+
+        static object[] PortValueTestCase<T>(T value = default)
+        {
+            Func<ConstantNodeModel, object> getCompareValue = c => c.ObjectValue;
+            if (typeof(T).IsSubclassOf(typeof(Enum)))
+            {
+                getCompareValue = c => ((EnumConstantNodeModel)c).EnumValue;
+            }
+            return new object[] { value, new Func<TestNodeModelWithCustomPorts, Func<IPortModel>>(m => m.CreatePort(value)), getCompareValue };
+        }
     }
 }

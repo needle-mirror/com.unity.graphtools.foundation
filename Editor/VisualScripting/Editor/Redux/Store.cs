@@ -46,6 +46,9 @@ namespace UnityEditor.VisualScripting.Editor
             GraphReducers.Register(this);
             StackReducers.Register(this);
             NodeReducers.Register(this);
+#if UNITY_2020_1_OR_NEWER
+            PlacematReducers.Register(this);
+#endif
             EdgeReducers.Register(this);
             VariableReducers.Register(this);
             PropertiesReducers.Register(this);

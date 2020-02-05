@@ -194,27 +194,35 @@ namespace UnityEditor.VisualScripting.Model
             var kinds = new List<BinaryOperatorKind>();
             MethodInfo[] methods = type.GetMethods(BindingFlags.Public | BindingFlags.Static);
 
-            foreach (BinaryOperatorKind kind in Enum.GetValues(typeof(BinaryOperatorKind)))
+            if (typeof(Unknown) == type)
             {
-                try
+                foreach (BinaryOperatorKind kind in Enum.GetValues(typeof(BinaryOperatorKind)))
+                    kinds.Add(kind);
+            }
+            else
+            {
+                foreach (BinaryOperatorKind kind in Enum.GetValues(typeof(BinaryOperatorKind)))
                 {
-                    string compiledName = GetBinaryOperatorCompiledName(kind);
-                    var infos = methods.Where(m =>
+                    try
                     {
-                        if (!m.IsSpecialName || m.Name != compiledName)
-                            return false;
+                        string compiledName = GetBinaryOperatorCompiledName(kind);
+                        var infos = methods.Where(m =>
+                        {
+                            if (!m.IsSpecialName || m.Name != compiledName)
+                                return false;
 
-                        return m.GetParameters().Length == 2;
-                    });
+                            return m.GetParameters().Length == 2;
+                        });
 
-                    if (infos.Any())
-                    {
-                        kinds.Add(kind);
+                        if (infos.Any())
+                        {
+                            kinds.Add(kind);
+                        }
                     }
-                }
-                catch (Exception e)
-                {
-                    Debug.Log(e);
+                    catch (Exception e)
+                    {
+                        Debug.Log(e);
+                    }
                 }
             }
 
@@ -282,27 +290,35 @@ namespace UnityEditor.VisualScripting.Model
             var kinds = new List<UnaryOperatorKind>();
             MethodInfo[] methods = type.GetMethods(BindingFlags.Public | BindingFlags.Static);
 
-            foreach (UnaryOperatorKind kind in Enum.GetValues(typeof(UnaryOperatorKind)))
+            if (typeof(Unknown) == type)
             {
-                try
+                foreach (UnaryOperatorKind kind in Enum.GetValues(typeof(UnaryOperatorKind)))
+                    kinds.Add(kind);
+            }
+            else
+            {
+                foreach (UnaryOperatorKind kind in Enum.GetValues(typeof(UnaryOperatorKind)))
                 {
-                    string compiledName = GetUnaryOperatorCompiledName(kind);
-                    var infos = methods.Where(m =>
+                    try
                     {
-                        if (!m.IsSpecialName || m.Name != compiledName)
-                            return false;
+                        string compiledName = GetUnaryOperatorCompiledName(kind);
+                        var infos = methods.Where(m =>
+                        {
+                            if (!m.IsSpecialName || m.Name != compiledName)
+                                return false;
 
-                        return m.GetParameters().Length == 1;
-                    });
+                            return m.GetParameters().Length == 1;
+                        });
 
-                    if (infos.Any())
-                    {
-                        kinds.Add(kind);
+                        if (infos.Any())
+                        {
+                            kinds.Add(kind);
+                        }
                     }
-                }
-                catch (Exception e)
-                {
-                    Debug.Log(e);
+                    catch (Exception e)
+                    {
+                        Debug.Log(e);
+                    }
                 }
             }
 

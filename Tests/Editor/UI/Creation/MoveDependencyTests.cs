@@ -193,7 +193,7 @@ namespace UnityEditor.VisualScriptingTests.UI
             INodeModel[] expectedMovedDependencies,
             INodeModel[] expectedUnmovedDependencies = null)
         {
-            const float epsilon = 0.000001f;
+            const float epsilon = 0.00001f;
 
             Vector2 startMousePos = new Vector2(42, 13);
             List<Vector2> initPositions = expectedMovedDependencies.Select(x => x.Position).ToList();

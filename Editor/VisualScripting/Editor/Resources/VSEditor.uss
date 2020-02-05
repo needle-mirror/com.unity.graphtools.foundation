@@ -362,3 +362,7 @@ VseBlankPage Button {
     left: 2px;
     background-image: resource("GraphView/Badge/CommentTip.png");
 }
+
+.functionHeaderTitle .unity-base-field {
+    flex-direction: column;
+}

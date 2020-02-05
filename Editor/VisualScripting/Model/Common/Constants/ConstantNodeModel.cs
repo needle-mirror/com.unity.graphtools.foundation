@@ -28,6 +28,15 @@ namespace UnityEditor.VisualScripting.Model
         {
             return $"{GetType().Name}: {ObjectValue}";
         }
+
+        public void SetValue<T>(T value)
+        {
+            if (Type != value.GetType() && !value.GetType().IsSubclassOf(Type))
+                throw new ArgumentException($"can't set value of type {value.GetType().Name} in {Type.Name}");
+            SetFromOther(value);
+        }
+
+        protected abstract void SetFromOther(object o);
     }
 
     [Serializable]
@@ -72,8 +81,13 @@ namespace UnityEditor.VisualScripting.Model
             OutputPort = AddDataOutputPort(null, typeof(TSerialized).GenerateTypeHandle(Stencil));
         }
     }
+
     [Serializable]
     public abstract class ConstantNodeModel<T> : ConstantNodeModel<T, T>
     {
+        protected override void SetFromOther(object o)
+        {
+            ObjectValue = o;
+        }
     }
 }

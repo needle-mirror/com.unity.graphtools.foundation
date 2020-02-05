@@ -201,90 +201,6 @@ namespace UnityEditor.VisualScriptingTests.Actions
         }
 
         [Test]
-        public void Test_BypassNodeAction([Values] TestingMode mode)
-        {
-            var constantA = GraphModel.CreateConstantNode("constantA", typeof(float).GenerateTypeHandle(Stencil), Vector2.zero);
-            var binary0 = GraphModel.CreateBinaryOperatorNode(BinaryOperatorKind.Add, Vector2.zero);
-            var binary1 = GraphModel.CreateBinaryOperatorNode(BinaryOperatorKind.Add, Vector2.zero);
-            GraphModel.CreateEdge(binary0.InputPortA, constantA.OutputPort);
-            GraphModel.CreateEdge(binary1.InputPortA, binary0.OutputPort);
-
-            var constantB = GraphModel.CreateConstantNode("constantB", typeof(float).GenerateTypeHandle(Stencil), Vector2.zero);
-            var binary2 = GraphModel.CreateBinaryOperatorNode(BinaryOperatorKind.Add, Vector2.zero);
-            var binary3 = GraphModel.CreateBinaryOperatorNode(BinaryOperatorKind.Add, Vector2.zero);
-            GraphModel.CreateEdge(binary2.InputPortA, constantB.OutputPort);
-            GraphModel.CreateEdge(binary3.InputPortA, binary2.OutputPort);
-
-            var constantC = GraphModel.CreateConstantNode("constantC", typeof(float).GenerateTypeHandle(Stencil), Vector2.zero);
-            var binary4 = GraphModel.CreateBinaryOperatorNode(BinaryOperatorKind.Add, Vector2.zero);
-            var binary5 = GraphModel.CreateBinaryOperatorNode(BinaryOperatorKind.Add, Vector2.zero);
-            GraphModel.CreateEdge(binary4.InputPortA, constantC.OutputPort);
-            GraphModel.CreateEdge(binary5.InputPortA, binary4.OutputPort);
-
-            TestPrereqActionPostreq(mode,
-                () =>
-                {
-                    Refresh();
-                    Assert.That(GetNodeCount(), Is.EqualTo(9));
-                    Assert.That(GetEdgeCount(), Is.EqualTo(6));
-                    Assert.That(binary0.InputPortA, Is.ConnectedTo(constantA.OutputPort));
-                    Assert.That(binary1.InputPortA, Is.ConnectedTo(binary0.OutputPort));
-                    Assert.That(binary2.InputPortA, Is.ConnectedTo(constantB.OutputPort));
-                    Assert.That(binary3.InputPortA, Is.ConnectedTo(binary2.OutputPort));
-                    Assert.That(binary4.InputPortA, Is.ConnectedTo(constantC.OutputPort));
-                    Assert.That(binary5.InputPortA, Is.ConnectedTo(binary4.OutputPort));
-                    return new BypassNodeAction(binary0);
-                },
-                () =>
-                {
-                    Refresh();
-                    Assert.That(GetNodeCount(), Is.EqualTo(9));
-                    Assert.That(GetEdgeCount(), Is.EqualTo(5));
-                    Assert.That(binary1.InputPortA, Is.ConnectedTo(constantA.OutputPort));
-                    Assert.That(binary2.InputPortA, Is.ConnectedTo(constantB.OutputPort));
-                    Assert.That(binary3.InputPortA, Is.ConnectedTo(binary2.OutputPort));
-                    Assert.That(binary4.InputPortA, Is.ConnectedTo(constantC.OutputPort));
-                    Assert.That(binary5.InputPortA, Is.ConnectedTo(binary4.OutputPort));
-                });
-
-            TestPrereqActionPostreq(mode,
-                () =>
-                {
-                    Refresh();
-                    Assert.That(GetNodeCount(), Is.EqualTo(9));
-                    Assert.That(GetEdgeCount(), Is.EqualTo(5));
-                    Assert.That(binary1.InputPortA, Is.ConnectedTo(constantA.OutputPort));
-                    Assert.That(binary2.InputPortA, Is.ConnectedTo(constantB.OutputPort));
-                    Assert.That(binary3.InputPortA, Is.ConnectedTo(binary2.OutputPort));
-                    Assert.That(binary4.InputPortA, Is.ConnectedTo(constantC.OutputPort));
-                    Assert.That(binary5.InputPortA, Is.ConnectedTo(binary4.OutputPort));
-                    return new BypassNodeAction(binary2, binary4);
-                },
-                () =>
-                {
-                    Refresh();
-                    Assert.That(GetNodeCount(), Is.EqualTo(9));
-                    Assert.That(GetEdgeCount(), Is.EqualTo(3));
-                    Assert.That(binary1.InputPortA, Is.ConnectedTo(constantA.OutputPort));
-                    Assert.That(binary3.InputPortA, Is.ConnectedTo(constantB.OutputPort));
-                    Assert.That(binary5.InputPortA, Is.ConnectedTo(constantC.OutputPort));
-                });
-
-            void Refresh()
-            {
-                RefreshReference(ref binary0);
-                RefreshReference(ref binary1);
-                RefreshReference(ref binary2);
-                RefreshReference(ref binary3);
-                RefreshReference(ref binary4);
-                RefreshReference(ref binary5);
-                RefreshReference(ref constantA);
-                RefreshReference(ref constantB);
-                RefreshReference(ref constantC);
-            }
-        }
-
-        [Test]
         public void Test_RemoveNodesAction([Values] TestingMode mode)
         {
             var constantA = GraphModel.CreateConstantNode("constantA", typeof(int).GenerateTypeHandle(Stencil), Vector2.zero);
@@ -323,18 +239,6 @@ namespace UnityEditor.VisualScriptingTests.Actions
             }
         }
 
-        //TODO We disabled exception to fix a bug where Bypass&Remove would throw when removing a group of nodes...
-        //     where one of the nodes (ex:constant) has only one edge connected to the group and that edge is removed
-        //     before being doing the bypass on the constant node. See the fogbugz case 1049559
-        [Ignore("Disable until remove corner cases handled")]
-        [Test]
-        public void Test_BypassNodeAction_Throw()
-        {
-            var constantA = GraphModel.CreateConstantNode("constantA", typeof(float).GenerateTypeHandle(Stencil), Vector2.zero);
-
-            Assert.Throws<InvalidOperationException>(() => m_Store.Dispatch(new BypassNodeAction(constantA)));
-        }
-
         T Get<T>(T prev) where T : INodeModel
         {
             return (T)GraphModel.NodesByGuid[prev.Guid];
@@ -357,7 +261,11 @@ namespace UnityEditor.VisualScriptingTests.Actions
                     Assert.That(Get(node1).Color, Is.EqualTo(Color.clear));
                     Assert.That(Get(node2).Color, Is.EqualTo(Color.clear));
                     Assert.That(Get(node3).Color, Is.EqualTo(Color.clear));
-                    return new ChangeNodeColorAction(Color.red, node0);
+#if UNITY_2020_1_OR_NEWER
+                    return new ChangeElementColorAction(Color.red, new[] { node0 }, null);
+#else
+                    return new ChangeElementColorAction(Color.red, new[] { node0 });
+#endif
                 },
                 () =>
                 {
@@ -378,7 +286,11 @@ namespace UnityEditor.VisualScriptingTests.Actions
                     Assert.That(Get(node1).Color, Is.EqualTo(Color.clear));
                     Assert.That(Get(node2).Color, Is.EqualTo(Color.clear));
                     Assert.That(Get(node3).Color, Is.EqualTo(Color.clear));
-                    return new ChangeNodeColorAction(Color.blue, Get(node1), Get(node2));
+#if UNITY_2020_1_OR_NEWER
+                    return new ChangeElementColorAction(Color.blue, new[] { Get(node1), Get(node2) }, null);
+#else
+                    return new ChangeElementColorAction(Color.blue, new[] { Get(node1), Get(node2) });
+#endif
                 },
                 () =>
                 {

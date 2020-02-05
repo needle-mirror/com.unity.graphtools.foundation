@@ -214,6 +214,9 @@ namespace UnityEditor.VisualScripting.Editor
 
             var nodeModelsToMove = new HashSet<NodeModel>();
             var stickyModelsToMove = new HashSet<StickyNoteModel>();
+#if UNITY_2020_1_OR_NEWER
+            var placematModelsToMove = new HashSet<PlacematModel>();
+#endif
 
             List<IMovable> movableElements = graphViewChange.movedElements.OfType<IMovable>().ToList();
 
@@ -221,6 +224,12 @@ namespace UnityEditor.VisualScripting.Editor
             {
                 switch (((IHasGraphElementModel)movedElement)?.GraphElementModel)
                 {
+#if UNITY_2020_1_OR_NEWER
+                    case PlacematModel placematModel:
+                        placematModelsToMove.Add(placematModel);
+                        break;
+#endif
+
                     case NodeModel nodeModel:
                         if (movedElement.NeedStoreDispatch)
                             nodeModelsToMove.Add(nodeModel);
@@ -232,10 +241,15 @@ namespace UnityEditor.VisualScripting.Editor
                 }
             }
 
-            // TODO It would be nice to have a single way of moving things around and thus not having to deal with 3
+            // TODO It would be nice to have a single way of moving things around and thus not having to deal with
             // separate collections.
+#if UNITY_2020_1_OR_NEWER
+            if (nodeModelsToMove.Any() || stickyModelsToMove.Any() || placematModelsToMove.Any())
+                m_Store.Dispatch(new MoveElementsAction(delta, nodeModelsToMove, placematModelsToMove, stickyModelsToMove));
+#else
             if (nodeModelsToMove.Any() || stickyModelsToMove.Any())
                 m_Store.Dispatch(new MoveElementsAction(delta, nodeModelsToMove, stickyModelsToMove));
+#endif
 
             foreach (var movedElement in movableElements)
             {
@@ -372,14 +386,22 @@ namespace UnityEditor.VisualScripting.Editor
             public List<VariableDeclarationModel> variableDeclarations;
             public Vector2 topLeftNodePosition;
             public List<StickyNoteModel> stickyNotes;
+#if UNITY_2020_1_OR_NEWER
+            public List<PlacematModel> placemats;
+#endif
 
             public string ToJson()
             {
                 return JsonUtility.ToJson(this);
             }
 
+#if UNITY_2020_1_OR_NEWER
+            public bool IsEmpty() => (!nodes.Any() && !implicitStackedNodes.Any() && !edges.Any() &&
+                !variableDeclarations.Any() && !stickyNotes.Any() && !placemats.Any());
+#else
             public bool IsEmpty() => (!nodes.Any() && !implicitStackedNodes.Any() && !edges.Any() &&
                 !variableDeclarations.Any() && !stickyNotes.Any());
+#endif
         }
 
         protected override void CollectCopyableGraphElements(IEnumerable<GraphElement> elements, HashSet<GraphElement> elementsToCopySet)
@@ -486,22 +508,50 @@ namespace UnityEditor.VisualScripting.Editor
                 .OfType<StickyNoteModel>()
                 .ToList();
 
+#if UNITY_2020_1_OR_NEWER
+            List<PlacematModel> placematsToCopy = graphElementModels
+                .OfType<PlacematModel>()
+                .ToList();
+#endif
+
             List<EdgeModel> edgesToCopy = graphElementModels
                 .OfType<EdgeModel>()
                 .Select(DuplicateEdge)
                 .Where(e => e != null)
                 .ToList();
 
+            Vector2 topLeftNodePosition = Vector2.positiveInfinity;
+            foreach (var n in floatingNodes)
+            {
+                topLeftNodePosition = Vector2.Min(topLeftNodePosition, n.Position);
+            }
+            foreach (var n in stickyNotesToCopy)
+            {
+                topLeftNodePosition = Vector2.Min(topLeftNodePosition, n.Position.position);
+            }
+#if UNITY_2020_1_OR_NEWER
+            foreach (var n in placematsToCopy)
+            {
+                topLeftNodePosition = Vector2.Min(topLeftNodePosition, n.Position.position);
+            }
+#endif
+
+            if (topLeftNodePosition == Vector2.positiveInfinity)
+            {
+                topLeftNodePosition = Vector2.zero;
+            }
+
             CopyPasteData copyPasteData = new CopyPasteData
             {
-                topLeftNodePosition = floatingNodes.Skip(1).Aggregate((floatingNodes.FirstOrDefault()?.Position) ??
-                    stickyNotesToCopy.FirstOrDefault()?.Position.position ??
-                    Vector2.zero, (acc, x) => Vector2.Min(x.Position, acc)),
+                topLeftNodePosition = topLeftNodePosition,
                 nodes = nodesToCopy,
                 implicitStackedNodes = implicitStackedNodesToCopy,
                 edges = edgesToCopy,
                 variableDeclarations = variableDeclarationsToCopy,
-                stickyNotes = stickyNotesToCopy
+                stickyNotes = stickyNotesToCopy,
+#if UNITY_2020_1_OR_NEWER
+                placemats = placematsToCopy
+#endif
             };
 
             return copyPasteData;
@@ -523,25 +573,22 @@ namespace UnityEditor.VisualScripting.Editor
 
         internal static void OnUnserializeAndPaste(VSGraphModel graph, TargetInsertionInfo targetInfo, IEditorDataModel editorDataModel, CopyPasteData data)
         {
-            OnUnserializeAndPaste(graph, targetInfo, editorDataModel, data, out _);
-        }
-
-        static void OnUnserializeAndPaste(VSGraphModel graph, TargetInsertionInfo targetInfo, IEditorDataModel editorDataModel, CopyPasteData data, out Dictionary<INodeModel, NodeModel> mapping)
-        {
             bool isDuplication = targetInfo.OperationName == "Duplicate";
 
             CopyPasteData copyPasteData = data;
 
-            CreateElementsFromCopiedData(graph, targetInfo, editorDataModel, copyPasteData, isDuplication, out mapping);
+            CreateElementsFromCopiedData(graph, targetInfo, editorDataModel, copyPasteData, isDuplication, out _);
         }
 
         static void CreateElementsFromCopiedData(VSGraphModel graph, TargetInsertionInfo targetInfo,
             IEditorDataModel editorDataModel,
             CopyPasteData copyPasteData,
             bool isDuplication,
-            out Dictionary<INodeModel, NodeModel> mapping)
+            out Dictionary<INodeModel, NodeModel> nodeMapping)
         {
-            mapping = new Dictionary<INodeModel, NodeModel>();
+            Dictionary<string, IGraphElementModel> elementMapping = new Dictionary<string, IGraphElementModel>();
+
+            nodeMapping = new Dictionary<INodeModel, NodeModel>();
             foreach (NodeModel originalModel in copyPasteData.nodes)
             {
                 // pasted, stacked node
@@ -553,13 +600,13 @@ namespace UnityEditor.VisualScripting.Editor
                         targetInfo.TargetStack.Position += targetInfo.Delta;
                     }
 
-                    PasteNode(targetInfo.OperationName, originalModel, mapping, targetInfo.TargetStack, graph,
+                    PasteNode(targetInfo.OperationName, originalModel, nodeMapping, targetInfo.TargetStack, graph,
                         editorDataModel, targetInfo.Delta,
                         targetInfo.TargetStackInsertionIndex != -1 ? targetInfo.TargetStackInsertionIndex++ : -1);
                 }
                 else // duplication OR not stacked
                 {
-                    PasteNode(targetInfo.OperationName, originalModel, mapping, originalModel.ParentStackModel as StackBaseModel,
+                    PasteNode(targetInfo.OperationName, originalModel, nodeMapping, originalModel.ParentStackModel as StackBaseModel,
                         graph, editorDataModel, targetInfo.Delta,
                         targetInfo.TargetStackInsertionIndex != -1 ? targetInfo.TargetStackInsertionIndex++ : -1,
                         copyPasteData.implicitStackedNodes
@@ -567,17 +614,23 @@ namespace UnityEditor.VisualScripting.Editor
                 }
             }
 
+            foreach (var nodeModel in nodeMapping)
+            {
+                elementMapping.Add(nodeModel.Key.GetId(), nodeModel.Value);
+            }
+
             foreach (var edge in copyPasteData.edges)
             {
-                INodeModel newInput = mapping.Values.FirstOrDefault(node =>
+                INodeModel newInput = nodeMapping.Values.FirstOrDefault(node =>
                     node.OriginalInstanceId == edge.InputPortModel.NodeModel.OriginalInstanceId);
-                INodeModel newOutput = mapping.Values.FirstOrDefault(node =>
+                INodeModel newOutput = nodeMapping.Values.FirstOrDefault(node =>
                     node.OriginalInstanceId == edge.OutputPortModel.NodeModel.OriginalInstanceId);
                 if (newInput != null && newOutput != null)
                 {
                     var inputPortModel = newInput.InputsById[edge.InputPortModel.UniqueId];
                     var outputPortModel = newOutput.OutputsById[edge.OutputPortModel.UniqueId];
                     IEdgeModel copiedEdge = graph.CreateEdge(inputPortModel, outputPortModel);
+                    elementMapping.Add(edge.GetId(), copiedEdge);
                     editorDataModel?.SelectElementsUponCreation(new[] { copiedEdge }, true);
                 }
             }
@@ -594,7 +647,7 @@ namespace UnityEditor.VisualScripting.Editor
                 editorDataModel?.SelectElementsUponCreation(duplicatedModels, true);
             }
 
-            foreach (var stickyNote in copyPasteData.stickyNotes.Cast<IStickyNoteModel>())
+            foreach (var stickyNote in copyPasteData.stickyNotes)
             {
                 var newPosition = new Rect(stickyNote.Position.position + targetInfo.Delta, stickyNote.Position.size);
                 var pastedStickyNote = (StickyNoteModel)graph.CreateStickyNote(newPosition);
@@ -602,7 +655,44 @@ namespace UnityEditor.VisualScripting.Editor
                 pastedStickyNote.UpdateTheme(stickyNote.Theme);
                 pastedStickyNote.UpdateTextSize(stickyNote.TextSize);
                 editorDataModel?.SelectElementsUponCreation(new[] { pastedStickyNote }, true);
+                elementMapping.Add(stickyNote.GetId(), pastedStickyNote);
             }
+
+#if UNITY_2020_1_OR_NEWER
+            List<PlacematModel> pastedPlacemats = new List<PlacematModel>();
+            // Keep placemats relative order
+            foreach (var placemat in copyPasteData.placemats.OrderBy(p => p.ZOrder))
+            {
+                var newPosition = new Rect(placemat.Position.position + targetInfo.Delta, placemat.Position.size);
+                var newTitle = "Copy of " + placemat.Title;
+                var pastedPlacemat = (PlacematModel)graph.CreatePlacemat(newTitle, newPosition);
+                pastedPlacemat.Color = placemat.Color;
+                pastedPlacemat.Collapsed = placemat.Collapsed;
+                pastedPlacemat.HiddenElementsGuid = placemat.HiddenElementsGuid;
+                editorDataModel?.SelectElementsUponCreation(new[] { pastedPlacemat }, true);
+                pastedPlacemats.Add(pastedPlacemat);
+                elementMapping.Add(placemat.GetId(), pastedPlacemat);
+            }
+
+            // Update hidden content to new node ids.
+            foreach (var pastedPlacemat in pastedPlacemats)
+            {
+                if (pastedPlacemat.Collapsed)
+                {
+                    List<string> pastedHiddenContent = new List<string>();
+                    foreach (var guid in pastedPlacemat.HiddenElementsGuid)
+                    {
+                        IGraphElementModel pastedElement;
+                        if (elementMapping.TryGetValue(guid, out pastedElement))
+                        {
+                            pastedHiddenContent.Add(pastedElement.GetId());
+                        }
+                    }
+
+                    pastedPlacemat.HiddenElementsGuid = pastedHiddenContent;
+                }
+            }
+#endif
 
             Undo.RegisterCompleteObjectUndo((Object)graph.AssetModel, $"{targetInfo.OperationName} selection");
         }
@@ -1280,5 +1370,13 @@ namespace UnityEditor.VisualScripting.Editor
         {
             return UIController.Blackboard;
         }
+
+#if UNITY_2020_1_OR_NEWER
+        protected override Experimental.GraphView.PlacematContainer CreatePlacematContainer()
+        {
+            return new PlacematContainer(m_Store, this);
+        }
+
+#endif
     }
 }

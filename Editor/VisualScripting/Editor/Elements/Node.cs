@@ -63,11 +63,7 @@ namespace UnityEditor.VisualScripting.Editor
             }
         }
 
-#if UNITY_2019_3_OR_NEWER
         Label m_TitleLabel;
-#else
-        BoundLabel m_TitleLabel;
-#endif
         protected VisualElement TitleContainer { get; private set; }
 
         protected GraphView m_GraphView;
@@ -79,11 +75,6 @@ namespace UnityEditor.VisualScripting.Editor
             Assert.IsNotNull(store);
 
             styleSheets.Add(AssetDatabase.LoadAssetAtPath<StyleSheet>(UICreationHelper.templatePath + "Node.uss"));
-            // @TODO: This might need to be reviewed in favor of a better / more scalable approach (non preprocessor based)
-            // that would ideally bring the same level of backward/forward compatibility and/or removed when a 2013 beta version lands.
-#if UNITY_2019_3_OR_NEWER
-            styleSheets.Add(AssetDatabase.LoadAssetAtPath<StyleSheet>(UICreationHelper.templatePath + "Node.2019.3.uss"));
-#endif
             styleSheets.Add(AssetDatabase.LoadAssetAtPath<StyleSheet>(UICreationHelper.templatePath + "PropertyField.uss"));
 
             this.model = model;
@@ -152,6 +143,8 @@ namespace UnityEditor.VisualScripting.Editor
                     m_TitleLabel = titleLabel;
                 }
             }
+
+            UpdateTooltip(model);
 
             RegisterCallback<AttachToPanelEvent>(OnAttachToPanel);
             RegisterCallback<DetachFromPanelEvent>(OnDetachFromPanel);
@@ -302,6 +295,12 @@ namespace UnityEditor.VisualScripting.Editor
             return false;
         }
 
+        public virtual void ResetColor()
+        {
+            var titleElement = this.MandatoryQ("title");
+            titleElement.style.backgroundColor = StyleKeyword.Null;
+        }
+
         public virtual void SetColor(Color c)
         {
             var titleElement = this.MandatoryQ("title");
@@ -333,6 +332,12 @@ namespace UnityEditor.VisualScripting.Editor
         {
             ((NodeModel)model).DefineNode();
             m_Store.Dispatch(new RefreshUIAction(UpdateFlags.RequestCompilation | UpdateFlags.GraphTopology, new List<IGraphElementModel> { model }));
+        }
+
+        [PublicAPI]
+        public void UpdateTooltip(INodeModel nodeModel)
+        {
+            tooltip = nodeModel.ToolTip;
         }
     }
 }

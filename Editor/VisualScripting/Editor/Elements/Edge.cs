@@ -58,6 +58,15 @@ namespace UnityEditor.VisualScripting.Editor
             OnPortChanged(isInput: false);
         }
 
+#if UNITY_2020_1_OR_NEWER
+        public override bool UpdateEdgeControl()
+        {
+            schedule.Execute(_ => UpdateEdgeBubble());
+            return base.UpdateEdgeControl();
+        }
+
+#endif
+
         public override void OnPortChanged(bool isInput)
         {
             base.OnPortChanged(isInput);
@@ -66,12 +75,18 @@ namespace UnityEditor.VisualScripting.Editor
             if (panel == null)
                 return;
 
+            UpdateEdgeBubble();
+        }
+
+        void UpdateEdgeBubble()
+        {
             NodeModel inputPortNodeModel = m_EdgeModel?.InputPortModel?.NodeModel as NodeModel;
             NodeModel outputPortNodeModel = m_EdgeModel?.OutputPortModel?.NodeModel as NodeModel;
 
             PortType portType = m_EdgeModel?.OutputPortModel?.PortType ?? PortType.Data;
             if ((portType == PortType.Execution || portType == PortType.Loop) && (outputPortNodeModel != null || inputPortNodeModel != null) &&
-                !string.IsNullOrEmpty(m_EdgeModel?.OutputPortModel?.Name))
+                !string.IsNullOrEmpty(m_EdgeModel?.OutputPortModel?.Name) &&
+                visible)
             {
                 m_EdgeBubble.text = m_EdgeModel.OutputPortModel.Name;
                 m_EdgeBubble.EnableInClassList("candidate", (output == null || input == null));

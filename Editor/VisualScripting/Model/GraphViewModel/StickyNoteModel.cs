@@ -8,6 +8,8 @@ namespace UnityEditor.VisualScripting.GraphViewModel
     {
         [SerializeField]
         string m_Title;
+
+        [SerializeField]
         string m_Id = Guid.NewGuid().ToString();
 
         public StickyNoteModel()
@@ -79,7 +81,11 @@ namespace UnityEditor.VisualScripting.GraphViewModel
         }
 
         // Capabilities
+#if UNITY_2020_1_OR_NEWER
+        public CapabilityFlags Capabilities => CapabilityFlags.Selectable | CapabilityFlags.Deletable | CapabilityFlags.Movable | CapabilityFlags.Copiable;
+#else
         public CapabilityFlags Capabilities => CapabilityFlags.Selectable | CapabilityFlags.Deletable | CapabilityFlags.Movable;
+#endif
 
         public ScriptableObject SerializableAsset => (ScriptableObject)AssetModel;
         public IGraphAssetModel AssetModel => GraphModel?.AssetModel;

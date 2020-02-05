@@ -26,6 +26,11 @@ namespace UnityEditor.VisualScripting.GraphViewModel
         [SerializeField]
         protected List<StickyNoteModel> m_StickyNoteModels;
 
+#if UNITY_2020_1_OR_NEWER
+        [SerializeField]
+        protected List<PlacematModel> m_PlacematModels;
+#endif
+
         [SerializeReference]
         Stencil m_Stencil;
 
@@ -53,6 +58,10 @@ namespace UnityEditor.VisualScripting.GraphViewModel
                 m_NodesByGuid = new Dictionary<GUID, INodeModel>();
             if (m_StickyNoteModels == null)
                 m_StickyNoteModels = new List<StickyNoteModel>();
+#if UNITY_2020_1_OR_NEWER
+            if (m_PlacematModels == null)
+                m_PlacematModels = new List<PlacematModel>();
+#endif
         }
 
         public virtual string Name => name;
@@ -78,6 +87,10 @@ namespace UnityEditor.VisualScripting.GraphViewModel
         public IReadOnlyList<INodeModel> NodeModels => m_GraphNodeModels;
         public IReadOnlyList<IEdgeModel> EdgeModels => m_EdgeModels;
         public IEnumerable<IStickyNoteModel> StickyNoteModels => m_StickyNoteModels;
+
+#if UNITY_2020_1_OR_NEWER
+        public IEnumerable<IPlacematModel> PlacematModels => m_PlacematModels;
+#endif
 
         public Stencil Stencil
         {
@@ -344,6 +357,67 @@ namespace UnityEditor.VisualScripting.GraphViewModel
             }
         }
 
+#if UNITY_2020_1_OR_NEWER
+        const string k_DefaultPlacematName = "Placemat";
+        public IPlacematModel CreatePlacemat(string title, Rect position, SpawnFlags dataSpawnFlags = SpawnFlags.Default)
+        {
+            var placematModel = (PlacematModel)CreateOrphanPlacemat(title ?? k_DefaultPlacematName, position);
+            if (!dataSpawnFlags.IsOrphan())
+                AddPlacemat(placematModel);
+
+            return placematModel;
+        }
+
+        IPlacematModel CreateOrphanPlacemat(string title, Rect position)
+        {
+            var placematModel = new PlacematModel();
+            placematModel.Title = title;
+            placematModel.Position = position;
+            placematModel.GraphModel = this;
+            placematModel.ZOrder = GetPlacematTopZOrder();
+            return placematModel;
+        }
+
+        int GetPlacematTopZOrder()
+        {
+            int maxZ = Int32.MinValue;
+            foreach (var model in m_PlacematModels)
+            {
+                maxZ = Math.Max(model.ZOrder, maxZ);
+            }
+            return maxZ == Int32.MinValue ? 1 : maxZ + 1;
+        }
+
+        void AddPlacemat(IPlacematModel model)
+        {
+            var placematModel = (PlacematModel)model;
+
+            Undo.RegisterCompleteObjectUndo(m_AssetModel, "Add Placemat");
+            LastChanges?.ChangedElements.Add(placematModel);
+            placematModel.GraphModel = this;
+            m_PlacematModels.Add(placematModel);
+        }
+
+        void DeletePlacemat(IPlacematModel placematModel)
+        {
+            Undo.RegisterCompleteObjectUndo(m_AssetModel, "Delete Placemat");
+            var model = (PlacematModel)placematModel;
+
+            m_PlacematModels.Remove(model);
+            if (LastChanges != null)
+            {
+                if (placematModel.HiddenElementsGuid != null)
+                {
+                    LastChanges.ChangedElements.AddRange(m_GraphNodeModels.Where(e => placematModel.HiddenElementsGuid.Contains(e.GetId().ToString())));
+                }
+                LastChanges.DeletedElements += 1;
+            }
+
+            model.Destroy();
+        }
+
+#endif
+
         protected internal virtual void OnEnable()
         {
             if (m_GraphNodeModels == null)
@@ -361,6 +435,10 @@ namespace UnityEditor.VisualScripting.GraphViewModel
                 m_EdgeModels = new List<EdgeModel>();
             if (m_StickyNoteModels == null)
                 m_StickyNoteModels = new List<StickyNoteModel>();
+#if UNITY_2020_1_OR_NEWER
+            if (m_PlacematModels == null)
+                m_PlacematModels = new List<PlacematModel>();
+#endif
         }
 
         public void Dispose() {}
@@ -407,6 +485,15 @@ namespace UnityEditor.VisualScripting.GraphViewModel
                 DeleteStickyNote(stickyNoteModel);
         }
 
+#if UNITY_2020_1_OR_NEWER
+        public void DeletePlacemats(IPlacematModel[] placematsToDelete)
+        {
+            foreach (IPlacematModel placematModel in placematsToDelete)
+                DeletePlacemat(placematModel);
+        }
+
+#endif
+
         public void BypassNodes(INodeModel[] actionNodeModels)
         {
             foreach (var model in actionNodeModels)
@@ -443,6 +530,9 @@ namespace UnityEditor.VisualScripting.GraphViewModel
         {
             m_GraphNodeModels.RemoveAll(n => n == null);
             m_StickyNoteModels.RemoveAll(s => s == null);
+#if UNITY_2020_1_OR_NEWER
+            m_PlacematModels.RemoveAll(p => p == null);
+#endif
             DeleteEdges(m_EdgeModels.Where(e => !e.IsValid()));
             m_EdgeModels.RemoveAll(e => e == null);
         }

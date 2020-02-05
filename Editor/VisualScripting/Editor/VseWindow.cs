@@ -299,65 +299,14 @@ namespace UnityEditor.VisualScripting.Editor
             m_Menu = CreateMenu();
             m_BlankPage = CreateBlankPage();
 
-
-            IMGUIContainer imguiContainer = null;
-            imguiContainer = new IMGUIContainer(() =>
-            {
-                var timeRect = new Rect(0, 0, rootVisualElement.layout.width, imguiContainer.layout.height);
-                m_TracingTimeline.OnGUI(timeRect);
-            });
-            m_TracingTimeline = new TracingTimeline(m_GraphView, m_Store.GetState(), imguiContainer);
-            m_TracingTimeline.SyncVisible();
-
-            rootVisualElement.Add(m_Menu);
-            rootVisualElement.Add(imguiContainer);
-            rootVisualElement.Add(m_GraphContainer);
+            SetupWindow();
 
             m_CompilationPendingLabel = new Label("Compilation Pending"){name = "compilationPendingLabel"};
 
             m_GraphContainer.Add(m_GraphView);
+            Dictionary<Event, ShortcutDelegate> dictionaryShortcuts = GetShortcutDictionary();
 
-            m_ShortcutHandler = new ShortcutHandler(
-                new Dictionary<Event, ShortcutDelegate>
-                {
-                    { Event.KeyboardEvent("F2"), () => Application.platform != RuntimePlatform.OSXEditor ? RenameElement() : EventPropagation.Continue },
-                    { Event.KeyboardEvent("F5"), () =>
-                  {
-                      RefreshUI(UpdateFlags.All);
-                      return EventPropagation.Continue;
-                  }},
-                    { Event.KeyboardEvent("return"), () => Application.platform == RuntimePlatform.OSXEditor ? RenameElement() : EventPropagation.Continue },
-                    { Event.KeyboardEvent("[enter]"), () => Application.platform == RuntimePlatform.OSXEditor ? RenameElement() : EventPropagation.Continue },
-                    { Event.KeyboardEvent("backspace"), OnBackspaceKeyDown },
-                    { Event.KeyboardEvent("space"), OnSpaceKeyDown },
-                    { Event.KeyboardEvent("C"), () =>
-                  {
-                      IGraphElementModel[] selectedModels = m_GraphView.selection
-                          .OfType<IHasGraphElementModel>()
-                          .Select(x => x.GraphElementModel)
-                          .ToArray();
-
-                      // Convert variable -> constant if selection contains at least one item that satisfies conditions
-                      IVariableModel[] variableModels = selectedModels.OfType<VariableNodeModel>().Cast<IVariableModel>().ToArray();
-                      if (variableModels.Any())
-                      {
-                          m_Store.Dispatch(new ConvertVariableNodesToConstantNodesAction(variableModels));
-                          return EventPropagation.Stop;
-                      }
-
-                      IConstantNodeModel[] constantModels = selectedModels.OfType<IConstantNodeModel>().ToArray();
-                      if (constantModels.Any())
-                          m_Store.Dispatch(new ConvertConstantNodesToVariableNodesAction(constantModels));
-                      return EventPropagation.Stop;
-                  }},
-                    { Event.KeyboardEvent("Q"), () => m_GraphView.AlignSelection(false) },
-                    { Event.KeyboardEvent("#Q"), () => m_GraphView.AlignSelection(true) },
-                    // DEBUG
-                    { Event.KeyboardEvent("1"), () => OnCreateLogNode(LogNodeModel.LogTypes.Message) },
-                    { Event.KeyboardEvent("2"), () => OnCreateLogNode(LogNodeModel.LogTypes.Warning) },
-                    { Event.KeyboardEvent("3"), () => OnCreateLogNode(LogNodeModel.LogTypes.Error) },
-                    { Event.KeyboardEvent("`"), () => OnCreateStickyNote(new Rect(m_GraphView.ChangeCoordinatesTo(m_GraphView.contentViewContainer, m_GraphView.WorldToLocal(Event.current.mousePosition)), StickyNote.defaultSize)) },
-                });
+            m_ShortcutHandler = new ShortcutHandler(GetShortcutDictionary());
 
             rootVisualElement.parent.AddManipulator(m_ShortcutHandler);
             Selection.selectionChanged += OnGlobalSelectionChange;
@@ -405,6 +354,80 @@ namespace UnityEditor.VisualScripting.Editor
                 vsDataModel.PluginRepository = m_PluginRepository;
                 vsDataModel.OnCompilationRequest = OnCompilationRequest;
             }
+        }
+
+        protected virtual void SetupWindow()
+        {
+            AddMenu();
+            AddTracingTimeline();
+            AddGraphView();
+        }
+
+        protected void AddMenu()
+        {
+            rootVisualElement.Add(m_Menu);
+        }
+
+        protected void AddTracingTimeline()
+        {
+            IMGUIContainer imguiContainer = null;
+            imguiContainer = new IMGUIContainer(() =>
+            {
+                var timeRect = new Rect(0, 0, rootVisualElement.layout.width, imguiContainer.layout.height);
+                m_TracingTimeline.OnGUI(timeRect);
+            });
+            m_TracingTimeline = new TracingTimeline(m_GraphView, m_Store.GetState(), imguiContainer);
+            m_TracingTimeline.SyncVisible();
+            rootVisualElement.Add(imguiContainer);
+        }
+
+        protected void AddGraphView()
+        {
+            rootVisualElement.Add(m_GraphContainer);
+        }
+
+        protected virtual Dictionary<Event, ShortcutDelegate> GetShortcutDictionary()
+        {
+            return new Dictionary<Event, ShortcutDelegate>
+            {
+                { Event.KeyboardEvent("F2"), () => Application.platform != RuntimePlatform.OSXEditor ? RenameElement() : EventPropagation.Continue },
+                { Event.KeyboardEvent("F5"), () =>
+              {
+                  RefreshUI(UpdateFlags.All);
+                  return EventPropagation.Continue;
+              }},
+                { Event.KeyboardEvent("return"), () => Application.platform == RuntimePlatform.OSXEditor ? RenameElement() : EventPropagation.Continue },
+                { Event.KeyboardEvent("[enter]"), () => Application.platform == RuntimePlatform.OSXEditor ? RenameElement() : EventPropagation.Continue },
+                { Event.KeyboardEvent("backspace"), OnBackspaceKeyDown },
+                { Event.KeyboardEvent("space"), OnSpaceKeyDown },
+                { Event.KeyboardEvent("C"), () =>
+              {
+                  IGraphElementModel[] selectedModels = m_GraphView.selection
+                      .OfType<IHasGraphElementModel>()
+                      .Select(x => x.GraphElementModel)
+                      .ToArray();
+
+                  // Convert variable -> constant if selection contains at least one item that satisfies conditions
+                  IVariableModel[] variableModels = selectedModels.OfType<VariableNodeModel>().Cast<IVariableModel>().ToArray();
+                  if (variableModels.Any())
+                  {
+                      m_Store.Dispatch(new ConvertVariableNodesToConstantNodesAction(variableModels));
+                      return EventPropagation.Stop;
+                  }
+
+                  IConstantNodeModel[] constantModels = selectedModels.OfType<IConstantNodeModel>().ToArray();
+                  if (constantModels.Any())
+                      m_Store.Dispatch(new ConvertConstantNodesToVariableNodesAction(constantModels));
+                  return EventPropagation.Stop;
+              }},
+                { Event.KeyboardEvent("Q"), () => m_GraphView.AlignSelection(false) },
+                { Event.KeyboardEvent("#Q"), () => m_GraphView.AlignSelection(true) },
+                // DEBUG
+                { Event.KeyboardEvent("1"), () => OnCreateLogNode(LogNodeModel.LogTypes.Message) },
+                { Event.KeyboardEvent("2"), () => OnCreateLogNode(LogNodeModel.LogTypes.Warning) },
+                { Event.KeyboardEvent("3"), () => OnCreateLogNode(LogNodeModel.LogTypes.Error) },
+                { Event.KeyboardEvent("`"), () => OnCreateStickyNote(new Rect(m_GraphView.ChangeCoordinatesTo(m_GraphView.contentViewContainer, m_GraphView.WorldToLocal(Event.current.mousePosition)), StickyNote.defaultSize)) },
+            };
         }
 
         EventPropagation OnBackspaceKeyDown()
@@ -816,7 +839,7 @@ namespace UnityEditor.VisualScripting.Editor
             ProjectWindowUtil.StartNameEditingIfProjectWindowExists(0, endAction, modelName, GetIcon(), null);
         }
 
-        public static void CreateGraphAsset<TStencilType, TAssetType>(string graphAssetName = k_DefaultGraphAssetName)
+        public static void CreateGraphAsset<TStencilType, TAssetType>(string graphAssetName = k_DefaultGraphAssetName, IGraphTemplate template = null)
             where TStencilType : Stencil
             where TAssetType : GraphAssetModel
         {
@@ -824,12 +847,13 @@ namespace UnityEditor.VisualScripting.Editor
             string modelName = Path.GetFileName(uniqueFilePath);
 
             var endAction = CreateInstance<DoCreateVisualScriptAsset>();
+            endAction.Template = template;
             endAction.StencilType = typeof(TStencilType);
             endAction.AssetType = typeof(TAssetType);
             ProjectWindowUtil.StartNameEditingIfProjectWindowExists(0, endAction, modelName, GetIcon(), null);
         }
 
-        public static void CreateGraphAsset<TStencilType, TAssetType, TGraphType>(string graphAssetName = k_DefaultGraphAssetName)
+        public static void CreateGraphAsset<TStencilType, TAssetType, TGraphType>(string graphAssetName = k_DefaultGraphAssetName, IGraphTemplate template = null)
             where TStencilType : Stencil
             where TAssetType : GraphAssetModel
             where TGraphType : GraphModel
@@ -838,6 +862,7 @@ namespace UnityEditor.VisualScripting.Editor
             string modelName = Path.GetFileName(uniqueFilePath);
 
             var endAction = CreateInstance<DoCreateVisualScriptAsset>();
+            endAction.Template = template;
             endAction.StencilType = typeof(TStencilType);
             endAction.AssetType = typeof(TAssetType);
             endAction.GraphType = typeof(TGraphType);

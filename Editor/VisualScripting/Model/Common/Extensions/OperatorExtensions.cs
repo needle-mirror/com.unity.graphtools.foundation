@@ -1,5 +1,7 @@
 using System;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 using UnityEditor.VisualScripting.Model;
 
 namespace VisualScripting.Model.Common.Extensions
@@ -107,6 +109,31 @@ namespace VisualScripting.Model.Common.Extensions
             }
 
             throw new ArgumentException($"Unable to provide a nice name for binary operator kind {operatorKind}");
+        }
+
+        public static BinaryExpressionSyntax Add(this ExpressionSyntax left, ExpressionSyntax right)
+        {
+            return BinaryExpression(SyntaxKind.AddExpression, left, right);
+        }
+
+        public static BinaryExpressionSyntax Sub(this ExpressionSyntax left, ExpressionSyntax right)
+        {
+            return BinaryExpression(SyntaxKind.SubtractExpression, left, right);
+        }
+
+        public static BinaryExpressionSyntax Mult(this ExpressionSyntax left, ExpressionSyntax right)
+        {
+            return BinaryExpression(SyntaxKind.MultiplyExpression, left, right);
+        }
+
+        public static LiteralExpressionSyntax ToSyntax(this int n)
+        {
+            return LiteralExpression(SyntaxKind.NumericLiteralExpression, Literal(n));
+        }
+
+        public static LiteralExpressionSyntax ToSyntax(this float n)
+        {
+            return LiteralExpression(SyntaxKind.NumericLiteralExpression, Literal(n));
         }
     }
 }

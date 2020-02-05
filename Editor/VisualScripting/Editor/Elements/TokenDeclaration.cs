@@ -19,11 +19,7 @@ namespace UnityEditor.VisualScripting.Editor
         readonly Pill m_Pill;
         TextField m_TitleTextfield;
 
-#if UNITY_2019_3_OR_NEWER
         Label m_TitleLabel;
-#else
-        BoundLabel m_TitleLabel;
-#endif
 
         public Store Store => m_Store;
         public string TitleValue => Declaration.Title.Nicify();
@@ -73,11 +69,7 @@ namespace UnityEditor.VisualScripting.Editor
             {
                 if (modelReference is IExposeTitleProperty titleProperty)
                 {
-#if UNITY_2019_3_OR_NEWER
                     m_TitleLabel = m_Pill.Q<Label>("title-label");
-#else
-                    m_TitleLabel = m_Pill.Q<Label>("title-label").ReplaceWithBoundLabel();
-#endif
                     m_TitleLabel.bindingPath = titleProperty.TitlePropertyName;
                 }
             }

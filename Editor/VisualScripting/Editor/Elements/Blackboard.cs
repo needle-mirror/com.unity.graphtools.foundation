@@ -12,11 +12,7 @@ using Object = UnityEngine.Object;
 
 namespace UnityEditor.VisualScripting.Editor
 {
-#if UNITY_2019_3_OR_NEWER
     public class Blackboard : Experimental.GraphView.Blackboard, IMovable
-#else
-    public class Blackboard : Experimental.GraphView.Blackboard, ISelection, IMovable
-#endif
     {
         public delegate void RebuildCallback(RebuildMode rebuildMode);
 
@@ -389,9 +385,6 @@ namespace UnityEditor.VisualScripting.Editor
             graphElement.MarkDirtyRepaint();
         }
 
-#if !UNITY_2019_3_OR_NEWER
-        public List<ISelectable> selection => GraphView.selection;
-#endif
         public List<IHighlightable> GraphVariables { get; } = new List<IHighlightable>();
 
         void RebuildSections()
@@ -403,24 +396,6 @@ namespace UnityEditor.VisualScripting.Editor
                 blackboardProvider.RebuildSections(this);
             }
         }
-
-#if !UNITY_2019_3_OR_NEWER
-        public void AddToSelection(ISelectable selectable)
-        {
-            GraphView.AddToSelection(selectable);
-        }
-
-        public void RemoveFromSelection(ISelectable selectable)
-        {
-            GraphView.RemoveFromSelection(selectable);
-        }
-
-        public void ClearSelection()
-        {
-            GraphView.ClearSelection();
-        }
-
-#endif
 
         void OnContextualMenuEvent(ContextualMenuPopulateEvent evt)
         {

@@ -85,6 +85,7 @@ namespace UnityEditor.VisualScripting.Editor
 
             // Load this graph asset.
             m_Store.Dispatch(new LoadGraphAssetAction(graphAssetFilePath));
+            m_GraphView.FrameAll();
 
             if (mode != OpenMode.OpenAndFocus)
                 return;

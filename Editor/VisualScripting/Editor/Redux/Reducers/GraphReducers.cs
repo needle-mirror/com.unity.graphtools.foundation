@@ -20,6 +20,8 @@ namespace UnityEditor.VisualScripting.Editor
             store.Register<PasteSerializedDataAction>(PasteSerializedData);
             store.Register<MoveElementsAction>(MoveElements);
             store.Register<PanToNodeAction>(PanToNode);
+            store.Register<ChangeElementColorAction>(ChangeElementColor);
+            store.Register<ResetElementColorAction>(ResetElementColor);
         }
 
         static State PasteSerializedData(State previousState, PasteSerializedDataAction action)
@@ -46,6 +48,9 @@ namespace UnityEditor.VisualScripting.Editor
 
             var vsGraphModel = (VSGraphModel)graphModel;
             IStickyNoteModel[] stickyNotesToDelete = GetStickyNotesToDelete(deletables);
+#if UNITY_2020_1_OR_NEWER
+            IPlacematModel[] placematsToDelete = GetPlacematsToDelete(deletables);
+#endif
             IReadOnlyCollection<INodeModel> nodesToDelete = GetNodesToDelete(vsGraphModel, deletables);
             IReadOnlyCollection<IEdgeModel> edgesToDelete = GetEdgesToDelete(graphModel, deletables, nodesToDelete);
             VariableDeclarationModel[] declarationModelsToDelete = GetDeclarationModelsToDelete(deletables, nodesToDelete);
@@ -55,6 +60,9 @@ namespace UnityEditor.VisualScripting.Editor
             if (IsReferenceDatabaseDirty(nodesToDelete))
                 graphModel.Stencil.GetSearcherDatabaseProvider().ClearReferenceItemsSearcherDatabases();
             graphModel.DeleteStickyNotes(stickyNotesToDelete);
+#if UNITY_2020_1_OR_NEWER
+            graphModel.DeletePlacemats(placematsToDelete);
+#endif
             graphModel.DeleteEdges(edgesToDelete);
             graphModel.DeleteNodes(nodesToDelete, GraphModel.DeleteConnections.False);
             vsGraphModel.DeleteVariableDeclarations(declarationModelsToDelete, false);
@@ -69,6 +77,14 @@ namespace UnityEditor.VisualScripting.Editor
         {
             return deletables.OfType<IStickyNoteModel>().ToArray();
         }
+
+#if UNITY_2020_1_OR_NEWER
+        static IPlacematModel[] GetPlacematsToDelete(IGraphElementModel[] deletables)
+        {
+            return deletables.OfType<IPlacematModel>().ToArray();
+        }
+
+#endif
 
         static bool IsReferenceDatabaseDirty(IReadOnlyCollection<INodeModel> nodesToDelete)
         {
@@ -174,6 +190,12 @@ namespace UnityEditor.VisualScripting.Editor
         {
             Undo.RegisterCompleteObjectUndo((Object)previousState.AssetModel, "Move");
 
+#if UNITY_2020_1_OR_NEWER
+            if (action.PlacematModels != null)
+                foreach (var placematModel in action.PlacematModels)
+                    placematModel.Move(action.Delta);
+#endif
+
             // TODO It would be nice to have a single way of moving things around and thus not having to deal with 3
             // separate collections.
             if (action.NodeModels != null)
@@ -181,10 +203,8 @@ namespace UnityEditor.VisualScripting.Editor
                     ((GraphModel)previousState.CurrentGraphModel).MoveNode(nodeModel, nodeModel.Position + action.Delta);
 
             if (action.StickyModels != null)
-            {
                 foreach (var stickyNoteModel in action.StickyModels)
                     stickyNoteModel.Move(new Rect(stickyNoteModel.Position.position + action.Delta, stickyNoteModel.Position.size));
-            }
 
             previousState.MarkForUpdate(UpdateFlags.GraphGeometry);
             return previousState;
@@ -194,6 +214,46 @@ namespace UnityEditor.VisualScripting.Editor
         {
             previousState.EditorDataModel.NodeToFrameGuid = action.nodeGuid;
             previousState.MarkForUpdate(UpdateFlags.GraphGeometry);
+            return previousState;
+        }
+
+        static State ChangeElementColor(State previousState, ChangeElementColorAction action)
+        {
+            Undo.RegisterCompleteObjectUndo((Object)previousState.AssetModel, "Change Color");
+            EditorUtility.SetDirty((Object)previousState.AssetModel);
+            if (action.NodeModels != null)
+                foreach (var model in action.NodeModels)
+                {
+                    model.ChangeColor(action.Color);
+                }
+#if UNITY_2020_1_OR_NEWER
+            if (action.PlacematModels != null)
+                foreach (var model in action.PlacematModels)
+                {
+                    model.Color = action.Color;
+                }
+#endif
+            previousState.MarkForUpdate(UpdateFlags.None);
+            return previousState;
+        }
+
+        static State ResetElementColor(State previousState, ResetElementColorAction action)
+        {
+            Undo.RegisterCompleteObjectUndo((Object)previousState.AssetModel, "Reset Color");
+            EditorUtility.SetDirty((Object)previousState.AssetModel);
+            if (action.NodeModels != null)
+                foreach (var nodeModel in action.NodeModels)
+                {
+                    nodeModel.HasUserColor = false;
+                }
+#if UNITY_2020_1_OR_NEWER
+            if (action.PlacematModels != null)
+                foreach (var model in action.PlacematModels)
+                {
+                    model.Color = PlacematModel.k_DefaultColor;
+                }
+#endif
+            previousState.MarkForUpdate(UpdateFlags.None);
             return previousState;
         }
     }

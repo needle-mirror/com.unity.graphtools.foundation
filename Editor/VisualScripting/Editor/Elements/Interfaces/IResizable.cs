@@ -1,3 +1,4 @@
+#if !UNITY_2020_1_OR_NEWER
 using System;
 
 namespace UnityEditor.VisualScripting.Editor
@@ -8,3 +9,4 @@ namespace UnityEditor.VisualScripting.Editor
         void OnResized();
     }
 }
+#endif

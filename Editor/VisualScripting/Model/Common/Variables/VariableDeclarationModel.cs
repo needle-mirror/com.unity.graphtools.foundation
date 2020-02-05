@@ -38,7 +38,11 @@ namespace UnityEditor.VisualScripting.Model
         {
             get
             {
+#if UNITY_2020_1_OR_NEWER
+                CapabilityFlags caps = CapabilityFlags.Selectable | CapabilityFlags.Movable | CapabilityFlags.Droppable | CapabilityFlags.Copiable;
+#else
                 CapabilityFlags caps = CapabilityFlags.Selectable | CapabilityFlags.Movable | CapabilityFlags.Droppable;
+#endif
                 if (!(VariableType == VariableType.FunctionParameter
                       && (FunctionModel is IEventFunctionModel || FunctionModel is LoopStackModel)))
                     caps |= CapabilityFlags.Deletable | CapabilityFlags.Modifiable;

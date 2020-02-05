@@ -31,11 +31,7 @@ namespace UnityEditor.VisualScripting.Model.Translators
             if (member.Path == null || member.Path.Count == 0)
                 yield break;
 
-            var access = RoslynBuilder.MemberReference(input, member.Path[0]);
-            for (int i = 1; i < member.Path.Count; i++)
-            {
-                access = RoslynBuilder.MemberReference(access, member.Path[i]);
-            }
+            var access = RoslynBuilder.MemberReference(input, member.Path.ToArray());
 
             yield return access;
         }
@@ -411,11 +407,7 @@ namespace UnityEditor.VisualScripting.Model.Translators
                 if (rightHandExpression == null)
                     continue;
 
-                MemberAccessExpressionSyntax access = RoslynBuilder.MemberReference(leftHand, member.Path[0]);
-                for (int i = 1; i < member.Path.Count; i++)
-                {
-                    access = RoslynBuilder.MemberReference(access, member.Path[i]);
-                }
+                var access = RoslynBuilder.MemberReference(leftHand, member.Path.ToArray());
 
                 yield return SyntaxFactory.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression, access, rightHandExpression as ExpressionSyntax);
             }

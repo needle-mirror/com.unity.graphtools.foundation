@@ -96,10 +96,10 @@ namespace UnityEditor.VisualScriptingTests.Actions
         [Test]
         public void Test_MoveElementsActionForNodes([Values] TestingMode mode)
         {
-            var node0 = GraphModel.CreateNode<Type0FakeNodeModel>("Node0", Vector2.zero);
-            var node1 = GraphModel.CreateNode<Type0FakeNodeModel>("Node1", Vector2.zero);
-            var node2 = GraphModel.CreateNode<Type0FakeNodeModel>("Node2", Vector2.zero);
-            var node3 = GraphModel.CreateNode<Type0FakeNodeModel>("Node3", Vector2.zero);
+            GraphModel.CreateNode<Type0FakeNodeModel>("Node0", Vector2.zero);
+            GraphModel.CreateNode<Type0FakeNodeModel>("Node1", Vector2.zero);
+            GraphModel.CreateNode<Type0FakeNodeModel>("Node2", Vector2.zero);
+            GraphModel.CreateNode<Type0FakeNodeModel>("Node3", Vector2.zero);
             var newPosition0 = new Vector2(50, -75);
             var newPosition1 = new Vector2(60, 25);
             var newPosition2 = new Vector2(-30, 15);
@@ -113,7 +113,11 @@ namespace UnityEditor.VisualScriptingTests.Actions
                     Assert.That(GetNode(1).Position, Is.EqualTo(Vector2.zero));
                     Assert.That(GetNode(2).Position, Is.EqualTo(Vector2.zero));
                     Assert.That(GetNode(3).Position, Is.EqualTo(Vector2.zero));
+#if UNITY_2020_1_OR_NEWER
+                    return new MoveElementsAction(newPosition0, new[] {GetNode(0)}, null, null);
+#else
                     return new MoveElementsAction(newPosition0, new[] {GetNode(0)}, null);
+#endif
                 },
                 () =>
                 {
@@ -132,7 +136,11 @@ namespace UnityEditor.VisualScriptingTests.Actions
                     Assert.That(GetNode(1).Position, Is.EqualTo(Vector2.zero));
                     Assert.That(GetNode(2).Position, Is.EqualTo(Vector2.zero));
                     Assert.That(GetNode(3).Position, Is.EqualTo(Vector2.zero));
+#if UNITY_2020_1_OR_NEWER
+                    return new MoveElementsAction(newPosition1, new[] {GetNode(1)}, null, null);
+#else
                     return new MoveElementsAction(newPosition1, new[] {GetNode(1)}, null);
+#endif
                 },
                 () =>
                 {
@@ -151,7 +159,11 @@ namespace UnityEditor.VisualScriptingTests.Actions
                     Assert.That(GetNode(1).Position, Is.EqualTo(newPosition1));
                     Assert.That(GetNode(2).Position, Is.EqualTo(Vector2.zero));
                     Assert.That(GetNode(3).Position, Is.EqualTo(Vector2.zero));
+#if UNITY_2020_1_OR_NEWER
+                    return new MoveElementsAction(newPosition2, new[] {GetNode(2)}, null, null);
+#else
                     return new MoveElementsAction(newPosition2, new[] {GetNode(2)}, null);
+#endif
                 },
                 () =>
                 {
@@ -170,7 +182,11 @@ namespace UnityEditor.VisualScriptingTests.Actions
                     Assert.That(GetNode(1).Position, Is.EqualTo(newPosition1));
                     Assert.That(GetNode(2).Position, Is.EqualTo(newPosition2));
                     Assert.That(GetNode(3).Position, Is.EqualTo(Vector2.zero));
+#if UNITY_2020_1_OR_NEWER
+                    return new MoveElementsAction(deltaAll, new[] {GetNode(0), GetNode(1), GetNode(2), GetNode(3)}, null, null);
+#else
                     return new MoveElementsAction(deltaAll, new[] {GetNode(0), GetNode(1), GetNode(2), GetNode(3)}, null);
+#endif
                 },
                 () =>
                 {
@@ -196,7 +212,11 @@ namespace UnityEditor.VisualScriptingTests.Actions
                     Assert.That(GetEdgeCount(), Is.EqualTo(0));
                     Assert.That(GetStickyNoteCount(), Is.EqualTo(1));
                     Assert.That(GetStickyNote(0).Position, Is.EqualTo(origStickyPosition));
+#if UNITY_2020_1_OR_NEWER
+                    return new MoveElementsAction(newStickyPosition.position - origStickyPosition.position, null, null, new[] {stickyNote});
+#else
                     return new MoveElementsAction(newStickyPosition.position - origStickyPosition.position, null, new[] {stickyNote});
+#endif
                 },
                 () =>
                 {
@@ -221,6 +241,12 @@ namespace UnityEditor.VisualScriptingTests.Actions
             var newStickyPosition = new Rect(origStickyPosition.position + deltaMove, itemSize);
             var stickyNote = (StickyNoteModel)GraphModel.CreateStickyNote(origStickyPosition);
 
+#if UNITY_2020_1_OR_NEWER
+            var origPlacematPosition = new Rect(Vector2.one * 200, itemSize);
+            var newPlacematPosition = new Rect(origPlacematPosition.position + deltaMove, itemSize);
+            var placemat = (PlacematModel)GraphModel.CreatePlacemat("Blah", origPlacematPosition);
+#endif
+
             TestPrereqActionPostreq(mode,
                 () =>
                 {
@@ -229,7 +255,12 @@ namespace UnityEditor.VisualScriptingTests.Actions
                     Assert.That(GetStickyNoteCount(), Is.EqualTo(1));
                     Assert.That(GetNode(0).Position, Is.EqualTo(origNodePosition));
                     Assert.That(GetStickyNote(0).Position, Is.EqualTo(origStickyPosition));
+#if UNITY_2020_1_OR_NEWER
+                    Assert.That(GetPlacemat(0).Position, Is.EqualTo(origPlacematPosition));
+                    return new MoveElementsAction(deltaMove, new[] { node }, new[] { placemat }, new[] { stickyNote });
+#else
                     return new MoveElementsAction(deltaMove, new[] {node}, new[] {stickyNote});
+#endif
                 },
                 () =>
                 {
@@ -238,6 +269,9 @@ namespace UnityEditor.VisualScriptingTests.Actions
                     Assert.That(GetStickyNoteCount(), Is.EqualTo(1));
                     Assert.That(GetNode(0).Position, Is.EqualTo(newNodePosition));
                     Assert.That(GetStickyNote(0).Position.position, Is.EqualTo(newStickyPosition.position));
+#if UNITY_2020_1_OR_NEWER
+                    Assert.That(GetPlacemat(0).Position.position, Is.EqualTo(newPlacematPosition.position));
+#endif
                 });
         }
     }

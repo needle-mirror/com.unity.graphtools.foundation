@@ -32,10 +32,10 @@ namespace UnityEditor.VisualScripting.Editor
         }
     }
 
-    static class GraphElementFactory
+    public static class GraphElementFactory
     {
         [CanBeNull]
-        internal static GraphElement CreateUI(GraphView graphView, Store store, IGraphElementModel model)
+        public static GraphElement CreateUI(GraphView graphView, Store store, IGraphElementModel model)
         {
             if (model == null)
             {

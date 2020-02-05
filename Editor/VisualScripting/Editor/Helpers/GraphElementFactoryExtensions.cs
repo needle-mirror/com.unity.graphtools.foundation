@@ -1,5 +1,4 @@
 using System;
-using JetBrains.Annotations;
 using UnityEditor.Experimental.GraphView;
 using UnityEditor.VisualScripting.Editor.SmartSearch;
 using UnityEditor.VisualScripting.GraphViewModel;
@@ -9,7 +8,7 @@ using UnityEngine;
 namespace UnityEditor.VisualScripting.Editor
 {
     [GraphtoolsExtensionMethods]
-    static class GraphElementFactoryExtensions
+    public static class GraphElementFactoryExtensions
     {
         public static GraphElement CreateFunction(this INodeBuilder builder, Store store, FunctionModel model)
         {
@@ -32,6 +31,14 @@ namespace UnityEditor.VisualScripting.Editor
         {
             return new IfConditionNode(model, store, builder.GraphView);
         }
+
+#if UNITY_2020_1_OR_NEWER
+        public static GraphElement CreatePlacemat(this INodeBuilder builder, Store store, PlacematModel model)
+        {
+            return builder.GraphView.placematContainer.CreatePlacemat(() => new Placemat(model, store, builder.GraphView), model.Position, model.ZOrder, model.Title);
+        }
+
+#endif
 
         public static GraphElement CreateNode(this INodeBuilder builder, Store store, NodeModel model)
         {

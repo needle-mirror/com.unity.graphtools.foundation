@@ -30,7 +30,7 @@ namespace UnityEditor.VisualScripting.Model
         protected override void OnDefineNode()
         {
             base.OnDefineNode();
-            InputPort = AddDataInput<KeyCode>("Key Choice");
+            InputPort = AddDataInput("Key Choice", defaultValue: KeyCode.Space);
             ButtonOutputPort = AddDataOutputPort<bool>(nameof(Input.GetKey));
         }
     }

@@ -57,11 +57,7 @@ namespace UnityEditor.VisualScripting.Model
             }
 
             var arg = obj != null ? Argument(obj) : Argument(LiteralExpression(SyntaxKind.NullLiteralExpression));
-            yield return RoslynBuilder.MethodInvocation(
-                methodName,
-                IdentifierName(nameof(Debug)),
-                new[] { arg },
-                Enumerable.Empty<TypeSyntax>());
+            yield return RoslynBuilder.MethodInvocation(methodName, IdentifierName(nameof(Debug)), arg);
         }
     }
 }

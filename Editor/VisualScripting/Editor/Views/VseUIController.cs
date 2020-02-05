@@ -134,6 +134,14 @@ namespace UnityEditor.VisualScripting.Editor
                 state.EditorDataModel.ElementModelToRename = null;
             }
 
+#if UNITY_2020_1_OR_NEWER
+            // We need to do this after all graph elements are created.
+            foreach (var p in m_GraphView.placematContainer.Placemats.Cast<Placemat>())
+            {
+                p.InitCollapsedElementsFromModel();
+            }
+#endif
+
             m_GraphView.MarkDirtyRepaint();
 
             topologyStopwatch.Stop();
@@ -208,7 +216,7 @@ namespace UnityEditor.VisualScripting.Editor
                     break;
             }
 
-            m_GraphView.RemoveElement(graphElement);
+            m_GraphView.DeleteElements(new[] { graphElement });
             graphElement.UnregisterCallback<MouseOverEvent>(m_GraphView.OnMouseOver);
         }
 
@@ -221,13 +229,21 @@ namespace UnityEditor.VisualScripting.Editor
             if (graphModel == null)
                 return;
 
+#if UNITY_2020_1_OR_NEWER
+            m_GraphView.placematContainer.RemoveAllPlacemats();
+            foreach (var placematModel in ((VSGraphModel)state.CurrentGraphModel).PlacematModels.OrderBy(e => e.ZOrder))
+            {
+                var placemat = GraphElementFactory.CreateUI(m_GraphView, m_Store, placematModel);
+                if (placemat != null)
+                    AddToGraphView(placemat);
+            }
+#endif
+
             foreach (var nodeModel in graphModel.NodeModels)
             {
                 var node = GraphElementFactory.CreateUI(m_GraphView, m_Store, nodeModel);
                 if (node != null)
-                {
                     AddToGraphView(node);
-                }
             }
 
             foreach (var stickyNoteModel in ((VSGraphModel)state.CurrentGraphModel).StickyNoteModels)
@@ -395,7 +411,8 @@ namespace UnityEditor.VisualScripting.Editor
             // probably related to the undo selection thingy
             try
             {
-                m_GraphView.AddElement(graphElement);
+                if (graphElement.parent == null) // Some elements (e.g. Placemats) come in already added to the right spot.
+                    m_GraphView.AddElement(graphElement);
             }
             catch (Exception e)
             {

@@ -13,8 +13,13 @@ namespace UnityEditor.VisualScripting.GraphViewModel
         [SerializeReference]
         List<INodeModel> m_StackedNodeModels = new List<INodeModel>();
 
+#if UNITY_2020_1_OR_NEWER
+        public override CapabilityFlags Capabilities => CapabilityFlags.Selectable | CapabilityFlags.Deletable |
+        CapabilityFlags.Movable | CapabilityFlags.DeletableWhenEmpty | CapabilityFlags.Copiable;
+#else
         public override CapabilityFlags Capabilities => CapabilityFlags.Selectable | CapabilityFlags.Deletable |
         CapabilityFlags.Movable | CapabilityFlags.DeletableWhenEmpty;
+#endif
 
         public virtual IFunctionModel OwningFunctionModel { get; set; }
 
@@ -223,16 +228,16 @@ namespace UnityEditor.VisualScripting.GraphViewModel
             m_StackedNodeModels.Clear();
         }
 
-        protected override PortModel AddInputPort(string portName, PortType portType, TypeHandle dataType, string portId = null, PortModel.PortModelOptions options = PortModel.PortModelOptions.Default)
+        protected override PortModel AddInputPort(string portName, PortType portType, TypeHandle dataType, string portId = null, PortModel.PortModelOptions options = PortModel.PortModelOptions.Default, Action<ConstantNodeModel> preDefine = null, object portCreationData = null)
         {
-            var inputPort = base.AddInputPort(portName, portType, dataType, portId, options);
+            var inputPort = base.AddInputPort(portName, portType, dataType, portId, options, preDefine, portCreationData);
             m_InputPorts.Add(inputPort);
             return inputPort;
         }
 
-        protected override PortModel AddOutputPort(string portName, PortType portType, TypeHandle dataType, string portId = null, PortModel.PortModelOptions options = PortModel.PortModelOptions.Default)
+        protected override PortModel AddOutputPort(string portName, PortType portType, TypeHandle dataType, string portId = null, PortModel.PortModelOptions options = PortModel.PortModelOptions.Default, object portCreationData = null)
         {
-            var outputPort = base.AddOutputPort(portName, portType, dataType, portId, options);
+            var outputPort = base.AddOutputPort(portName, portType, dataType, portId, options, portCreationData);
             m_OutputPorts.Add(outputPort);
             return outputPort;
         }

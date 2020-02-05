@@ -22,14 +22,10 @@ namespace UnityEditor.VisualScripting.Editor
             {
                 m_Image.tintColor = value;
 
-                #if UNITY_2019_3_OR_NEWER
                 style.borderLeftColor = value;
                 style.borderRightColor = value;
                 style.borderTopColor = value;
                 style.borderBottomColor = value;
-                #else
-                style.borderColor = value;
-                #endif
             }
         }
 

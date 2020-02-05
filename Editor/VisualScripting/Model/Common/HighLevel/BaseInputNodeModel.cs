@@ -29,9 +29,7 @@ namespace UnityEditor.VisualScripting.Model
                     SyntaxKind.DefaultLiteralExpression,
                     SyntaxFactory.Token(SyntaxKind.DefaultKeyword));
 
-            var methodParameters = new[] { SyntaxFactory.Argument(inputName) };
-
-            var method = RoslynBuilder.MethodInvocation(methodName = MethodName(portModel), typeof(Input).ToTypeSyntax(), methodParameters, Enumerable.Empty<TypeSyntax>());
+            var method = RoslynBuilder.MethodInvocation(methodName = MethodName(portModel), typeof(Input).ToTypeSyntax(), SyntaxFactory.Argument(inputName));
             return method;
         }
     }

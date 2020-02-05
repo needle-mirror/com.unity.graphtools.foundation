@@ -25,6 +25,11 @@ namespace UnityEditor.VisualScripting.Model
             base.OnDefineNode();
         }
 
+        protected override void SetFromOther(object o)
+        {
+            value.Value = Convert.ToInt32(o);
+        }
+
         public Enum EnumValue => value.ValueAsEnum(Stencil);
 
         public TypeHandle EnumType => value.EnumType;

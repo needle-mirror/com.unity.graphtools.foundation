@@ -7,11 +7,18 @@ using UnityEditor.VisualScripting.Model;
 using UnityEditor.VisualScripting.Model.Stencils;
 using UnityEditor.VisualScripting.Model.Compilation;
 using UnityEngine;
+using UnityEngine.Scripting.APIUpdating;
 
 // ReSharper disable AccessToStaticMemberViaDerivedType
 
 namespace UnityEditor.VisualScriptingTests.Types
 {
+    namespace NewNamespace
+    {
+        [MovedFrom(false, sourceNamespace: "UnityEditor.VisualScriptingTests.Types.OldNamespace", sourceClassName: "Bar")]
+        class Foo {}
+    }
+
     class TypeHandleTests
     {
         CSharpTypeSerializer m_TypeSerializer;
@@ -102,6 +109,18 @@ namespace UnityEditor.VisualScriptingTests.Types
             Assert.AreEqual(isValueType, metadata.IsValueType);
             Assert.AreEqual(isClass, metadata.IsClass);
             Assert.AreEqual(isEnum, metadata.IsEnum);
+        }
+
+        [Test]
+        public void Test_TypeHandle_Resolve_WorksWithRenamedTypes_WithMovedFromAttribute()
+        {
+            var typeStr = typeof(NewNamespace.Foo).AssemblyQualifiedName;
+            var originalTypeStr = typeStr.Replace("NewNamespace", "OldNamespace").Replace("Foo", "Bar");
+
+            var typeHandle = new TypeHandle(originalTypeStr);
+
+            var resolvedType = typeHandle.Resolve(m_TypeSerializer);
+            Assert.AreEqual(typeof(NewNamespace.Foo), resolvedType);
         }
     }
 }

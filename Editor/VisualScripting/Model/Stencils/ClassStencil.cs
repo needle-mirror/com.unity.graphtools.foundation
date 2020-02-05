@@ -75,7 +75,7 @@ namespace UnityEditor.VisualScripting.Model.Stencils
         {
             return !type.IsAbstract
                 && !type.IsInterface
-                && type.IsPublic
+                && type.IsVisible
                 && !Attribute.IsDefined(type, typeof(ObsoleteAttribute))
                 && !k_BlackListedNamespaces.Any(b => type.Namespace != null && type.Namespace.ToLower().StartsWith(b)
                 && !Attribute.IsDefined(type, typeof(ObsoleteAttribute)));

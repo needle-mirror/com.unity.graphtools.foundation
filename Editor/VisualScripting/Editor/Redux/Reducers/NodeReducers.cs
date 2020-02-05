@@ -15,9 +15,6 @@ namespace UnityEditor.VisualScripting.Editor
         public static void Register(Store store)
         {
             store.Register<DisconnectNodeAction>(DisconnectNode);
-            store.Register<BypassNodeAction>(BypassNode);
-            store.Register<ChangeNodeColorAction>(ChangeNodeColor);
-            store.Register<ResetNodeColorAction>(ResetNodeColor);
             store.Register<CreateNodeFromSearcherAction>(CreateNodeFromSearcher);
             store.Register<SetNodeEnabledStateAction>(SetNodeEnabledState);
             store.Register<RefactorConvertToFunctionAction>(RefactorConvertToFunction);
@@ -49,40 +46,6 @@ namespace UnityEditor.VisualScripting.Editor
                 graphModel.DeleteEdges(edgeModels);
             }
 
-            return previousState;
-        }
-
-        static State BypassNode(State previousState, BypassNodeAction action)
-        {
-            var graphModel = (VSGraphModel)previousState.CurrentGraphModel;
-            graphModel.BypassNodes(action.NodeModels);
-
-            return previousState;
-        }
-
-        static State ChangeNodeColor(State previousState, ChangeNodeColorAction action)
-        {
-            Undo.RegisterCompleteObjectUndo((Object)previousState.AssetModel, "Change Color");
-            EditorUtility.SetDirty((Object)previousState.AssetModel);
-            foreach (var nodeModel in action.NodeModels.OfType<NodeModel>())
-            {
-                nodeModel.ChangeColor(action.Color);
-            }
-            previousState.MarkForUpdate(UpdateFlags.None);
-            return previousState;
-        }
-
-        static State ResetNodeColor(State previousState, ResetNodeColorAction action)
-        {
-            Undo.RegisterCompleteObjectUndo((Object)previousState.AssetModel, "Change Color");
-            EditorUtility.SetDirty((Object)previousState.AssetModel);
-            foreach (INodeModel nodeModel in action.NodeModels)
-            {
-                ((NodeModel)nodeModel).HasUserColor = false;
-            }
-
-            // TODO: Should not be topology
-            previousState.MarkForUpdate(UpdateFlags.GraphTopology);
             return previousState;
         }
 

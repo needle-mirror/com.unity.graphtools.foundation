@@ -92,7 +92,10 @@ namespace UnityEditor.VisualScripting.Editor
             {
                 if (model is IEdgeModel edgeModel)
                 {
-                    m_EdgesToRebuild.Add(edgeModel);
+                    if (graphChanges.DeleteEdgeModels.Contains(edgeModel))
+                        m_EdgesToDelete.Add(edgeModel);
+                    else
+                        m_EdgesToRebuild.Add(edgeModel);
                 }
                 else if (model is INodeModel nodeModel)
                 {
@@ -118,6 +121,12 @@ namespace UnityEditor.VisualScripting.Editor
                 {
                     m_OtherElementsToRebuild.Add(model);
                 }
+#if UNITY_2020_1_OR_NEWER
+                else if (model is IPlacematModel)
+                {
+                    m_OtherElementsToRebuild.Add(model);
+                }
+#endif
                 else
                 {
                     Debug.LogWarning($"Unexpected model to rebuild: {model.GetType().Name}, make sure it is correctly supported by UI Partial Rebuild.");
@@ -162,6 +171,16 @@ namespace UnityEditor.VisualScripting.Editor
                         m_GraphElementsToDelete.Add(graphElement);
                     }
                 }
+#if UNITY_2020_1_OR_NEWER
+                else if (elementModel is IPlacematModel placemat)
+                {
+                    if (placemat.Destroyed)
+                    {
+                        var graphElement = existingElements[elementModel];
+                        m_GraphElementsToDelete.Add(graphElement);
+                    }
+                }
+#endif
             }
 
             foreach (IEdgeModel edge in graphChangeList.DeleteEdgeModels)
@@ -237,13 +256,22 @@ namespace UnityEditor.VisualScripting.Editor
         {
             foreach (GraphElement graphElement in m_GraphElementsToDelete)
             {
-                if (graphElement is Experimental.GraphView.Edge edge)
+                if (graphElement is Edge edge)
                 {
                     edge.input?.Disconnect(edge);
                     edge.output?.Disconnect(edge);
                     edge.input = null;
                     edge.output = null;
                 }
+
+#if UNITY_2020_1_OR_NEWER
+                if (graphElement is Placemat placemat)
+                {
+                    if (placemat.Collapsed)
+                        placemat.ShowHiddenElements();
+                }
+#endif
+
                 m_DeleteElement(graphElement);
                 m_NumDeleted++;
             }

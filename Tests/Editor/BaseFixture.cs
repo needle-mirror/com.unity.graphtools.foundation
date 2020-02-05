@@ -378,6 +378,19 @@ namespace UnityEditor.VisualScriptingTests
             return GetAllStickyNotes().Count();
         }
 
+#if UNITY_2020_1_OR_NEWER
+        protected IEnumerable<PlacematModel> GetAllPlacemats()
+        {
+            return GraphModel.PlacematModels.Cast<PlacematModel>();
+        }
+
+        protected PlacematModel GetPlacemat(int index)
+        {
+            return GetAllPlacemats().ElementAt(index);
+        }
+
+#endif
+
         protected IVariableDeclarationModel GetFunctionVariable(IFunctionModel method, string localName)
         {
             return method.FunctionVariableModels.Single(f => f.Title == localName);

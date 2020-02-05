@@ -280,7 +280,7 @@ namespace UnityEditor.VisualScripting.Editor
         }
     }
 #else
-    class StickyNote : UnityEditor.Experimental.GraphView.StickyNote, IHasGraphElementModel, IResizable, IMovable
+    class StickyNote : UnityEditor.Experimental.GraphView.StickyNote, IHasGraphElementModel, IMovable
     {
         readonly Store m_Store;
         readonly IStickyNoteModel stickyNoteModel;
@@ -300,7 +300,7 @@ namespace UnityEditor.VisualScripting.Editor
 
             title = model.Title;
             contents = model.Contents;
-            SetPosition(position);
+            base.SetPosition(position);
 
             RegisterCallback<StickyNoteChangeEvent>(OnChange);
         }

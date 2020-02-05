@@ -209,8 +209,13 @@ namespace UnityEditor.VisualScripting.Model
             ((VSGraphModel)GraphModel).LastChanges.RequiresRebuild = true;
         }
 
+#if UNITY_2020_1_OR_NEWER
+        public override CapabilityFlags Capabilities => CapabilityFlags.Selectable | CapabilityFlags.Deletable |
+        CapabilityFlags.Movable | CapabilityFlags.Renamable | CapabilityFlags.Copiable;
+#else
         public override CapabilityFlags Capabilities => CapabilityFlags.Selectable | CapabilityFlags.Deletable |
         CapabilityFlags.Movable | CapabilityFlags.Renamable;
+#endif
 
         public void ClearVariableDeclarations()
         {

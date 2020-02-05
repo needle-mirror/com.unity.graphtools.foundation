@@ -114,6 +114,10 @@ namespace UnityEditor.VisualScripting.Editor
                 capabilities |= Capabilities.Droppable;
             if (model.Capabilities.HasFlag(CapabilityFlags.Renamable))
                 capabilities |= Capabilities.Renamable;
+#if UNITY_2020_1_OR_NEWER
+            if (model.Capabilities.HasFlag(CapabilityFlags.Copiable))
+                capabilities |= Capabilities.Copiable;
+#endif
             return capabilities;
         }
 
@@ -167,23 +171,23 @@ namespace UnityEditor.VisualScripting.Editor
             {
                 case LoopStackModel.TitleComponentIcon.Collection:
                     tokenElementIcon.AddToClassList("typeArray");
-                    tokenElementIcon.style.visibility = Visibility.Visible;
+                    tokenElementIcon.style.visibility = StyleKeyword.Null;
                     break;
                 case LoopStackModel.TitleComponentIcon.Condition:
                     tokenElementIcon.AddToClassList("typeBoolean");
-                    tokenElementIcon.style.visibility = Visibility.Visible;
+                    tokenElementIcon.style.visibility = StyleKeyword.Null;
                     break;
                 case LoopStackModel.TitleComponentIcon.Count:
                     tokenElementIcon.AddToClassList("typeCount");
-                    tokenElementIcon.style.visibility = Visibility.Visible;
+                    tokenElementIcon.style.visibility = StyleKeyword.Null;
                     break;
                 case LoopStackModel.TitleComponentIcon.Index:
                     tokenElementIcon.AddToClassList("typeIndex");
-                    tokenElementIcon.style.visibility = Visibility.Visible;
+                    tokenElementIcon.style.visibility = StyleKeyword.Null;
                     break;
                 case LoopStackModel.TitleComponentIcon.Item:
                     tokenElementIcon.AddToClassList("typeItem");
-                    tokenElementIcon.style.visibility = Visibility.Visible;
+                    tokenElementIcon.style.visibility = StyleKeyword.Null;
                     break;
                 case LoopStackModel.TitleComponentIcon.None:
                     break;
