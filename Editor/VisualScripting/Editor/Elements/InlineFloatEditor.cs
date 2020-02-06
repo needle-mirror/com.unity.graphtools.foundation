@@ -91,7 +91,7 @@ namespace UnityEditor.VisualScripting.Editor.ConstantEditor
     {
         static string GraphToolEditorStylePath => UICreationHelper.templatePath + "ConstantEditors.uss";
 
-        internal InlineFloatEditor()
+        public InlineFloatEditor()
         {
             styleSheets.Add(AssetDatabase.LoadAssetAtPath<StyleSheet>(GraphToolEditorStylePath));
             AddToClassList("vs-inline-float-editor");
