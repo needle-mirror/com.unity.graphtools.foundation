@@ -25,9 +25,9 @@ namespace UnityEditor.VisualScripting.Model.Stencils
                             var movedFromAttribute = (MovedFromAttribute)attribute;
                             movedFromAttribute.GetData(out _, out var nameSpace, out var assembly, out var className);
 
-                            var currentClassName = t.Name;
+                            var currentClassName = GetFullNameNoNamespace(t.FullName, t.Namespace);
                             var currentNamespace = t.Namespace;
-                            var currentAssembly = t.Assembly.FullName;
+                            var currentAssembly = t.Assembly.GetName().Name;
 
                             var newNamespace = string.IsNullOrEmpty(nameSpace) ? currentNamespace : nameSpace;
                             var newClassName = string.IsNullOrEmpty(className) ? currentClassName : className;
@@ -42,6 +42,28 @@ namespace UnityEditor.VisualScripting.Model.Stencils
 
                 return s_MovedFromTypes;
             }
+        }
+
+        /// <summary>
+        /// Gets the full name of a type without the namespace.
+        /// </summary>
+        /// <remarks>
+        /// The full name of a type nested type includes the outer class type name. The type names are normally
+        /// separated by '+' but Unity serialization uses the '/' character as separator.
+        ///
+        /// This method returns the full type name of a class and switches the type separator to '/' to follow Unity.
+        /// </remarks>
+        /// <param name="typeName">The full type name, including the namespace.</param>
+        /// <param name="nameSpace">The namespace to be removed.</param>
+        /// <returns>Returns a string.</returns>
+        static string GetFullNameNoNamespace(string typeName, string nameSpace)
+        {
+            if (typeName.Contains(nameSpace))
+            {
+                return typeName.Substring(nameSpace.Length + 1).Replace("+", "/");
+            }
+
+            return typeName;
         }
 
         public CSharpTypeSerializer(Dictionary<string, string> typeRenames = null)
@@ -94,7 +116,14 @@ namespace UnityEditor.VisualScripting.Model.Stencils
                 var type = Type.GetType(assemblyQualifiedName);
                 if (type == null)
                 {
-                    // check if the type has moved
+                    // Check if the type has moved
+
+                    // remove the assembly version string
+                    var versionIdx = assemblyQualifiedName.IndexOf(", Version=");
+                    if (versionIdx > 0)
+                        assemblyQualifiedName = assemblyQualifiedName.Substring(0, versionIdx);
+                    // replace all '+' with '/' to follow the Unity serialization convention for nested types
+                    assemblyQualifiedName = assemblyQualifiedName.Replace("+", "/");
                     if (MovedFromTypes.ContainsKey(assemblyQualifiedName))
                     {
                         type = MovedFromTypes[assemblyQualifiedName];

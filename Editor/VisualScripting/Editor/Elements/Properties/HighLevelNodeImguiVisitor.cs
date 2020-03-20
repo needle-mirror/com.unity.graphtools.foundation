@@ -6,6 +6,8 @@ using System.Reflection;
 #if PROPERTIES
 using Unity.Properties;
 using Unity.Properties.Reflection;
+using UnityEditor.VisualScripting.Runtime;
+using UnityEngine.Assertions;
 #endif
 using UnityEditor.VisualScripting.Editor.SmartSearch;
 using UnityEditor.VisualScripting.GraphViewModel;
@@ -16,7 +18,7 @@ using UnityEngine;
 namespace UnityEditor.VisualScripting.Editor
 {
 #if PROPERTIES
-    abstract class ImguiVisitorBase : PropertyVisitor
+    public abstract class ImguiVisitorBase : PropertyVisitor
     {
         static ImguiVisitorBase()
         {
@@ -25,11 +27,22 @@ namespace UnityEditor.VisualScripting.Editor
 #endif
         }
 
+        protected virtual IEnumerable<IPropertyVisitorAdapter> Adapters
+        {
+            get
+            {
+                yield return new IMGUIPrimitivesAdapter();
+                yield return new IMGUIMathematicsAdapter();
+                yield return new TypeHandleAdapter(this);
+            }
+        }
+
         public ImguiVisitorBase()
         {
-            AddAdapter(new IMGUIPrimitivesAdapter());
-            AddAdapter(new IMGUIMathematicsAdapter());
-            AddAdapter(new TypeHandleAdapter(this));
+            foreach (var adapter in Adapters)
+            {
+                AddAdapter(adapter);
+            }
         }
 
         protected override VisitStatus Visit<TProperty, TContainer, TValue>(TProperty property, ref TContainer container, ref TValue value, ref ChangeTracker changeTracker)
@@ -51,7 +64,7 @@ namespace UnityEditor.VisualScripting.Editor
             return VisitStatus.Handled;
         }
 
-        class IMGUIAdapter : IPropertyVisitorAdapter
+        public class IMGUIAdapter : IPropertyVisitorAdapter
         {
             protected static void DoField<TProperty, TContainer, TValue>(TProperty property, ref TContainer container, ref TValue value, ref ChangeTracker changeTracker, Func<GUIContent, TValue, TValue> drawer)
                 where TProperty : IProperty<TContainer, TValue>
@@ -67,26 +80,40 @@ namespace UnityEditor.VisualScripting.Editor
             }
         }
 
-        class TypeHandleAdapter : IMGUIAdapter, IVisitAdapter<TypeHandle>
+        public abstract class PickFromSearcherAdapter : IMGUIAdapter
         {
             readonly ImguiVisitorBase m_HighLevelNodeImguiVisitor;
+            TypeHandle m_Picked;
+            INodeModel m_EditedModel;
 
-            public TypeHandleAdapter(ImguiVisitorBase highLevelNodeImguiVisitor)
+            public Stencil Stencil => m_HighLevelNodeImguiVisitor.model.GraphModel.Stencil;
+            public INodeModel VisitorModel => m_HighLevelNodeImguiVisitor.model;
+
+            protected PickFromSearcherAdapter(ImguiVisitorBase highLevelNodeImguiVisitor)
             {
                 m_HighLevelNodeImguiVisitor = highLevelNodeImguiVisitor;
             }
 
-            TypeHandle m_Picked;
-            INodeModel m_EditedModel;
-
-            public VisitStatus Visit<TProperty, TContainer>(IPropertyVisitor visitor, TProperty property, ref TContainer container, ref TypeHandle value, ref ChangeTracker changeTracker) where TProperty : IProperty<TContainer, TypeHandle>
+            protected virtual SearcherFilter MakeSearcherAdapterFromAttribute(TypeSearcherAttribute attribute, INodeModel model)
             {
-                if (!property.Attributes.HasAttribute<TypeSearcherAttribute>())
-                    return VisitStatus.Unhandled;
+                if (attribute.FilteredType != null)
+                {
+                    var filter = attribute.FilteredType;
+                    Assert.IsTrue(typeof(ISearcherFilter).IsAssignableFrom(filter),
+                        "The filter is not type of ISearcherFilter");
+                    return ((ISearcherFilter)Activator.CreateInstance(filter)).GetFilter(model);
+                }
 
+                return null;
+            }
+
+            protected bool ExposeTypeHandle(IProperty property, ref ChangeTracker changeTracker, ref TypeHandle pickedType)
+            {
+                bool justPicked = false;
                 if (m_EditedModel == m_HighLevelNodeImguiVisitor.model && m_Picked != default)
                 {
-                    value = m_Picked;
+                    pickedType = m_Picked;
+                    justPicked = true;
                     m_Picked = default;
                     m_EditedModel = null;
                     changeTracker.MarkChanged();
@@ -96,7 +123,7 @@ namespace UnityEditor.VisualScripting.Editor
                 var model = m_HighLevelNodeImguiVisitor.model;
                 var stencil = model.GraphModel.Stencil;
 
-                var friendlyName = value.GetMetadata(stencil).FriendlyName;
+                var friendlyName = pickedType.GetMetadata(stencil).FriendlyName;
 
                 EditorGUILayout.BeginHorizontal();
                 EditorGUILayout.PrefixLabel(property.GetName());
@@ -107,10 +134,26 @@ namespace UnityEditor.VisualScripting.Editor
                     var mousePosition = GUILayoutUtility.GetLastRect().center; // /*mainContainer.LocalToWorld*/(Event.current.mousePosition);
                     void Callback(TypeHandle type, int index) => m_Picked = type;
 
-                    SearcherService.ShowTypes(stencil, mousePosition, Callback, attribute.Filter?.GetFilter(model));
+                    SearcherService.ShowTypes(stencil, mousePosition, Callback, MakeSearcherAdapterFromAttribute(attribute, model));
                 }
 
                 EditorGUILayout.EndHorizontal();
+                return justPicked;
+            }
+        }
+
+        class TypeHandleAdapter : PickFromSearcherAdapter, IVisitAdapter<TypeHandle>
+        {
+            public TypeHandleAdapter(ImguiVisitorBase highLevelNodeImguiVisitor)
+                : base(highLevelNodeImguiVisitor)
+            {
+            }
+
+            public VisitStatus Visit<TProperty, TContainer>(IPropertyVisitor visitor, TProperty property, ref TContainer container, ref TypeHandle value, ref ChangeTracker changeTracker) where TProperty : IProperty<TContainer, TypeHandle>
+            {
+                if (!property.Attributes.HasAttribute<TypeSearcherAttribute>())
+                    return VisitStatus.Unhandled;
+                ExposeTypeHandle(property, ref changeTracker, ref value);
 
                 return VisitStatus.Handled;
             }
@@ -283,7 +326,7 @@ namespace UnityEditor.VisualScripting.Editor
         }
     }
 
-    class HighLevelNodeImguiVisitor : ImguiVisitorBase
+    public class HighLevelNodeImguiVisitor : ImguiVisitorBase
     {
         const string k_ScriptPropertyName = "m_Script";
         static readonly HashSet<string> k_ExcludedPropertyNames =
@@ -298,7 +341,8 @@ namespace UnityEditor.VisualScripting.Editor
 
         public override bool IsExcluded<TProperty, TContainer, TValue>(TProperty property, ref TContainer container)
         {
-            return k_ExcludedPropertyNames.Contains(property.GetName());
+            return k_ExcludedPropertyNames.Contains(property.GetName()) ||
+                model is IPropertyVisitorNodeTarget target && target.IsExcluded(property.GetValue(ref container));
         }
 
         protected override VisitStatus BeginContainer<TProperty, TContainer, TValue>(TProperty property, ref TContainer container, ref TValue value, ref ChangeTracker changeTracker)

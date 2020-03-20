@@ -122,6 +122,10 @@ VseGraphView .stack-node .port.execution #connector #cap {
     border-color: #393939;
 }
 
+VseGraphView .node .port.execution-active {
+    --port-color: #b4ff69;
+}
+
 VseGraphView .stack-node .port.execution #type {
     margin-left: 0;
     margin-right: 0;

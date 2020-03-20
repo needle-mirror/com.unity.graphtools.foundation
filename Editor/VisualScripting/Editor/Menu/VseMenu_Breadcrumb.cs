@@ -21,6 +21,8 @@ namespace UnityEditor.VisualScripting.Editor
             State state = m_Store.GetState();
             IGraphModel graphModel = state.CurrentGraphModel;
 
+            m_Breadcrumb.TrimItems(0);
+
             int i = 0;
             for (; i < state.EditorDataModel.PreviousGraphModels.Count; i++)
             {
@@ -40,7 +42,7 @@ namespace UnityEditor.VisualScripting.Editor
                 m_Breadcrumb.CreateOrUpdateItem(i++, newCurrentGraph, null);
 
             object boundObject = state.EditorDataModel.BoundObject;
-            string newBoundObjectName = boundObject?.ToString();
+            string newBoundObjectName = boundObject is GameObject gameObject && gameObject ? gameObject.name : boundObject?.ToString();
             if (newBoundObjectName != null)
                 m_Breadcrumb.CreateOrUpdateItem(i++, newBoundObjectName, null);
 

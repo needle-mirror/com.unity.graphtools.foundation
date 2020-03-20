@@ -12,25 +12,26 @@ namespace UnityEditor.VisualScripting.Editor.SmartSearch
     public class TypeSearcherDatabase
     {
         readonly List<ITypeMetadata> m_TypesMetadata;
-        readonly Stencil m_Stencil;
+        public Stencil Stencil { get; }
 
         List<Action<List<SearcherItem>>> m_Registrations;
         List<Func<List<SearcherItem>, ITypeMetadata, bool>> m_MetaRegistrations;
 
+
         public TypeSearcherDatabase(Stencil stencil, List<ITypeMetadata> typesMetadata)
         {
-            m_Stencil = stencil;
+            Stencil = stencil;
             m_TypesMetadata = typesMetadata;
             m_Registrations = new List<Action<List<SearcherItem>>>();
             m_MetaRegistrations = new List<Func<List<SearcherItem>, ITypeMetadata, bool>>();
         }
 
-        protected void RegisterTypesFromMetadata(Func<List<SearcherItem>, ITypeMetadata, bool> register)
+        public void RegisterTypesFromMetadata(Func<List<SearcherItem>, ITypeMetadata, bool> register)
         {
             m_MetaRegistrations.Add(register);
         }
 
-        protected void RegisterTypes(Action<List<SearcherItem>> register)
+        public void RegisterTypes(Action<List<SearcherItem>> register)
         {
             m_Registrations.Add(register);
         }
@@ -40,7 +41,7 @@ namespace UnityEditor.VisualScripting.Editor.SmartSearch
             RegisterTypesFromMetadata((items, metadata) =>
             {
                 var classItem = new TypeSearcherItem(metadata.TypeHandle, metadata.FriendlyName);
-                return items.TryAddClassItem(m_Stencil, classItem, metadata);
+                return items.TryAddClassItem(Stencil, classItem, metadata);
             });
             return this;
         }

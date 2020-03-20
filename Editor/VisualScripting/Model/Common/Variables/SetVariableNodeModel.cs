@@ -19,7 +19,7 @@ namespace UnityEditor.VisualScripting.Model
         protected override void OnDefineNode()
         {
             InstancePort = AddInstanceInput<Unknown>(null, "Instance");
-            ValuePort = AddDataInput<Unknown>("Value");
+            ValuePort = AddDataInputPort<Unknown>("Value");
         }
 
         public override void OnConnection(IPortModel selfConnectedPortModel, IPortModel otherConnectedPortModel)

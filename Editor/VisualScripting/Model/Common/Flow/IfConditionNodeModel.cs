@@ -34,7 +34,7 @@ namespace UnityEditor.VisualScripting.Model
 
         protected override void OnDefineNode()
         {
-            IfPort = AddDataInput<bool>("Condition");
+            IfPort = AddDataInputPort<bool>("Condition");
             ThenPort = AddExecutionOutputPort("Then");
             ElsePort = AddExecutionOutputPort("Else");
 

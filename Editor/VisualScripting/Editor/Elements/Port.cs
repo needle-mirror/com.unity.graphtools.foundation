@@ -13,12 +13,12 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.VisualScripting.Editor
 {
-    public class Port : Experimental.GraphView.Port, IDropTarget
+    public class Port : Experimental.GraphView.Port, IDropTarget, IBadgeContainer
     {
         const string k_DropHighlightClass = "drop-highlighted";
         const string k_DropHighlightDeniedClass = "denied";
 
-        IPortModel Model => (IPortModel)userData;
+        public IPortModel Model => (IPortModel)userData;
 
         VisualElement m_InputEditor; // if this port allows editing an input, holds the element editing it
 
@@ -32,6 +32,9 @@ namespace UnityEditor.VisualScripting.Editor
 #endif
         GraphView GraphView => m_GraphView ?? (m_GraphView = GetFirstAncestorOfType<VseGraphView>());
         VseGraphView VseGraphView => GraphView as VseGraphView;
+
+        public IconBadge ErrorBadge { get; set; }
+        public ValueBadge ValueBadge { get; set; }
 
         // TODO: Weird that ContainsPoint does not work out of the box (with the default implementation)
         public override bool ContainsPoint(Vector2 localPoint)
@@ -117,6 +120,15 @@ namespace UnityEditor.VisualScripting.Editor
             }
 
             return edgeModelsToDelete;
+        }
+
+        /// <summary>
+        /// Used to highlight the port when it is triggered during tracing
+        /// </summary>
+        public bool ExecutionPortActive
+        {
+            get => ClassListContains("execution-active");
+            set => EnableInClassList("execution-active", value);
         }
 
         public static Port Create(IPortModel model, Store store, Orientation orientation, VisualElement existingIcon = null)

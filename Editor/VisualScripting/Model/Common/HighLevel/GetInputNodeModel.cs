@@ -39,7 +39,7 @@ namespace UnityEditor.VisualScripting.Model
         protected override void OnDefineNode()
         {
             base.OnDefineNode();
-            InputPort = AddDataInput<InputName>("Input Choice");
+            InputPort = AddDataInputPort<InputName>("Input Choice");
             ButtonOutputPort = AddDataOutputPort<bool>(nameof(Input.GetButton));
             AxisOutputPort = AddDataOutputPort<float>(nameof(Input.GetAxis));
         }

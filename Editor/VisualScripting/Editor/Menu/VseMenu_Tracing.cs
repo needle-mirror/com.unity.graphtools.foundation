@@ -1,16 +1,26 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using UnityEditor.Searcher;
 using UnityEditor.UIElements;
+using UnityEditor.VisualScripting.Model.Stencils;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Object = UnityEngine.Object;
 
 namespace UnityEditor.VisualScripting.Editor
 {
     partial class VseMenu
     {
+        class TargetSearcherItem : SearcherItem
+        {
+            public int Target;
+
+            public TargetSearcherItem(int target, string name, string help = "", List<SearcherItem> children = null) : base(name, help, children)
+            {
+                Target = target;
+            }
+        }
         public Action<ChangeEvent<bool>> OnToggleTracing;
 
         const int k_UpdateIntervalMs = 500;
@@ -74,26 +84,21 @@ namespace UnityEditor.VisualScripting.Editor
             m_TotalFrameLabel.AddToClassList("frameCounterLabel");
         }
 
-        class EntitySearcherItem : SearcherItem
-        {
-            public readonly DebuggerTracer.FrameData.EntityDescriptor Entity;
-            public EntitySearcherItem(DebuggerTracer.FrameData.EntityDescriptor e)
-                : base($"{e.EntityReference.EntityIndex}: {e.EntityName}")
-            {
-                Entity = e;
-            }
-        }
-
         void OnPickTargetButton(EventBase eventBase)
         {
-            var items = DebuggerTracer.GetTargets(m_Store.GetState().currentTracingFrame, (m_Store.GetState().CurrentGraphModel?.AssetModel as Object)?.GetInstanceID() ?? -1)
-                .Select(x => (SearcherItem) new EntitySearcherItem(x)).ToList();
+            State state = m_Store.GetState();
+            IDebugger debugger = state.CurrentGraphModel.Stencil.Debugger;
+            var targetIndices = debugger.GetDebuggingTargets(state.CurrentGraphModel);
+            var items = targetIndices == null ? null : targetIndices.Select(x =>
+                (SearcherItem) new TargetSearcherItem(x, debugger.GetTargetLabel(state.CurrentGraphModel, x))).ToList();
+            if (items == null || !items.Any())
+                items = new List<SearcherItem> {new SearcherItem("<No Object found>")};
+
             SearcherWindow.Show(EditorWindow.focusedWindow, items, "Entities", i =>
             {
-                if (i == null)
+                if (i == null || !(i is TargetSearcherItem targetSearcherItem))
                     return true;
-                var t = ((EntitySearcherItem)i).Entity;
-                m_Store.GetState().currentTracingTarget = t.EntityReference.EntityIndex;
+                state.CurrentTracingTarget = targetSearcherItem.Target;
                 UpdateTracingMenu();
                 return true;
             }, eventBase.originalMousePosition);
@@ -108,8 +113,8 @@ namespace UnityEditor.VisualScripting.Editor
                 int frame = m_CurrentFrameTextField.value;
 
                 frame = Math.Max(0, Math.Min(frame, Time.frameCount));
-                m_Store.GetState().currentTracingFrame = frame;
-                m_Store.GetState().currentTracingStep = -1;
+                m_Store.GetState().CurrentTracingFrame = frame;
+                m_Store.GetState().CurrentTracingStep = -1;
                 UpdateTracingMenu();
             }
         }
@@ -118,9 +123,9 @@ namespace UnityEditor.VisualScripting.Editor
         {
             var state = m_Store.GetState();
 
-            if (EditorApplication.isPlaying && state.EditorDataModel.TracingEnabled && DebuggerTracer.AllGraphs != null)
+            if (EditorApplication.isPlaying && state.EditorDataModel.TracingEnabled)
             {
-                m_PickTargetLabel.text = state.currentTracingTarget.ToString();
+                m_PickTargetLabel.text = state.CurrentGraphModel?.Stencil?.Debugger?.GetTargetLabel(state.CurrentGraphModel, state.CurrentTracingTarget);
                 m_PickTargetIcon.visible = false;
                 m_PickTargetButton.SetEnabled(true);
                 if (EditorApplication.isPaused || !EditorApplication.isPlaying)
@@ -136,8 +141,8 @@ namespace UnityEditor.VisualScripting.Editor
                 }
                 else
                 {
-                    state.currentTracingFrame = Time.frameCount;
-                    state.currentTracingStep = -1;
+                    state.CurrentTracingFrame = Time.frameCount;
+                    state.CurrentTracingStep = -1;
                     m_FirstFrameTracingButton.SetEnabled(false);
                     m_PreviousFrameTracingButton.SetEnabled(false);
                     m_PreviousStepTracingButton.SetEnabled(false);
@@ -152,11 +157,11 @@ namespace UnityEditor.VisualScripting.Editor
                     m_LastUpdate.Start();
                 if (force || EditorApplication.isPaused || m_LastUpdate.ElapsedMilliseconds > k_UpdateIntervalMs)
                 {
-                    m_CurrentFrameTextField.value = state.currentTracingFrame;
+                    m_CurrentFrameTextField.value = state.CurrentTracingFrame;
                     m_TotalFrameLabel.text = $"/{Time.frameCount.ToString()}";
-                    if (state.currentTracingStep != -1)
+                    if (state.CurrentTracingStep != -1)
                     {
-                        m_TotalFrameLabel.text += $" [{state.currentTracingStep}/{state.maxTracingStep}]";
+                        m_TotalFrameLabel.text += $" [{state.CurrentTracingStep}/{state.MaxTracingStep}]";
                     }
 
                     m_LastUpdate.Restart();
@@ -165,8 +170,8 @@ namespace UnityEditor.VisualScripting.Editor
             else
             {
                 m_LastUpdate.Stop();
-                state.currentTracingFrame = Time.frameCount;
-                state.currentTracingStep = -1;
+                state.CurrentTracingFrame = Time.frameCount;
+                state.CurrentTracingStep = -1;
                 m_PickTargetLabel.text = "";
                 m_PickTargetIcon.visible = true;
                 m_CurrentFrameTextField.value = 0;
@@ -185,39 +190,39 @@ namespace UnityEditor.VisualScripting.Editor
 
         void OnFirstFrameTracingButton()
         {
-            m_Store.GetState().currentTracingFrame = 0;
-            m_Store.GetState().currentTracingStep = -1;
+            m_Store.GetState().CurrentTracingFrame = 0;
+            m_Store.GetState().CurrentTracingStep = -1;
             UpdateTracingMenu();
         }
 
         void OnPreviousFrameTracingButton()
         {
-            if (m_Store.GetState().currentTracingFrame > 0)
+            if (m_Store.GetState().CurrentTracingFrame > 0)
             {
-                m_Store.GetState().currentTracingFrame--;
-                m_Store.GetState().currentTracingStep = -1;
+                m_Store.GetState().CurrentTracingFrame--;
+                m_Store.GetState().CurrentTracingStep = -1;
                 UpdateTracingMenu();
             }
         }
 
         void OnPreviousStepTracingButton()
         {
-            if (m_Store.GetState().currentTracingStep > 0)
+            if (m_Store.GetState().CurrentTracingStep > 0)
             {
-                m_Store.GetState().currentTracingStep--;
+                m_Store.GetState().CurrentTracingStep--;
             }
             else
             {
-                if (m_Store.GetState().currentTracingStep == -1)
+                if (m_Store.GetState().CurrentTracingStep == -1)
                 {
-                    m_Store.GetState().currentTracingStep = m_Store.GetState().maxTracingStep;
+                    m_Store.GetState().CurrentTracingStep = m_Store.GetState().MaxTracingStep;
                 }
                 else
                 {
-                    if (m_Store.GetState().currentTracingFrame > 0)
+                    if (m_Store.GetState().CurrentTracingFrame > 0)
                     {
-                        m_Store.GetState().currentTracingFrame--;
-                        m_Store.GetState().currentTracingStep = m_Store.GetState().maxTracingStep;
+                        m_Store.GetState().CurrentTracingFrame--;
+                        m_Store.GetState().CurrentTracingStep = m_Store.GetState().MaxTracingStep;
                     }
                 }
             }
@@ -227,22 +232,22 @@ namespace UnityEditor.VisualScripting.Editor
 
         void OnNextStepTracingButton()
         {
-            if (m_Store.GetState().currentTracingStep < m_Store.GetState().maxTracingStep && m_Store.GetState().currentTracingStep >= 0)
+            if (m_Store.GetState().CurrentTracingStep < m_Store.GetState().MaxTracingStep && m_Store.GetState().CurrentTracingStep >= 0)
             {
-                m_Store.GetState().currentTracingStep++;
+                m_Store.GetState().CurrentTracingStep++;
             }
             else
             {
-                if (m_Store.GetState().currentTracingStep == -1 && (m_Store.GetState().currentTracingFrame < Time.frameCount))
+                if (m_Store.GetState().CurrentTracingStep == -1 && (m_Store.GetState().CurrentTracingFrame < Time.frameCount))
                 {
-                    m_Store.GetState().currentTracingStep = 0;
+                    m_Store.GetState().CurrentTracingStep = 0;
                 }
                 else
                 {
-                    if (m_Store.GetState().currentTracingFrame < Time.frameCount)
+                    if (m_Store.GetState().CurrentTracingFrame < Time.frameCount)
                     {
-                        m_Store.GetState().currentTracingFrame++;
-                        m_Store.GetState().currentTracingStep = 0;
+                        m_Store.GetState().CurrentTracingFrame++;
+                        m_Store.GetState().CurrentTracingStep = 0;
                     }
                 }
             }
@@ -252,18 +257,18 @@ namespace UnityEditor.VisualScripting.Editor
 
         void OnNextFrameTracingButton()
         {
-            if (m_Store.GetState().currentTracingFrame < Time.frameCount)
+            if (m_Store.GetState().CurrentTracingFrame < Time.frameCount)
             {
-                m_Store.GetState().currentTracingFrame++;
-                m_Store.GetState().currentTracingStep = -1;
+                m_Store.GetState().CurrentTracingFrame++;
+                m_Store.GetState().CurrentTracingStep = -1;
                 UpdateTracingMenu();
             }
         }
 
         void OnLastFrameTracingButton()
         {
-            m_Store.GetState().currentTracingFrame = Time.frameCount;
-            m_Store.GetState().currentTracingStep = -1;
+            m_Store.GetState().CurrentTracingFrame = Time.frameCount;
+            m_Store.GetState().CurrentTracingStep = -1;
             UpdateTracingMenu();
         }
     }

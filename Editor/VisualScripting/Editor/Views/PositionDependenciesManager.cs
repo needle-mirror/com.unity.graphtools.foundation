@@ -20,7 +20,7 @@ namespace UnityEditor.VisualScripting.Editor
         INodeModel DependentNode { get; }
     }
 
-    class LinkedNodesDependency : IDependency
+    public class LinkedNodesDependency : IDependency
     {
         public IPortModel DependentPort;
         public IPortModel ParentPort;
@@ -175,6 +175,7 @@ namespace UnityEditor.VisualScripting.Editor
 
         public void UpdateNodeState(Dictionary<IGraphElementModel, GraphElement> modelsToNodeMapping)
         {
+            HashSet<GUID> processed = new HashSet<GUID>();
             void ProcessDependency(INodeModel nodeModel, ModelState state)
             {
                 if (nodeModel.State == ModelState.Disabled)
@@ -188,7 +189,8 @@ namespace UnityEditor.VisualScripting.Editor
                     return;
                 foreach (var dependency in dependencies)
                 {
-                    ProcessDependency(dependency.Value.DependentNode, state);
+                    if (processed.Add(dependency.Key))
+                        ProcessDependency(dependency.Value.DependentNode, state);
                 }
             }
 
@@ -375,7 +377,9 @@ namespace UnityEditor.VisualScripting.Editor
                         else
                         {
                             position = new Vector2(
-                                prev.Position.x - k_AlignHorizontalOffset - depUI.layout.width,
+                                prev.Position.x + (linked.ParentPort.Direction == Direction.Output
+                                    ? parentUI.layout.width + k_AlignHorizontalOffset
+                                    : -k_AlignHorizontalOffset - depUI.layout.width) ,
                                 inputPos.y + inputPortPos.y - outputPortPos.y
                             );
                             Log($"  pos {position} parent NOT stackNode");
@@ -414,9 +418,10 @@ namespace UnityEditor.VisualScripting.Editor
             bool anyEdge = false;
             foreach (Edge edge in selection.OfType<Edge>())
             {
+                if (!edge.GraphElementModel.GraphModel.Stencil.CreateDependencyFromEdge(edge.model, out LinkedNodesDependency dependency, out INodeModel parent))
+                    continue;
                 anyEdge = true;
 
-                LinkedNodesDependency dependency = CreateDependencyFromEdge(edge.model, out INodeModel parent);
                 GraphElement element = vseGraphView.UIController.ModelsToNodeMapping[dependency.DependentNode];
                 AlignDependency(element, dependency, Vector2.zero, parent);
                 topMostModels.Add(dependency.DependentNode);
@@ -500,35 +505,10 @@ namespace UnityEditor.VisualScripting.Editor
 
         public void AddPositionDependency(IEdgeModel model)
         {
-            IDependency dependency = CreateDependencyFromEdge(model, out INodeModel parent);
+            if (!model.GraphModel.Stencil.CreateDependencyFromEdge(model, out var dependency, out INodeModel parent))
+                return;
             Add(parent, dependency);
             LogDependencies();
-        }
-
-        static LinkedNodesDependency CreateDependencyFromEdge(IEdgeModel model, out INodeModel parent)
-        {
-            LinkedNodesDependency dependency;
-            if (model.InputPortModel.NodeModel is IStackModel && model.InputPortModel.PortType != PortType.Instance)
-            {
-                dependency = new LinkedNodesDependency
-                {
-                    DependentPort = model.InputPortModel,
-                    ParentPort = model.OutputPortModel,
-                    count = 1,
-                };
-                parent = model.OutputPortModel.NodeModel;
-            }
-            else
-            {
-                dependency = new LinkedNodesDependency
-                {
-                    DependentPort = model.OutputPortModel,
-                    ParentPort = model.InputPortModel,
-                };
-                parent = model.InputPortModel.NodeModel;
-            }
-
-            return dependency;
         }
     }
 }

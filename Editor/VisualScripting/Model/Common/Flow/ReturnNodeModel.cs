@@ -21,7 +21,7 @@ namespace UnityEditor.VisualScripting.Model
         {
             var returnType = ParentStackModel?.OwningFunctionModel?.ReturnType;
             m_InputPort = returnType != null && returnType.Value.IsValid && returnType != TypeHandle.Void
-                ? AddDataInput("value", returnType.Value)
+                ? AddDataInputPort("value", returnType.Value)
                 : null;
         }
     }

@@ -12,7 +12,7 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.VisualScripting.Editor
 {
-    class TokenDeclaration : GraphElement, IDroppable, IHighlightable, IRenamable, IMovable
+    public class TokenDeclaration : GraphElement, IDroppable, IHighlightable, IRenamable, IMovable
     {
         readonly Store m_Store;
         readonly GraphView m_GraphView;

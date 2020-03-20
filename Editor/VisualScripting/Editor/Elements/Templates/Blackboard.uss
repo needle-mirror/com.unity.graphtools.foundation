@@ -80,6 +80,16 @@ BlackboardThisField.blackboardField #pill,
     min-width: 52px;
 }
 
+.blackboardField #pill.read-only > TemplateContainer > #node-border,
+.blackboardField #pill.read-only > TemplateContainer > #selection-border {
+    border-radius: 0 5px 5px 0;
+}
+
+.blackboardField #pill.write-only > TemplateContainer > #node-border,
+.blackboardField #pill.write-only > TemplateContainer > #selection-border {
+    border-radius: 5px 0 0 5px;
+}
+
 .blackboardField #pill #contents > #top > #title-label {
     -unity-text-align: middle-center;
     flex-grow: 1;

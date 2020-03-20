@@ -21,9 +21,9 @@ namespace UnityEditor.VisualScriptingTests
 
         protected override void OnDefineNode()
         {
-            Input0 = AddDataInput<int>("input0");
-            Input1 = AddDataInput<int>("input1");
-            Input2 = AddDataInput<int>("input2");
+            Input0 = AddDataInputPort<int>("input0");
+            Input1 = AddDataInputPort<int>("input1");
+            Input2 = AddDataInputPort<int>("input2");
             Output0 = AddDataOutputPort<int>("output0");
             Output1 = AddDataOutputPort<int>("output1");
             Output2 = AddDataOutputPort<int>("output2");

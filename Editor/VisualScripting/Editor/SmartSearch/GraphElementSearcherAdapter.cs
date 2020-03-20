@@ -28,6 +28,9 @@ namespace UnityEditor.VisualScripting.Editor.SmartSearch
                 return;
 
             var itemsList = items.ToList();
+            if (!itemsList.Any())
+                return;
+
             m_DetailsTitle.text = itemsList.First().Name;
 
             var graphView = SearcherService.GraphView;

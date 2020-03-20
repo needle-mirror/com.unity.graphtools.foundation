@@ -23,7 +23,7 @@ namespace UnityEditor.VisualScripting.Model
             base.OnDefineNode();
 
             var typeHandle = typeof(IEnumerable<object>).GenerateTypeHandle(Stencil);
-            InputPort = AddDataInput(ForEachHeaderModel.DefaultCollectionName, typeHandle);
+            InputPort = AddDataInputPort(ForEachHeaderModel.DefaultCollectionName, typeHandle);
         }
 
         public override void OnConnection(IPortModel selfConnectedPortModel, IPortModel otherConnectedPortModel)

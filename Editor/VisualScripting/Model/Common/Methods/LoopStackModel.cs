@@ -47,7 +47,7 @@ namespace UnityEditor.VisualScripting.Model
 
         protected override void OnDefineNode()
         {
-            InputPort = AddInputExecutionPort(null);
+            InputPort = AddExecutionInputPort(null);
             OutputPort = AddExecutionOutputPort(null);
         }
 

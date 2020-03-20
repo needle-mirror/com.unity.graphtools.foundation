@@ -34,6 +34,26 @@ namespace UnityEditor.VisualScripting.Editor.SmartSearch
             return this;
         }
 
+        public SearcherFilter WithTypesInheriting<T>(Stencil stencil)
+        {
+            return WithTypesInheriting(stencil, typeof(T));
+        }
+
+        public SearcherFilter WithTypesInheriting<T, TA>(Stencil stencil) where TA : Attribute
+        {
+            return WithTypesInheriting(stencil, typeof(T), typeof(TA));
+        }
+
+        public SearcherFilter WithTypesInheriting(Stencil stencil, Type type, Type attributeType = null)
+        {
+            this.RegisterType(data =>
+            {
+                var dataType = data.Type.Resolve(stencil);
+                return type.IsAssignableFrom(dataType) && (attributeType == null || dataType.GetCustomAttribute(attributeType) != null);
+            });
+            return this;
+        }
+
         public SearcherFilter WithMacros()
         {
             this.RegisterGraphAsset(data => data.GraphAssetModel != null);

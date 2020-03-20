@@ -14,7 +14,7 @@ using Object = UnityEngine.Object;
 
 namespace UnityEditor.VisualScripting.Editor
 {
-    static class EdgeReducers
+    public static class EdgeReducers
     {
         const int k_NodeOffset = 60;
         const int k_StackOffset = 120;
@@ -218,7 +218,7 @@ namespace UnityEditor.VisualScripting.Editor
             return previousState;
         }
 
-        static State CreateEdge(State previousState, CreateEdgeAction action)
+        public static State CreateEdge(State previousState, CreateEdgeAction action)
         {
             var graphModel = (VSGraphModel)previousState.CurrentGraphModel;
 

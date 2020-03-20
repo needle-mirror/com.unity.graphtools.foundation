@@ -10,7 +10,7 @@ namespace UnityEditor.VisualScripting.GraphViewModel
 
         protected override void OnDefineNode()
         {
-            InputPort = AddInputExecutionPort(null);
+            InputPort = AddExecutionInputPort(null);
             AddExecutionOutputPort(null);
         }
     }

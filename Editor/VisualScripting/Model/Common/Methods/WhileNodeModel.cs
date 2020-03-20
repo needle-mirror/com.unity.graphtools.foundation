@@ -16,7 +16,7 @@ namespace UnityEditor.VisualScripting.Model
         {
             base.OnDefineNode();
 
-            InputPort = AddDataInput<bool>(WhileHeaderModel.DefaultConditionName);
+            InputPort = AddDataInputPort<bool>(WhileHeaderModel.DefaultConditionName);
         }
     }
 }

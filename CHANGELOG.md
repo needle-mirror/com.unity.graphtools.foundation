@@ -4,6 +4,31 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.2.1-preview.1] - 2020-03-20
+
+### Added
+- AnimationCurve constant editor
+- Allow support of polymorphic edges in graph.
+- Allow windows to decide if they handle specific asset types
+
+### Changed
+- Rework pills visual to tell apart read-only/write-only fields
+
+### Fixed
+- Fix graph dirty flag when renaming token
+
+## [0.2.0-preview.3] - 2020-02-26
+
+### Fixed
+
+- Fixed package warnings
+
+## [0.2.0-preview.2] - 2020-02-21
+
+### Changed
+
+- Changed the handing of the MovedFrom attribute to accept assembly strings without version and fixed support for nested types
+
 ## [0.2.0-preview.1] - 2020-02-06
 ## [0.2.0-preview] - 2020-02-05
 

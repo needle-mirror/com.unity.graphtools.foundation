@@ -5,9 +5,16 @@ using JetBrains.Annotations;
 
 namespace UnityEngine.VisualScripting
 {
-    // https://github.com/joaoportela/CircullarBuffer-CSharp/blob/master/CircularBuffer/CircularBuffer.cs
+    // Credit: https://github.com/joaoportela/CircullarBuffer-CSharp/blob/master/CircularBuffer/CircularBuffer.cs
+    // ----------------------------------------------------------------------------
+    // "THE BEER-WARE LICENSE" (Revision 42):
+    // Joao Portela wrote this file. As long as you retain this notice you
+    // can do whatever you want with this stuff. If we meet some day, and you think
+    // this stuff is worth it, you can buy me a beer in return.
+    // Joao Portela
+    // ----------------------------------------------------------------------------
     [PublicAPI]
-    public class CircularBuffer<T> : IReadOnlyList<T>
+    public class CircularBuffer<T> : IReadOnlyList<T>, IDisposable where T : IDisposable
     {
         readonly T[] m_Buffer;
 
@@ -146,6 +153,7 @@ namespace UnityEngine.VisualScripting
         {
             if (IsFull)
             {
+                m_Buffer[m_End].Dispose();
                 m_Buffer[m_End] = item;
                 Increment(ref m_End);
                 m_Start = m_End;
@@ -172,6 +180,7 @@ namespace UnityEngine.VisualScripting
             {
                 Decrement(ref m_Start);
                 m_End = m_Start;
+                m_Buffer[m_Start].Dispose();
                 m_Buffer[m_Start] = item;
             }
             else
@@ -358,6 +367,14 @@ namespace UnityEngine.VisualScripting
             }
 
             return false;
+        }
+
+        public void Dispose()
+        {
+            foreach (var item in this)
+            {
+                item.Dispose();
+            }
         }
     }
 }

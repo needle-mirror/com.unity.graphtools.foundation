@@ -85,13 +85,13 @@ namespace UnityEditor.VisualScripting.Editor
 
             PortType portType = m_EdgeModel?.OutputPortModel?.PortType ?? PortType.Data;
             if ((portType == PortType.Execution || portType == PortType.Loop) && (outputPortNodeModel != null || inputPortNodeModel != null) &&
-                !string.IsNullOrEmpty(m_EdgeModel?.OutputPortModel?.Name) &&
+                !string.IsNullOrEmpty(m_EdgeModel?.EdgeLabel) &&
                 visible)
             {
-                m_EdgeBubble.text = m_EdgeModel.OutputPortModel.Name;
+                m_EdgeBubble.text = m_EdgeModel?.EdgeLabel;
                 m_EdgeBubble.EnableInClassList("candidate", (output == null || input == null));
                 m_EdgeBubble.AttachTo(edgeControl, SpriteAlignment.Center);
-                m_EdgeBubble.style.visibility = Visibility.Visible;
+                m_EdgeBubble.style.visibility = StyleKeyword.Null;
             }
             else
             {

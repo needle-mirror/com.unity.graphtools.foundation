@@ -22,6 +22,8 @@ namespace UnityEditor.VisualScripting.GraphViewModel
         protected List<INodeModel> m_GraphNodeModels;
         [SerializeField]
         protected List<EdgeModel> m_EdgeModels;
+        [SerializeReference]
+        protected List<EdgeModel> m_PolymorphicEdgeModels;
 
         [SerializeField]
         protected List<StickyNoteModel> m_StickyNoteModels;
@@ -52,8 +54,8 @@ namespace UnityEditor.VisualScripting.GraphViewModel
             LastChanges = new GraphChangeList();
             if (m_GraphNodeModels == null)
                 m_GraphNodeModels = new List<INodeModel>();
-            if (m_EdgeModels == null)
-                m_EdgeModels = new List<EdgeModel>();
+            if (m_PolymorphicEdgeModels == null)
+                m_PolymorphicEdgeModels = new List<EdgeModel>();
             if (m_NodesByGuid == null)
                 m_NodesByGuid = new Dictionary<GUID, INodeModel>();
             if (m_StickyNoteModels == null)
@@ -85,7 +87,7 @@ namespace UnityEditor.VisualScripting.GraphViewModel
         public IReadOnlyDictionary<GUID, INodeModel> NodesByGuid => m_NodesByGuid ?? (m_NodesByGuid = new Dictionary<GUID, INodeModel>());
 
         public IReadOnlyList<INodeModel> NodeModels => m_GraphNodeModels;
-        public IReadOnlyList<IEdgeModel> EdgeModels => m_EdgeModels;
+        public IReadOnlyList<IEdgeModel> EdgeModels => m_PolymorphicEdgeModels;
         public IEnumerable<IStickyNoteModel> StickyNoteModels => m_StickyNoteModels;
 
 #if UNITY_2020_1_OR_NEWER
@@ -238,7 +240,7 @@ namespace UnityEditor.VisualScripting.GraphViewModel
             nodeModel.Move(newPosition);
         }
 
-        public IEdgeModel CreateEdge(IPortModel inputPort, IPortModel outputPort)
+        public virtual IEdgeModel CreateEdge(IPortModel inputPort, IPortModel outputPort)
         {
             var existing = EdgesConnectedToPorts(inputPort, outputPort);
             if (existing != null)
@@ -253,14 +255,14 @@ namespace UnityEditor.VisualScripting.GraphViewModel
             return edgeModel;
         }
 
-        public IEdgeModel CreateOrphanEdge(IPortModel input, IPortModel output)
+        public virtual IEdgeModel CreateOrphanEdge(IPortModel input, IPortModel output)
         {
             Assert.IsNotNull(input);
             Assert.IsNotNull(input.NodeModel);
             Assert.IsNotNull(output);
             Assert.IsNotNull(output.NodeModel);
 
-            var edgeModel = new EdgeModel(this, input, output);
+            var edgeModel = new EdgeModel(this, input, output) { EdgeLabel = String.Empty };
 
             input.NodeModel.OnConnection(input, output);
             output.NodeModel.OnConnection(output, input);
@@ -268,11 +270,11 @@ namespace UnityEditor.VisualScripting.GraphViewModel
             return edgeModel;
         }
 
-        void AddEdge(IEdgeModel edgeModel, IPortModel inputPort, IPortModel outputPort)
+        public void AddEdge(IEdgeModel edgeModel, IPortModel inputPort, IPortModel outputPort)
         {
             Undo.RegisterCompleteObjectUndo(m_AssetModel, "Add Edge");
             ((EdgeModel)edgeModel).GraphModel = this;
-            m_EdgeModels.Add((EdgeModel)edgeModel);
+            m_PolymorphicEdgeModels.Add((EdgeModel)edgeModel);
             LastChanges?.ChangedElements.Add(edgeModel);
             LastChanges?.ChangedElements.Add(inputPort.NodeModel);
             LastChanges?.ChangedElements.Add(outputPort.NodeModel);
@@ -280,7 +282,7 @@ namespace UnityEditor.VisualScripting.GraphViewModel
 
         public void DeleteEdge(IPortModel input, IPortModel output)
         {
-            DeleteEdges(m_EdgeModels.Where(x => x.InputPortModel == input && x.OutputPortModel == output));
+            DeleteEdges(m_PolymorphicEdgeModels.Where(x => x.InputPortModel == input && x.OutputPortModel == output));
         }
 
         public void DeleteEdge(IEdgeModel edgeModel)
@@ -294,7 +296,7 @@ namespace UnityEditor.VisualScripting.GraphViewModel
             LastChanges?.ChangedElements.Add(edgeModel.InputPortModel?.NodeModel);
             LastChanges?.ChangedElements.Add(edgeModel.OutputPortModel?.NodeModel);
 
-            m_EdgeModels.Remove(model);
+            m_PolymorphicEdgeModels.Remove(model);
             if (LastChanges != null)
             {
                 LastChanges.DeleteEdgeModels.Add(model);
@@ -431,8 +433,20 @@ namespace UnityEditor.VisualScripting.GraphViewModel
                 m_NodesByGuid.Add(model.Guid, model);
             }
 
-            if (m_EdgeModels == null)
+            if (m_PolymorphicEdgeModels == null)
+                m_PolymorphicEdgeModels = new List<EdgeModel>();
+            if (m_EdgeModels != null)
+            {
+                foreach (var edge in m_EdgeModels)
+                {
+                    m_PolymorphicEdgeModels.Add(edge);
+                }
+
+                m_EdgeModels.Clear();
+            }
+            else
                 m_EdgeModels = new List<EdgeModel>();
+
             if (m_StickyNoteModels == null)
                 m_StickyNoteModels = new List<StickyNoteModel>();
 #if UNITY_2020_1_OR_NEWER
@@ -533,8 +547,8 @@ namespace UnityEditor.VisualScripting.GraphViewModel
 #if UNITY_2020_1_OR_NEWER
             m_PlacematModels.RemoveAll(p => p == null);
 #endif
-            DeleteEdges(m_EdgeModels.Where(e => !e.IsValid()));
-            m_EdgeModels.RemoveAll(e => e == null);
+            DeleteEdges(m_PolymorphicEdgeModels.Where(e => !e.IsValid()));
+            m_PolymorphicEdgeModels.RemoveAll(e => e == null);
         }
 
         struct DeclarationIndex

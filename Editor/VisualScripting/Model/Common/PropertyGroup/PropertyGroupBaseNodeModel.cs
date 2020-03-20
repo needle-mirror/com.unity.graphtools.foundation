@@ -35,7 +35,7 @@ namespace UnityEditor.VisualScripting.Model
             foreach (var member in Members)
             {
                 if (MemberPortDirection == Direction.Input)
-                    AddDataInput(member.GetId(), member.Type);
+                    AddDataInputPort(member.GetId(), member.Type);
                 else
                     AddDataOutputPort(member.GetId(), member.Type);
             }

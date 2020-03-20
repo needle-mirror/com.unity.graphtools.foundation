@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using JetBrains.Annotations;
 using UnityEditor.Callbacks;
 using UnityEditor.EditorCommon;
@@ -27,6 +28,25 @@ using Object = UnityEngine.Object;
 
 namespace UnityEditor.VisualScripting.Editor
 {
+    public interface IVseWindowCreate
+    {
+        VseWindow Create();
+    }
+
+    [AttributeUsage(AttributeTargets.Class)]
+    public class ViewTypeMappingAttribute : System.Attribute
+    {
+        public ViewTypeMappingAttribute(Type assetType, Type windowCreator)
+        {
+            AssetType = assetType;
+            WindowCreator = windowCreator;
+        }
+
+        public Type AssetType { get; }
+        public Type WindowCreator { get; }
+    }
+
+
     [PublicAPI]
     public partial class VseWindow : GraphViewEditorWindow, IHasCustomMenu
     {
@@ -43,7 +63,7 @@ namespace UnityEditor.VisualScripting.Editor
             Menu.UpdateUI();
         }
 
-        const string k_StyleSheetPath = PackageTransitionHelper.AssetPath + "VisualScripting/Editor/Resources/";
+        const string k_StyleSheetPath = PackageTransitionHelper.AssetPath + "VisualScripting/Editor/Views/Templates/";
 
         const string k_DefaultGraphAssetName = "VSGraphAsset.asset";
 
@@ -52,8 +72,9 @@ namespace UnityEditor.VisualScripting.Editor
         public VSPreferences Preferences => DataModel.Preferences;
         public bool TracingEnabled;
 
-
-        public GameObject BoundObject => null; // TODO: m_BoundObject;
+        [SerializeField]
+        private GameObject m_BoundObject;
+        public GameObject BoundObject => m_BoundObject;
 
         string m_LastGraphFilePath;
 
@@ -77,7 +98,7 @@ namespace UnityEditor.VisualScripting.Editor
         List<string> m_ElementModelsToExpandUponCreation;
         public List<string> ElementModelsToExpandUponCreation => m_ElementModelsToExpandUponCreation;
 
-        string LastGraphFilePath => m_LastGraphFilePath;
+        public string LastGraphFilePath => m_LastGraphFilePath;
 
         public IEditorDataModel DataModel { get; private set; }
 
@@ -135,14 +156,84 @@ namespace UnityEditor.VisualScripting.Editor
 
         public bool RefreshUIDisabled { private get; set; }
 
-        public static VseWindow ShowVsEditorWindow()
+        static Dictionary<Type, IVseWindowCreate> s_AssetToViewTypeMapping;
+        protected static Dictionary<Type, IVseWindowCreate> AssetToViewTypeMapping
         {
-            //getting all the VseWindows except derived classes
-            var vseWindows = Resources.FindObjectsOfTypeAll(typeof(VseWindow)).OfExactType<VseWindow>().ToArray();
-            var window = vseWindows.Length > 0 ? vseWindows[0] : CreateInstance<VseWindow>();
+            get
+            {
+                DiscoverVSWindowMapping();
+                return s_AssetToViewTypeMapping;
+            }
+        }
+
+        protected static void DiscoverVSWindowMapping()
+        {
+            if (s_AssetToViewTypeMapping != null)
+                return;
+            s_AssetToViewTypeMapping = new Dictionary<Type, IVseWindowCreate>();
+#if UNITY_EDITOR
+            AppDomain currentDomain = AppDomain.CurrentDomain;
+            foreach (Assembly assembly in currentDomain.GetAssemblies())
+            {
+                try
+                {
+                    foreach (var type in assembly.GetTypesSafe())
+                    {
+                        if (type.IsInterface || type.IsAbstract)
+                            continue;
+                        if (typeof(VseWindow).IsAssignableFrom(type))
+                        {
+                            var typeMappingAttribute = type.GetCustomAttributes<ViewTypeMappingAttribute>().FirstOrDefault();
+                            if (typeMappingAttribute != null)
+                            {
+                                s_AssetToViewTypeMapping.Add(typeMappingAttribute.AssetType, (IVseWindowCreate)Activator.CreateInstance(typeMappingAttribute.WindowCreator));
+                            }
+                        }
+                    }
+                }
+                catch (TypeLoadException e)
+                {
+                    Debug.LogWarningFormat("Error while loading types from assembly {0}: {1}", assembly.FullName, e);
+                }
+            }
+#endif
+        }
+
+        public static VseWindow ShowVsEditorWindow(VSGraphAssetModel loadedAsset = null)
+        {
+            VseWindow window = null;
+            var vseWindows = Resources.FindObjectsOfTypeAll<VseWindow>();
+            if (loadedAsset != null)
+            {
+                foreach (var w in vseWindows)
+                {
+                    if (w.CanHandleAssetType(loadedAsset))
+                    {
+                        window = w;
+                        break;
+                    }
+                }
+
+                if (window == null && AssetToViewTypeMapping.TryGetValue(loadedAsset.GetType(), out IVseWindowCreate viewCreation))
+                {
+                    window = viewCreation.Create();
+                }
+            }
+
+            if (window == null)
+            {
+                //backcomp reason, use the old algorithm
+                vseWindows = Resources.FindObjectsOfTypeAll(typeof(VseWindow)).OfExactType<VseWindow>().ToArray();
+                window = vseWindows.Length > 0 ? vseWindows[0] : CreateInstance<VseWindow>();
+            }
             window.Show();
             window.Focus();
             return window;
+        }
+
+        protected virtual bool CanHandleAssetType(VSGraphAssetModel asset)
+        {
+            return false;
         }
 
         protected enum OpenMode { Open, OpenAndFocus }
@@ -167,9 +258,9 @@ namespace UnityEditor.VisualScripting.Editor
             if (asset == null)
                 return null;
 
-            VseWindow vseWindow = ShowVsEditorWindow();
+            VseWindow vseWindow = ShowVsEditorWindow(asset);
 
-            vseWindow.SetCurrentSelection(asset, OpenMode.OpenAndFocus);
+            vseWindow.SetCurrentSelection(path, OpenMode.OpenAndFocus);
 
             return vseWindow;
         }
@@ -188,7 +279,7 @@ namespace UnityEditor.VisualScripting.Editor
 
         public virtual void SetBoundObject(GameObject boundObject)
         {
-            throw new NotImplementedException("SetBoundObject");
+            m_BoundObject = boundObject;
         }
 
         public virtual void OnCompilationRequest(RequestCompilationOptions options)
@@ -227,13 +318,18 @@ namespace UnityEditor.VisualScripting.Editor
             var iGraphModel = m_Store.GetState().CurrentGraphModel as ScriptableObject;
             if (!iGraphModel)
             {
-                m_GraphView.UIController.ResetBlackboard();
-                m_GraphView.UIController.Clear();
-                m_Store.GetState().UnloadCurrentGraphAsset();
-                m_LastGraphFilePath = null;
-                Menu.UpdateUI();
-                UpdateGraphContainer();
+                UnloadGraph();
             }
+        }
+
+        public void UnloadGraph()
+        {
+            m_GraphView.UIController.ResetBlackboard();
+            m_GraphView.UIController.Clear();
+            m_Store.GetState().UnloadCurrentGraphAsset();
+            m_LastGraphFilePath = null;
+            Menu.UpdateUI();
+            UpdateGraphContainer();
         }
 
         public void UpdateGraphIfAssetMoved()
@@ -330,7 +426,7 @@ namespace UnityEditor.VisualScripting.Editor
                 {
                     try
                     {
-                        m_Store.Dispatch(new LoadGraphAssetAction(LastGraphFilePath, loadType: LoadGraphAssetAction.Type.KeepHistory));
+                        m_Store.Dispatch(new LoadGraphAssetAction(LastGraphFilePath, boundObject: m_BoundObject, loadType: LoadGraphAssetAction.Type.KeepHistory));
                     }
                     catch (Exception e)
                     {
@@ -540,16 +636,18 @@ namespace UnityEditor.VisualScripting.Editor
             }
 
             State state = m_Store.GetState();
-            VseUtility.UpdateCodeViewer(show: false, sourceIndex: SourceCodePhases.Final,
-                compilationResult: results,
-                selectionDelegate: lineMetadata =>
-                {
-                    if (lineMetadata == null)
-                        return;
 
-                    GUID nodeGuid = (GUID)lineMetadata;
-                    m_Store.Dispatch(new PanToNodeAction(nodeGuid));
-                });
+            if (vsGraphModel?.Stencil?.GeneratesCode == true)
+                VseUtility.UpdateCodeViewer(show: false, sourceIndex: SourceCodePhases.Final,
+                    compilationResult: results,
+                    selectionDelegate: lineMetadata =>
+                    {
+                        if (lineMetadata == null)
+                            return;
+
+                        GUID nodeGuid = (GUID)lineMetadata;
+                        m_Store.Dispatch(new PanToNodeAction(nodeGuid));
+                    });
 
             //TODO: incremental re-register
             m_PluginRepository.RegisterPlugins(options);
@@ -813,11 +911,11 @@ namespace UnityEditor.VisualScripting.Editor
 
             m_TracingTimeline.SyncVisible();
 
+
             if (EditorApplication.isPlaying && !EditorApplication.isPaused)
             {
-                m_TracingTimeline.Dirty = false;
-                m_Store.GetState().currentTracingFrame = Time.frameCount;
-                m_Menu.UpdateUI();
+                m_TracingTimeline.Dirty = true;
+                m_Store.GetState().CurrentTracingFrame = Time.frameCount;
             }
 
             if (m_TracingTimeline.Dirty)
@@ -1101,8 +1199,8 @@ namespace UnityEditor.VisualScripting.Editor
                 default:
                     SearcherService.ShowGraphNodes(m_Store.GetState(), mousePosition, item =>
                     {
-                        m_Store.Dispatch(new CreateNodeFromSearcherAction(
-                            m_Store.GetState().CurrentGraphModel, graphPosition, item));
+                        m_Store.Dispatch(new CreateNodeAction(
+                            m_Store.GetState().CurrentGraphModel, graphPosition, item.CreateElements));
                     });
                     break;
             }

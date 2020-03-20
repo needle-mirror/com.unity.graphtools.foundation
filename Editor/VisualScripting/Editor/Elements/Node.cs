@@ -108,7 +108,7 @@ namespace UnityEditor.VisualScripting.Editor
             UpdateFromModel();
 
             var titleLabel = HasInstancePort ? m_InstancePort.Q<Label>(className: "connectorText") : this.Q<Label>("title-label");
-            if (model is INodeModelProgress)
+            if (model.HasProgress)
                 m_CoroutineProgressBar = new ProgressBar();
             if (HasInstancePort)
             {

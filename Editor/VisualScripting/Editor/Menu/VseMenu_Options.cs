@@ -89,7 +89,6 @@ namespace UnityEditor.VisualScripting.Editor
                         var path = m_Store.GetState().CurrentGraphModel.GetAssetPath();
                         Selection.activeObject = null;
                         Resources.UnloadAsset((Object)m_Store.GetState().CurrentGraphModel.AssetModel);
-                        Resources.UnloadAsset((Object)m_Store.GetState().CurrentGraphModel);
                         m_Store.Dispatch(new LoadGraphAssetAction(path));
                     }
                 });

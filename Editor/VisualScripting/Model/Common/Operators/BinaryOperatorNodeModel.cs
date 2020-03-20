@@ -81,8 +81,8 @@ namespace UnityEditor.VisualScripting.Model
 
         void DefinePorts(TypeHandle aType, TypeHandle bType, TypeHandle outputType)
         {
-            m_InputAPort = AddDataInput("A", aType, nameof(PortName.PortA));
-            m_InputBPort = AddDataInput("B", bType, nameof(PortName.PortB));
+            m_InputAPort = AddDataInputPort("A", aType, nameof(PortName.PortA));
+            m_InputBPort = AddDataInputPort("B", bType, nameof(PortName.PortB));
             m_MainOutputPort = AddDataOutputPort("Out", outputType);
         }
 

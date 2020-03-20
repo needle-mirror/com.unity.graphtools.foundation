@@ -11,27 +11,15 @@ namespace UnityEditor.VisualScripting.Editor
     {
         public static void PromptToCreate(this ICreatableGraphTemplate template, Store store)
         {
-            template.PromptToCreate(store, template.GraphTypeName, template.DefaultAssetName);
-        }
-
-        public static void PromptToCreate(this IGraphTemplateFromGameObject template, Store store)
-        {
-            var graphTitle = template.GameObject.name;
-            var assetName = graphTitle + ".asset";
-            template.PromptToCreate(store, graphTitle, assetName);
-        }
-
-        public static void PromptToCreate(this IGraphTemplate template, Store store, string graphTitle, string assetName)
-        {
-            PromptToCreate(template.StencilType, store, graphTitle, assetName, template);
+            PromptToCreate(template.StencilType, store, template.GraphTypeName, template.DefaultAssetName, template);
         }
 
         public static void PromptToCreate(Type stencilType, Store store, string graphTitle, string assetName, IGraphTemplate template = null)
         {
             var path = EditorUtility.SaveFilePanelInProject(
-                "Create visual script",
+                "Create scripting graph",
                 assetName,
-                "asset", "Create a new visual script for " + graphTitle);
+                "asset", "Create a new scripting graph for " + graphTitle);
 
             if (path.Length != 0)
             {

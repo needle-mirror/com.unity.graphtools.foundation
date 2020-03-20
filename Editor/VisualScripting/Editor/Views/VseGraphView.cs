@@ -121,14 +121,18 @@ namespace UnityEditor.VisualScripting.Editor
                         ? elem.GetPosition().position // stacked node models don't have a reliable position
                         : elemModel.Position; // floating ones do
                     Vector2 startPos = contentViewContainer.ChangeCoordinatesTo(elem.hierarchy.parent, elemPos);
-                    PositionDependenciesManagers.StartNotifyMove(selection, startPos);
 
-                    bool hasFlag = evt.modifiers.HasFlag(EventModifiers.Shift);
+                    bool requireShiftToMoveDependencies = !(elemModel.GraphModel?.Stencil?.MoveNodeDependenciesByDefault).GetValueOrDefault();
+                    bool hasShift = evt.modifiers.HasFlag(EventModifiers.Shift);
+                    bool moveNodeDependencies = requireShiftToMoveDependencies == hasShift;
+
+                    if (moveNodeDependencies)
+                        PositionDependenciesManagers.StartNotifyMove(selection, startPos);
 
                     // schedule execute because the mouse won't be moving when the graph view is panning
                     schedule.Execute(() =>
                     {
-                        if (selectionDragger.IsActive && !hasFlag) // processed
+                        if (selectionDragger.IsActive && moveNodeDependencies) // processed
                         {
                             Vector2 pos = contentViewContainer.ChangeCoordinatesTo(elem.hierarchy.parent, elem.GetPosition().position);
                             PositionDependenciesManagers.ProcessMovedNodes(pos);
@@ -567,7 +571,7 @@ namespace UnityEditor.VisualScripting.Editor
                 var newInputPortModel = matchingNodes.FirstOrDefault(nodeCopy => nodeCopy.OriginalInstanceId == inputNodeInstanceId) ?
                     .InputsById[original.InputId];
 
-                return newInputPortModel != null && newOutputPortModel != null ? new EdgeModel(original.GraphModel, newInputPortModel, newOutputPortModel) : null;
+                return newInputPortModel != null && newOutputPortModel != null ? new EdgeModel(original.GraphModel, newInputPortModel, newOutputPortModel) { EdgeLabel = String.Empty } : null;
             }
         }
 
@@ -592,7 +596,7 @@ namespace UnityEditor.VisualScripting.Editor
             foreach (NodeModel originalModel in copyPasteData.nodes)
             {
                 // pasted, stacked node
-                if ((!originalModel.OutputsById.Any() || originalModel.IsBranchType) && !isDuplication)
+                if ((!originalModel.OutputsById.Any() || originalModel.IsBranchType) && !isDuplication && originalModel.IsStacked)
                 {
                     if (targetInfo.TargetStack == null)
                     {
@@ -983,6 +987,11 @@ namespace UnityEditor.VisualScripting.Editor
                     (startPort.node != null && startPort.node.ClassListContains("standalone")) ||
                     (p.node != null && p.node.ClassListContains("standalone"));
 
+                if (startPort.portType == typeof(ExecutionFlow) && p.portType != typeof(ExecutionFlow))
+                    return false;
+                if (p.portType == typeof(ExecutionFlow) && startPort.portType != typeof(ExecutionFlow))
+                    return false;
+
                 // Check for preexisting uphill connections
                 if (VseUIController.IsNodeConnectedTo(startPortStack, portStack))
                 {
@@ -1002,10 +1011,12 @@ namespace UnityEditor.VisualScripting.Editor
                 if (p.direction == startPort.direction)
                     return false;
 
+                var currentPortModel = (PortModel)p.userData;
+                var startPortModel = (PortModel)startPort.userData;
                 if (tokenInvolved || floatingNodeInvolved ||
-                    !stackInvolved && ((PortModel)p.userData).PortType != PortType.Loop &&
-                    ((PortModel)startPort.userData).PortType != PortType.Loop)
-                    return (p.orientation == startPort.orientation);
+                    !stackInvolved && currentPortModel.PortType != PortType.Loop &&
+                    startPortModel.PortType != PortType.Loop)
+                    return p.orientation == startPort.orientation && currentPortModel.PortType == startPortModel.PortType;
 
                 // Need to dig deeper since orientations are conflicting
                 INodeModel candidateNode = ((PortModel)p.userData).NodeModel;

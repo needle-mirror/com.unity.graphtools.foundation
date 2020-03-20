@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Unity.Profiling;
 using UnityEditor.VisualScripting.GraphViewModel;
+using UnityEditor.VisualScripting.Model.Stencils;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -43,41 +44,41 @@ namespace UnityEditor.VisualScripting.Editor
         public void OnGUI(Rect timeRect)
         {
             // sync timeline and tracing toolbar state both ways
-            m_State.CurrentTime = TimelineState.FrameToTime(m_VSWindowState.currentTracingFrame);
+            m_State.CurrentTime = TimelineState.FrameToTime(m_VSWindowState.CurrentTracingFrame);
 
             m_Overlay.HandleEvents();
             int timeChangedByTimeline = TimelineState.TimeToFrame(m_State.CurrentTime);
             // force graph update
-            if (timeChangedByTimeline != m_VSWindowState.currentTracingFrame)
-                m_VSWindowState.currentTracingStep = -1;
-            m_VSWindowState.currentTracingFrame = timeChangedByTimeline;
+            if (timeChangedByTimeline != m_VSWindowState.CurrentTracingFrame)
+                m_VSWindowState.CurrentTracingStep = -1;
+            m_VSWindowState.CurrentTracingFrame = timeChangedByTimeline;
 
             GUI.BeginGroup(timeRect);
 
-            int graphId = (m_VSWindowState?.AssetModel as Object)?.GetInstanceID() ?? -1;
-            DebuggerTracer.GraphTrace trace = DebuggerTracer.GetGraphData(graphId, false);
-            if (trace != null && trace.AllFrames.Count > 0)
+            var debugger = m_VSWindowState?.AssetModel?.GraphModel?.Stencil?.Debugger;
+            IGraphTrace trace = debugger?.GetGraphTrace(m_VSWindowState?.AssetModel?.GraphModel, m_VSWindowState.CurrentTracingTarget);
+            if (trace?.AllFrames != null && trace.AllFrames.Count > 0)
             {
                 float frameDeltaToPixel = m_TimeArea.FrameDeltaToPixel();
-                DebuggerTracer.FrameData first = trace.AllFrames[0];
-                DebuggerTracer.FrameData last = trace.AllFrames[trace.AllFrames.Count - 1];
-                float start = m_TimeArea.FrameToPixel(first.Frame);
-                float width = frameDeltaToPixel * Mathf.Max(last.Frame - first.Frame, 1);
+                int firstFrame = trace.AllFrames[0].Frame;
+                int lastFrame = trace.AllFrames[trace.AllFrames.Count - 1].Frame;
+                float start = m_TimeArea.FrameToPixel(firstFrame);
+                float width = frameDeltaToPixel * Mathf.Max(lastFrame - firstFrame, 1);
 
                 // draw active range
                 EditorGUI.DrawRect(new Rect(start,
                     timeRect.yMax - k_FrameRectangleHeight, width, k_FrameRectangleHeight), k_FrameHasDataColor);
 
                 // draw per-node active ranges
-                var framesPerNode = IndexFramesPerNode(graphId, trace, first.Frame, last.Frame, m_VSWindowState.currentTracingTarget, out bool invalidated);
+                var framesPerNode = IndexFramesPerNode(m_VSWindowState?.AssetModel?.GraphModel, trace, firstFrame, lastFrame, m_VSWindowState.CurrentTracingTarget, out bool invalidated);
 
                 // while recording in unpaused playmode, adjust the timeline to show all data
                 // same if the cached data changed (eg. Load a trace dump)
                 if (EditorApplication.isPlaying && !EditorApplication.isPaused || invalidated)
                 {
                     m_TimeArea.SetShownRange(
-                        first.Frame - k_MinTimeVisibleOnTheRight,
-                        last.Frame + k_MinTimeVisibleOnTheRight);
+                        firstFrame - k_MinTimeVisibleOnTheRight,
+                        lastFrame + k_MinTimeVisibleOnTheRight);
                 }
 
                 if (framesPerNode != null)
@@ -87,6 +88,7 @@ namespace UnityEditor.VisualScripting.Editor
                         .Select(x => x.GraphElementModel)
                         .OfType<INodeModel>()
                         .FirstOrDefault();
+
                     if (nodeModelSelected != null && framesPerNode.TryGetValue(nodeModelSelected.Guid, out HashSet<(int, int)> frames))
                     {
                         foreach ((int, int)frameInterval in frames)
@@ -118,9 +120,9 @@ namespace UnityEditor.VisualScripting.Editor
         struct FramesPerNodeCache
         {
             public Dictionary<SerializableGUID, HashSet<(int, int)>> NodeToFrames;
-            public int firstFrame;
-            public int lastFrame;
-            public int graphId;
+            public int FirstFrame;
+            public int LastFrame;
+            public IGraphModel GraphModel;
             public int EntityId;
         }
 
@@ -129,18 +131,28 @@ namespace UnityEditor.VisualScripting.Editor
         static readonly Color32 k_FrameHasDataColor = new Color32(38, 80, 154, 200);
         static readonly Color32 k_FrameHasNodeColor = new Color32(255, 255, 255, 62);
 
-        static Dictionary<SerializableGUID, HashSet<(int, int)>> IndexFramesPerNode(int graphId, DebuggerTracer.GraphTrace trace, int firstFrame, int lastFrame, int entityId, out bool invalidated)
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="graphModel"></param>
+        /// <param name="trace"></param>
+        /// <param name="firstFrame"></param>
+        /// <param name="lastFrame"></param>
+        /// <param name="entityId"></param>
+        /// <param name="invalidated"></param>
+        /// <returns></returns>
+        Dictionary<SerializableGUID, HashSet<(int StartFrame, int EndFrame)>> IndexFramesPerNode(IGraphModel graphModel, IGraphTrace trace, int firstFrame, int lastFrame, int entityId, out bool invalidated)
         {
             invalidated = false;
-            if (s_FramesPerNodeCache.graphId == graphId && s_FramesPerNodeCache.firstFrame == firstFrame &&
-                s_FramesPerNodeCache.lastFrame == lastFrame && s_FramesPerNodeCache.EntityId == entityId)
+            if (s_FramesPerNodeCache.GraphModel == graphModel && s_FramesPerNodeCache.FirstFrame == firstFrame &&
+                s_FramesPerNodeCache.LastFrame == lastFrame && s_FramesPerNodeCache.EntityId == entityId)
                 return s_FramesPerNodeCache.NodeToFrames;
 
             invalidated = true;
             s_IndexFramesPerNodeMarker.Begin();
-            s_FramesPerNodeCache.graphId = graphId;
-            s_FramesPerNodeCache.firstFrame = firstFrame;
-            s_FramesPerNodeCache.lastFrame = lastFrame;
+            s_FramesPerNodeCache.GraphModel = graphModel;
+            s_FramesPerNodeCache.FirstFrame = firstFrame;
+            s_FramesPerNodeCache.LastFrame = lastFrame;
             s_FramesPerNodeCache.EntityId = entityId;
 
             Dictionary<SerializableGUID, HashSet<(int, int)>> framesPerNode;
@@ -154,10 +166,11 @@ namespace UnityEditor.VisualScripting.Editor
             }
 
             // index individual frames where a node is active
-            foreach (var frame in trace.AllFrames)
+            foreach (IFrameData frame in trace.AllFrames)
             {
-                var entityTrace = frame.GetExistingEntityFrameTrace(entityId);
-                var nodes = entityTrace.steps.Select(s => SerializableGUID.FromParts(s.nodeId1, s.nodeId2));
+                IEnumerable<SerializableGUID> nodes = frame.GetDebuggingSteps(graphModel)
+                    .Where(n => n.NodeModel != null)
+                    .Select(n => (SerializableGUID)n.NodeModel.Guid);
                 foreach (var node in nodes)
                 {
                     if (!framesPerNodeRaw.TryGetValue(node, out var frames))

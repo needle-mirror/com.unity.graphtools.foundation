@@ -3,11 +3,13 @@ using UnityEditor.Experimental.GraphView;
 using UnityEditor.UIElements;
 using UnityEditor.VisualScripting.Model;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.VisualScripting.Editor
 {
     partial class VseMenu
     {
+        ToolbarButton m_NewGraphButton;
         ToolbarButton m_SaveAllButton;
         ToolbarButton m_BuildAllButton;
         ToolbarButton m_RefreshUIButton;
@@ -17,6 +19,10 @@ namespace UnityEditor.VisualScripting.Editor
 
         void CreateCommonMenu()
         {
+            m_NewGraphButton = this.MandatoryQ<ToolbarButton>("newGraphButton");
+            m_NewGraphButton.tooltip = "New Graph";
+            m_NewGraphButton.ChangeClickEvent(OnNewGraphButton);
+
             m_SaveAllButton = this.MandatoryQ<ToolbarButton>("saveAllButton");
             m_SaveAllButton.tooltip = "Save All";
             m_SaveAllButton.ChangeClickEvent(OnSaveAllButton);
@@ -53,9 +59,26 @@ namespace UnityEditor.VisualScripting.Editor
 
         protected virtual void UpdateCommonMenu(VSPreferences prefs, bool enabled)
         {
+            m_NewGraphButton.SetEnabled(enabled);
             m_SaveAllButton.SetEnabled(enabled);
             m_BuildAllButton.SetEnabled(enabled);
-            m_ViewInCodeViewerButton.SetEnabled(enabled);
+
+            m_ViewInCodeViewerButton.style.display = m_Store.GetState()?.AssetModel?.GraphModel?.Stencil?.GeneratesCode == true
+                ? DisplayStyle.Flex
+                : DisplayStyle.None;
+        }
+
+        void OnNewGraphButton()
+        {
+            var minimap = ConsoleWindowBridge.FindBoundGraphViewToolWindow<GraphViewMinimapWindow>(m_GraphView);
+            if (minimap != null)
+                minimap.Close();
+
+            var bb = ConsoleWindowBridge.FindBoundGraphViewToolWindow<GraphViewBlackboardWindow>(m_GraphView);
+            if (bb != null)
+                bb.Close();
+
+            EditorWindow.GetWindow<VseWindow>().UnloadGraph();
         }
 
         static void OnSaveAllButton()

@@ -11,11 +11,6 @@ namespace UnityEditor.VisualScripting.Model
     }
 
     // Graph templated by a GameObject
-    public interface IGraphTemplateFromGameObject : IGraphTemplate
-    {
-        GameObject GameObject { get; }
-    }
-
     // Define a template that can be created from anywhere
     public interface ICreatableGraphTemplate : IGraphTemplate
     {

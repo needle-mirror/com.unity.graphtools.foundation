@@ -11,7 +11,7 @@ namespace UnityEditor.VisualScriptingTests
 
         protected override void OnDefineNode()
         {
-            Input = AddDataInput<float>("input0");
+            Input = AddDataInputPort<float>("input0");
             Output = AddDataOutputPort<float>("output0");
         }
     }

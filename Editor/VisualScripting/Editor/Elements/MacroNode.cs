@@ -38,7 +38,7 @@ namespace UnityEditor.VisualScripting.Editor
         {
             if (m_MacroModel.GraphAssetModel != null)
                 Store.Dispatch(new LoadGraphAssetAction(
-                    m_MacroModel.GraphAssetModel.GraphModel.GetAssetPath(), true, LoadGraphAssetAction.Type.PushOnStack));
+                    m_MacroModel.GraphAssetModel.GraphModel.GetAssetPath(), null, true, LoadGraphAssetAction.Type.PushOnStack));
         }
 
         public string TitleValue => m_MacroModel.Title;

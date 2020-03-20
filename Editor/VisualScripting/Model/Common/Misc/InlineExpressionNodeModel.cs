@@ -40,7 +40,7 @@ namespace UnityEditor.VisualScripting.Model
                      .OfType<IdentifierNameSyntax>()
                      .Where(x => !(x.Parent is InvocationExpressionSyntax))
                      .Select(x => x.Identifier.Text).Distinct())
-                AddDataInput<float>(id);
+                AddDataInputPort<float>(id);
         }
 
         public void Rename(string newName)

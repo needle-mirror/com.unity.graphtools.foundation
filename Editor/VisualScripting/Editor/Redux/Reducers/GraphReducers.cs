@@ -138,6 +138,7 @@ namespace UnityEditor.VisualScripting.Editor
 
             Undo.RegisterCompleteObjectUndo((Object)action.RenamableModel.AssetModel, "Renaming graph element");
             action.RenamableModel.Rename(action.Name);
+            EditorUtility.SetDirty((Object)action.RenamableModel.AssetModel);
 
             IGraphChangeList graphChangeList = previousState.CurrentGraphModel.LastChanges;
 

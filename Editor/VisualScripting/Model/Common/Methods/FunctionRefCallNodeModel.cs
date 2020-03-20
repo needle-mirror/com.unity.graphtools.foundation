@@ -88,7 +88,7 @@ namespace UnityEditor.VisualScripting.Model
             m_LastParametersAdded = new List<string>(functionModel.FunctionParameterModels.Count());
             foreach (var parameter in functionModel.FunctionParameterModels)
             {
-                AddDataInput(parameter.Name, parameter.DataType);
+                AddDataInputPort(parameter.Name, parameter.DataType);
                 m_LastParametersAdded.Add(parameter.Name);
             }
 

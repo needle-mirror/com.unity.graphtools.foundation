@@ -49,7 +49,6 @@
     min-height: 300px;
 }
 
-
 .vseGraphView #disabledOverlay {
     display: none;
     left: 0px;
@@ -84,27 +83,46 @@
     bottom: 0;
 }
 
-VseBlankPage {
+.vse-blank-page {
     position: absolute;
     left: 0;
     right: 0;
     top: 0;
     bottom: 0;
+    color: #B4B4B4;
     background-color: #282828;
     justify-content: center;
     align-items: center;
+    font-size: 14px;
 }
 
-VseBlankPage * {
-    color: #B4B4B4;
+.onboarding-block {
+    justify-content: center;
+    align-items: center;
+    font-size: 14px;
+    padding: 0 10px;
+    width: 100%;
 }
 
-VseBlankPage Label {
-    font-size: 16px;
+.onboarding-block > * {
+    margin: 4px 0;
 }
 
-VseBlankPage Button {
-    font-size: 12px;
+.onboarding-block .unity-label {
+    white-space: normal;
+    -unity-text-align: upper-center;
+}
+
+.onboarding-block .unity-button {
+    white-space: normal;
+    color: #ffffff;
+    padding: 6px;
+    width: 100%;
+    max-width: 200px;
+}
+
+.onboarding-block .unity-button:hover {
+    background-color: #1d9ad6;
 }
 
 #buttonBar {
@@ -174,7 +192,11 @@ VseBlankPage Button {
 .token-node.write-only > Pill.pill > TemplateContainer > #selection-border {
     margin: 2px 3px 0;
     padding: 1px 4px;
-    border-radius: 5px;
+}
+
+.token-node.read-only > Pill.pill > TemplateContainer > #node-border,
+.token-node.read-only > Pill.pill > TemplateContainer > #selection-border {
+    border-radius: 0 5px 5px 0;
 }
 
 .token-node.read-only > Pill.pill > TemplateContainer > #node-border > #contents > #top > .unity-label,
@@ -188,6 +210,11 @@ VseBlankPage Button {
 .token-node.read-only > Pill.pill > TemplateContainer > #selection-border > #contents > #top > #output,
 .token-node.write-only > Pill.pill > TemplateContainer > #selection-border > #contents > #top > #output {
     padding-right: 4px;
+}
+
+.token-node.write-only > Pill.pill > TemplateContainer > #node-border,
+.token-node.write-only > Pill.pill > TemplateContainer > #selection-border {
+    border-radius: 5px 0 0 5px;
 }
 
 .port.instance {
@@ -329,6 +356,7 @@ VseBlankPage Button {
     color : #F0F0F0;
     background-color : #303030;
     border-radius: 0px;
+    width: 120px;
     max-width : 350px;
     min-width : 24px;
     min-height : 16px;

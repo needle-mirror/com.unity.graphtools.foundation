@@ -1,4 +1,5 @@
 using System;
+using UnityEditor.UIElements;
 using UnityEditor.VisualScripting.Editor.ConstantEditor;
 using UnityEditor.VisualScripting.Editor.SmartSearch;
 using UnityEditor.VisualScripting.Model;
@@ -16,7 +17,7 @@ namespace UnityEditor.VisualScripting.Editor
         readonly Store m_Store;
         readonly Stencil m_Stencil;
 
-        IVariableDeclarationModel VariableDeclarationModel => userData as IVariableDeclarationModel;
+        protected IVariableDeclarationModel VariableDeclarationModel => userData as IVariableDeclarationModel;
         string TypeText => VariableDeclarationModel.DataType.GetMetadata(m_Stencil).FriendlyName;
 
         static readonly GUIContent k_InitializationContent = new GUIContent("");
@@ -39,7 +40,7 @@ namespace UnityEditor.VisualScripting.Editor
             {
                 if (stencil.RequiresInitialization(variableDeclarationModel))
                 {
-                    m_InitializationElement = new Button(OnInitializationButton) {text = "Create Init value"};
+                    m_InitializationElement = new Button(OnInitializationButton) { text = "Create Init value" };
                     m_InitializationElement.AddToClassList("rowButton");
                 }
             }

@@ -2,6 +2,7 @@ using System;
 using UnityEditor.EditorCommon.Redux;
 using UnityEditor.VisualScripting.Model;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace UnityEditor.VisualScripting.Editor
 {
@@ -44,13 +45,16 @@ namespace UnityEditor.VisualScripting.Editor
         }
 
         public readonly string AssetPath;
+        public readonly Object BoundObject;
         public readonly Type LoadType;
 
         public readonly bool AlignAfterLoad;
 
-        public LoadGraphAssetAction(string assetPath, bool alignAfterLoad = false, Type loadType = Type.Replace)
+        public LoadGraphAssetAction(string assetPath, Object boundObject = null, bool alignAfterLoad = false,
+                                    Type loadType = Type.Replace)
         {
             AssetPath = assetPath;
+            BoundObject = boundObject;
             LoadType = loadType;
             AlignAfterLoad = alignAfterLoad;
         }

@@ -9,3 +9,7 @@
 .vs-inline-float-editor FloatInput {
     width: 60px;
 }
+
+.unity-curve-field {
+    min-width: 60px;
+}

@@ -1,4 +1,7 @@
-<UXML xmlns:ui="UnityEngine.UIElements" xmlns:vs="UnityEditor.VisualScripting.Editor" xmlns:vsui="UnityEditor.UIElements" xmlns:vsuiec="UnityEditor.EditorCommon.UIElements">
+<UXML xmlns:ui="UnityEngine.UIElements" xmlns:vsui="UnityEditor.UIElements">
+    <vsui:ToolbarButton name="newGraphButton">
+        <ui:VisualElement class="icon"/>
+    </vsui:ToolbarButton>
     <vsui:ToolbarButton name="saveAllButton">
         <ui:VisualElement class="icon"/>
     </vsui:ToolbarButton>

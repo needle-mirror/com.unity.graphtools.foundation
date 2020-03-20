@@ -104,7 +104,8 @@ namespace UnityEditor.VisualScriptingTests.Models
         public void NonAbstractNodeModels_AllHaveSerializableAttributes()
         {
             //Prepare
-            var allNodeModelTypes = TypeCache.GetTypesDerivedFrom(typeof(NodeModel));
+            var allNodeModelTypes = TypeCache.GetTypesDerivedFrom(typeof(NodeModel))
+                .Where(t => !t.IsAbstract && !t.IsGenericType);
             var serializableNodeTypes = allNodeModelTypes.Where(t => t.GetCustomAttributes(typeof(SerializableAttribute)).Any());
             var serializableTypesLookup = new HashSet<Type>(serializableNodeTypes);
 
@@ -136,7 +137,7 @@ namespace UnityEditor.VisualScriptingTests.Models
 
             public Func<IPortModel> CreatePort<T>(T value = default)
             {
-                return () => AddDataInput(typeof(T).Name, defaultValue: value);
+                return () => AddDataInputPort(typeof(T).Name, defaultValue: value);
             }
 
             protected override void OnDefineNode()

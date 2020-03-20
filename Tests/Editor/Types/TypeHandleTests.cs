@@ -15,8 +15,17 @@ namespace UnityEditor.VisualScriptingTests.Types
 {
     namespace NewNamespace
     {
-        [MovedFrom(false, sourceNamespace: "UnityEditor.VisualScriptingTests.Types.OldNamespace", sourceClassName: "Bar")]
-        class Foo {}
+        [MovedFrom(false, sourceNamespace: "UnityEditor.VisualScriptingTests.Types.OldNamespace", sourceClassName: "OldTypeName", sourceAssembly: "Unity.OldAssemblyName.Foundation.Editor.Tests")]
+        class NewTypeName {}
+
+        class EnclosingType
+        {
+            [MovedFrom(false, sourceClassName: "EnclosingType/InnerOld", sourceNamespace: "UnityEditor.VisualScriptingTests.Types.OldNamespace", sourceAssembly: "Unity.OldAssemblyName.Foundation.Editor.Tests")]
+            public class InnerNew {}
+
+            [MovedFrom(false, sourceNamespace: "UnityEditor.VisualScriptingTests.Types.OldNamespace", sourceAssembly: "Unity.OldAssemblyName.Foundation.Editor.Tests")]
+            public class InnerTypeUnchanged {}
+        }
     }
 
     class TypeHandleTests
@@ -114,13 +123,45 @@ namespace UnityEditor.VisualScriptingTests.Types
         [Test]
         public void Test_TypeHandle_Resolve_WorksWithRenamedTypes_WithMovedFromAttribute()
         {
-            var typeStr = typeof(NewNamespace.Foo).AssemblyQualifiedName;
-            var originalTypeStr = typeStr.Replace("NewNamespace", "OldNamespace").Replace("Foo", "Bar");
+            var typeStr = typeof(NewNamespace.NewTypeName).AssemblyQualifiedName;
+            var originalTypeStr = typeStr
+                .Replace("NewNamespace", "OldNamespace")
+                .Replace("NewTypeName", "OldTypeName")
+                .Replace("GraphTools", "OldAssemblyName");
 
             var typeHandle = new TypeHandle(originalTypeStr);
 
             var resolvedType = typeHandle.Resolve(m_TypeSerializer);
-            Assert.AreEqual(typeof(NewNamespace.Foo), resolvedType);
+            Assert.AreEqual(typeof(NewNamespace.NewTypeName), resolvedType);
+        }
+
+        [Test]
+        public void Test_TypeHandle_WithNestedType_Resolve_WorksWithRenamedTypes_WithMovedFromAttribute()
+        {
+            var typeStr = typeof(NewNamespace.EnclosingType.InnerNew).AssemblyQualifiedName;
+            var originalTypeStr = typeStr
+                .Replace("NewNamespace", "OldNamespace")
+                .Replace("InnerNew", "InnerOld")
+                .Replace("GraphTools", "OldAssemblyName");
+
+            var typeHandle = new TypeHandle(originalTypeStr);
+
+            var resolvedType = typeHandle.Resolve(m_TypeSerializer);
+            Assert.AreEqual(typeof(NewNamespace.EnclosingType.InnerNew), resolvedType);
+        }
+
+        [Test]
+        public void Test_TypeHandle_WithNestedType_Resolve_ChangedAssembly_WithMovedFromAttribute()
+        {
+            var typeStr = typeof(NewNamespace.EnclosingType.InnerTypeUnchanged).AssemblyQualifiedName;
+            var originalTypeStr = typeStr
+                .Replace("NewNamespace", "OldNamespace")
+                .Replace("GraphTools", "OldAssemblyName");
+
+            var typeHandle = new TypeHandle(originalTypeStr);
+
+            var resolvedType = typeHandle.Resolve(m_TypeSerializer);
+            Assert.AreEqual(typeof(NewNamespace.EnclosingType.InnerTypeUnchanged), resolvedType);
         }
     }
 }

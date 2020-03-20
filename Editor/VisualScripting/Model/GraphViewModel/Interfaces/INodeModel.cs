@@ -15,6 +15,11 @@ namespace UnityEditor.VisualScripting.GraphViewModel
         LoopStack
     }
 
+    public interface IPropertyVisitorNodeTarget
+    {
+        object Target { get; set; }
+        bool IsExcluded(object value);
+    }
     public interface INodeModel : IGraphElementModelWithGuid, IUndoRedoAware
     {
         ModelState State { get; }
@@ -36,6 +41,7 @@ namespace UnityEditor.VisualScripting.GraphViewModel
         GUID OriginalInstanceId { get; set; }
         bool Destroyed { get; }
         string ToolTip { get; }
+        bool HasProgress { get; }
 
         void OnConnection(IPortModel selfConnectedPortModel, IPortModel otherConnectedPortModel);
         void OnDisconnection(IPortModel selfConnectedPortModel, IPortModel otherConnectedPortModel);

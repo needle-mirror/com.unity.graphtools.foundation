@@ -44,19 +44,19 @@ namespace UnityEditor.VisualScripting.Editor
         }
     }
 
-    public class CreateNodeFromSearcherAction : IAction
+    public class CreateNodeAction : IAction
     {
         public readonly IGraphModel GraphModel;
         public readonly Vector2 Position;
-        public readonly GraphNodeModelSearcherItem SelectedItem;
+        public Func<GraphNodeCreationData, IGraphElementModel[]> CreateElements { get; }
         public readonly IReadOnlyList<GUID> Guids;
 
-        public CreateNodeFromSearcherAction(IGraphModel graphModel, Vector2 position,
-                                            GraphNodeModelSearcherItem selectedItem, IReadOnlyList<GUID> guids = null)
+        public CreateNodeAction(IGraphModel graphModel, Vector2 position,
+                                Func<GraphNodeCreationData, IGraphElementModel[]> createElements, IReadOnlyList<GUID> guids = null)
         {
             GraphModel = graphModel;
             Position = position;
-            SelectedItem = selectedItem;
+            CreateElements = createElements;
             Guids = guids;
         }
     }

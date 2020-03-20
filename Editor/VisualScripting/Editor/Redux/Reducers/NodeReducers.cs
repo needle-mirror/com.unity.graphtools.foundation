@@ -15,7 +15,7 @@ namespace UnityEditor.VisualScripting.Editor
         public static void Register(Store store)
         {
             store.Register<DisconnectNodeAction>(DisconnectNode);
-            store.Register<CreateNodeFromSearcherAction>(CreateNodeFromSearcher);
+            store.Register<CreateNodeAction>(CreateNode);
             store.Register<SetNodeEnabledStateAction>(SetNodeEnabledState);
             store.Register<RefactorConvertToFunctionAction>(RefactorConvertToFunction);
             store.Register<RefactorExtractMacroAction>(RefactorExtractMacro);
@@ -23,9 +23,9 @@ namespace UnityEditor.VisualScripting.Editor
             store.Register<CreateMacroRefAction>(CreateMacroRefNode);
         }
 
-        static State CreateNodeFromSearcher(State previousState, CreateNodeFromSearcherAction action)
+        static State CreateNode(State previousState, CreateNodeAction action)
         {
-            var nodes = action.SelectedItem.CreateElements.Invoke(
+            var nodes = action.CreateElements.Invoke(
                 new GraphNodeCreationData(action.GraphModel, action.Position, guids: action.Guids));
 
             if (nodes.Any(n => n is EdgeModel))

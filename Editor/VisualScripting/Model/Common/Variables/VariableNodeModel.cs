@@ -47,9 +47,19 @@ namespace UnityEditor.VisualScripting.Model
         {
             // used by macro outputs
             if (m_DeclarationModel != null /* this node */ && m_DeclarationModel.Modifiers.HasFlag(ModifierFlags.WriteOnly))
-                m_MainPortModel = AddDataInput(null, DataType, k_MainPortName);
+            {
+                if (DataType == TypeHandle.ExecutionFlow)
+                    m_MainPortModel = AddExecutionInputPort(null);
+                else
+                    m_MainPortModel = AddDataInputPort(null, DataType, k_MainPortName);
+            }
             else
-                m_MainPortModel = AddDataOutputPort(null, DataType, k_MainPortName);
+            {
+                if (DataType == TypeHandle.ExecutionFlow)
+                    m_MainPortModel = AddExecutionOutputPort(null);
+                else
+                    m_MainPortModel = AddDataOutputPort(null, DataType, k_MainPortName);
+            }
         }
 
         public void Rename(string newName)

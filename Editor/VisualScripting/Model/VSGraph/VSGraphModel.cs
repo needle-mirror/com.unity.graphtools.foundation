@@ -183,9 +183,9 @@ namespace UnityEditor.VisualScripting.Model
         public bool CheckIntegrity(Verbosity errors)
         {
             Assert.IsTrue((UnityEngine.Object)AssetModel, "graph asset is invalid");
-            for (var i = 0; i < m_EdgeModels.Count; i++)
+            for (var i = 0; i < EdgeModels.Count; i++)
             {
-                var edge = m_EdgeModels[i];
+                var edge = EdgeModels[i];
                 Assert.IsNotNull(edge.InputPortModel, $"Edge {i} input is null, output: {edge.OutputPortModel}");
                 Assert.IsNotNull(edge.OutputPortModel, $"Edge {i} output is null, input: {edge.InputPortModel}");
             }
@@ -218,9 +218,8 @@ namespace UnityEditor.VisualScripting.Model
                 if (node is IStackModel stackModel)
                     CheckNodeList(stackModel.NodeModels, existingGuids);
 
-                if (node is VariableNodeModel variableNode)
+                if (node is VariableNodeModel variableNode && variableNode.DeclarationModel != null)
                 {
-                    Assert.IsNotNull(variableNode.DeclarationModel, $"Variable Node {i} {variableNode.Title} has a null declaration model");
                     if (variableNode.DeclarationModel.VariableType == VariableType.GraphVariable)
                     {
                         var originalDeclarations = GraphVariableModels.Where(d => d.GetId() == variableNode.DeclarationModel.GetId());
@@ -244,11 +243,11 @@ namespace UnityEditor.VisualScripting.Model
 
         public void QuickCleanup()
         {
-            for (var i = m_EdgeModels.Count - 1; i >= 0; i--)
+            for (var i = m_PolymorphicEdgeModels.Count - 1; i >= 0; i--)
             {
-                var edge = m_EdgeModels[i];
+                var edge = m_PolymorphicEdgeModels[i];
                 if (edge?.InputPortModel == null || edge.OutputPortModel == null)
-                    m_EdgeModels.RemoveAt(i);
+                    m_PolymorphicEdgeModels.RemoveAt(i);
             }
 
             CleanupNodes(m_GraphNodeModels);

@@ -93,7 +93,7 @@ namespace UnityEditor.VisualScripting.Model
             if (m_GraphAsset == null)
             {
                 foreach (var cachedVariableInfos in m_CachedInputVariables)
-                    AddDataInput(cachedVariableInfos.Name, cachedVariableInfos.Type);
+                    AddDataInputPort(cachedVariableInfos.Name, cachedVariableInfos.Type);
 
                 foreach (var cachedVariableInfos in m_CachedOutputVariables)
                     AddDataOutputPort(cachedVariableInfos.Name, cachedVariableInfos.Type);
@@ -118,7 +118,7 @@ namespace UnityEditor.VisualScripting.Model
                 switch (declaration.Modifiers)
                 {
                     case ModifierFlags.ReadOnly:
-                        AddDataInput(declaration.VariableName, declaration.DataType);
+                        AddDataInputPort(declaration.VariableName, declaration.DataType);
                         m_DefinedInputVariables.Add(declaration);
                         m_CachedInputVariables.Add(
                             new CachedVariableInfos { Name = declaration.VariableName, Type = declaration.DataType });

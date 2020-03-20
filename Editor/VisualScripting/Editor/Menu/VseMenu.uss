@@ -32,6 +32,10 @@
     height: 18px; /* since icon is absolute, force inner toggle height */
 }
 
+#vseMenu #newGraphButton .icon {
+    background-image: resource("Images/CreateNew");
+}
+
 #vseMenu #saveAllButton .icon {
     background-image: resource("SaveActive");
 }

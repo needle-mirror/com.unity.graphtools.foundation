@@ -114,6 +114,7 @@ namespace UnityEditor.VisualScripting.Editor
             }
 
             previousState.AssetModel = asset;
+            previousState.EditorDataModel.BoundObject = action.BoundObject;
             previousState.MarkForUpdate(UpdateFlags.All);
 
             var graphModel = previousState.CurrentGraphModel;

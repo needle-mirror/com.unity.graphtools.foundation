@@ -15,6 +15,8 @@ namespace UnityEditor.VisualScripting.GraphViewModel
             if (masterAsset == null || childAsset == null)
                 return;
 
+            EditorUtility.SetDirty(masterAsset);
+
             if (AssetDatabase.GetAssetPath(childAsset).Equals(AssetDatabase.GetAssetPath(masterAsset)))
                 return;
 
@@ -30,8 +32,6 @@ namespace UnityEditor.VisualScripting.GraphViewModel
                 childAsset.hideFlags |= HideFlags.HideInHierarchy;
                 AssetDatabase.AddObjectToAsset(childAsset, masterAsset);
             }
-
-            EditorUtility.SetDirty(masterAsset);
         }
     }
 }

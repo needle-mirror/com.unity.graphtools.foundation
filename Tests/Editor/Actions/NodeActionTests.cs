@@ -30,7 +30,7 @@ namespace UnityEditor.VisualScriptingTests.Actions
                 () =>
                 {
                     Assert.That(GetNodeCount(), Is.EqualTo(0));
-                    return new CreateNodeFromSearcherAction(GraphModel, new Vector2(100, 200), item);
+                    return new CreateNodeAction(GraphModel, new Vector2(100, 200), item.CreateElements);
                 },
                 () =>
                 {

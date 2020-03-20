@@ -28,7 +28,7 @@ namespace UnityEditor.VisualScripting.Model
 
         protected override void OnDefineNode()
         {
-            InputPort = AddDataInput<object>("Object");
+            InputPort = AddDataInputPort<object>("Object");
         }
     }
 

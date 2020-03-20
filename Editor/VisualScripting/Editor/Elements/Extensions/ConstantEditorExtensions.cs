@@ -146,5 +146,10 @@ namespace UnityEditor.VisualScripting.Editor.ConstantEditor
         {
             return builder.BuildSingleFieldEditor(s.value, new TextField());
         }
+
+        public static VisualElement BuildCurveEditor(this IConstantEditorBuilder builder, ConstantNodeModel<AnimationCurve> c)
+        {
+            return builder.BuildSingleFieldEditor(c.value, new CurveField());
+        }
     }
 }

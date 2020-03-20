@@ -3,26 +3,26 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Object = UnityEngine.Object;
 
 namespace UnityEditor.VisualScripting.Editor
 {
     public interface IOnboardingProvider
     {
-        string Title { get; }
         VisualElement CreateOnboardingElement(Store store);
+        bool GetGraphAndObjectFromSelection(VseWindow vseWindow, Object selectedObject, out string assetPath,
+            out Object boundObject);
     }
 
     public interface VSOnboardingProvider : IOnboardingProvider {}
 
     public class VseBlankPage : VisualElement
     {
-        static readonly GUIContent k_NoScriptAssetSelectedText = VseUtility.CreatTextContent("Available stencils: ");
-
         readonly Store m_Store;
 
         static List<IOnboardingProvider> s_OnboardingProviders;
 
-        protected virtual IEnumerable<IOnboardingProvider> OnboardingProviders
+        public virtual IEnumerable<IOnboardingProvider> OnboardingProviders
         {
             get
             {
@@ -35,7 +35,12 @@ namespace UnityEditor.VisualScripting.Editor
             }
         }
 
-        public VseBlankPage(Store store)
+        public VseBlankPage()
+        {
+            AddToClassList("vse-blank-page");
+        }
+
+        public VseBlankPage(Store store) : this()
         {
             m_Store = store;
         }
@@ -44,11 +49,8 @@ namespace UnityEditor.VisualScripting.Editor
         {
             Clear();
 
-            Add(new Label { text = k_NoScriptAssetSelectedText.text });
-
             foreach (var provider in OnboardingProviders)
             {
-                Add(new Label { text = "- " + provider.Title });
                 Add(provider.CreateOnboardingElement(m_Store));
             }
         }

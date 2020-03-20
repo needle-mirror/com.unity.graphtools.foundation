@@ -9,6 +9,11 @@
     min-width: 200px;
 }
 
+.highLevelNode {
+    --unity-hl-node-label-width: 60;
+    --unity-hl-node-field-width: 60;
+}
+
 .stack-node #node-border,
 .stackable-node.floating #node-border {
     margin-left: 0;

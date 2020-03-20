@@ -12,7 +12,8 @@ namespace UnityEditor.VisualScripting.Editor
     public class HighLevelNode : Node
     {
 #if PROPERTIES
-        static readonly HighLevelNodeImguiVisitor m_Visitor = new HighLevelNodeImguiVisitor();
+        static readonly HighLevelNodeImguiVisitor k_Visitor = new HighLevelNodeImguiVisitor();
+        protected virtual HighLevelNodeImguiVisitor PropertyVisitor => k_Visitor;
 #endif
         static readonly CustomStyleProperty<float> k_LabelWidth = new CustomStyleProperty<float>("--unity-hl-node-label-width");
         static readonly CustomStyleProperty<float> k_FieldWidth = new CustomStyleProperty<float>("--unity-hl-node-field-width");
@@ -55,11 +56,15 @@ namespace UnityEditor.VisualScripting.Editor
                 EditorGUILayout.LabelField("com.unity.properties is not installed in the project");
 #else
                 ChangeTracker changeTracker = new ChangeTracker();
-                var modelContainer = model;
-                m_Visitor.model = model;
-                PropertyContainer.Visit(ref modelContainer, m_Visitor, ref changeTracker);
+                object modelContainer = model is IPropertyVisitorNodeTarget nodeTarget ? nodeTarget.Target : model;
+                PropertyVisitor.model = model;
+                PropertyContainer.Visit(ref modelContainer, PropertyVisitor, ref changeTracker);
                 if (changeTracker.IsChanged())
+                {
+                    if (model is IPropertyVisitorNodeTarget nodeTarget2)
+                        nodeTarget2.Target = modelContainer;
                     RedefineNode();
+                }
 #endif
             });
         }

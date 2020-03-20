@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEditor.VisualScripting.Editor.Plugins;
 using UnityEditor.VisualScripting.GraphViewModel;
 using UnityEditor.VisualScripting.Model;
 using UnityEngine;
@@ -13,23 +14,18 @@ namespace UnityEditor.VisualScripting.Editor
 
         public VSPreferences Preferences => EditorDataModel?.Preferences;
 
-        public IEditorDataModel EditorDataModel { get; }
+        public IEditorDataModel EditorDataModel { get; private set; }
         public ICompilationResultModel CompilationResultModel { get; private set; }
 
-        public struct DebuggingDataModel
-        {
-            public INodeModel nodeModel;
-            public byte progress;
-            public DebuggerTracer.EntityFrameTrace.StepType type;
-            public string text;
-            public Dictionary<INodeModel, string> values;
-        }
-        public List<DebuggingDataModel> DebuggingData { get; set; }
+        /// <summary>
+        /// Stores the list of steps for the current graph, frame and target tuple
+        /// </summary>
+        public List<TracingStep> DebuggingData { get; set; }
 
-        public int currentTracingTarget;
-        public int currentTracingFrame;
-        public int currentTracingStep;
-        public int maxTracingStep;
+        public int CurrentTracingTarget = -1;
+        public int CurrentTracingFrame;
+        public int CurrentTracingStep;
+        public int MaxTracingStep;
 
         public enum UIRebuildType                             // for performance debugging purposes
         {
@@ -42,7 +38,7 @@ namespace UnityEditor.VisualScripting.Editor
         {
             CompilationResultModel = new CompilationResultModel();
             EditorDataModel = editorDataModel;
-            currentTracingStep = -1;
+            CurrentTracingStep = -1;
         }
 
         public void Dispose()
@@ -50,14 +46,19 @@ namespace UnityEditor.VisualScripting.Editor
             UnloadCurrentGraphAsset();
             CompilationResultModel = null;
             DebuggingData = null;
+            EditorDataModel = null;
         }
 
         public void UnloadCurrentGraphAsset()
         {
             AssetModel?.Dispose();
             AssetModel = null;
-            //TODO: should not be needed ?
-            EditorDataModel?.PluginRepository?.UnregisterPlugins();
+            if (EditorDataModel != null)
+            {
+                //TODO: should not be needed ?
+                EditorDataModel.PluginRepository?.UnregisterPlugins();
+                EditorDataModel.BoundObject = null;
+            }
         }
 
         public void RegisterReducers(Store store, Action clearRegistrations)

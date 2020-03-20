@@ -1,12 +1,8 @@
 using System;
-using System.Linq;
 using UnityEditor.Experimental.GraphView;
 using UnityEditor.VisualScripting.Editor;
-using UnityEditor.VisualScripting.Model;
 using UnityEngine;
 using UnityEngine.Assertions;
-using UnityEngine.Serialization;
-using Object = UnityEngine.Object;
 
 namespace UnityEditor.VisualScripting.GraphViewModel
 {
@@ -119,6 +115,14 @@ namespace UnityEditor.VisualScripting.GraphViewModel
 
         public IPortModel InputPortModel => m_InputPortReference.GetPortModel(Direction.Input, ref m_InputPortModel);
         public IPortModel OutputPortModel => m_OutputPortReference.GetPortModel(Direction.Output, ref m_OutputPortModel);
+
+        [SerializeField]
+        string m_EdgeLabel = null;
+        public string EdgeLabel
+        {
+            get => m_EdgeLabel ?? OutputPortModel?.Name;
+            set => m_EdgeLabel = value;
+        }
 
         public string GetId()
         {

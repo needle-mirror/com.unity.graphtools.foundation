@@ -118,7 +118,7 @@ namespace UnityEditor.VisualScripting.Model
                 {
                     string parameterName = parameter.Name;
                     m_LastParametersAdded.Add(parameterName);
-                    AddDataInput(parameterName.Nicify(), parameter.ParameterType.GenerateTypeHandle(Stencil), parameterName);
+                    AddDataInputPort(parameterName.Nicify(), parameter.ParameterType.GenerateTypeHandle(Stencil), parameterName);
                 }
 
                 if (m_MethodInfo.ContainsGenericParameters)

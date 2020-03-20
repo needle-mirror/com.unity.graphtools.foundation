@@ -70,7 +70,11 @@ namespace UnityEditor.VisualScripting.Editor
                 ? VisualScriptingIconUtility.LoadIconRequired("GraphView/Nodes/BlackboardFieldExposed.png")
                 : null;
 
-            this.MandatoryQ<Pill>("pill").tooltip = TitleValue;
+            var pill = this.MandatoryQ<Pill>("pill");
+            pill.tooltip = TitleValue;
+
+            pill.EnableInClassList("read-only", (variableDeclarationModel.Modifiers & ModifierFlags.ReadOnly) != 0);
+            pill.EnableInClassList("write-only", (variableDeclarationModel.Modifiers & ModifierFlags.WriteOnly) != 0);
 
             viewDataKey = variableDeclarationModel.GetId() + "__" + Blackboard.k_PersistenceKey;
         }

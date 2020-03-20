@@ -88,26 +88,34 @@ namespace UnityEditor.VisualScripting.Editor
             };
         }
 
-        static void GetTokenPorts(Store store, INodeModel model, out Port inputPort, out Port outputPort)
+        public static void GetTokenPorts(Store store, INodeModel model, out Port inputPort, out Port outputPort, Orientation? orientation = null)
         {
             inputPort = null;
             outputPort = null;
 
             // TODO: weirdly VariableNodeModels implement IHasMainOutputPort, but that 'output port' can be an input
 
-            // Token only support one input port, we use the first one found.
-            if (model is IHasMainInputPort inputModel)
+            Port newPort = null;
+            switch (model)
             {
-                var port = Port.Create(inputModel.InputPort, store, GetPortOrientation(inputModel.InputPort));
-                SetupPort(port, ref inputPort, ref outputPort);
+                // Token only support one input port, we use the first one found.
+                case IHasMainExecutionInputPort inputTriggerModel:
+                    newPort = Port.Create(inputTriggerModel.ExecutionInputPort, store, GetPortOrientation(inputTriggerModel.ExecutionInputPort));
+                    break;
+                case IHasMainExecutionOutputPort outputTriggerModel:
+                    newPort = Port.Create(outputTriggerModel.ExecutionOutputPort, store, GetPortOrientation(outputTriggerModel.ExecutionOutputPort));
+                    break;
+                case IHasMainInputPort inputModel:
+                    newPort = Port.Create(inputModel.InputPort, store, GetPortOrientation(inputModel.InputPort));
+                    break;
+                case IHasMainOutputPort outputModel:
+                    if (outputModel.OutputPort != null)
+                        newPort = Port.Create(outputModel.OutputPort, store, GetPortOrientation(outputModel.OutputPort));
+                    break;
             }
 
-            // Token only support one output port, we use the first one found.
-            if (model is IHasMainOutputPort outputModel)
-            {
-                var port = Port.Create(outputModel.OutputPort, store, GetPortOrientation(outputModel.OutputPort));
-                SetupPort(port, ref inputPort, ref outputPort);
-            }
+            if (newPort != null)
+                SetupPort(newPort, ref inputPort, ref outputPort);
 
             void SetupPort(Port port, ref Port resultInputPort, ref Port resultOutputPort)
             {
@@ -121,6 +129,11 @@ namespace UnityEditor.VisualScripting.Editor
 
             Orientation GetPortOrientation(IPortModel port)
             {
+                if (orientation != null)
+                    return orientation.Value;
+                if (port == null)
+                    return Orientation.Horizontal;
+
                 switch (port.PortType)
                 {
                     case PortType.Data:
@@ -144,7 +157,7 @@ namespace UnityEditor.VisualScripting.Editor
                 ? VisualScriptingIconUtility.LoadIconRequired("GraphView/Nodes/BlackboardFieldExposed.png")
                 : null;
 
-            GetTokenPorts(store, model, out var input, out var output);
+            GetTokenPorts(store, model, out var input, out var output, Orientation.Horizontal);
 
             var token = new Token(model, store, input, output, builder.GraphView, icon);
             if (model.DeclarationModel != null && model.DeclarationModel is LoopVariableDeclarationModel loopVariableDeclarationModel)
@@ -179,6 +192,13 @@ namespace UnityEditor.VisualScripting.Editor
         public static GraphElement CreateMacro(this INodeBuilder builder, Store store, MacroRefNodeModel model)
         {
             return new MacroNode(model, store, builder.GraphView);
+        }
+
+        public static GraphElement CreateEdgePortal(this INodeBuilder builder, Store store, IEdgePortalModel model)
+        {
+            GetTokenPorts(store, model, out var input, out var output, Orientation.Horizontal);
+
+            return new Token(model, store, input, output, builder.GraphView);
         }
     }
 }

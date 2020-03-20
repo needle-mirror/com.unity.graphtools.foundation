@@ -18,7 +18,7 @@ namespace UnityEditor.VisualScripting.Model
         protected override void OnDefineNode()
         {
             var portType = Kind == UnaryOperatorKind.LogicalNot ? TypeHandle.Bool : TypeHandle.Float;
-            InputPort = AddDataInput("A", portType);
+            InputPort = AddDataInputPort("A", portType);
 
             if (Kind == UnaryOperatorKind.LogicalNot || Kind == UnaryOperatorKind.Minus)
                 OutputPort = AddDataOutputPort("Out", portType);

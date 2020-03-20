@@ -12,6 +12,7 @@ namespace UnityEditor.VisualScripting.GraphViewModel
         GUID OutputNodeGuid { get; }
         IPortModel InputPortModel { get; }
         IPortModel OutputPortModel { get; }
+        string EdgeLabel { get; }
     }
 
     [SuppressMessage("ReSharper", "InconsistentNaming")]

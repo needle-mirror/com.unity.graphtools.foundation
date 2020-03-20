@@ -257,6 +257,8 @@ namespace UnityEditor.VisualScripting.GraphViewModel
 
         public GUID OriginalInstanceId { get; set; }
 
+        public virtual bool HasProgress => false;
+
         public virtual void OnConnection(IPortModel selfConnectedPortModel, IPortModel otherConnectedPortModel)
         {
         }
@@ -384,17 +386,17 @@ namespace UnityEditor.VisualScripting.GraphViewModel
             };
         }
 
-        protected PortModel AddDataInput<TDataType>(string portName, string portId = null, PortModel.PortModelOptions options = PortModel.PortModelOptions.Default, TDataType defaultValue = default)
+        protected PortModel AddDataInputPort<TDataType>(string portName, string portId = null, PortModel.PortModelOptions options = PortModel.PortModelOptions.Default, TDataType defaultValue = default)
         {
             Action<ConstantNodeModel> preDefine = null;
 
             if (!EqualityComparer<TDataType>.Default.Equals(defaultValue, default))
                 preDefine = constantModel => constantModel.SetValue(defaultValue);
 
-            return AddDataInput(portName, typeof(TDataType).GenerateTypeHandle(Stencil), portId, options, preDefine);
+            return AddDataInputPort(portName, typeof(TDataType).GenerateTypeHandle(Stencil), portId, options, preDefine);
         }
 
-        protected PortModel AddDataInput(string portName, TypeHandle typeHandle, string portId = null, PortModel.PortModelOptions options = PortModel.PortModelOptions.Default, Action<ConstantNodeModel> preDefine = null)
+        protected PortModel AddDataInputPort(string portName, TypeHandle typeHandle, string portId = null, PortModel.PortModelOptions options = PortModel.PortModelOptions.Default, Action<ConstantNodeModel> preDefine = null)
         {
             return AddInputPort(portName, PortType.Data, typeHandle, portId, options, preDefine);
         }
@@ -419,7 +421,7 @@ namespace UnityEditor.VisualScripting.GraphViewModel
             return AddInputPort(portName, PortType.Instance, dataType, portId);
         }
 
-        protected PortModel AddInputExecutionPort(string portName, string portId = null)
+        protected PortModel AddExecutionInputPort(string portName, string portId = null)
         {
             return AddInputPort(portName, PortType.Execution, TypeHandle.ExecutionFlow, portId);
         }

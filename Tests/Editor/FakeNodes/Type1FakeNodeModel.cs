@@ -12,7 +12,7 @@ namespace UnityEditor.VisualScriptingTests
 
         protected override void OnDefineNode()
         {
-            Input = AddDataInput<GameObject>("input0");
+            Input = AddDataInputPort<GameObject>("input0");
             Output = AddDataOutputPort<GameObject>("output0");
         }
     }

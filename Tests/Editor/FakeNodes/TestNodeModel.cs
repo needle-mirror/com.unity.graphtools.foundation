@@ -8,7 +8,7 @@ namespace UnityEditor.VisualScriptingTests
     {
         protected override void OnDefineNode()
         {
-            AddDataInput<float>("one");
+            AddDataInputPort<float>("one");
         }
     }
 }

@@ -175,6 +175,7 @@ namespace UnityEditor.VisualScripting.Model.Stencils
 
         public virtual StencilCapabilityFlags Capabilities => 0;
         public abstract IBuilder Builder { get; }
+        public virtual bool MoveNodeDependenciesByDefault => true;
 
         public virtual string GetSourceFilePath(VSGraphModel graphModel)
         {
@@ -186,6 +187,8 @@ namespace UnityEditor.VisualScripting.Model.Stencils
         }
 
         static Dictionary<TypeHandle, Type> s_TypeToConstantNodeModelTypeCache;
+        public virtual IDebugger Debugger => null;
+        public virtual bool GeneratesCode => false;
 
         public virtual Type GetConstantNodeModelType(Type type)
         {
@@ -306,5 +309,96 @@ namespace UnityEditor.VisualScripting.Model.Stencils
 
         public virtual void OnInspectorGUI()
         {}
+
+        public virtual bool CreateDependencyFromEdge(IEdgeModel model, out LinkedNodesDependency linkedNodesDependency, out INodeModel parent)
+        {
+            if (model.InputPortModel.NodeModel is IStackModel && model.InputPortModel.PortType != PortType.Instance)
+            {
+                linkedNodesDependency = new LinkedNodesDependency
+                {
+                    DependentPort = model.InputPortModel,
+                    ParentPort = model.OutputPortModel,
+                    count = 1,
+                };
+                parent = model.OutputPortModel.NodeModel;
+            }
+            else
+            {
+                linkedNodesDependency = new LinkedNodesDependency
+                {
+                    DependentPort = model.OutputPortModel,
+                    ParentPort = model.InputPortModel,
+                };
+                parent = model.InputPortModel.NodeModel;
+            }
+
+            return true;
+        }
+    }
+
+    /// <summary>
+    /// The trace of all recorded frames relevant to a specific graph and target tuple
+    /// </summary>
+    public interface IGraphTrace
+    {
+        IReadOnlyList<IFrameData> AllFrames { get; }
+    }
+
+    /// <summary>
+    /// The trace of all steps recorded during a specific frame, in the context of a specific graph, target and frame
+    /// </summary>
+    public interface IFrameData
+    {
+        int Frame { get; }
+        IEnumerable<TracingStep> GetDebuggingSteps(IGraphModel context);
+    }
+
+    /// <summary>
+    /// Stencil specific implementation of tracing/debugging
+    /// </summary>
+    public interface IDebugger
+    {
+        /// <summary>
+        /// Setup called when the tracing plugin is starting
+        /// </summary>
+        void Start();
+
+        /// <summary>
+        /// Tear down called when the tracing plugin is stopping
+        /// </summary>
+        void Stop();
+
+        /// <summary>
+        /// Gets collection of all debugging targets (entities, game objects, ...) as arbitrary indices
+        /// </summary>
+        /// <param name="graphModel">The current graph model</param>
+        /// <returns>The list of targets or null if none could be produced</returns>
+        IEnumerable<int> GetDebuggingTargets(IGraphModel graphModel);
+
+        /// <summary>
+        /// Used to fill the current tracing target label in the UI
+        /// </summary>
+        /// <param name="graphModel"></param>
+        /// <param name="target"></param>
+        /// <returns></returns>
+        string GetTargetLabel(IGraphModel graphModel, int target);
+
+        /// <summary>
+        /// Produces a list of steps for a given graph, frame and target
+        /// </summary>
+        /// <param name="currentGraphModel">The current graph</param>
+        /// <param name="frame">The current frame</param>
+        /// <param name="tracingTarget">The current target</param>
+        /// <param name="stepList">The resulting list of steps</param>
+        /// <returns>Returns true if successful</returns>
+        bool GetTracingSteps(IGraphModel currentGraphModel, int frame, int tracingTarget, out List<TracingStep> stepList);
+
+        /// <summary>
+        /// Get the existing graph trace of a given graph and target including all recorded frames
+        /// </summary>
+        /// <param name="assetModelGraphModel">The current graph</param>
+        /// <param name="currentTracingTarget">The current target</param>
+        /// <returns>The trace of all frames relevant to this specific graph and target tuple</returns>
+        IGraphTrace GetGraphTrace(IGraphModel assetModelGraphModel, int currentTracingTarget);
     }
 }

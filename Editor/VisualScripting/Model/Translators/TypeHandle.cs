@@ -31,10 +31,12 @@ namespace UnityEditor.VisualScripting.Model.Stencils
         public static TypeHandle UInt { get; } = GenerateTypeHandle(typeof(uint));
         public static TypeHandle Long { get; } = GenerateTypeHandle(typeof(long));
         public static TypeHandle Object { get; } = GenerateTypeHandle(typeof(object));
+        public static TypeHandle GameObject { get; } = GenerateTypeHandle(typeof(GameObject));
         public static TypeHandle String { get; } = GenerateTypeHandle(typeof(string));
         public static TypeHandle Vector2 { get; } = GenerateTypeHandle(typeof(Vector2));
         public static TypeHandle Vector3 { get; } = GenerateTypeHandle(typeof(Vector3));
         public static TypeHandle Vector4 { get; } = GenerateTypeHandle(typeof(Vector4));
+        public static TypeHandle Quaternion { get; } = GenerateTypeHandle(typeof(Quaternion));
 
         public bool IsValid => !string.IsNullOrEmpty(Identification);
 

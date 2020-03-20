@@ -376,6 +376,15 @@ namespace UnityEditor.VisualScripting.Editor
             badgeContainer.ShowValueBadge(m_IconsParent, visualElement, alignment, value, portPos);
         }
 
+        internal static void ClearPorts(Node node)
+        {
+            node.Query<Port>().ForEach(p =>
+            {
+                ClearValue(p);
+                p.ExecutionPortActive = false;
+            });
+        }
+
         internal static void ClearValue(VisualElement visualElement)
         {
             Assert.IsNotNull(visualElement);

@@ -27,7 +27,7 @@ namespace UnityEditor.VisualScripting.Model
         protected override void OnDefineNode()
         {
             base.OnDefineNode();
-            KeyPort = AddDataInput<KeyCode>("key");
+            KeyPort = AddDataInputPort<KeyCode>("key");
         }
     }
 }

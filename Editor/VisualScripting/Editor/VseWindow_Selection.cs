@@ -16,29 +16,26 @@ namespace UnityEditor.VisualScripting.Editor
             if (Locked)
                 return;
 
-            // selection is a SemanticGraph
+            foreach (var onboardingProvider in m_BlankPage.OnboardingProviders)
+            {
+                if (onboardingProvider.GetGraphAndObjectFromSelection(this, Selection.activeObject, out var selectedAssetPath, out var boundObject))
+                {
+                    SetCurrentSelection(selectedAssetPath, OpenMode.Open, boundObject);
+                    return;
+                }
+            }
+
+            // selection is a GraphAssetModel
             var semanticGraph = Selection.activeObject as GraphAssetModel;
             Object selectedObject = semanticGraph;
             if (semanticGraph != null)
             {
-                SetCurrentSelection(selectedObject, OpenMode.Open);
+                SetCurrentSelection(AssetDatabase.GetAssetPath(selectedObject), OpenMode.Open);
                 return;
-            }
-
-            // selection is a GameObject (not Prefab)
-            selectedObject = Selection.activeGameObject;
-            if (selectedObject != null)
-            {
-                // TODO: find matching systems ?
-//                bool isPrefab = VseUtility.IsPrefabOrAsset(selectedObject);
-//                if (!isPrefab)
-//                {
-//                    SetCurrentSelection(selectedObject, OpenMode.Open);
-//                }
             }
         }
 
-        protected void SetCurrentSelection(Object obj, OpenMode mode)
+        protected void SetCurrentSelection(string graphAssetFilePath, OpenMode mode, Object boundObject = null)
         {
             var vseWindows = (VseWindow[])Resources.FindObjectsOfTypeAll(typeof(VseWindow));
 
@@ -46,45 +43,28 @@ namespace UnityEditor.VisualScripting.Editor
             if (s_LastFocusedEditor != GetInstanceID() && vseWindows.Length > 1)
                 return;
 
-            // Extract the selected graph asset file path from the selected object, if possible.
-            string graphAssetFilePath = null;
-
             var editorDataModel = m_Store.GetState().EditorDataModel;
             if (editorDataModel == null)
                 return;
-            var curBoundObject = editorDataModel.BoundObject;
-//            object player = null;
-//            if (obj is GameObject)
-//            {
-//                var selectedGameObject = (GameObject)obj;
-//
-//                player = VseUtility.GetVisualScriptFromGameObject(selectedGameObject);
-//                if (player != null)
-//                {
-//                    graphAssetFilePath = VseUtility.GetAssetPathFromComponent(player);
-//                }
-//            }
-//            else
-            if (obj is GraphAssetModel asset)
-            {
-                if (m_Store.GetState() != null && m_Store.GetState().AssetModel != null && (GraphAssetModel)m_Store.GetState().AssetModel == asset
-                    // if we already had no bound object, abort. otherwise, we'll reload the same graph with no bound object
-                    && curBoundObject == null)
-                    return;
+            var curBoundObject = editorDataModel.BoundObject as Object;
 
-                graphAssetFilePath = AssetDatabase.GetAssetPath(asset);
+            if (AssetDatabase.LoadAssetAtPath<GraphAssetModel>(graphAssetFilePath))
+            {
+                // don't load if same graph and same bound object
+                if (m_Store.GetState() != null && m_Store.GetState().AssetModel != null &&
+                    graphAssetFilePath == LastGraphFilePath &&
+                    curBoundObject == boundObject)
+                    return;
             }
 
             // If there is not graph asset, unload the current one.
             if (string.IsNullOrWhiteSpace(graphAssetFilePath))
             {
-                m_Store.Dispatch(new UnloadGraphAssetAction());
-                Repaint();
                 return;
             }
 
             // Load this graph asset.
-            m_Store.Dispatch(new LoadGraphAssetAction(graphAssetFilePath));
+            m_Store.Dispatch(new LoadGraphAssetAction(graphAssetFilePath, boundObject));
             m_GraphView.FrameAll();
 
             if (mode != OpenMode.OpenAndFocus)
