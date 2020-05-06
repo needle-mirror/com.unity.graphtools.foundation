@@ -329,8 +329,7 @@ namespace UnityEditor.VisualScripting.Editor
                     }
 
                     var parentPosition = parentUI.GetPosition();
-                    if (parentUI is Experimental.GraphView.StackNode &&
-                        element is Experimental.GraphView.StackNode)
+                    if (linked.DependentPort.PortType == PortType.Execution && linked.ParentPort.PortType == PortType.Execution)
                     {
                         if (linked.count > 1)
                         {

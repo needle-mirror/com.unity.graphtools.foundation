@@ -1,26 +1,12 @@
-using System;
-#if PROPERTIES
-using Unity.Properties;
-#endif
+using Unity.Properties.UI;
 using UnityEditor.Experimental.GraphView;
 using UnityEditor.VisualScripting.GraphViewModel;
-using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.VisualScripting.Editor
 {
     public class HighLevelNode : Node
     {
-#if PROPERTIES
-        static readonly HighLevelNodeImguiVisitor k_Visitor = new HighLevelNodeImguiVisitor();
-        protected virtual HighLevelNodeImguiVisitor PropertyVisitor => k_Visitor;
-#endif
-        static readonly CustomStyleProperty<float> k_LabelWidth = new CustomStyleProperty<float>("--unity-hl-node-label-width");
-        static readonly CustomStyleProperty<float> k_FieldWidth = new CustomStyleProperty<float>("--unity-hl-node-field-width");
-
-        const float k_DefaultLabelWidth = 150;
-        const float k_DefaultFieldWidth = 120;
-
         public HighLevelNode(INodeModel model, Store store, GraphView graphView)
             : base(model, store, graphView) {}
 
@@ -40,33 +26,21 @@ namespace UnityEditor.VisualScripting.Editor
             VisualElement output = this.MandatoryQ("output");
             output.AddToClassList("node-controls");
 
-            var imguiContainer = CreateControls();
+            var controlsElement = CreateControls();
 
-            imguiContainer.AddToClassList("node-controls");
-            mainContainer.MandatoryQ("top").Insert(1, imguiContainer);
+            controlsElement.AddToClassList("node-controls");
+            mainContainer.MandatoryQ("top").Insert(1, controlsElement);
         }
 
         protected virtual VisualElement CreateControls()
         {
-            return new IMGUIContainer(() =>
+            var element = new PropertyElement();
+            element.SetTarget(model);
+            element.OnChanged += (e, p) =>
             {
-                EditorGUIUtility.labelWidth = customStyle.TryGetValue(k_LabelWidth, out var labelWidth) ? labelWidth : k_DefaultLabelWidth;
-                EditorGUIUtility.fieldWidth = customStyle.TryGetValue(k_FieldWidth, out var fieldWidth) ? fieldWidth : k_DefaultFieldWidth;
-#if !PROPERTIES
-                EditorGUILayout.LabelField("com.unity.properties is not installed in the project");
-#else
-                ChangeTracker changeTracker = new ChangeTracker();
-                object modelContainer = model is IPropertyVisitorNodeTarget nodeTarget ? nodeTarget.Target : model;
-                PropertyVisitor.model = model;
-                PropertyContainer.Visit(ref modelContainer, PropertyVisitor, ref changeTracker);
-                if (changeTracker.IsChanged())
-                {
-                    if (model is IPropertyVisitorNodeTarget nodeTarget2)
-                        nodeTarget2.Target = modelContainer;
-                    RedefineNode();
-                }
-#endif
-            });
+                RedefineNode();
+            };
+            return element;
         }
     }
 }

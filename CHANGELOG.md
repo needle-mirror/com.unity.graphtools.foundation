@@ -4,6 +4,11 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.2.2-preview.1] - 2020-05-06
+
+### Changed
+- Enabling vertical alignment in out-of-stack nodes w/ execution ports
+
 ## [0.2.1-preview.1] - 2020-03-20
 
 ### Added
@@ -16,6 +21,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 - Fix graph dirty flag when renaming token
+
+## [0.2.0-preview.4] - 2020-03-20
+
+### Changed
+
+- Updated com.unity.properties.ui@1.1.0-preview
 
 ## [0.2.0-preview.3] - 2020-02-26
 

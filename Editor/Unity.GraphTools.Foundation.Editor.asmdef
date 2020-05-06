@@ -6,7 +6,8 @@
         "com.unity.code-analysis",
         "Unity.InternalAPIEngineBridgeDev.002",
         "Unity.Properties",
-        "Unity.Properties.Reflection"
+        "Unity.Properties.UI",
+        "Unity.Properties.UI.Editor"
     ],
     "includePlatforms": [
         "Editor"
@@ -32,17 +33,6 @@
     ],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [
-        {
-            "name": "com.unity.properties",
-            "expression": "0.5.0-preview",
-            "define": "PROPERTIES"
-        },
-        {
-            "name": "com.unity.properties",
-            "expression": "0.6.0-preview",
-            "define": "NEW_PROPERTIES"
-        }
-    ],
+    "versionDefines": [],
     "noEngineReferences": false
 }
