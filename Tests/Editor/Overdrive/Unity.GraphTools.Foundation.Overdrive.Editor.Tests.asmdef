@@ -1,0 +1,30 @@
+{
+    "name": "Unity.GraphTools.Foundation.Overdrive.Editor.Tests",
+    "references": [
+        "Unity.GraphTools.Foundation.Overdrive",
+        "Unity.GraphTools.Foundation.Overdrive.Editor",
+        "Unity.Searcher.Editor",
+        "Unity.InternalAPIEngineBridge.009",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner",
+        "Unity.InternalAPIEngineBridgeDev.003"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Moq.dll",
+        "Microsoft.CodeAnalysis.CSharp.dll",
+        "Microsoft.CodeAnalysis.dll",
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

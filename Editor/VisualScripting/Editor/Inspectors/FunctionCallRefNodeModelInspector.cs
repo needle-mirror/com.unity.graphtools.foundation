@@ -15,7 +15,7 @@ namespace UnityEditor.VisualScripting.Editor
 //                return;
 //
 //            var decl = asset.Node;
-//            var assetGUIDs = AssetDatabase.FindAssets($"t:{typeof(VSGraphAssetModel).Name}");
+//            var assetGUIDs = AssetDatabase.FindAssets($"t:{typeof(VSGraphAssetModel).FullName}");
 //
 //            var functions = assetGUIDs.SelectMany(assetGuid =>
 //            {

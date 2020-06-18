@@ -1,0 +1,115 @@
+.blackboard {
+    background-color: #1F1F1F;
+    font-size: 12px;
+}
+
+.mainContainer > #content > #header {
+    border-radius: 6px;
+    margin: 4px 4px 2px;
+    padding: 0;
+}
+
+.blackboardFieldPropertyView .row {
+    flex-direction: row;
+    padding: 0 2px 0 10px;
+}
+
+.blackboardFieldPropertyView .row > .rowLabel {
+    min-width: 56px;
+    font-size: 10px;
+}
+
+.blackboardFieldPropertyView .row > .rowControl {
+    flex: 1;
+    margin: 2px 4px;
+    padding: 2px 3px;
+}
+
+.blackboardFieldPropertyView .row > .rowTextField {
+    min-width: 50px;
+    font-size: 10px;
+}
+
+.blackboardFieldPropertyView .row > .rowButton {
+    min-width: 75px;
+    max-width: 225px;
+    font-size: 10px;
+    height: 18px;
+    flex-grow: 0;
+    padding-top: 0;
+    margin-left: 6px;
+    margin-right: 6px;
+    -unity-text-align: middle-center;
+}
+
+.blackboardField > #titleEditor {
+    -unity-text-align: middle-left;
+    font-size: 11px;
+    opacity: 1;
+}
+
+BlackboardThisField.blackboardField,
+.blackboardField {
+    flex-basis: auto;
+}
+
+BlackboardThisField.blackboardField,
+.blackboardField.readonly {
+    padding-left: 16px;
+}
+
+.blackboardField.readonly #pill > TemplateContainer > #node-border {
+    background-image: resource("Images/PillBackgroundReadOnly");
+}
+
+.blackboardField.parameter #pill > TemplateContainer > #node-border {
+    background-image: resource("Images/PillBackgroundParameter");
+}
+
+.blackboardField.parameter.readonly #pill > TemplateContainer > #node-border {
+    background-image: resource("Images/PillBackgroundParameterReadOnly");
+}
+
+BlackboardThisField.blackboardField #pill,
+.blackboardField.readonly #pill,
+.blackboardField.parameter.readonly #pill {
+    min-width: 0;
+}
+
+.blackboardField #pill {
+    min-width: 52px;
+}
+
+.blackboardField #pill.read-only > TemplateContainer > #node-border,
+.blackboardField #pill.read-only > TemplateContainer > #selection-border {
+    border-radius: 0 5px 5px 0;
+}
+
+.blackboardField #pill.write-only > TemplateContainer > #node-border,
+.blackboardField #pill.write-only > TemplateContainer > #selection-border {
+    border-radius: 5px 0 0 5px;
+}
+
+.blackboardField #pill #contents > #top > #title-label {
+    -unity-text-align: middle-center;
+    flex-grow: 1;
+    /*text-overflow: ellipsis;*/
+    /*-unity-ellipsis-position: middle;*/
+}
+
+.unity-base-text-field .unity-base-field__input {
+    align-self: stretch;
+}
+
+.blackboardField > .mainContainer > #textField {
+    top: 6px;
+}
+
+.blackboard #MyElement {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-color: #FF8B8B;
+}

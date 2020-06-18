@@ -33,7 +33,7 @@ namespace UnityEditor.VisualScripting.Editor
         VseWindow Create();
     }
 
-    [AttributeUsage(AttributeTargets.Class)]
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
     public class ViewTypeMappingAttribute : System.Attribute
     {
         public ViewTypeMappingAttribute(Type assetType, Type windowCreator)
@@ -50,7 +50,6 @@ namespace UnityEditor.VisualScripting.Editor
     [PublicAPI]
     public partial class VseWindow : GraphViewEditorWindow, IHasCustomMenu
     {
-        [MenuItem("Window/Visual Script", false, 2020)]
         static void ShowNewVsEditorWindow()
         {
             ShowVsEditorWindow();
@@ -183,8 +182,7 @@ namespace UnityEditor.VisualScripting.Editor
                             continue;
                         if (typeof(VseWindow).IsAssignableFrom(type))
                         {
-                            var typeMappingAttribute = type.GetCustomAttributes<ViewTypeMappingAttribute>().FirstOrDefault();
-                            if (typeMappingAttribute != null)
+                            foreach (var typeMappingAttribute in type.GetCustomAttributes<ViewTypeMappingAttribute>())
                             {
                                 s_AssetToViewTypeMapping.Add(typeMappingAttribute.AssetType, (IVseWindowCreate)Activator.CreateInstance(typeMappingAttribute.WindowCreator));
                             }

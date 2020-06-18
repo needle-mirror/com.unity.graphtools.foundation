@@ -1,0 +1,41 @@
+.ge-node--token .ge-node__title-container {
+    background-color: transparent;
+    border-radius: 0;
+}
+
+.ge-node--token .ge-node__content-container {
+    align-items: center;
+}
+
+.ge-node--token .ge-port-container {
+    justify-content: center;
+}
+
+.ge-node--token .ge-node__inputs {
+    border-right-width: 0;
+}
+
+.ge-node--token .ge-port__label {
+    display: none;
+}
+
+
+.ge-node--portal-entry .ge-node__title {
+    padding-right: 12px;
+}
+
+.ge-node--portal-exit .ge-node__title {
+    padding-left: 12px;
+}
+
+.ge-node--token.ge-node--portal-entry .ge-node__content-container,
+.ge-node--token.ge-node--portal-entry .ge-node__selection-border,
+.ge-node--token.ge-node--portal-entry #disabledOverlay {
+    border-top-right-radius: 20px;
+}
+
+.ge-node--token.ge-node--portal-exit .ge-node__content-container,
+.ge-node--token.ge-node--portal-exit .ge-node__selection-border,
+.ge-node--token.ge-node--portal-exit #disabledOverlay {
+    border-bottom-left-radius: 22px;
+}

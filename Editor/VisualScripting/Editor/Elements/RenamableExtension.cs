@@ -23,7 +23,7 @@ namespace UnityEditor.VisualScripting.Editor.Renamable
             Rename(renamable, false, mouseDownEvent);
         }
 
-        internal static void Rename(this IRenamable renamable, bool forceRename, MouseDownEvent mouseDownEvent = null)
+        public static void Rename(this IRenamable renamable, bool forceRename, MouseDownEvent mouseDownEvent = null)
         {
             if (renamable.RenameDelegate != null)
             {

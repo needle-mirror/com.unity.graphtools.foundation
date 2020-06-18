@@ -1,0 +1,16 @@
+.ge-node {
+    width: 200px;
+    height: 200px;
+}
+
+.ge-placemat {
+    background-color: darkcyan;
+}
+
+.EdgeColorsMatchCustomPortColors .ge-port--direction-input {
+    --port-color: #ff0000;
+}
+
+.EdgeColorsMatchCustomPortColors .ge-port--direction-output {
+    --port-color: #0000ff;
+}

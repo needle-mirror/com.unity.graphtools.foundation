@@ -1,0 +1,12 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:VisualElement name="content" picking-mode="Ignore">
+        <ui:VisualElement name="header" picking-mode="Ignore">
+            <ui:VisualElement name="labelContainer" picking-mode="Ignore">
+                <ui:Label name="titleLabel" text="" />
+                <ui:Label name="subTitleLabel" text="Blackboard" />
+            </ui:VisualElement>
+            <ui:Button name="addButton" text="+" />
+        </ui:VisualElement>
+        <ui:VisualElement name="contentContainer" picking-mode="Ignore" />
+    </ui:VisualElement>
+</ui:UXML>

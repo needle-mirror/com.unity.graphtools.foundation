@@ -1,0 +1,51 @@
+.hidden {
+    display: none;
+}
+
+/* Example of dynamic properties
+Read from the GridBackground decorator */
+GridBackground {
+    --grid-background-color:#202020;
+    --line-color: #202020;
+    --thick-line-color: #202020;
+    --spacing:750.0;
+    --thick-lines:0;
+}
+
+
+FreehandElement {
+    --segment-size: 5;
+    --segment-color: #FF9900;
+    --delete-segment-color: #FF0000;
+}
+
+Layer {
+    position:absolute;
+    left:0;
+    top:0;
+    bottom:0;
+    right:0;
+    /* Needs to set the flex-direction to row because when set to column
+    Yoga try to constrain absolute childs to that size as well.
+    This allows text within the absolute child to wrap to the size of its parent.
+    See Yoga.c YGNodeAbsoluteLayoutChild function. */
+    flex-direction: row;
+}
+
+.resizer-icon {
+    background-image: resource("Builtin Skins/DarkSkin/Images/WindowBottomResize.png");
+    flex: 1 0 0;
+}
+
+.resizer.resizeAllDir {
+    cursor: resize-up-left;
+}
+
+.resizer.resizeVerticalDir {
+    cursor: resize-vertical;
+}
+
+.resizer.resizeHorizontalDir {
+    cursor: resize-horizontal;
+    color: #ff0000;
+}

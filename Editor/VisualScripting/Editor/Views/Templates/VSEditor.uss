@@ -1,6 +1,5 @@
-* {
+#vseRoot {
     --disabled-color: rgba(18, 18, 18, 0.52);
-    --unused-color: rgb(216, 174, 34);
     --invalid-color: rgba(145, 29, 19, 0.7);
 
     --unused-color: rgb(120, 104, 31);

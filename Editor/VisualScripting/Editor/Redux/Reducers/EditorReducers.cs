@@ -26,7 +26,7 @@ namespace UnityEditor.VisualScripting.Editor
 
         public static void BuildAll(Action<string, CompilerMessage[]> roslynCompilationOnBuildFinished)
         {
-            var assetGUIDs = AssetDatabase.FindAssets($"t:{typeof(VSGraphAssetModel).Name}");
+            var assetGUIDs = AssetDatabase.FindAssets($"t:{typeof(VSGraphAssetModel).FullName}");
 
             var assetsByBuilder = assetGUIDs.Select(assetGuid => AssetDatabase.LoadAssetAtPath<VSGraphAssetModel>(AssetDatabase.GUIDToAssetPath(assetGuid)))
                 .Where(asset => asset.GraphModel.State == ModelState.Enabled)

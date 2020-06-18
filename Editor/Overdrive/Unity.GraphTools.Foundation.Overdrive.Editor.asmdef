@@ -1,0 +1,30 @@
+{
+    "name": "Unity.GraphTools.Foundation.Overdrive.Editor",
+    "references": [
+        "Unity.Searcher.Editor",
+        "Unity.InternalAPIEngineBridgeDev.003",
+        "Unity.Properties",
+        "Unity.Properties.UI",
+        "Unity.Properties.UI.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "System.Collections.Immutable.dll",
+        "System.Composition.AttributedModel.dll",
+        "System.Composition.Convention.dll",
+        "System.Composition.Hosting.dll",
+        "System.Composition.Runtime.dll",
+        "System.Composition.TypedParts.dll",
+        "System.Reflection.Metadata.dll",
+        "System.Runtime.Loader.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

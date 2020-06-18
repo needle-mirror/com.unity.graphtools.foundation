@@ -1,7 +1,7 @@
 {
   "name": "com.unity.graphtools.foundation",
   "displayName": "Graph Tools Foundation",
-  "version": "0.2.2-preview.1",
+  "version": "0.2.3-preview.1",
   "unity": "2019.3",
   "description": "A framework for node based tools including a graph data model, a UI foundation and graph-to-asset pipeline. It is not meant to be used by itself, but as a dependency of public-facing packages",
   "keywords": [
@@ -15,15 +15,17 @@
   "dependencies": {
     "com.unity.searcher": "4.0.9",
     "com.unity.code-analysis": "0.1.2-preview",
-    "com.unity.properties.ui": "1.1.0-preview",
-    "nuget.moq": "1.0.0"
+    "nuget.moq": "1.0.0",
+    "com.unity.properties": "1.2.0-preview",
+    "com.unity.properties.ui": "1.2.0-preview",
+    "com.unity.serialization": "1.2.0-preview"
   },
   "upmCi": {
-    "footprint": "4e01a3005b8e4af6e5697250702a551e492551e5"
+    "footprint": "2b4c09dfe5cd6d0faf1759fce9e6f0b135413ede"
   },
   "repository": {
-    "type": "git",
     "url": "https://github.com/Unity-Technologies/visualscripting-dev.git",
-    "revision": "f361d61931bd7d49ae4180de0ad7d1b72d03c5fe"
+    "type": "git",
+    "revision": "d39284bee5539e03b58dee571ad37ba2609551c8"
   }
 }

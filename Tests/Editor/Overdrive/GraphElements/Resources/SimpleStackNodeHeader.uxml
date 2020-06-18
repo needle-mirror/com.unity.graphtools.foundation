@@ -1,0 +1,8 @@
+<UXML xmlns:ui="UnityEngine.UIElements"
+      xmlns:ed="UnityEditor.UIElements">
+    <ui:VisualElement name="stackNodeTitleContainer" picking-mode="Ignore">
+        <ui:Label name="titleLabel" text="" />
+        <ui:TextField name="titleField" text="" />
+    </ui:VisualElement>
+    <ed:EnumField name="operationField" />
+</UXML>

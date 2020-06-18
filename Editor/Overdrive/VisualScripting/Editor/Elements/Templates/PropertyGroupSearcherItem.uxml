@@ -1,0 +1,13 @@
+<UXML xmlns:ui="UnityEngine.UIElements">
+  <ui:VisualElement name="itemMainVisualContainer">
+    <Style path="Searcher"/>
+    <Style path="PropertyGroupSearcher"/>
+    <ui:VisualElement name="itemIndent"/>
+    <ui:VisualElement name="itemChildExpander">
+      <ui:Label name="expanderIcon"/>
+    </ui:VisualElement>
+    <ui:VisualElement name="itemIconVisualElement"/>
+    <ui:Toggle name="selectionToggle"/>
+    <ui:VisualElement name="labelsContainer"/>
+  </ui:VisualElement>
+</UXML>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:VisualElement name="sectionHeader" picking-mode="Ignore">
+        <ui:Label name="sectionTitleLabel" picking-mode="Ignore"/>
+    </ui:VisualElement>
+    <ui:VisualElement name="rowsContainer" picking-mode="Ignore" />
+</ui:UXML>

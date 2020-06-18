@@ -118,6 +118,8 @@ namespace UnityEditor.VisualScripting.Editor
                 m_GraphView.window.DisplaySmartSearch(menuAction);
             });
 
+            m_GraphView.AddContextualMenuEntries(m_Evt);
+
 #if UNITY_2020_1_OR_NEWER
             m_Evt.menu.AppendAction("Create Placemat", menuAction =>
             {

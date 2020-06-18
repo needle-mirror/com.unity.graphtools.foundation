@@ -1,0 +1,17 @@
+#pinIcon {
+    width: 0;
+    height: 12px;
+    align-self: center;
+}
+
+#pinIcon.pinned {
+    width: 12px;
+}
+
+#pinIcon.pinned.offset {
+    background-image: resource("Images/pin-offset@64");
+}
+
+#pinIcon.pinned.attached {
+    background-image: resource("Images/pin-attached@64");
+}

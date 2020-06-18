@@ -1389,5 +1389,8 @@ namespace UnityEditor.VisualScripting.Editor
         }
 
 #endif
+        public virtual void AddContextualMenuEntries(ContextualMenuPopulateEvent contextualMenuPopulateEvent)
+        {
+        }
     }
 }

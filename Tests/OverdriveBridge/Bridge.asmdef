@@ -1,0 +1,22 @@
+{
+    "name": "Unity.InternalAPIEngineBridge.009",
+    "references": [
+        "Unity.GraphTools.Foundation.Overdrive",
+        "Unity.GraphTools.Foundation.Overdrive.Editor",
+        "Unity.Searcher.Editor",
+        "UnityEditor.Utils",
+        "Unity.InternalAPIEngineBridgeDev.003"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": []
+}

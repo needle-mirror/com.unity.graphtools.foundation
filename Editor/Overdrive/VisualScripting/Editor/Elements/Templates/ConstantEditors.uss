@@ -1,0 +1,11 @@
+.vs-inline-float-editor {
+    flex-direction: row;
+}
+
+.vs-inline-float-editor Label {
+    min-width: 11px;
+}
+
+.vs-inline-float-editor FloatInput {
+    width: 60px;
+}

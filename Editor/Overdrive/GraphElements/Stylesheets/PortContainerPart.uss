@@ -1,0 +1,6 @@
+.ge-in-out-port-container-part,
+.ge-port-container-part {
+    flex-direction: row;
+    flex-grow: 1;
+    overflow: hidden;
+}

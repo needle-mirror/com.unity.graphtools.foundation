@@ -70,7 +70,7 @@ namespace UnityEditor.VisualScripting.Editor.SmartSearch
 
         public GraphElementSearcherDatabase AddMacros()
         {
-            string[] assetGUIDs = AssetDatabase.FindAssets($"t:{typeof(VSGraphAssetModel).Name}");
+            string[] assetGUIDs = AssetDatabase.FindAssets($"t:{typeof(VSGraphAssetModel).FullName}");
             List<VSGraphAssetModel> macros = assetGUIDs.Select(assetGuid =>
                 AssetDatabase.LoadAssetAtPath<VSGraphAssetModel>(AssetDatabase.GUIDToAssetPath(assetGuid)))
                 .Where(x =>
@@ -109,7 +109,7 @@ namespace UnityEditor.VisualScripting.Editor.SmartSearch
 
         public GraphElementSearcherDatabase AddGraphsMethods()
         {
-            string[] assetGUIDs = AssetDatabase.FindAssets($"t:{typeof(VSGraphAssetModel).Name}");
+            string[] assetGUIDs = AssetDatabase.FindAssets($"t:{typeof(VSGraphAssetModel).FullName}");
             List<Tuple<IGraphModel, FunctionModel>> methods = assetGUIDs.SelectMany(assetGuid =>
             {
                 string assetPath = AssetDatabase.GUIDToAssetPath(assetGuid);

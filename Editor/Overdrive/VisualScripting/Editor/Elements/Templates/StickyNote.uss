@@ -1,0 +1,9 @@
+.ge-sticky-note {
+    overflow: visible;
+    --selection-border-radius: 4px;
+}
+
+.ge-sticky-note__content-container {
+    flex-grow: 1;
+    overflow: hidden;
+}

@@ -1,0 +1,55 @@
+MiniMap {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 200px;
+    height: 200px;
+}
+
+MiniMap.windowed {
+    position: relative;
+    width: auto;
+    height: auto;
+    left: auto;
+    top: auto;
+    flex-grow: 1;
+}
+
+MiniMap .unity-label {
+    position:absolute;
+    top:0;
+    left:0;
+    right:0;
+    height: 16px;
+    padding-top: 1px;
+    padding-left: 2px;
+    margin-left: 4px;
+    margin-top: 2px;
+    margin-right: 4px;
+}
+
+MiniMap.windowed .unity-label  {
+    display: none;
+}
+
+MiniMap.graphElement {
+    border-color:#CCC;
+    background-color:rgba(100, 100, 100, 0.5);
+    position:absolute;
+    padding-top: 22px;
+}
+
+MiniMap.graphElement.windowed {
+    position:relative;
+    padding-top:0;
+    flex-grow:1;
+}
+
+MiniMap.anchored {
+    left: 20px;
+    bottom: 20px;
+}
+
+MiniMap.anchored Label {
+    color:#aaaa00;
+}

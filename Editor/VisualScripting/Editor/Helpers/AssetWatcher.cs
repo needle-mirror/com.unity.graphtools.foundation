@@ -56,7 +56,7 @@ namespace UnityEditor.VisualScripting.Editor
             s_Instance = new AssetWatcher();
             Instance.m_ProjectAssetPaths = new Dictionary<string, string>();
 
-            var graphAssetGUIDs = AssetDatabase.FindAssets("t:" + typeof(VSGraphAssetModel).Name);
+            var graphAssetGUIDs = AssetDatabase.FindAssets("t:" + typeof(VSGraphAssetModel).FullName);
             foreach (var guid in graphAssetGUIDs)
             {
                 var path = AssetDatabase.GUIDToAssetPath(guid);

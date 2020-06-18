@@ -9,5 +9,7 @@ namespace UnityEditor.VisualScripting.Model
         {
             value = "";
         }
+
+        protected override string DefaultValue => "";
     }
 }
