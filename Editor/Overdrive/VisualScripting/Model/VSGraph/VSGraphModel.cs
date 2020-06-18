@@ -84,10 +84,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             }
         }
 
-        public void DeleteVariableDeclarations(IEnumerable<VariableDeclarationModel> variableModels, bool deleteUsages, bool registerUndo = true)
+        public void DeleteVariableDeclarations(IEnumerable<VariableDeclarationModel> variableModels, bool deleteUsages)
         {
-            if (registerUndo)
-                Undo.RegisterCompleteObjectUndo((Object)AssetModel, "Remove Variable Declarations");
+            Undo.RegisterCompleteObjectUndo((Object)AssetModel, "Remove Variable Declarations");
 
             foreach (VariableDeclarationModel variableModel in variableModels)
             {

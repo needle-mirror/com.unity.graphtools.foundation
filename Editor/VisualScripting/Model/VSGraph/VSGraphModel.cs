@@ -85,9 +85,10 @@ namespace UnityEditor.VisualScripting.Model
             }
         }
 
-        public void DeleteVariableDeclarations(IEnumerable<VariableDeclarationModel> variableModels, bool deleteUsages)
+        public void DeleteVariableDeclarations(IEnumerable<VariableDeclarationModel> variableModels, bool deleteUsages, bool registerUndo = true)
         {
-            Undo.RegisterCompleteObjectUndo((Object)AssetModel, "Remove Variable Declarations");
+            if (registerUndo)
+                Undo.RegisterCompleteObjectUndo((Object)AssetModel, "Remove Variable Declarations");
 
             foreach (VariableDeclarationModel variableModel in variableModels)
             {
