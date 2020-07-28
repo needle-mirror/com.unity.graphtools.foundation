@@ -7,13 +7,22 @@ using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
 {
-    class IONodeModel : IGTFNodeModel, IHasIOPorts, IHasTitle, ICollapsible
+    class IONodeModel : IInOutPortsNode, IHasTitle, ICollapsible
     {
         public IGTFGraphModel GraphModel { get; set; }
 
         GUID m_GUID = GUID.Generate();
-        public GUID Guid => m_GUID;
-        public IGTFGraphAssetModel AssetModel => GraphModel.AssetModel;
+        public GUID Guid
+        {
+            get => m_GUID;
+            set => m_GUID = value;
+        }
+
+        public IGTFGraphAssetModel AssetModel
+        {
+            get => GraphModel.AssetModel;
+            set => GraphModel.AssetModel = value;
+        }
 
         public void AssignNewGuid()
         {
@@ -32,6 +41,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         public bool IsCopiable => true;
         public string Title { get; set; }
         public string DisplayTitle => Title;
+        public string Tooltip { get; set; }
 
         public void CreatePorts(int inputPorts, int outputPorts)
         {
@@ -58,13 +68,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             }
         }
 
-        List<PortModel> m_InputPorts = new List<PortModel>();
-        List<PortModel> m_OutputPorts = new List<PortModel>();
+        protected List<PortModel> m_InputPorts = new List<PortModel>();
+        protected List<PortModel> m_OutputPorts = new List<PortModel>();
         public IEnumerable<IGTFPortModel> InputPorts => m_InputPorts;
         public IEnumerable<IGTFPortModel> OutputPorts => m_OutputPorts;
         public IEnumerable<IGTFPortModel> Ports => InputPorts.Concat(OutputPorts);
         public bool Collapsed { get; set; }
         public Color Color => Color.black;
+        public bool AllowSelfConnect => true;
         public bool HasUserColor => false;
         public bool HasProgress => false;
         public string IconTypeString => null;
@@ -73,6 +84,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         public IReadOnlyDictionary<string, IGTFPortModel> OutputsById => OutputPorts.ToDictionary(e => e.Guid.ToString());
         public IReadOnlyList<IGTFPortModel> InputsByDisplayOrder => m_InputPorts;
         public IReadOnlyList<IGTFPortModel> OutputsByDisplayOrder => m_OutputPorts;
+        public virtual IEnumerable<IGTFEdgeModel> GetConnectedEdges()
+        {
+            return NodeModelDefaultImplementations.GetConnectedEdges(this);
+        }
+
         public void DefineNode()
         {
         }

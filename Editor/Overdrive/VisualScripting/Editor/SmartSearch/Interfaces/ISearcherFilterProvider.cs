@@ -9,7 +9,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch
         SearcherFilter GetGraphSearcherFilter();
         SearcherFilter GetOutputToGraphSearcherFilter(IGTFPortModel portModel);
         SearcherFilter GetInputToGraphSearcherFilter(IGTFPortModel portModel);
-        SearcherFilter GetTypeSearcherFilter();
         SearcherFilter GetEdgeSearcherFilter(IGTFEdgeModel edgeModel);
     }
 }

@@ -7,15 +7,56 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
     public class IconBadge : VisualElement
     {
         static CustomStyleProperty<int> s_DistanceProperty = new CustomStyleProperty<int>("--distance");
+        static readonly int kDefaultDistanceValue = 6;
+
+        public static readonly string ussClassName = "icon-badge";
+        public static readonly string iconUssClassName = ussClassName.WithUssElement("icon");
+        public static readonly string tipUssClassName = ussClassName.WithUssElement("tip");
+        public static readonly string textUssClassName = ussClassName.WithUssElement("text");
+
+        static readonly string defaultStylePath = "IconBadge.uss";
+
+        public static IconBadge CreateError(string message)
+        {
+            var result = new IconBadge();
+            result.VisualStyle = "error";
+            result.BadgeText = message;
+            return result;
+        }
+
+        public static IconBadge CreateComment(string message)
+        {
+            var result = new IconBadge();
+            result.VisualStyle = "comment";
+            result.BadgeText = message;
+            return result;
+        }
+
+        VisualElement m_Target;
+
+        VisualElement m_OriginalParent;
 
         VisualElement m_TipElement;
+
         VisualElement m_IconElement;
+
         Label m_TextElement;
 
-        SpriteAlignment alignment { get; set; }
-        VisualElement target { get; set; }
+        int m_Distance;
 
-        string badgeText
+        int m_CurrentTipAngle;
+
+        Attacher m_Attacher;
+
+        Attacher m_TextAttacher;
+
+        bool m_IsAttached;
+
+        string m_BadgeType;
+
+        SpriteAlignment m_Alignment;
+
+        public string BadgeText
         {
             set
             {
@@ -26,7 +67,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             }
         }
 
-        string visualStyle
+        public string VisualStyle
         {
             set
             {
@@ -53,19 +94,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             }
         }
 
-        const int kDefaultDistanceValue = 6;
-
-        int m_Distance;
-
-        int m_CurrentTipAngle;
-
-        Attacher m_Attacher;
-        bool m_IsAttached;
-        VisualElement m_OriginalParent;
-
-        Attacher m_TextAttacher;
-        string m_BadgeType;
-
         public IconBadge()
         {
             m_IsAttached = false;
@@ -75,24 +103,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             LoadTemplate(tpl);
 
             RegisterCallback<CustomStyleResolvedEvent>(OnCustomStyleResolved);
-            visualStyle = "error";
+            VisualStyle = "error";
         }
-
-        public IconBadge(VisualTreeAsset template)
-        {
-            m_IsAttached = false;
-            m_Distance = kDefaultDistanceValue;
-            LoadTemplate(template);
-            RegisterCallback<CustomStyleResolvedEvent>(OnCustomStyleResolved);
-            visualStyle = "error";
-        }
-
-        public static readonly string ussClassName = "icon-badge";
-        public static readonly string iconUssClassName = ussClassName.WithUssElement("icon");
-        public static readonly string tipUssClassName = ussClassName.WithUssElement("tip");
-        public static readonly string textUssClassName = ussClassName.WithUssElement("text");
-
-        static readonly string defaultStylePath = "IconBadge.uss";
 
         void LoadTemplate(VisualTreeAsset tpl)
         {
@@ -135,27 +147,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             }
         }
 
-        public static IconBadge CreateError(string message)
-        {
-            var result = new IconBadge();
-            result.visualStyle = "error";
-            result.badgeText = message;
-            return result;
-        }
-
-        public static IconBadge CreateComment(string message)
-        {
-            var result = new IconBadge();
-            result.visualStyle = "comment";
-            result.badgeText = message;
-            return result;
-        }
-
         public void AttachTo(VisualElement badgeTarget, SpriteAlignment align)
         {
             Detach();
-            alignment = align;
-            this.target = badgeTarget;
+            m_Alignment = align;
+            this.m_Target = badgeTarget;
             m_IsAttached = true;
             badgeTarget.RegisterCallback<DetachFromPanelEvent>(OnTargetDetachedFromPanel);
             CreateAttacher();
@@ -165,7 +161,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         {
             if (m_IsAttached)
             {
-                target.UnregisterCallback<DetachFromPanelEvent>(OnTargetDetachedFromPanel);
+                m_Target.UnregisterCallback<DetachFromPanelEvent>(OnTargetDetachedFromPanel);
                 m_IsAttached = false;
             }
             ReleaseAttacher();
@@ -180,8 +176,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                 m_OriginalParent = hierarchy.parent;
                 RemoveFromHierarchy();
 
-                target.UnregisterCallback<DetachFromPanelEvent>(OnTargetDetachedFromPanel);
-                target.RegisterCallback<AttachToPanelEvent>(OnTargetAttachedToPanel);
+                m_Target.UnregisterCallback<DetachFromPanelEvent>(OnTargetDetachedFromPanel);
+                m_Target.RegisterCallback<AttachToPanelEvent>(OnTargetAttachedToPanel);
             }
         }
 
@@ -189,7 +185,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         {
             if (m_IsAttached)
             {
-                target.RegisterCallback<DetachFromPanelEvent>(OnTargetDetachedFromPanel);
+                m_Target.RegisterCallback<DetachFromPanelEvent>(OnTargetDetachedFromPanel);
 
                 //we re-add ourselves to the hierarchy
                 if (m_OriginalParent != null)
@@ -215,7 +211,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         void CreateAttacher()
         {
-            m_Attacher = new Attacher(this, target, alignment);
+            m_Attacher = new Attacher(this, m_Target, m_Alignment);
             m_Attacher.distance = m_Distance;
         }
 
@@ -357,7 +353,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             Vector2 tipTranslate = Vector2.zero;
             bool tipVisible = true;
 
-            switch (alignment)
+            switch (m_Alignment)
             {
                 case SpriteAlignment.TopCenter:
                     iconRect.x = iconOffset;

@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -10,10 +11,22 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         static readonly string k_ClassName = "ge-edge-control-point";
 
         EdgeControl m_EdgeControl;
-        IGTFEdgeModel m_EdgeModel;
+
+        IEditableEdge m_EdgeModel;
+
         int m_ControlPointIndex;
 
-        public EdgeControlPoint(EdgeControl edgeControl, IGTFEdgeModel edgeModel, int controlPointIndex)
+        bool m_DraggingControlPoint;
+
+        bool m_DraggingTightness;
+
+        Vector2 m_OriginalElementPosition;
+
+        float m_OriginalTightness;
+
+        Vector2 m_OriginalPointerPosition;
+
+        public EdgeControlPoint(EdgeControl edgeControl, IEditableEdge edgeModel, int controlPointIndex)
         {
             m_EdgeControl = edgeControl;
             m_EdgeModel = edgeModel;
@@ -28,20 +41,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             style.position = Position.Absolute;
         }
 
-        bool m_DraggingControlPoint;
-        bool m_DraggingTightness;
-        Vector2 m_OriginalElementPosition;
-        float m_OriginalTightness;
-        Vector2 m_OriginalPointerPosition;
-
         void OnPointerDown(PointerDownEvent e)
         {
             if (!e.isPrimary || e.button != 0)
                 return;
 
             m_OriginalPointerPosition = this.ChangeCoordinatesTo(parent, e.localPosition);
-            m_OriginalElementPosition = m_EdgeModel.EdgeControlPoints[m_ControlPointIndex].Position;
-            m_OriginalTightness = m_EdgeModel.EdgeControlPoints[m_ControlPointIndex].Tightness;
+            m_OriginalElementPosition = m_EdgeModel.EdgeControlPoints.ElementAt(m_ControlPointIndex).Position;
+            m_OriginalTightness = m_EdgeModel.EdgeControlPoints.ElementAt(m_ControlPointIndex).Tightness;
 
             if (e.modifiers == EventModifiers.None)
             {

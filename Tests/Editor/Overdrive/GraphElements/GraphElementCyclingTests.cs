@@ -33,7 +33,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         {
             graphView.RebuildUI(GraphModel, Store);
 
-            List<GraphElement> elemList = graphView.graphElements.ToList().Where(e => e.IsSelectable() && !(e is Edge)).OrderBy(e => e.controlid).ToList();
+            List<GraphElement> elemList = graphView.GraphElements.ToList().Where(e => e.IsSelectable() && !(e is Edge)).OrderBy(e => e.controlid).ToList();
 
             graphView.AddToSelection(elemList[0]);
 
@@ -42,16 +42,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             {
                 helpers.KeyPressed(KeyCode.RightBracket);
                 yield return null;
-                Assert.AreEqual(1, graphView.selection.Count);
-                Assert.AreEqual(elemList[i], graphView.selection[0]);
+                Assert.AreEqual(1, graphView.Selection.Count);
+                Assert.AreEqual(elemList[i], graphView.Selection[0]);
             }
 
             // Cycle one more brings us back to the 1st element
             helpers.KeyPressed(KeyCode.RightBracket);
             yield return null;
 
-            Assert.AreEqual(1, graphView.selection.Count);
-            Assert.AreEqual(elemList[0], graphView.selection[0]);
+            Assert.AreEqual(1, graphView.Selection.Count);
+            Assert.AreEqual(elemList[0], graphView.Selection[0]);
 
             yield return null;
         }
@@ -61,7 +61,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         {
             graphView.RebuildUI(GraphModel, Store);
 
-            List<GraphElement> elemList = graphView.graphElements.ToList().Where(e => e.IsSelectable() && !(e is Edge)).OrderBy(e => e.controlid).ToList();
+            List<GraphElement> elemList = graphView.GraphElements.ToList().Where(e => e.IsSelectable() && !(e is Edge)).OrderBy(e => e.controlid).ToList();
 
             graphView.AddToSelection(elemList[k_NodeCount - 1]);
 
@@ -70,16 +70,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             {
                 helpers.KeyPressed(KeyCode.LeftBracket);
                 yield return null;
-                Assert.AreEqual(1, graphView.selection.Count);
-                Assert.AreEqual(elemList[i], graphView.selection[0]);
+                Assert.AreEqual(1, graphView.Selection.Count);
+                Assert.AreEqual(elemList[i], graphView.Selection[0]);
             }
 
             // Cycle one more brings us back to the last element
             helpers.KeyPressed(KeyCode.LeftBracket);
             yield return null;
 
-            Assert.AreEqual(1, graphView.selection.Count);
-            Assert.AreEqual(elemList[k_NodeCount - 1], graphView.selection[0]);
+            Assert.AreEqual(1, graphView.Selection.Count);
+            Assert.AreEqual(elemList[k_NodeCount - 1], graphView.Selection[0]);
 
             yield return null;
         }

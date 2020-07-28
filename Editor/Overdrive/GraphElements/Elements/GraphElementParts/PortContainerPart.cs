@@ -6,9 +6,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 {
     public class PortContainerPart : BaseGraphElementPart
     {
+        public static readonly string k_UssClassName = "ge-port-container-part";
+        public static readonly string k_PortsUssName = "ports";
+
         public static PortContainerPart Create(string name, IGTFGraphElementModel model, IGraphElement graphElement, string parentClassName)
         {
-            if (model is IHasPorts)
+            if (model is IPortNode)
             {
                 return new PortContainerPart(name, model, graphElement, parentClassName);
             }
@@ -16,20 +19,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             return null;
         }
 
-        public static readonly string k_UssClassName = "ge-port-container-part";
-        public static readonly string k_PortsUssName = "ports";
+        VisualElement m_Root;
+
+        PortContainer PortContainer { get; set; }
+
+        public override VisualElement Root => m_Root;
 
         protected PortContainerPart(string name, IGTFGraphElementModel model, IGraphElement ownerElement, string parentClassName)
             : base(name, model, ownerElement, parentClassName) {}
 
-        PortContainer PortContainer { get; set; }
-        VisualElement m_Root;
-
-        public override VisualElement Root => m_Root;
-
         protected override void BuildPartUI(VisualElement container)
         {
-            if (m_Model is IHasPorts)
+            if (m_Model is IPortNode)
             {
                 m_Root = new VisualElement { name = PartName };
                 m_Root.AddToClassList(k_UssClassName);
@@ -51,7 +52,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         protected override void UpdatePartFromModel()
         {
-            if (m_Model is IHasPorts portHolder)
+            if (m_Model is IPortNode portHolder)
             {
                 PortContainer?.UpdatePorts(portHolder.Ports, m_OwnerElement.GraphView, m_OwnerElement.Store);
             }

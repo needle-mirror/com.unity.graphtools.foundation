@@ -7,6 +7,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 {
     public class EditableTitlePart : BaseGraphElementPart
     {
+        public static readonly string k_UssClassName = "ge-editable-title-part";
+        public static readonly string k_TitleLabelName = "title";
+
         public static EditableTitlePart Create(string name, IGTFGraphElementModel model, IGraphElement graphElement, string parentClassName, bool multiline = false)
         {
             if (model is IHasTitle)
@@ -17,21 +20,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             return null;
         }
 
-        public static readonly string k_UssClassName = "ge-editable-title-part";
-        public static readonly string k_TitleLabelName = "title";
-
         bool m_Multiline;
+
+        protected VisualElement TitleContainer { get; set; }
+
+        protected VisualElement TitleLabel { get; set; }
+
+        public override VisualElement Root => TitleContainer;
 
         protected EditableTitlePart(string name, IGTFGraphElementModel model, IGraphElement ownerElement, string parentClassName, bool multiline)
             : base(name, model, ownerElement, parentClassName)
         {
             m_Multiline = multiline;
         }
-
-        protected VisualElement TitleContainer { get; set; }
-        protected VisualElement TitleLabel { get; set; }
-
-        public override VisualElement Root => TitleContainer;
 
         protected override void BuildPartUI(VisualElement container)
         {

@@ -1,4 +1,5 @@
 using System;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
@@ -14,7 +15,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         public static T CreateNode<T>(this IGraphNodeCreationData data, string name = null,  Action<T> preDefineSetup = null) where T : NodeModel
         {
-            return (data.GraphModel as IGraphModel)?.CreateNode(name, data.Position, data.SpawnFlags, preDefineSetup);
+            return data.GraphModel?.CreateNode(name, data.Position, data.SpawnFlags, preDefineSetup);
         }
 
         public static IGTFNodeModel CreateVariableNode(this IGraphNodeCreationData data, IGTFVariableDeclarationModel declarationModel)

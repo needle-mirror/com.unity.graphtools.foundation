@@ -7,71 +7,84 @@ using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
 {
-    class PortModel : IGTFPortModel, IHasTitle
+    class PortModel : IReorderableEdgesPort, IHasTitle
     {
         bool m_Connected;
         public IGTFGraphModel GraphModel { get; set; }
 
         GUID m_GUID = GUID.Generate();
-        public GUID Guid => m_GUID;
-        public IGTFGraphAssetModel AssetModel => GraphModel.AssetModel;
+        public GUID Guid
+        {
+            get => m_GUID;
+            set => m_GUID = value;
+        }
+
+        public IGTFGraphAssetModel AssetModel
+        {
+            get => GraphModel.AssetModel;
+            set => GraphModel.AssetModel = value;
+        }
 
         public void AssignNewGuid()
         {
             m_GUID = GUID.Generate();
         }
 
-        public IGTFNodeModel NodeModel { get; set; }
+        public IPortNode NodeModel { get; set; }
         public Direction Direction { get; set; }
         public PortType PortType => PortType.Data;
         public Orientation Orientation { get; set; } = Orientation.Horizontal;
         public PortCapacity Capacity { get; set; } = PortCapacity.Single;
+
         public PortCapacity GetDefaultCapacity()
         {
             return Direction == Direction.Input ? PortCapacity.Single : PortCapacity.Multi;
         }
 
         public Type PortDataType { get; } = typeof(float);
-        public bool IsConnected => m_Connected || ConnectedEdges.Any();
 
-        public void FakeIsConnected(bool connected)
-        {
-            m_Connected = connected;
-        }
-
-        public bool IsConnectedTo(IGTFPortModel port)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IEnumerable<IGTFEdgeModel> ConnectedEdges =>
-            ((GraphModel)GraphModel)?.EdgeModels?.Where(e => e.FromPort == this || e.ToPort == this) ?? Enumerable.Empty<IGTFEdgeModel>();
-        public bool HasReorderableEdges { get; set; } = false;
-        public void MoveEdgeFirst(IGTFEdgeModel edge)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void MoveEdgeUp(IGTFEdgeModel edge)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void MoveEdgeDown(IGTFEdgeModel edge)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void MoveEdgeLast(IGTFEdgeModel edge)
-        {
-            throw new NotImplementedException();
-        }
+        public bool HasReorderableEdges { get; set; }
 
         public string ToolTip { get; set; }
+
+        public virtual IEnumerable<IGTFPortModel> GetConnectedPorts()
+        {
+            return PortModelDefaultImplementations.GetConnectedPorts(this);
+        }
+
+        public virtual IEnumerable<IGTFEdgeModel> GetConnectedEdges()
+        {
+            return PortModelDefaultImplementations.GetConnectedEdges(this);
+        }
+
+        public virtual bool IsConnectedTo(IGTFPortModel toPort)
+        {
+            return PortModelDefaultImplementations.IsConnectedTo(this, toPort);
+        }
+
+        public virtual void MoveEdgeFirst(IGTFEdgeModel edge)
+        {
+            ReorderableEdgesPortDefaultImplementations.MoveEdgeFirst(this, edge);
+        }
+
+        public virtual void MoveEdgeUp(IGTFEdgeModel edge)
+        {
+            ReorderableEdgesPortDefaultImplementations.MoveEdgeUp(this, edge);
+        }
+
+        public virtual void MoveEdgeDown(IGTFEdgeModel edge)
+        {
+            ReorderableEdgesPortDefaultImplementations.MoveEdgeDown(this, edge);
+        }
+
+        public virtual void MoveEdgeLast(IGTFEdgeModel edge)
+        {
+            ReorderableEdgesPortDefaultImplementations.MoveEdgeLast(this, edge);
+        }
+
         public IConstant EmbeddedValue => null;
         public bool DisableEmbeddedValueEditor => false;
         public string UniqueName => m_GUID.ToString();
-        public IEnumerable<IGTFPortModel> ConnectionPortModels => Enumerable.Empty<IGTFPortModel>();
         public TypeHandle DataTypeHandle { get; } = TypeHandle.Int;
         public string Title { get; set; }
         public string DisplayTitle => Title;

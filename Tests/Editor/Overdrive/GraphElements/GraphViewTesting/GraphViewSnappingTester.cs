@@ -1,5 +1,6 @@
 using System.Collections;
 using NUnit.Framework;
+using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
@@ -49,9 +50,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
             m_ReferenceNode1Pos = referenceNode1Pos;
             m_ReferenceNode2Pos = referenceNode2Pos;
 
-            snappingNodeModel = CreateNode("Snapping Node", m_SnappingNodePos);
-            referenceNode1Model = CreateNode("Reference Node 1", m_ReferenceNode1Pos);
-            referenceNode2Model = CreateNode("Reference Node 2", m_ReferenceNode2Pos);
+            snappingNodeModel = CreateNode("Snapping Node", GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos));
+            referenceNode1Model = CreateNode("Reference Node 1", GraphViewStaticBridge.RoundToPixelGrid(m_ReferenceNode1Pos));
+            referenceNode2Model = CreateNode("Reference Node 2", GraphViewStaticBridge.RoundToPixelGrid(m_ReferenceNode2Pos));
 
             if (isPortSnapping)
             {
@@ -89,6 +90,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
             m_SnappedNode = snappingNodeModel.GetUI<Node>(graphView);
             m_ReferenceNode1 = referenceNode1Model.GetUI<Node>(graphView);
             m_ReferenceNode2 = referenceNode2Model.GetUI<Node>(graphView);
+
+            m_SnappingNodePos = m_SnappedNode?.layout.position ?? Vector2.zero;
+            m_ReferenceNode1Pos = m_ReferenceNode1?.layout.position ?? Vector2.zero;
+            m_ReferenceNode2Pos = m_ReferenceNode2?.layout.position ?? Vector2.zero;
+
             Assert.IsNotNull(m_SnappedNode);
             Assert.IsNotNull(m_ReferenceNode1);
             Assert.IsNotNull(m_ReferenceNode2);

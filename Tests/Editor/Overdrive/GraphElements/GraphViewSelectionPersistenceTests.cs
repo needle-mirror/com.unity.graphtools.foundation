@@ -91,9 +91,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Assert.IsNotNull(node2);
             Assert.IsNotNull(node3);
 
-            Assert.True(node1.selected);
-            Assert.False(node2.selected);
-            Assert.True(node3.selected);
+            Assert.True(node1.Selected);
+            Assert.False(node2.Selected);
+            Assert.True(node3.Selected);
         }
 
         [UnityTest, Ignore("FIXME EnterPlayMode")]
@@ -123,9 +123,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             // Allow 1 frame to let the persistence be restored
             yield return null;
 
-            Assert.True(node1.selected);
-            Assert.False(node2.selected);
-            Assert.True(node3.selected);
+            Assert.True(node1.Selected);
+            Assert.False(node2.Selected);
+            Assert.True(node3.Selected);
         }
 
         [UnityTest]
@@ -140,9 +140,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             Undo.PerformUndo();
 
-            Assert.False(node1.selected);
-            Assert.False(node2.selected);
-            Assert.False(node3.selected);
+            Assert.False(node1.Selected);
+            Assert.False(node2.Selected);
+            Assert.False(node3.Selected);
 
             yield return null;
         }
@@ -160,9 +160,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Undo.PerformUndo();
             Undo.PerformRedo();
 
-            Assert.True(node1.selected);
-            Assert.False(node2.selected);
-            Assert.True(node3.selected);
+            Assert.True(node1.Selected);
+            Assert.False(node2.Selected);
+            Assert.True(node3.Selected);
 
             yield return null;
         }
@@ -182,9 +182,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Undo.PerformUndo();
             Undo.PerformRedo();
 
-            Assert.True(node1.selected);
-            Assert.False(node2.selected);
-            Assert.True(node3.selected);
+            Assert.True(node1.Selected);
+            Assert.False(node2.Selected);
+            Assert.True(node3.Selected);
 
             // Allow 1 frame to let the persistence be saved
             yield return null;
@@ -203,9 +203,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             // Allow 1 frame to let the persistence be restored
             yield return null;
 
-            Assert.True(node1.selected);
-            Assert.False(node2.selected);
-            Assert.True(node3.selected);
+            Assert.True(node1.Selected);
+            Assert.False(node2.Selected);
+            Assert.True(node3.Selected);
         }
 
         [UnityTest, Ignore("FIXME EnterPlayMode needs backing asset.")]
@@ -225,7 +225,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 graphView.AddElement(blackboard);
 
                 graphView.AddToSelection(field);
-                Assert.True(field.selected);
+                Assert.True(field.Selected);
             }
 
             // Allow 1 frame to let the persistent data get saved
@@ -250,7 +250,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
                 graphView.AddElement(blackboard);
 
-                Assert.True(field.selected);
+                Assert.True(field.Selected);
             }
         }
 
@@ -271,7 +271,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 graphView.AddElement(blackboard);
 
                 graphView.AddToSelection(field);
-                Assert.True(field.selected);
+                Assert.True(field.Selected);
             }
 
             // Allow 1 frame to let the persistent data get saved
@@ -295,7 +295,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 var row = new BlackboardRow(field, propertyView);
                 inSection.Add(row);
 
-                Assert.True(field.selected);
+                Assert.True(field.Selected);
             }
         }
     }

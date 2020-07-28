@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -19,14 +19,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             store.RegisterReducer<State, RemoveNodesAction>(BypassAndDeleteElements);
             store.RegisterReducer<State, PasteSerializedDataAction>(PasteSerializedData);
             store.RegisterReducer<State, MoveElementsAction>(MoveElements);
-            store.RegisterReducer<State, AlignElementsAction>(AlignElements);
-            store.RegisterReducer<State, PanToNodeAction>(PanToNode);
+            store.RegisterReducer<State, AutoPlaceElementsAction>(AutoPlaceElements);
             store.RegisterReducer<State, ChangeElementColorAction>(ChangeElementColor);
             store.RegisterReducer<State, ResetElementColorAction>(ResetElementColor);
         }
 
         static State PasteSerializedData(State previousState, PasteSerializedDataAction action)
         {
+            Undo.RegisterCompleteObjectUndo((Object)previousState.AssetModel, "Paste");
+
             VseGraphView.OnUnserializeAndPaste(action.Graph, action.Info, action.EditorDataModel, action.Data);
             return previousState;
         }
@@ -60,7 +61,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             graphModel.DeletePlacemats(placematsToDelete);
             graphModel.DeleteEdges(edgesToDelete);
             graphModel.DeleteNodes(nodesToDelete, DeleteConnections.False);
-            graphModel.DeleteVariableDeclarations(declarationModelsToDelete, false, true);
+            graphModel.DeleteVariableDeclarations(declarationModelsToDelete, false);
         }
 
         static VariableDeclarationModel[] GetDeclarationModelsToDelete(IGTFGraphElementModel[] deletables)
@@ -83,7 +84,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             var edgesToDelete = new HashSet<IGTFEdgeModel>(deletables.OfType<IGTFEdgeModel>());
             foreach (var node in nodesToDelete)
             {
-                foreach (var portModel in node.GetPortModels())
+                var portHolder = node as IPortNode;
+                foreach (var portModel in portHolder?.Ports ?? Enumerable.Empty<IGTFPortModel>())
                 {
                     var edgesConnectedToPort = graphModel.EdgeModels.Where(e => e.ToPort == portModel || e.FromPort == portModel);
                     edgesToDelete.AddRange(edgesConnectedToPort);
@@ -99,7 +101,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             return nodesToDelete.ToList();
         }
 
-        static void BypassNodes(IGTFGraphModel graphModel, IGTFNodeModel[] actionNodeModels)
+        static void BypassNodes(IGTFGraphModel graphModel, IInOutPortsNode[] actionNodeModels)
         {
             foreach (var model in actionNodeModels)
             {
@@ -167,7 +169,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             action.RenamableModel.Rename(action.Name);
             EditorUtility.SetDirty((Object)graphModel.AssetModel);
 
-            IGraphChangeList graphChangeList = previousState.CurrentGraphModel.LastChanges;
+            GraphChangeList graphChangeList = previousState.CurrentGraphModel.LastChanges;
 
             var vsGraphModel = previousState.CurrentGraphModel;
 
@@ -215,7 +217,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             // TODO It would be nice to have a single way of moving things around and thus not having to deal with 3
             // separate collections.
             foreach (var nodeModel in action.Models.OfType<IGTFNodeModel>())
-                ((GraphModel)previousState.CurrentGraphModel).MoveNode(nodeModel, nodeModel.Position + action.Delta);
+            {
+                nodeModel.Move(nodeModel.Position + action.Delta);
+            }
 
             foreach (var stickyNoteModel in action.Models.OfType<IGTFStickyNoteModel>())
                 stickyNoteModel.PositionAndSize = new Rect(stickyNoteModel.PositionAndSize.position + action.Delta, stickyNoteModel.PositionAndSize.size);
@@ -227,9 +231,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                 var nodeModels = new HashSet<IGTFNodeModel>(action.Models.OfType<IGTFNodeModel>());
                 foreach (var edgeModel in edgeModels)
                 {
-                    if (nodeModels.Contains(edgeModel.FromPort.NodeModel) && nodeModels.Contains(edgeModel.ToPort.NodeModel))
+                    if (edgeModel is IEditableEdge editableEdge && nodeModels.Contains(edgeModel.FromPort.NodeModel) && nodeModels.Contains(edgeModel.ToPort.NodeModel))
                     {
-                        edgeModel.Move(action.Delta);
+                        editableEdge.Move(action.Delta);
                     }
                 }
             }
@@ -238,12 +242,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             return previousState;
         }
 
-        static State AlignElements(State previousState, AlignElementsAction action)
+        static State AutoPlaceElements(State previousState, AutoPlaceElementsAction action)
         {
-            if (action.Models == null || action.Deltas == null || action.Models.Length != action.Deltas.Length)
+            if (action.Models == null || action.Deltas == null || action.Models.Length != action.Deltas.Length || previousState.AssetModel == null)
                 return previousState;
 
-            Undo.RegisterCompleteObjectUndo((Object)previousState.AssetModel, "Align");
+            Undo.RegisterCompleteObjectUndo((Object)previousState.AssetModel, "Auto Place Elements");
 
             for (int i = 0; i < action.Models.Length; ++i)
             {
@@ -255,7 +259,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                         model.Move(delta);
                         break;
                     case IGTFNodeModel nodeModel:
-                        ((GraphModel)previousState.CurrentGraphModel).MoveNode(nodeModel, nodeModel.Position + delta);
+                        nodeModel.Move(nodeModel.Position + delta);
                         break;
                     case IGTFStickyNoteModel noteModel:
                         noteModel.PositionAndSize = new Rect(noteModel.PositionAndSize.position + delta, noteModel.PositionAndSize.size);
@@ -264,18 +268,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                 previousState.MarkForUpdate(UpdateFlags.UpdateView, model as IGTFGraphElementModel);
             }
 
-            if (previousState.AssetModel != null)
-            {
-                EditorUtility.SetDirty((Object)previousState.AssetModel);
-            }
+            EditorUtility.SetDirty((Object)previousState.AssetModel);
 
-            return previousState;
-        }
-
-        static State PanToNode(State previousState, PanToNodeAction action)
-        {
-            previousState.EditorDataModel.NodeToFrameGuid = action.nodeGuid;
-            previousState.MarkForUpdate(UpdateFlags.GraphGeometry);
             return previousState;
         }
 
@@ -286,7 +280,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             if (action.NodeModels != null)
                 foreach (var model in action.NodeModels)
                 {
-                    model.ChangeColor(action.Color);
+                    model.Color = action.Color;
                     previousState.MarkForUpdate(UpdateFlags.UpdateView, model);
                 }
             if (action.PlacematModels != null)

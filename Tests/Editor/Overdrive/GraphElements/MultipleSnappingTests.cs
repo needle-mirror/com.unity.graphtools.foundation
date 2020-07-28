@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using NUnit.Framework;
+using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEngine.TestTools;
 using UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utilities;
@@ -74,12 +75,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             // Snapped to Grid
             var borderWidth = SnapToGridStrategy.GetBorderWidth(m_SnappedNode);
-            Assert.AreEqual(m_SnappingNodePos.x, m_SnappedNode.layout.x - borderWidth.Left);
-            Assert.AreEqual(m_SnappingNodePos.y, m_SnappedNode.layout.y);
+            Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.x),
+                GraphViewStaticBridge.RoundToPixelGrid(m_SnappedNode.layout.x - borderWidth.Left));
+            Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.y), m_SnappedNode.layout.y, 0.0001);
 
             // Should not be dragged normally
-            Assert.AreNotEqual(m_SnappingNodePos.y + moveOffset.y, m_SnappedNode.layout.y);
-            Assert.AreNotEqual(m_SnappingNodePos.x + moveOffset.x, m_SnappedNode.layout.x - borderWidth.Left);
+            Assert.AreNotEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.y + moveOffset.y),
+                m_SnappedNode.layout.y);
+            Assert.AreNotEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.x + moveOffset.x),
+                GraphViewStaticBridge.RoundToPixelGrid(m_SnappedNode.layout.x - borderWidth.Left));
 
             yield return null;
         }
@@ -131,8 +135,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Assert.AreEqual(m_ReferenceNode2.layout.xMin, m_SnappedNode.layout.xMin);
 
             // Should not be dragged normally
-            Assert.AreNotEqual(m_SnappingNodePos.y + moveOffset.y, m_SnappedNode.layout.y);
-            Assert.AreNotEqual(m_SnappingNodePos.x + moveOffset.x, m_SnappedNode.layout.x);
+            Assert.AreNotEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.y + moveOffset.y),
+                m_SnappedNode.layout.y);
+            Assert.AreNotEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.x + moveOffset.x),
+                m_SnappedNode.layout.x);
 
             yield return null;
         }
@@ -176,14 +182,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             // Snapped to first grid line (positioned at k_Spacing)
             var borderWidth = SnapToGridStrategy.GetBorderWidth(m_SnappedNode);
-            Assert.AreEqual(k_Spacing, m_SnappedNode.layout.x - borderWidth.Left);
+            Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(k_Spacing),
+                GraphViewStaticBridge.RoundToPixelGrid(m_SnappedNode.layout.x - borderWidth.Left));
 
             // Snapped to borders
             Assert.AreEqual(m_SnappedNode.layout.y, m_ReferenceNode1.layout.y);
 
             // Should not be dragged normally
-            Assert.AreNotEqual(m_SnappingNodePos.y + moveOffset.y, m_SnappedNode.layout.y - borderWidth.Top);
-            Assert.AreNotEqual(m_SnappingNodePos.x + moveOffset.x, m_SnappedNode.layout.x - borderWidth.Left);
+            Assert.AreNotEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.y + moveOffset.y),
+                GraphViewStaticBridge.RoundToPixelGrid(m_SnappedNode.layout.y - borderWidth.Top));
+            Assert.AreNotEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.x + moveOffset.x),
+                GraphViewStaticBridge.RoundToPixelGrid(m_SnappedNode.layout.x - borderWidth.Left));
 
             yield return null;
         }
@@ -239,8 +248,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Assert.AreEqual(distanceBetweenNode1AndNode2, distanceBetweenNode2AndNode3);
 
             // Should not be dragged normally
-            Assert.AreNotEqual(m_SnappingNodePos.y + moveOffset.y, m_SnappedNode.layout.y);
-            Assert.AreNotEqual(m_SnappingNodePos.x + moveOffset.x, m_SnappedNode.layout.x);
+            Assert.AreNotEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.y + moveOffset.y),
+                m_SnappedNode.layout.y);
+            Assert.AreNotEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.x + moveOffset.x),
+                m_SnappedNode.layout.x);
 
             yield return null;
         }
@@ -281,7 +292,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             // Snapped to top grid line
             var borderWidth = SnapToGridStrategy.GetBorderWidth(m_SnappedNode);
 
-            Assert.AreEqual(k_Spacing, m_SnappedNode.layout.yMin - borderWidth.Top);
+            Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(k_Spacing),
+                m_SnappedNode.layout.yMin - GraphViewStaticBridge.RoundToPixelGrid(borderWidth.Top));
 
             // The three nodes should be evenly spaced horizontally
             float distanceBetweenNode1AndNode2 = m_ReferenceNode1.layout.xMin - m_SnappedNode.layout.xMax;
@@ -290,8 +302,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Assert.AreEqual(distanceBetweenNode1AndNode2, distanceBetweenNode2AndNode3);
 
             // Should not be dragged normally
-            Assert.AreNotEqual(m_SnappingNodePos.y + moveOffset.y, m_SnappedNode.layout.y);
-            Assert.AreNotEqual(m_SnappingNodePos.x + moveOffset.x, m_SnappedNode.layout.x);
+            Assert.AreNotEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.y + moveOffset.y), m_SnappedNode.layout.y);
+            Assert.AreNotEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.x + moveOffset.x), m_SnappedNode.layout.x);
 
             yield return null;
         }
@@ -339,8 +351,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Assert.AreEqual(distanceBetweenNode1AndNode2, distanceBetweenNode2AndNode3);
 
             // Should not be dragged normally
-            Assert.AreNotEqual(m_SnappingNodePos.y + moveOffset.y, m_SnappedNode.layout.y);
-            Assert.AreNotEqual(m_SnappingNodePos.x + moveOffset.x, m_SnappedNode.layout.x);
+            Assert.AreNotEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.y + moveOffset.y),
+                m_SnappedNode.layout.y);
+            Assert.AreNotEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.x + moveOffset.x),
+                m_SnappedNode.layout.x);
 
             yield return null;
         }
@@ -385,7 +399,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             // Snapped to first grid line (positioned at k_Spacing)
             var borderWidth = SnapToGridStrategy.GetBorderWidth(m_SnappedNode);
-            Assert.AreEqual(3f * k_Spacing, m_SnappedNode.layout.x - borderWidth.Left);
+            Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(3f * k_Spacing),
+                GraphViewStaticBridge.RoundToPixelGrid(m_SnappedNode.layout.x - borderWidth.Left));
 
             // Snapped to borders
             Assert.AreEqual(m_SnappedNode.layout.y, m_ReferenceNode1.layout.y);
@@ -399,15 +414,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             // Snapped to Port
             Assert.AreEqual(inputPortUI.GetGlobalCenter().y, outputPortUI.GetGlobalCenter().y);
 
-            // The three nodes should be evenly spaced horizontally
-            float distanceBetweenNode1AndNode2 = m_SnappedNode.layout.xMin - borderWidth.Right - m_ReferenceNode1.layout.xMax;
+            // The three nodes should be evenly spaced horizontally up to one pixel difference
+            float distanceBetweenNode1AndNode2 = m_SnappedNode.layout.xMin - GraphViewStaticBridge.RoundToPixelGrid(borderWidth.Right) - m_ReferenceNode1.layout.xMax;
             float distanceBetweenNode2AndNode3 = m_ReferenceNode1.layout.xMin - m_ReferenceNode2.layout.xMax;
 
-            Assert.AreEqual(distanceBetweenNode1AndNode2, distanceBetweenNode2AndNode3);
+            var pixelSize = 1f / GraphViewStaticBridge.PixelPerPoint;
+            Assert.AreEqual(distanceBetweenNode1AndNode2, distanceBetweenNode2AndNode3, pixelSize + 0.0001f);
 
             // Should not be dragged normally
-            Assert.AreNotEqual(m_SnappingNodePos.y + moveOffset.y, m_SnappedNode.layout.y);
-            Assert.AreNotEqual(m_SnappingNodePos.x + moveOffset.x, m_SnappedNode.layout.x);
+            Assert.AreNotEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.y + moveOffset.y),
+                m_SnappedNode.layout.y);
+            Assert.AreNotEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.x + moveOffset.x),
+                m_SnappedNode.layout.x);
 
             yield return null;
         }

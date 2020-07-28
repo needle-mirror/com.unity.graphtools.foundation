@@ -16,11 +16,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             return null;
         }
 
-        protected FourWayResizerPart(string name, IGTFGraphElementModel model, IGraphElement ownerElement, string parentClassName)
-            : base(name, model, ownerElement, parentClassName) {}
+        public override VisualElement Root => m_ResizableElement;
 
         ResizableElement m_ResizableElement;
-        public override VisualElement Root => m_ResizableElement;
+
+        protected FourWayResizerPart(string name, IGTFGraphElementModel model, IGraphElement ownerElement, string parentClassName)
+            : base(name, model, ownerElement, parentClassName) {}
 
         protected override void BuildPartUI(VisualElement container)
         {

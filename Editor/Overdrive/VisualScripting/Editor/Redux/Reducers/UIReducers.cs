@@ -11,16 +11,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
     {
         public static void Register(Store store)
         {
-            store.RegisterReducer<State, RefreshUIAction>(RefreshUI);
             store.RegisterReducer<State, OpenDocumentationAction>(OpenDocumentation);
-        }
-
-        static State RefreshUI(State previousState, RefreshUIAction action)
-        {
-            previousState.MarkForUpdate(action.UpdateFlags);
-            if (action.ChangedModels != null)
-                previousState.CurrentGraphModel.LastChanges.ChangedElements.AddRange(action.ChangedModels);
-            return previousState;
         }
 
         static State OpenDocumentation(State previousState, OpenDocumentationAction action)

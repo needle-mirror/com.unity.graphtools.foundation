@@ -58,7 +58,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 yield return null;
             }
 
-            BasicEdgeModel edgeModel = hOutPort.ConnectedEdges.First() as BasicEdgeModel;
+            BasicEdgeModel edgeModel = hOutPort.GetConnectedEdges().First() as BasicEdgeModel;
             Assert.IsNotNull(edgeModel);
 
             Port outputPort = hOutPort.GetUI<Port>(graphView);
@@ -79,7 +79,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 yield return null;
             }
 
-            edgeModel = vOutPort.ConnectedEdges.First() as BasicEdgeModel;
+            edgeModel = vOutPort.GetConnectedEdges().First() as BasicEdgeModel;
             Assert.IsNotNull(edgeModel);
 
             outputPort = vOutPort.GetUI<Port>(graphView);
@@ -102,8 +102,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             yield return null;
 
             // We start without any connection
-            Assert.IsFalse(startPort.IsConnected);
-            Assert.IsFalse(endPort.IsConnected);
+            Assert.IsFalse(startPort.IsConnected());
+            Assert.IsFalse(endPort.IsConnected());
 
             var actions = ConnectPorts(startPort, endPort);
             while (actions.MoveNext())
@@ -112,11 +112,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             }
 
             // Check that the edge exists and that it connects the two ports.
-            Assert.IsTrue(startPort.IsConnected);
-            Assert.IsTrue(endPort.IsConnected);
+            Assert.IsTrue(startPort.IsConnected());
+            Assert.IsTrue(endPort.IsConnected());
             Assert.IsTrue(startPort.IsConnectedTo(endPort));
 
-            var edge = startPort.ConnectedEdges.First();
+            var edge = startPort.GetConnectedEdges().First();
             Assert.IsNotNull(edge);
 
             var edgeUI = edge.GetUI<Edge>(graphView);
@@ -135,8 +135,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             yield return null;
 
             // We start without any connection
-            Assert.IsFalse(startPort.IsConnected);
-            Assert.IsFalse(endPort.IsConnected);
+            Assert.IsFalse(startPort.IsConnected());
+            Assert.IsFalse(endPort.IsConnected());
 
             var actions = ConnectPorts(endPort, startPort);
             while (actions.MoveNext())
@@ -145,11 +145,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             }
 
             // Check that the edge exists and that it connects the two ports.
-            Assert.IsTrue(startPort.IsConnected);
-            Assert.IsTrue(endPort.IsConnected);
+            Assert.IsTrue(startPort.IsConnected());
+            Assert.IsTrue(endPort.IsConnected());
             Assert.IsTrue(startPort.IsConnectedTo(endPort));
 
-            var edge = startPort.ConnectedEdges.First();
+            var edge = startPort.GetConnectedEdges().First();
             Assert.IsNotNull(edge);
 
             var edgeUI = edge.GetUI<Edge>(graphView);
@@ -176,7 +176,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             var startPortPosition = startPortUI.GetGlobalCenter();
             var endPortPosition = endPortUI.GetGlobalCenter();
 
-            var edgeModel = startPort.ConnectedEdges.First();
+            var edgeModel = startPort.GetConnectedEdges().First();
             var edge = edgeModel.GetUI<Edge>(graphView);
             Assert.IsNotNull(edge);
             VisualElement edgeParent = edge.parent;
@@ -199,7 +199,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             helpers.MouseUpEvent(emptyAreaPos);
             yield return null;
 
-            Assert.IsEmpty(startPort.ConnectedEdges);
+            Assert.IsEmpty(startPort.GetConnectedEdges());
         }
 
         [UnityTest]
@@ -222,7 +222,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 yield return null;
             }
 
-            var edge = startPort.ConnectedEdges.First().GetUI<Edge>(graphView);
+            var edge = startPort.GetConnectedEdges().First().GetUI<Edge>(graphView);
             VisualElement edgeParent = edge.parent;
 
             // Mouse press on the left half of the edge
@@ -243,7 +243,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             helpers.MouseUpEvent(emptyAreaPos);
             yield return null;
 
-            Assert.IsEmpty(startPort.ConnectedEdges);
+            Assert.IsEmpty(startPort.GetConnectedEdges());
         }
 
         [UnityTest]
@@ -264,7 +264,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 yield return null;
             }
 
-            var edge = startPort.ConnectedEdges.First().GetUI<Edge>(graphView);
+            var edge = startPort.GetConnectedEdges().First().GetUI<Edge>(graphView);
 
             // Allow one frame for the edge to be placed onto a layer
             yield return null;
@@ -296,7 +296,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             graphView.RebuildUI(GraphModel, Store);
             yield return null;
 
-            edge = startPort.ConnectedEdges.First().GetUI<Edge>(graphView);
+            edge = startPort.GetConnectedEdges().First().GetUI<Edge>(graphView);
 
             Assert.AreEqual(startPort, edge.Output);
             Assert.AreEqual(endPortTwo, edge.Input);
@@ -322,7 +322,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 yield return null;
             }
 
-            var edge = startPort.ConnectedEdges.First().GetUI<Edge>(graphView);
+            var edge = startPort.GetConnectedEdges().First().GetUI<Edge>(graphView);
             VisualElement edgeParent = edge.parent;
 
             // Mouse press on the left half of the edge
@@ -347,7 +347,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             graphView.RebuildUI(GraphModel, Store);
             yield return null;
 
-            edge = startPortTwo.ConnectedEdges.First().GetUI<Edge>(graphView);
+            edge = startPortTwo.GetConnectedEdges().First().GetUI<Edge>(graphView);
 
             Assert.AreEqual(startPortTwo, edge.Output);
             Assert.AreEqual(endPort, edge.Input);
@@ -375,7 +375,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 yield return null;
             }
 
-            var edge = startPort.ConnectedEdges.First().GetUI<Edge>(graphView);
+            var edge = startPort.GetConnectedEdges().First().GetUI<Edge>(graphView);
 
             VisualElement edgeParent = edge.parent;
 
@@ -436,7 +436,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 yield return null;
             }
 
-            var edge = startPort.ConnectedEdges.First().GetUI<Edge>(graphView);
+            var edge = startPort.GetConnectedEdges().First().GetUI<Edge>(graphView);
 
             VisualElement edgeParent = edge.parent;
 
@@ -489,7 +489,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             yield return null;
 
-            Assert.AreEqual(0, secondNode.InputPorts.First().ConnectedEdges.Count());
+            Assert.AreEqual(0, secondNode.GetInputPorts().First().GetConnectedEdges().Count());
 
             yield return null;
         }

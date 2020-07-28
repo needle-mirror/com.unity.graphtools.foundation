@@ -7,13 +7,22 @@ using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
 {
-    class SingleInputNodeModel : IGTFNodeModel, IHasSingleInputPort, IHasTitle, ICollapsible
+    class SingleInputNodeModel : ISingleInputPortNode, IHasTitle, ICollapsible
     {
         public IGTFGraphModel GraphModel => null;
 
         GUID m_GUID = GUID.Generate();
-        public GUID Guid => m_GUID;
-        public IGTFGraphAssetModel AssetModel => GraphModel.AssetModel;
+        public GUID Guid
+        {
+            get => m_GUID;
+            set => m_GUID = value;
+        }
+
+        public IGTFGraphAssetModel AssetModel
+        {
+            get => GraphModel.AssetModel;
+            set => GraphModel.AssetModel = value;
+        }
 
         public void AssignNewGuid()
         {
@@ -44,8 +53,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
 
         public string Title { get; set; }
         public string DisplayTitle => Title;
+        public string Tooltip { get; set; }
         public bool Collapsed { get; set; }
         public Color Color => Color.black;
+        public bool AllowSelfConnect => true;
         public bool HasUserColor => false;
         public bool HasProgress => false;
         public string IconTypeString => null;
@@ -54,6 +65,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         public IReadOnlyDictionary<string, IGTFPortModel> OutputsById => new Dictionary<string, IGTFPortModel>();
         public IReadOnlyList<IGTFPortModel> InputsByDisplayOrder => Ports.ToList();
         public IReadOnlyList<IGTFPortModel> OutputsByDisplayOrder => new IGTFPortModel[0];
+        public virtual IEnumerable<IGTFEdgeModel> GetConnectedEdges()
+        {
+            return NodeModelDefaultImplementations.GetConnectedEdges(this);
+        }
+
         public void DefineNode()
         {
         }
@@ -78,10 +94,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         {
             var portsToChooseFrom = portModel.Direction == Direction.Input ? OutputsByDisplayOrder : InputsByDisplayOrder;
             return portsToChooseFrom.First(p => p.DataTypeHandle == portModel.DataTypeHandle);
-        }
-
-        public void UndoRedoPerformed()
-        {
         }
     }
 }

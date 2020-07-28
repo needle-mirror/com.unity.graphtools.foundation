@@ -115,3 +115,17 @@
 .ge-port--data-type-material .ge-port__icon {
     --unity-image: url("Icons/Material@x3.png");
 }
+
+.ge-port--execution-active {
+    --port-color: #b4ff69;
+}
+
+.ge-port--drop-highlighted {
+    border-color: var(--dragndrop-highlight-color);
+    background-color: var(--dragndrop-highlight-background-color);
+}
+
+.ge-port--drop-highlighted--denied {
+    border-color: var(--dragndrop-denied-color);
+    background-color: var(--dragndrop-denied-background-color);
+}

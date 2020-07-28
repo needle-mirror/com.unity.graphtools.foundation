@@ -23,7 +23,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         public static readonly string k_TextFieldName = "text-field";
 
         Label m_Label;
+
         TextField m_TextField;
+
+        string m_CurrentValue;
+
+        public bool multiline
+        {
+            set => m_TextField.multiline = value;
+        }
 
         public EditableLabel()
         {
@@ -50,12 +58,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             m_TextField.SetValueWithoutNotify(value);
         }
 
-        public bool multiline
-        {
-            set => m_TextField.multiline = value;
-        }
-
-        string m_CurrentValue;
         void OnLabelMouseDown(MouseDownEvent e)
         {
             if (e.target == e.currentTarget)

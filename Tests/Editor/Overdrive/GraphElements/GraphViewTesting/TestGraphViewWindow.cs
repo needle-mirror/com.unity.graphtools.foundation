@@ -8,7 +8,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
     public class TestGraphViewWindow : EditorWindow
     {
         public GraphView GraphView { get; private set; }
-        public TestStore Store { get; private set; }
+        public Store Store { get; private set; }
         public BasicGraphModel GraphModel { get; private set; }
 
         public TestGraphViewWindow()
@@ -19,7 +19,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
         public void OnEnable()
         {
             GraphModel = new BasicGraphModel();
-            Store = new TestStore(new State(GraphModel));
+            Store = new Store(new State(GraphModel), StoreHelper.RegisterReducers);
             GraphView = new TestGraphView(Store);
 
             GraphView.name = "theView";

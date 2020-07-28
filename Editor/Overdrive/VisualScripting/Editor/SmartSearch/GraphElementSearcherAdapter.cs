@@ -4,7 +4,6 @@ using System.Linq;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.Searcher;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -43,7 +42,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch
             m_DetailsTitle.text = searcherItem.Name;
 
             var graphView = SearcherService.GraphView;
-            foreach (var graphElement in graphView.graphElements.ToList())
+            foreach (var graphElement in graphView.GraphElements.ToList())
             {
                 graphView.RemoveElement(graphElement);
             }

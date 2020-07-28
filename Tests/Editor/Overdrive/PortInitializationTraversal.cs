@@ -13,41 +13,41 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             // recurse first
             base.VisitNode(nodeModel, visitedNodes);
 
-            if (nodeModel == null)
+            if (!(nodeModel is IInOutPortsNode node))
                 return;
 
             foreach (var callback in Callbacks)
                 callback(nodeModel);
 
             // do after left recursion, so the leftmost node is processed first
-            foreach (var inputPortModel in nodeModel.InputsByDisplayOrder)
+            foreach (var inputPortModel in node.InputsByDisplayOrder)
             {
                 bool any = false;
 
-                var connectionPortModels = inputPortModel?.ConnectionPortModels ?? Enumerable.Empty<IGTFPortModel>();
+                var connectionPortModels = inputPortModel?.GetConnectedPorts() ?? Enumerable.Empty<IGTFPortModel>();
                 foreach (var connection in connectionPortModels)
                 {
                     any = true;
-                    nodeModel.OnConnection(inputPortModel, connection);
+                    node.OnConnection(inputPortModel, connection);
                 }
 
                 if (!any)
-                    nodeModel.OnConnection(inputPortModel, null);
+                    node.OnConnection(inputPortModel, null);
             }
 
-            foreach (var outputPortModel in nodeModel.OutputsByDisplayOrder)
+            foreach (var outputPortModel in node.OutputsByDisplayOrder)
             {
                 bool any = false;
 
-                var connectionPortModels = outputPortModel?.ConnectionPortModels ?? Enumerable.Empty<IGTFPortModel>();
+                var connectionPortModels = outputPortModel?.GetConnectedPorts() ?? Enumerable.Empty<IGTFPortModel>();
                 foreach (var connection in connectionPortModels)
                 {
                     any = true;
-                    nodeModel.OnConnection(outputPortModel, connection);
+                    node.OnConnection(outputPortModel, connection);
                 }
 
                 if (!any)
-                    nodeModel.OnConnection(outputPortModel, null);
+                    node.OnConnection(outputPortModel, null);
             }
         }
     }

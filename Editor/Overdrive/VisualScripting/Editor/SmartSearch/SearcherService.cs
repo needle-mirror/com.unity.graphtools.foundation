@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.Searcher;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch
@@ -51,7 +51,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch
 
         static SearcherService()
         {
-            GraphView = new SearcherGraphView(new Store(new State(new VSEditorDataModel(null))));
+            var store = new Store(new State(new VSEditorDataModel(null)), StoreHelper.RegisterReducers);
+            GraphView = new SearcherGraphView(store);
         }
 
         public static void ShowInputToGraphNodes(Overdrive.State state, IGTFPortModel portModel, Vector2 position,
@@ -59,10 +60,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch
         {
             var stencil = state.CurrentGraphModel.Stencil;
             var filter = stencil.GetSearcherFilterProvider()?.GetInputToGraphSearcherFilter(portModel);
-            var adapter = stencil.GetSearcherAdapter(state.CurrentGraphModel as IGraphModel, "Add an input node", portModel);
+            var adapter = stencil.GetSearcherAdapter(state.CurrentGraphModel, "Add an input node", portModel);
             var dbProvider = stencil.GetSearcherDatabaseProvider();
-            var dbs = dbProvider.GetGraphElementsSearcherDatabases(state.CurrentGraphModel as IGraphModel)
-                .Concat(dbProvider.GetGraphVariablesSearcherDatabases(state.CurrentGraphModel as IGraphModel))
+            var dbs = dbProvider.GetGraphElementsSearcherDatabases(state.CurrentGraphModel)
+                .Concat(dbProvider.GetGraphVariablesSearcherDatabases(state.CurrentGraphModel))
                 .Concat(dbProvider.GetDynamicSearcherDatabases(portModel))
                 .ToList();
 
@@ -74,9 +75,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch
         {
             var stencil = state.CurrentGraphModel.Stencil;
             var filter = stencil.GetSearcherFilterProvider()?.GetOutputToGraphSearcherFilter(portModel);
-            var adapter = stencil.GetSearcherAdapter(state.CurrentGraphModel as IGraphModel, $"Choose an action for {portModel.DataTypeHandle.GetMetadata(stencil).FriendlyName}", portModel);
+            var adapter = stencil.GetSearcherAdapter(state.CurrentGraphModel, $"Choose an action for {portModel.DataTypeHandle.GetMetadata(stencil).FriendlyName}", portModel);
             var dbProvider = stencil.GetSearcherDatabaseProvider();
-            var dbs = dbProvider.GetGraphElementsSearcherDatabases(state.CurrentGraphModel as IGraphModel).ToList();
+            var dbs = dbProvider.GetGraphElementsSearcherDatabases(state.CurrentGraphModel).ToList();
 
             PromptSearcher(dbs, filter, adapter, position, callback);
         }
@@ -86,9 +87,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch
         {
             var stencil = state.CurrentGraphModel.Stencil;
             var filter = stencil.GetSearcherFilterProvider()?.GetEdgeSearcherFilter(edgeModel);
-            var adapter = stencil.GetSearcherAdapter(state.CurrentGraphModel as IGraphModel, "Insert Node");
+            var adapter = stencil.GetSearcherAdapter(state.CurrentGraphModel, "Insert Node");
             var dbProvider = stencil.GetSearcherDatabaseProvider();
-            var dbs = dbProvider.GetGraphElementsSearcherDatabases(state.CurrentGraphModel as IGraphModel).ToList();
+            var dbs = dbProvider.GetGraphElementsSearcherDatabases(state.CurrentGraphModel).ToList();
 
             PromptSearcher(dbs, filter, adapter, position, callback);
         }
@@ -97,16 +98,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch
         {
             var stencil = state.CurrentGraphModel.Stencil;
             var filter = stencil.GetSearcherFilterProvider()?.GetGraphSearcherFilter();
-            var adapter = stencil.GetSearcherAdapter(state.CurrentGraphModel as IGraphModel, "Add a graph node");
+            var adapter = stencil.GetSearcherAdapter(state.CurrentGraphModel, "Add a graph node");
             var dbProvider = stencil.GetSearcherDatabaseProvider();
-            var dbs = dbProvider.GetGraphElementsSearcherDatabases(state.CurrentGraphModel as IGraphModel)
+            var dbs = dbProvider.GetGraphElementsSearcherDatabases(state.CurrentGraphModel)
                 .Concat(dbProvider.GetDynamicSearcherDatabases(null))
                 .ToList();
 
             PromptSearcher(dbs, filter, adapter, position, callback);
         }
 
-        static void PromptSearcher<T>(List<SearcherDatabase> databases, SearcherFilter filter,
+        static void PromptSearcher<T>(List<SearcherDatabaseBase> databases, SearcherFilter filter,
             ISearcherAdapter adapter, Vector2 position, Action<T> callback) where T : ISearcherItemDataProvider
         {
             ApplyDatabasesFilter<T>(databases, filter);
@@ -122,6 +123,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch
 
                 return false;
             }, position, null);
+            ApplyDatabasesFilter<T>(databases, null);
         }
 
         static SearcherItem GetRoot(SearcherItem item)
@@ -141,38 +143,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch
             return parent;
         }
 
-        public static void ApplyDatabasesFilter<T>(IEnumerable<SearcherDatabase> databases, SearcherFilter filter)
+        public static void ApplyDatabasesFilter<T>(List<SearcherDatabaseBase> databases, SearcherFilter filter)
             where T : ISearcherItemDataProvider
         {
             foreach (var database in databases)
             {
-                database.MatchFilter = (query, item) =>
+                if (database is LuceneSearcherDatabase luceneSearcherDatabase)
                 {
-                    if (!(item is T dataProvider))
-                        return false;
-
-                    if (filter == null || filter == SearcherFilter.Empty)
-                        return true;
-
-                    return filter.ApplyFilters(dataProvider.Data);
-                };
+                    luceneSearcherDatabase.SetFilters(filter?.LuceneFilters);
+                }
             }
-        }
-
-        // Used to display data that is not meant to be persisted. The database will be overwritten after each call to SearcherWindow.Show(...).
-        internal static void ShowTransientData(EditorWindow host, IEnumerable<SearcherItem> items,
-            ISearcherAdapter adapter, Action<SearcherItem> selectionDelegate, Vector2 pos)
-        {
-            var database = SearcherDatabase.Create(items.ToList(), "", false);
-            var searcher = new Searcher.Searcher(database, adapter);
-
-            SearcherWindow.Show(host, searcher, x =>
-            {
-                host.Focus();
-                selectionDelegate(x);
-
-                return !(Event.current?.modifiers.HasFlag(EventModifiers.Control)).GetValueOrDefault();
-            }, pos, null);
         }
 
         internal static void FindInGraph(
@@ -234,31 +214,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch
             }, position, null);
         }
 
-        public static void ShowTypes(Stencil stencil, Vector2 position, Action<TypeHandle, int> callback,
-            SearcherFilter userFilter = null)
+        public static void ShowVariableTypes(Stencil stencil, Vector2 position, Action<TypeHandle, int> callback)
         {
-            var databases = stencil.GetSearcherDatabaseProvider().GetTypesSearcherDatabases();
-            foreach (var database in databases)
-            {
-                database.MatchFilter = (query, item) =>
-                {
-                    if (!(item is TypeSearcherItem typeItem))
-                        return false;
+            var databases = stencil.GetSearcherDatabaseProvider().GetVariableTypesSearcherDatabases();
+            ShowTypes(databases, position, callback);
+        }
 
-                    var filter = stencil.GetSearcherFilterProvider()?.GetTypeSearcherFilter();
-                    var res = true;
-
-                    if (filter != null)
-                        res &= filter.ApplyFilters(typeItem.Data);
-
-                    if (userFilter != null)
-                        res &= userFilter.ApplyFilters(typeItem.Data);
-
-                    return res;
-                };
-            }
-
-            var searcher = new Searcher.Searcher(databases, k_TypeAdapter) { SortComparison = TypeComparison };
+        public static void ShowTypes(List<SearcherDatabase> databases, Vector2 position, Action<TypeHandle, int> callback)
+        {
+            var searcher = new Searcher.Searcher(databases, k_TypeAdapter) {SortComparison = TypeComparison};
             SearcherWindow.Show(EditorWindow.focusedWindow, searcher, item =>
             {
                 if (!(item is TypeSearcherItem typeItem))

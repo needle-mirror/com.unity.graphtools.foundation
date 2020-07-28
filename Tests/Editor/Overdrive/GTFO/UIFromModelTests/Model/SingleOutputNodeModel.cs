@@ -7,13 +7,22 @@ using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
 {
-    class SingleOutputNodeModel : IGTFNodeModel, IHasSingleOutputPort, IHasTitle, ICollapsible
+    class SingleOutputNodeModel : ISingleOutputPortNode, IHasTitle, ICollapsible
     {
         public IGTFGraphModel GraphModel => null;
 
         GUID m_GUID = GUID.Generate();
-        public GUID Guid => m_GUID;
-        public IGTFGraphAssetModel AssetModel => GraphModel.AssetModel;
+        public GUID Guid
+        {
+            get => m_GUID;
+            set => m_GUID = value;
+        }
+
+        public IGTFGraphAssetModel AssetModel
+        {
+            get => GraphModel.AssetModel;
+            set => GraphModel.AssetModel = value;
+        }
 
         public void AssignNewGuid()
         {
@@ -32,6 +41,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         public bool IsCopiable => true;
         public string Title { get; set; }
         public string DisplayTitle => Title;
+        public string Tooltip { get; set; }
 
         PortModel m_Port = new PortModel { Direction = Direction.Output };
         public IGTFPortModel OutputPort => m_Port;
@@ -46,6 +56,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
 
         public bool Collapsed { get; set; }
         public Color Color => Color.black;
+        public bool AllowSelfConnect => true;
         public bool HasUserColor => false;
         public bool HasProgress => false;
         public string IconTypeString => null;
@@ -54,6 +65,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         public IReadOnlyDictionary<string, IGTFPortModel> OutputsById => Ports.ToDictionary(e => e.Guid.ToString());
         public IReadOnlyList<IGTFPortModel> InputsByDisplayOrder => new IGTFPortModel[0];
         public IReadOnlyList<IGTFPortModel> OutputsByDisplayOrder => Ports.ToList();
+        public virtual IEnumerable<IGTFEdgeModel> GetConnectedEdges()
+        {
+            return NodeModelDefaultImplementations.GetConnectedEdges(this);
+        }
+
         public void DefineNode()
         {
         }
@@ -74,10 +90,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         {
             var portsToChooseFrom = portModel.Direction == Direction.Input ? OutputsByDisplayOrder : InputsByDisplayOrder;
             return portsToChooseFrom.First(p => p.DataTypeHandle == portModel.DataTypeHandle);
-        }
-
-        public void UndoRedoPerformed()
-        {
         }
     }
 }

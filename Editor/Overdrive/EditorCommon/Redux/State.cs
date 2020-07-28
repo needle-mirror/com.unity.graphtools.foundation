@@ -70,6 +70,27 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             Dispose(false);
         }
 
+        public virtual void PreStateChanged()
+        {
+            if (EditorDataModel != null && CurrentGraphModel.HasAnyTopologyChange())
+                EditorDataModel.SetUpdateFlag(EditorDataModel.UpdateFlags | UpdateFlags.GraphTopology);
+
+            if (EditorDataModel != null && CurrentGraphModel?.LastChanges?.RequiresRebuild == true)
+                EditorDataModel.SetUpdateFlag(EditorDataModel.UpdateFlags | UpdateFlags.RequestRebuild);
+        }
+
+        public virtual void PostStateChanged()
+        {
+            EditorDataModel?.SetUpdateFlag(UpdateFlags.None);
+        }
+
+        public virtual void PreDispatchAction(IAction action)
+        {
+            LastDispatchedActionName = action.GetType().Name;
+            CurrentGraphModel?.ResetChangeList();
+            LastActionUIRebuildType = UIRebuildType.None;
+        }
+
         public void MarkForUpdate(UpdateFlags flag, IGTFGraphElementModel model = null)
         {
             EditorDataModel?.SetUpdateFlag(flag);

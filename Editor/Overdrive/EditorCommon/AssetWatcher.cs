@@ -127,7 +127,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                                 newAssetModel.Name = newGraphName;
                                 newAssetModel.GraphModel.Name = newGraphName;
                                 foreach (var gvWindow in gvWindows.Where(w => w.Store.GetState()?.CurrentGraphModel == newAssetModel.GraphModel))
-                                    gvWindow.Store.Dispatch(new RefreshUIAction(UpdateFlags.All));
+                                    gvWindow.Store.ForceRefreshUI(UpdateFlags.All);
                             }
                         }
                     }

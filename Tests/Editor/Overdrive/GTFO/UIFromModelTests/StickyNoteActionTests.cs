@@ -1,9 +1,9 @@
 using System;
 using System.Collections;
 using NUnit.Framework;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.Helpers;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
@@ -13,14 +13,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
     public class StickyNoteActionTests : BaseTestFixture
     {
         GraphView m_GraphView;
-        Helpers.TestStore m_Store;
+        Store m_Store;
         GraphModel m_GraphModel;
 
         [SetUp]
         public new void SetUp()
         {
             m_GraphModel = new GraphModel();
-            m_Store = new Helpers.TestStore(new Helpers.TestState(m_GraphModel));
+            m_Store = new Store(new Helpers.TestState(m_GraphModel), StoreHelper.RegisterReducers);
             m_GraphView = new TestGraphView(m_Store);
 
             m_GraphView.name = "theView";

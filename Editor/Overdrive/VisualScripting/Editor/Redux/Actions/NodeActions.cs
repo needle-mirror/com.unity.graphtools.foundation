@@ -26,9 +26,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
     public class RemoveNodesAction : IAction
     {
         public readonly IGTFNodeModel[] ElementsToRemove;
-        public readonly IGTFNodeModel[] NodesToBypass;
+        public readonly IInOutPortsNode[] NodesToBypass;
 
-        public RemoveNodesAction(IGTFNodeModel[] nodesToBypass, IGTFNodeModel[] elementsToRemove)
+        public RemoveNodesAction(IInOutPortsNode[] nodesToBypass, IGTFNodeModel[] elementsToRemove)
         {
             ElementsToRemove = elementsToRemove;
             NodesToBypass = nodesToBypass;

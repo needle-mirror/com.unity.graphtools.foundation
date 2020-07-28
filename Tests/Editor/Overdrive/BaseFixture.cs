@@ -3,10 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 using UnityEngine.Profiling;
 
@@ -35,7 +34,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
         }
 
         public IGTFGraphElementModel ElementModelToRename { get; set; }
-        public GUID NodeToFrameGuid { get; set; } = default;
         public int CurrentGraphIndex => 0;
         public Preferences Preferences { get; }  = CreatePreferences();
 
@@ -50,7 +48,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
         public GameObject BoundObject { get; set; }
 
         public List<OpenedGraph> PreviousGraphModels { get; } = new List<OpenedGraph>();
-        public int UpdateCounter { get; set; }
         public bool TracingEnabled { get; set; }
         public bool CompilationPending { get; set; }
 
@@ -64,7 +61,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
             throw new NotImplementedException();
         }
 
-        public bool ShouldSelectElementUponCreation(IGraphElement hasGraphElementModel)
+        public bool ShouldSelectElementUponCreation(IGTFGraphElementModel model)
         {
             return false;
         }
@@ -83,7 +80,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
         {
             public void RegisterPlugins(IEnumerable<IPluginHandler> plugins) {}
             public void UnregisterPlugins(IEnumerable<IPluginHandler> except = null) {}
-            public IEnumerable<IPluginHandler> RegisteredPlugins { get; }
+            public IEnumerable<IPluginHandler> RegisteredPlugins => Enumerable.Empty<IPluginHandler>();
         }
     }
 
@@ -97,35 +94,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
         public TestState()
             : this(new TestEditorDataModel())
         {
-        }
-    }
-
-    public class TestStore : Overdrive.VisualScripting.Store
-    {
-        public TestStore(Overdrive.VisualScripting.State initialState)
-            : base(initialState)
-        {
-            Undo.undoRedoPerformed += UndoRedoPerformed;
-        }
-
-        public override void Dispose()
-        {
-            // ReSharper disable once DelegateSubtraction
-            Undo.undoRedoPerformed -= UndoRedoPerformed;
-        }
-
-        void UndoRedoPerformed()
-        {
-            Profiler.BeginSample("TestStore_UndoRedo");
-            InvokeStateChanged();
-            Profiler.EndSample();
-        }
-
-        public override void Dispatch<TAction>(TAction action)
-        {
-            base.Dispatch(action);
-            Update();
-            InvokeStateChanged();
         }
     }
 
@@ -145,11 +113,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
         }
     }
 
-    [Category("VSEditor")]
     [PublicAPI]
     public abstract class BaseFixture
     {
-        protected TestStore m_Store;
+        protected Store m_Store;
         protected const string k_GraphPath = "Assets/test.asset";
 
         protected GraphModel GraphModel => (GraphModel)m_Store.GetState().CurrentGraphModel;
@@ -244,7 +211,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
             Profiler.BeginSample("VS Tests SetUp");
             if (WriteOnDisk)
                 AssetDatabase.DeleteAsset(k_GraphPath);
-            m_Store = new TestStore(new TestState());
+            m_Store = new Store(new TestState(), StoreHelper.RegisterReducers);
 
             m_Store.StateChanged += AssertIntegrity;
 
@@ -289,7 +256,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
 
         protected IConstant GetConstantNode(int index)
         {
-            return (GetAllNodes().ElementAt(index) as ConstantNodeModel).Value;
+            return (GetAllNodes().ElementAt(index) as ConstantNodeModel)?.Value;
         }
 
         protected int GetNodeCount()
@@ -357,7 +324,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
             return GraphModel.VariableDeclarations.Single(f => f.DisplayTitle == fieldName);
         }
 
-        protected void AddUsage(IVariableDeclarationModel fieldModel)
+        protected void AddUsage(IGTFVariableDeclarationModel fieldModel)
         {
             int prevCount = GetFloatingVariableModels(GraphModel).Count();
             m_Store.Dispatch(new CreateVariableNodesAction(fieldModel, Vector2.one));
@@ -388,9 +355,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
             // TODO : Undo.postprocessModifications += PostprocessModifications;
         }
 
-        public IEnumerable<VariableNodeModel> GetFloatingVariableModels(IGraphModel graphModel)
+        public IEnumerable<VariableNodeModel> GetFloatingVariableModels(IGTFGraphModel graphModel)
         {
-            return graphModel.NodeModels.OfType<VariableNodeModel>().Where(v => !v.OutputPort.IsConnected);
+            return graphModel.NodeModels.OfType<VariableNodeModel>().Where(v => !v.OutputPort.IsConnected());
         }
 
         public void RefreshReference<T>(ref T model) where T : class, IGTFNodeModel
@@ -400,12 +367,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
 
         public void RefreshReference(ref IGTFEdgeModel model)
         {
-            var orig = model as IEdgeModel;
+            var orig = model;
 
-            model = orig == null ? null : GraphModel.EdgeModels.FirstOrDefault(ee =>
+            model = orig == null ? null : GraphModel.EdgeModels.FirstOrDefault(e =>
             {
-                var e = ee as IEdgeModel;
-                return e.ToNodeGuid == orig.ToNodeGuid && e.FromNodeGuid == orig.FromNodeGuid && e.ToPortId == orig.ToPortId && e.FromPortId == orig.FromPortId;
+                return e?.ToNodeGuid == orig.ToNodeGuid && e.FromNodeGuid == orig.FromNodeGuid && e.ToPortId == orig.ToPortId && e.FromPortId == orig.FromPortId;
             });
         }
 
@@ -423,21 +389,5 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
                 Debug.Log(((NodeModel)edgeModel.ToPort.NodeModel).Title + "<->" + ((NodeModel)edgeModel.FromPort.NodeModel).Title);
             }
         }
-
-        /*private static UndoPropertyModification[] PostprocessModifications(UndoPropertyModification[] modifications)
-        {
-            Func<PropertyModification, string> f = mod =>
-                {
-                    var o = mod.objectReference is SemanticGraph ? "graph" : mod.objectReference == null ? mod.value : mod.objectReference.GetType().Name;
-                    return $"{mod.target}: {o}\n";
-                };
-            StringBuilder sb = new StringBuilder();
-            foreach (var mod in modifications)
-            {
-                sb.AppendLine($"{mod.previousValue.propertyPath}:\n{f(mod.previousValue)}\n{f(mod.currentValue)}");
-            }
-            Debug.Log("POSTPROCESSMODIFICATIONS\n" + sb);
-            return modifications;
-        }*/
     }
 }

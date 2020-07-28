@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Profiling;
@@ -25,8 +25,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         public Blackboard Blackboard { get; }
 
         readonly VisualElement m_IconsParent;
-        IGraphModel m_LastGraphModel;
-        public IGraphModel LastGraphModel => m_LastGraphModel;
+        IGTFGraphModel m_LastGraphModel;
+        public IGTFGraphModel LastGraphModel => m_LastGraphModel;
 
         public VseUIController(VseGraphView graphView, Store store)
         {
@@ -88,13 +88,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             topologyStopwatch.Start();
 
             var state = m_Store.GetState();
-            var currentGraphModel = state.CurrentGraphModel as IGraphModel;
+            var currentGraphModel = state.CurrentGraphModel;
             if (currentGraphModel == null)
             {
                 return;
             }
 
-            IGraphChangeList graphChangeList = currentGraphModel.LastChanges;
+            GraphChangeList graphChangeList = currentGraphModel.LastChanges;
             string dispatchedActionName = state.LastDispatchedActionName; // save this now, because some actions trigger a UIRefresh, hiding the original action (TODO)
 
             m_GraphView.DisablePersistedSelectionRestore();
@@ -124,17 +124,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
             m_GraphView.EnablePersistedSelectionRestore();
 
-            if (ElementToRename != null && state.EditorDataModel is IEditorDataModel model)
+            if (ElementToRename != null)
             {
                 m_GraphView.ClearSelection();
                 m_GraphView.AddToSelection((GraphElement)ElementToRename);
                 ElementToRename.Rename(forceRename: true);
                 ElementToRename = null;
-                model.ElementModelToRename = null;
+                state.EditorDataModel.ElementModelToRename = null;
             }
 
             // We need to do this after all graph elements are created.
-            foreach (var p in m_GraphView.placematContainer.Placemats.Cast<Placemat>())
+            foreach (var p in m_GraphView.PlacematContainer.Placemats)
             {
                 p.UpdateFromModel();
             }
@@ -187,7 +187,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
                 if (partialRebuilder.BlackboardChanged)
                 {
-                    Blackboard?.Rebuild(Blackboard.RebuildMode.BlackboardOnly);
+                    Blackboard?.Rebuild(GraphElements.Blackboard.RebuildMode.BlackboardOnly);
                 }
 
                 if (state.Preferences.GetBool(BoolPref.LogUIBuildTime))
@@ -223,7 +223,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             if (graphModel == null)
                 return;
 
-            m_GraphView.placematContainer.RemoveAllPlacemats();
+            m_GraphView.PlacematContainer.RemoveAllPlacemats();
             foreach (var placematModel in state.CurrentGraphModel.PlacematModels.OrderBy(e => e.ZOrder))
             {
                 var placemat = GraphElementFactory.CreateUI<GraphElement>(m_GraphView, m_Store, placematModel);
@@ -257,7 +257,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                 index++;
             }
 
-            Blackboard?.Rebuild(Blackboard.RebuildMode.BlackboardOnly);
+            Blackboard?.Rebuild(GraphElements.Blackboard.RebuildMode.BlackboardOnly);
 
             m_GraphView.contentViewContainer.Add(m_IconsParent);
             m_GraphView.HighlightGraphElements();
@@ -349,7 +349,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         internal void Clear()
         {
-            List<GraphElement> elements = m_GraphView.graphElements.ToList();
+            List<GraphElement> elements = m_GraphView.GraphElements.ToList();
 
             m_GraphView.PositionDependenciesManagers.Clear();
             foreach (var element in elements)
@@ -429,16 +429,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             }
 
             if (graphElement != null &&
-                m_Store.GetState().EditorDataModel.ShouldSelectElementUponCreation(graphElement))
+                m_Store.GetState().EditorDataModel.ShouldSelectElementUponCreation(graphElement.Model))
                 graphElement.Select(m_GraphView, true);
-
-            // Execute any extra stuff when element is added
-            (graphElement as IVSGraphViewObserver)?.OnAddedToGraphView();
 
             if (graphElement is Node || graphElement is Token || graphElement is Edge)
                 graphElement.RegisterCallback<MouseOverEvent>(m_GraphView.OnMouseOver);
 
-            if (graphElement.Model is IGTFEdgePortalModel portalModel)
+            if (graphElement?.Model is IGTFEdgePortalModel portalModel)
             {
                 m_GraphView.AddPortalDependency(portalModel);
             }

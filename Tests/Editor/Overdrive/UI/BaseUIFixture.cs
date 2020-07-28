@@ -4,10 +4,10 @@ using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using NUnit.Framework;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -90,7 +90,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
 
         protected IList<GraphElement> GetGraphElements()
         {
-            return GraphView.graphElements.ToList();
+            return GraphView.GraphElements.ToList();
         }
 
         protected GraphElement GetGraphElement(int index)

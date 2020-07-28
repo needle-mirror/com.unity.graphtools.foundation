@@ -50,9 +50,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             yield return null;
 
-            Assert.True(node1?.selected);
-            Assert.False(node2?.selected);
-            Assert.False(node3?.selected);
+            Assert.True(node1?.Selected);
+            Assert.False(node2?.Selected);
+            Assert.False(node3?.Selected);
         }
 
         [UnityTest]
@@ -67,18 +67,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             yield return null;
 
-            Assert.True(node1.selected);
-            Assert.False(node2.selected);
-            Assert.False(node3.selected);
+            Assert.True(node1.Selected);
+            Assert.False(node2.Selected);
+            Assert.False(node3.Selected);
 
             // Select elem 2. All other elems should be unselected.
             helpers.Click(node2);
 
             yield return null;
 
-            Assert.False(node1.selected);
-            Assert.True(node2.selected);
-            Assert.False(node3.selected);
+            Assert.False(node1.Selected);
+            Assert.True(node2.Selected);
+            Assert.False(node3.Selected);
         }
 
         [UnityTest]
@@ -98,21 +98,21 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             // Add to selection.
             graphView.AddToSelection(node);
-            Assert.True(node.selected);
+            Assert.True(node.Selected);
 
             // Remove node.
             graphView.RemoveElement(node);
-            Assert.False(node.selected);
+            Assert.False(node.Selected);
 
             // Add node back and restore selection.
             graphView.AddElement(node);
-            Assert.True(node.selected);
+            Assert.True(node.Selected);
 
             // Remove and add back but with a different viewDataKey.
             graphView.RemoveElement(node);
             node.viewDataKey = wrongKey;
             graphView.AddElement(node);
-            Assert.False(node.selected);
+            Assert.False(node.Selected);
         }
 
         EventModifiers modifiers
@@ -140,9 +140,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             yield return null;
 
-            Assert.True(node1.selected);
-            Assert.True(node2.selected);
-            Assert.False(node3.selected);
+            Assert.True(node1.Selected);
+            Assert.True(node2.Selected);
+            Assert.False(node3.Selected);
         }
 
         [UnityTest]
@@ -167,9 +167,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             yield return null;
 
-            Assert.False(node1.selected);
-            Assert.True(node2.selected);
-            Assert.False(node3.selected);
+            Assert.False(node1.Selected);
+            Assert.True(node2.Selected);
+            Assert.False(node3.Selected);
         }
 
         // Taken from internal QuadTree utility
@@ -205,9 +205,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             yield return null;
 
-            Assert.False(node1.selected);
-            Assert.False(node2.selected);
-            Assert.True(node3.selected);
+            Assert.False(node1.Selected);
+            Assert.False(node2.Selected);
+            Assert.True(node3.Selected);
         }
 
         [UnityTest]
@@ -223,9 +223,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             yield return null;
 
-            Assert.True(node1.selected);
-            Assert.True(node2.selected);
-            Assert.True(node3.selected);
+            Assert.True(node1.Selected);
+            Assert.True(node2.Selected);
+            Assert.True(node3.Selected);
         }
 
         [UnityTest]
@@ -236,9 +236,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             GetUI(out var node1, out var node2, out var node3);
 
             graphView.AddToSelection(node1);
-            Assert.True(node1.selected);
-            Assert.False(node2.selected);
-            Assert.False(node3.selected);
+            Assert.True(node1.Selected);
+            Assert.False(node2.Selected);
+            Assert.False(node3.Selected);
 
             Rect rectangle = RectAroundNodes(node1, node2, node3);
 
@@ -247,9 +247,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             yield return null;
 
-            Assert.False(node1.selected);
-            Assert.True(node2.selected);
-            Assert.True(node3.selected);
+            Assert.False(node1.Selected);
+            Assert.True(node2.Selected);
+            Assert.True(node3.Selected);
         }
 
         [UnityTest]
@@ -268,9 +268,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             yield return null;
 
-            Assert.True(node1.selected);
-            Assert.True(node2.selected);
-            Assert.True(node3.selected);
+            Assert.True(node1.Selected);
+            Assert.True(node2.Selected);
+            Assert.True(node3.Selected);
         }
 
         [UnityTest]
@@ -291,7 +291,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             yield return null;
 
             // After manipulation we should have only zero elements left.
-            Assert.AreEqual(0, graphView.graphElements.ToList().Count);
+            Assert.AreEqual(0, graphView.GraphElements.ToList().Count);
         }
 
         [Test]
@@ -300,18 +300,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             graphView.RebuildUI(GraphModel, Store);
             GetUI(out var node1, out var node2, out _);
 
-            Assert.AreEqual(0, graphView.selection.Count);
+            Assert.AreEqual(0, graphView.Selection.Count);
 
             graphView.AddToSelection(node1);
-            Assert.AreEqual(1, graphView.selection.Count);
+            Assert.AreEqual(1, graphView.Selection.Count);
 
             // Add same element again, should have no impact on selection
             graphView.AddToSelection(node1);
-            Assert.AreEqual(1, graphView.selection.Count);
+            Assert.AreEqual(1, graphView.Selection.Count);
 
             // Add other element
             graphView.AddToSelection(node2);
-            Assert.AreEqual(2, graphView.selection.Count);
+            Assert.AreEqual(2, graphView.Selection.Count);
         }
 
         [Test]
@@ -322,18 +322,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             graphView.AddToSelection(node1);
             graphView.AddToSelection(node2);
-            Assert.AreEqual(2, graphView.selection.Count);
+            Assert.AreEqual(2, graphView.Selection.Count);
 
             graphView.RemoveFromSelection(node2);
-            Assert.AreEqual(1, graphView.selection.Count);
+            Assert.AreEqual(1, graphView.Selection.Count);
 
             // Remove the same item again, should have no impact on selection
             graphView.RemoveFromSelection(node2);
-            Assert.AreEqual(1, graphView.selection.Count);
+            Assert.AreEqual(1, graphView.Selection.Count);
 
             // Remove other element
             graphView.RemoveFromSelection(node1);
-            Assert.AreEqual(0, graphView.selection.Count);
+            Assert.AreEqual(0, graphView.Selection.Count);
         }
     }
 }

@@ -16,6 +16,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         MissingPort() {}
     }
 
+    public class ExecutionFlow
+    {
+        ExecutionFlow() {}
+    }
+
     [Serializable]
     //[MovedFrom(false, "UnityEditor.VisualScripting.Model.Stencils", "Unity.GraphTools.Foundation.Overdrive.Editor")]
     [MovedFrom(false, "UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting")]
@@ -25,6 +30,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         //TODO figure how to implement
         public static TypeHandle MissingType { get; } = TypeSerializer.GenerateCustomTypeHandle("__MISSINGTYPE");
         public static TypeHandle Unknown { get; }  = TypeSerializer.GenerateCustomTypeHandle(typeof(Unknown), "__UNKNOWN");
+        public static TypeHandle ExecutionFlow { get; } = TypeSerializer.GenerateCustomTypeHandle(typeof(ExecutionFlow), "__EXECUTIONFLOW");
         public static TypeHandle MissingPort { get; }  = TypeSerializer.GenerateTypeHandle(typeof(MissingPort));
         public static TypeHandle Bool { get; } = TypeSerializer.GenerateTypeHandle(typeof(bool));
         public static TypeHandle Void { get; } = TypeSerializer.GenerateTypeHandle(typeof(void));

@@ -7,6 +7,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 {
     public class EdgeBubblePart : BaseGraphElementPart
     {
+        public static readonly string k_UssClassName = "ge-edge-bubble-part";
+
         public static EdgeBubblePart Create(string name, IGTFGraphElementModel model, IGraphElement graphElement, string parentClassName)
         {
             if (model is IGTFEdgeModel)
@@ -17,13 +19,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             return null;
         }
 
-        public static readonly string k_UssClassName = "ge-edge-bubble-part";
+        public override VisualElement Root => m_EdgeBubble;
+
+        protected EdgeBubble m_EdgeBubble;
 
         protected EdgeBubblePart(string name, IGTFGraphElementModel model, IGraphElement ownerElement, string parentClassName)
             : base(name, model, ownerElement, parentClassName) {}
-
-        protected EdgeBubble m_EdgeBubble;
-        public override VisualElement Root => m_EdgeBubble;
 
         protected override void BuildPartUI(VisualElement container)
         {
@@ -70,8 +71,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             var edgeModel = m_Model as IGTFEdgeModel;
             var toPortNodeModel = edgeModel?.ToPort?.NodeModel;
             var fromPortNodeModel = edgeModel?.FromPort?.NodeModel;
+            var portType = edgeModel?.FromPort?.PortType ?? PortType.Data;
 
-            return (fromPortNodeModel != null || toPortNodeModel != null) &&
+            return portType == PortType.Execution && (fromPortNodeModel != null || toPortNodeModel != null) &&
                 !string.IsNullOrEmpty(edgeModel.EdgeLabel);
         }
 

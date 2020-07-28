@@ -1,9 +1,9 @@
 using System;
 using System.Linq;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -93,7 +93,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         {
             Undo.RegisterCompleteObjectUndo((Object)previousState.AssetModel, "Update Node Value");
 
-            if (actionValue.NodeModel == null || actionValue.NodeModel.OutputPort.IsConnected)
+            if (actionValue.NodeModel == null || actionValue.NodeModel.OutputPort.IsConnected())
             {
                 previousState.MarkForUpdate(UpdateFlags.RequestCompilation);
             }

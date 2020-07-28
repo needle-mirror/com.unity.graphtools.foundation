@@ -25,7 +25,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
         const int k_UpdateIntervalMs = 500;
 
         readonly GraphView m_GraphView;
-        readonly Overdrive.Store m_Store;
+        readonly Store m_Store;
         TracingTimeline m_TracingTimeline;
 
         Button m_PickTargetButton;
@@ -41,7 +41,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
         Label m_TotalFrameLabel;
         Stopwatch m_LastUpdate = Stopwatch.StartNew();
 
-        public TracingToolbar(GraphView graphView, Overdrive.Store store)
+        public TracingToolbar(GraphView graphView, Store store)
         {
             m_GraphView = graphView;
             m_Store = store;

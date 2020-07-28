@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 using UnityEngine.Assertions;
 using static UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.VSPreferences;
@@ -40,7 +40,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             var elementModels = action.SelectedItem.CreateElements.Invoke(
                 new GraphNodeCreationData(graphModel, position));
 
-            if (elementModels.Length == 0 || !(elementModels[0] is IGTFNodeModel selectedNodeModel))
+            if (elementModels.Length == 0 || !(elementModels[0] is IPortNode selectedNodeModel))
                 return previousState;
 
             var outputPortModel = selectedNodeModel.GetPortFitToConnectTo(action.PortModel);
@@ -66,7 +66,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             var elementModels = action.SelectedItem.CreateElements.Invoke(
                 new GraphNodeCreationData(graphModel, position));
 
-            if (!elementModels.Any() || !(elementModels[0] is IGTFNodeModel selectedNodeModel))
+            if (!elementModels.Any() || !(elementModels[0] is IPortNode selectedNodeModel))
                 return previousState;
 
             var inputPortModel = selectedNodeModel.GetPortFitToConnectTo(action.PortModel);
@@ -102,7 +102,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             var elementModels = action.SelectedItem.CreateElements.Invoke(
                 new GraphNodeCreationData(graphModel, position, guids: guids));
 
-            if (elementModels.Length == 0 || !(elementModels[0] is IGTFNodeModel selectedNodeModel))
+            if (elementModels.Length == 0 || !(elementModels[0] is IInOutPortsNode selectedNodeModel))
                 return previousState;
 
             // Delete old edge
@@ -165,20 +165,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             ItemizeOptions currentItemizeOptions = vsPrefs?.CurrentItemizeOptions ?? ItemizeOptions.Nothing;
 
             // automatically itemize, i.e. duplicate variables as they get connected
-            if (!outputPortModel.IsConnected || currentItemizeOptions == ItemizeOptions.Nothing)
+            if (!outputPortModel.IsConnected() || currentItemizeOptions == ItemizeOptions.Nothing)
                 return;
 
-            IGTFNodeModel nodeToConnect = outputPortModel.NodeModel;
-
             bool itemizeContant = currentItemizeOptions.HasFlag(ItemizeOptions.Constants)
-                && nodeToConnect is ConstantNodeModel;
+                && outputPortModel.NodeModel is ConstantNodeModel;
             bool itemizeVariable = currentItemizeOptions.HasFlag(ItemizeOptions.Variables)
-                && (nodeToConnect is VariableNodeModel || nodeToConnect is ThisNodeModel);
+                && (outputPortModel.NodeModel is VariableNodeModel);
+
             if (itemizeContant || itemizeVariable)
             {
                 Vector2 offset = Vector2.up * k_NodeOffset;
-                nodeToConnect = graphModel.DuplicateNode(outputPortModel.NodeModel, new Dictionary<IGTFNodeModel, IGTFNodeModel>(), offset);
-                outputPortModel = nodeToConnect.OutputsById[outputPortModel.UniqueName];
+                var nodeToConnect = graphModel.DuplicateNode(outputPortModel.NodeModel, new Dictionary<IGTFNodeModel, IGTFNodeModel>(), offset) as IInOutPortsNode;
+                outputPortModel = nodeToConnect?.OutputsById[outputPortModel.UniqueName];
             }
         }
 
@@ -238,7 +237,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                         portalEntry = graphModel.CreateNode<DataEdgePortalEntryModel>();
                     existingPortalEntries[outputPortModel] = portalEntry;
 
-                    var nodeModel = outputPortModel.NodeModel;
+                    if (!(outputPortModel.NodeModel is IInOutPortsNode nodeModel))
+                        return;
+
                     portalEntry.Position = data.startPos + k_EntryPortalBaseOffset;
 
                     // y offset based on port order. hurgh.
@@ -246,7 +247,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                     portalEntry.Position += Vector2.down * (k_PortalHeight * idx + 16); // Fudgy.
 
                     string portalName;
-                    if (nodeModel is IConstantNodeModel constantNodeModel)
+                    if (nodeModel is IGTFConstantNodeModel constantNodeModel)
                         portalName = constantNodeModel.Type.FriendlyName();
                     else
                     {
@@ -279,10 +280,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
                 portalExit.Position = data.endPos + k_ExitPortalBaseOffset;
                 {
-                    var nodeModel = data.edgeModel.ToPort.NodeModel;
-                    // y offset based on port order. hurgh.
-                    var idx = nodeModel.InputsByDisplayOrder.IndexOf(inputPortModel);
-                    portalExit.Position += Vector2.down * (k_PortalHeight * idx + 16); // Fudgy.
+                    if (data.edgeModel.ToPort.NodeModel is IInOutPortsNode nodeModel)
+                    {
+                        // y offset based on port order. hurgh.
+                        var idx = nodeModel.InputsByDisplayOrder.IndexOf(inputPortModel);
+                        portalExit.Position += Vector2.down * (k_PortalHeight * idx + 16); // Fudgy.
+                    }
                 }
 
                 ((EdgePortalModel)portalExit).DeclarationModel = portalEntry?.DeclarationModel;

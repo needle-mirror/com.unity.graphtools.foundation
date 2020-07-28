@@ -26,9 +26,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
             if (CollapseButton != null)
             {
-                if (m_Model is IHasPorts portHolder && portHolder.Ports != null)
+                if (m_Model is IPortNode portHolder && portHolder.Ports != null)
                 {
-                    var allPortConnected = portHolder.Ports.All(port => port.IsConnected);
+                    var allPortConnected = portHolder.Ports.All(port => port.IsConnected());
                     CollapseButton?.SetDisabledPseudoState(allPortConnected);
                 }
             }

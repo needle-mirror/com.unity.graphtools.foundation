@@ -7,6 +7,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 {
     public class PortConnectorWithIconPart : PortConnectorPart
     {
+        public static readonly string k_IconUssName = "icon";
+
         public new static PortConnectorWithIconPart Create(string name, IGTFGraphElementModel model, IGraphElement graphElement, string parentClassName)
         {
             if (model is IGTFPortModel && graphElement is Port)
@@ -17,12 +19,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             return null;
         }
 
-        protected PortConnectorWithIconPart(string name, IGTFGraphElementModel model, IGraphElement ownerElement, string parentClassName)
-            : base(name, model, ownerElement, parentClassName) {}
-
         Image m_Icon;
 
-        public static readonly string k_IconUssName = "icon";
+        protected PortConnectorWithIconPart(string name, IGTFGraphElementModel model, IGraphElement ownerElement, string parentClassName)
+            : base(name, model, ownerElement, parentClassName) {}
 
         protected override void BuildPartUI(VisualElement container)
         {

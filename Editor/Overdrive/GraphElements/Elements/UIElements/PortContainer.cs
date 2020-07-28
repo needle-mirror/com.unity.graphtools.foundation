@@ -11,15 +11,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
     {
         public new class UxmlFactory : UxmlFactory<PortContainer> {}
 
+        static readonly string sPortCountClassNamePrefix = "ge-port-container--port-count-";
+
         public PortContainer()
         {
             AddToClassList("ge-port-container");
             this.AddStylesheet("PortContainer.uss");
         }
 
-        static readonly string sPortCountClassNamePrefix = "ge-port-container--port-count-";
-
-        public void UpdatePorts(IEnumerable<IGTFPortModel> ports, GraphView graphView, Overdrive.Store store)
+        public void UpdatePorts(IEnumerable<IGTFPortModel> ports, GraphView graphView, Store store)
         {
             var uiPorts = this.Query<Port>().ToList();
             var portViewModels = ports?.ToList() ?? new List<IGTFPortModel>();

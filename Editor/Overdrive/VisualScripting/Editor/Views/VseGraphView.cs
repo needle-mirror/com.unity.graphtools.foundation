@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -55,7 +55,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         public event Action<List<ISelectableGraphElement>> OnSelectionChangedCallback;
 
-        public override bool supportsWindowedBlackboard => true;
+        public override bool SupportsWindowedBlackboard => true;
 
         public VseGraphView(VseWindow window, Store store, string graphViewName = "VisualScript") : base(store)
         {
@@ -102,7 +102,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                 {
                     m_SelectionDraggerWasActive = true;
 
-                    GraphElement elem = (GraphElement)selection.FirstOrDefault(x => x is IGraphElement hasModel && hasModel.Model is IGTFNodeModel);
+                    GraphElement elem = (GraphElement)Selection.FirstOrDefault(x => x is IGraphElement hasModel && hasModel.Model is IGTFNodeModel);
                     if (elem == null)
                         return;
 
@@ -115,7 +115,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                     bool moveNodeDependencies = requireShiftToMoveDependencies == hasShift;
 
                     if (moveNodeDependencies)
-                        PositionDependenciesManagers.StartNotifyMove(selection, startPos);
+                        PositionDependenciesManagers.StartNotifyMove(Selection, startPos);
 
                     // schedule execute because the mouse won't be moving when the graph view is panning
                     schedule.Execute(() =>
@@ -140,12 +140,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
             Insert(0, new GridBackground());
 
-            elementResized = OnElementResized;
+            ElementResizedCallback = OnElementResized;
 
-            serializeGraphElements = OnSerializeGraphElements;
-            unserializeAndPaste = UnserializeAndPaste;
+            SerializeGraphElementsCallback = OnSerializeGraphElements;
+            UnserializeAndPasteCallback = UnserializeAndPaste;
 
-            graphViewChanged += OnGraphViewChanged;
+            GraphViewChangedCallback += OnGraphViewChanged;
             PositionDependenciesManagers = new PositionDependenciesManager(this, store.GetState().Preferences);
 
             // Initialize Content debug display
@@ -252,14 +252,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             {
                 m_CurrentDragNDropHandler = null;
 
-                bool containsBlackboardFields = selection.OfType<IVisualScriptingField>().Any();
+                bool containsBlackboardFields = Selection.OfType<IVisualScriptingField>().Any();
                 if (!containsBlackboardFields)
                     return;
 
                 IDropTarget dropTarget = GetDropTarget(e.mousePosition, e.target as VisualElement);
-                dropTarget?.DragUpdated(e, selection, dropTarget, UIController.Blackboard);
+                dropTarget?.DragUpdated(e, Selection, dropTarget, UIController.Blackboard);
 
-                if (dropTarget != null && dropTarget.CanAcceptDrop(selection))
+                if (dropTarget != null && dropTarget.CanAcceptDrop(Selection))
                     DragAndDrop.visualMode = e.ctrlKey ? DragAndDropVisualMode.Copy : DragAndDropVisualMode.Move;
                 else
                     DragAndDrop.visualMode = DragAndDropVisualMode.Rejected;
@@ -276,12 +276,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             }
             else
             {
-                bool containsBlackboardFields = selection.OfType<IVisualScriptingField>().Any();
+                bool containsBlackboardFields = Selection.OfType<IVisualScriptingField>().Any();
                 if (!containsBlackboardFields)
                     return;
 
                 IDropTarget dropTarget = GetDropTarget(e.mousePosition, e.target as VisualElement);
-                dropTarget?.DragPerform(e, selection, dropTarget, UIController.Blackboard);
+                dropTarget?.DragPerform(e, Selection, dropTarget, UIController.Blackboard);
             }
             e.StopPropagation();
         }
@@ -290,7 +290,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         {
             m_CurrentDragNDropHandler = null;
 
-            if (!selection.OfType<IVisualScriptingField>().Any())
+            if (!Selection.OfType<IVisualScriptingField>().Any())
                 return;
 
             // TODO: How to differentiate between case where mouse has left a drop target window and a true drag operation abort?
@@ -303,7 +303,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         {
             // Display graph in inspector when clicking on background
             // TODO: displayed on double click ATM as this method overrides the Token.Select() which does not stop propagation
-            Selection.activeObject = m_Store.GetState()?.CurrentGraphModel.AssetModel as Object;
+            UnityEditor.Selection.activeObject = m_Store.GetState()?.CurrentGraphModel.AssetModel as Object;
         }
 
         [Serializable]
@@ -427,25 +427,25 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                 if (newInput != null && newOutput != null)
                 {
                     // Both node were duplicated; create a new edge between the duplicated nodes.
-                    inputPortModel = (newInput as IGTFNodeModel)?.InputsById[edge.ToPortId];
-                    outputPortModel = (newOutput as IGTFNodeModel)?.OutputsById[edge.FromPortId];
+                    inputPortModel = (newInput as IInOutPortsNode)?.InputsById[edge.ToPortId];
+                    outputPortModel = (newOutput as IInOutPortsNode)?.OutputsById[edge.FromPortId];
                 }
                 else if (newInput != null)
                 {
-                    inputPortModel = (newInput as IGTFNodeModel)?.InputsById[edge.ToPortId];
+                    inputPortModel = (newInput as IInOutPortsNode)?.InputsById[edge.ToPortId];
                     outputPortModel = edge.FromPort;
                 }
                 else if (newOutput != null)
                 {
                     inputPortModel = edge.ToPort;
-                    outputPortModel = (newOutput as IGTFNodeModel)?.OutputsById[edge.FromPortId];
+                    outputPortModel = (newOutput as IInOutPortsNode)?.OutputsById[edge.FromPortId];
                 }
 
                 if (inputPortModel != null && outputPortModel != null)
                 {
-                    if (inputPortModel.Capacity == PortCapacity.Single && inputPortModel.ConnectedEdges.Any())
+                    if (inputPortModel.Capacity == PortCapacity.Single && inputPortModel.GetConnectedEdges().Any())
                         continue;
-                    if (outputPortModel.Capacity == PortCapacity.Single && outputPortModel.ConnectedEdges.Any())
+                    if (outputPortModel.Capacity == PortCapacity.Single && outputPortModel.GetConnectedEdges().Any())
                         continue;
 
                     var copiedEdge = graph.CreateEdge(inputPortModel, outputPortModel);
@@ -680,11 +680,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         public EventPropagation RemoveSelection()
         {
-            IGTFNodeModel[] selectedNodes = selection.OfType<IGraphElement>()
-                .Select(x => x.Model).OfType<IGTFNodeModel>().ToArray();
+            IInOutPortsNode[] selectedNodes = Selection.OfType<IGraphElement>()
+                .Select(x => x.Model).OfType<IInOutPortsNode>().ToArray();
 
-            IGTFNodeModel[] connectedNodes = selectedNodes.Where(x => x.InputsById.Values
-                .Any(y => y.IsConnected) && x.OutputsById.Values.Any(y => y.IsConnected))
+            IInOutPortsNode[] connectedNodes = selectedNodes.Where(x => x.InputsById.Values
+                .Any(y => y.IsConnected()) && x.OutputsById.Values.Any(y => y.IsConnected()))
                 .ToArray();
 
             bool canSelectionBeBypassed = connectedNodes.Any();
@@ -764,30 +764,23 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             // Remove all the menu items provided by graph view.
             evt.menu.MenuItems().Clear();
 
-            VseContextualMenuBuilder menuBuilder = new VseContextualMenuBuilder(m_Store, evt, selection, this);
+            VseContextualMenuBuilder menuBuilder = new VseContextualMenuBuilder(m_Store, evt, Selection, this);
             menuBuilder.BuildContextualMenu();
 
             evt.StopPropagation();
         }
 
-        bool CanPerformSelectionOperation => selection.OfType<TokenDeclaration>().Any() ||
-        selection.OfType<IVisualScriptingField>().Any() ||
-        selection.OfType<StickyNote>().Any();
+        bool CanPerformSelectionOperation => Selection.OfType<TokenDeclaration>().Any() ||
+        Selection.OfType<IVisualScriptingField>().Any() ||
+        Selection.OfType<StickyNote>().Any();
 
-        protected override bool canCopySelection => CanPerformSelectionOperation || base.canCopySelection;
-        protected override bool canCutSelection => CanPerformSelectionOperation || base.canCutSelection;
-        protected override bool canPaste => CanPerformSelectionOperation || base.canPaste;
-
-        public bool CanCutSelection() => canCutSelection;
-        public bool CanCopySelection() => canCopySelection;
-        public bool CanPaste() => canPaste;
-        public void InvokeCutSelectionCallback() => CutSelectionCallback();
-        public void InvokeCopySelectionCallback() => CopySelectionCallback();
-        public void InvokePasteCallback() => PasteCallback();
+        public override bool CanCopySelection => CanPerformSelectionOperation || base.CanCopySelection;
+        public override bool CanCutSelection => CanPerformSelectionOperation || base.CanCutSelection;
+        public override bool CanPaste => CanPerformSelectionOperation || base.CanPaste;
 
         public void FrameSelectionIfNotVisible()
         {
-            if (selection.Cast<VisualElement>().Any(e => !IsElementVisibleInViewport(e)))
+            if (Selection.Cast<VisualElement>().Any(e => !IsElementVisibleInViewport(e)))
                 FrameSelection();
         }
 
@@ -820,7 +813,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                 currentProxy?.SetModel(hasModel.Model);
                 var scriptableObject = currentProxy?.ScriptableObject();
                 if (scriptableObject)
-                    Selection.activeObject = scriptableObject;
+                    UnityEditor.Selection.activeObject = scriptableObject;
             }
 
             m_Window.ShowNodeInSidePanel(selectable, true);
@@ -837,23 +830,23 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                 }
             }
 
-            OnSelectionChangedCallback?.Invoke(selection);
+            OnSelectionChangedCallback?.Invoke(Selection);
         }
 
         public override void RemoveFromSelection(ISelectableGraphElement selectable)
         {
             base.RemoveFromSelection(selectable);
             m_Window.ShowNodeInSidePanel(selectable, false);
-            OnSelectionChangedCallback?.Invoke(selection);
+            OnSelectionChangedCallback?.Invoke(Selection);
         }
 
         internal override void OnViewDataReady()
         {
             base.OnViewDataReady();
 
-            if (selection.OfType<Node>().Any())
+            if (Selection.OfType<Node>().Any())
             {
-                m_Window.ShowNodeInSidePanel(selection.OfType<Node>().Last(), true);
+                m_Window.ShowNodeInSidePanel(Selection.OfType<Node>().Last(), true);
             }
             else
             {
@@ -869,13 +862,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             PositionDependenciesManagers.AddPositionDependency(model);
         }
 
-        public void RemovePositionDependency(IGTFEdgeModel model)
+        public void RemovePositionDependency(IGTFEdgeModel edgeModel)
         {
-            if (model is IEdgeModel edgeModel)
-            {
-                PositionDependenciesManagers.Remove(edgeModel.FromNodeGuid, edgeModel.ToNodeGuid);
-                PositionDependenciesManagers.LogDependencies();
-            }
+            PositionDependenciesManagers.Remove(edgeModel.FromNodeGuid, edgeModel.ToNodeGuid);
+            PositionDependenciesManagers.LogDependencies();
         }
 
         public void AddPortalDependency(IGTFEdgePortalModel model)
@@ -891,7 +881,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         public EventPropagation AlignSelection(bool follow)
         {
-            PositionDependenciesManagers.AlignNodes(this, follow, selection);
+            PositionDependenciesManagers.AlignNodes(this, follow, Selection);
             return EventPropagation.Stop;
         }
 
@@ -932,7 +922,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                 return;
             }
 
-            SearcherService.ShowTypes(
+            SearcherService.ShowVariableTypes(
                 store.GetState().CurrentGraphModel.Stencil,
                 pos,
                 (t, i) =>
@@ -945,7 +935,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                         usage.UpdateTypeFromDeclaration();
                     }
 
-                    store.Dispatch(new RefreshUIAction(UpdateFlags.All));
+                    store.ForceRefreshUI(UpdateFlags.All);
                 });
         }
 
@@ -953,7 +943,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         {
             get
             {
-                IEnumerable<IHighlightable> elements = graphElements.ToList().OfType<IHighlightable>();
+                IEnumerable<IHighlightable> elements = GraphElements.ToList().OfType<IHighlightable>();
                 return elements.Concat(UIController.Blackboard?.GraphVariables ?? Enumerable.Empty<IHighlightable>());
             }
         }

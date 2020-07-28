@@ -18,6 +18,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         static State CreateStickyNote(State previousState, CreateStickyNoteAction action)
         {
+            Undo.RegisterCompleteObjectUndo((Object)previousState.AssetModel, "Add Sticky Note");
             previousState.CurrentGraphModel.CreateStickyNote(action.Position);
             return previousState;
         }

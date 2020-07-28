@@ -21,8 +21,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
         public IGTFGraphModel GraphModel { get; set; }
 
         GUID m_GUID = GUID.Generate();
-        public GUID Guid => m_GUID;
-        public IGTFGraphAssetModel AssetModel => GraphModel.AssetModel;
+        public GUID Guid
+        {
+            get => m_GUID;
+            set => m_GUID = value;
+        }
+
+        public IGTFGraphAssetModel AssetModel
+        {
+            get => GraphModel.AssetModel;
+            set => GraphModel.AssetModel = value;
+        }
 
         public void AssignNewGuid()
         {

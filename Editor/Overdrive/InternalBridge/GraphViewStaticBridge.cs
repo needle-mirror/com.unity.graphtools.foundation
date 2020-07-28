@@ -37,6 +37,20 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
             return GUIUtility.RoundToPixelGrid(v);
         }
 
+        public static Vector2 RoundToPixelGrid(Vector2 v)
+        {
+            return new Vector2(GUIUtility.RoundToPixelGrid(v.x), GUIUtility.RoundToPixelGrid(v.y));
+        }
+
+        public static Rect RoundToPixelGrid(Rect r)
+        {
+            var min = RoundToPixelGrid(r.min);
+            var max = RoundToPixelGrid(r.max);
+            return new Rect(min, max - min);
+        }
+
+        public static float PixelPerPoint => GUIUtility.pixelsPerPoint;
+
         public static void ApplyWireMaterial()
         {
             HandleUtility.ApplyWireMaterial();

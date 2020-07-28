@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.UIElements;
@@ -12,20 +12,65 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 {
     public class Port : GraphElements.Port, IDropTarget
     {
-        const string k_DropHighlightClass = "drop-highlighted";
+        public static readonly string k_PortTypeModifierClassNamePrefix = "ge-port--type-";
+        public static readonly string k_PortExecutionActiveModifer = k_UssClassName.WithUssModifier("execution-active");
+        public static readonly string k_DropHighlightClass = k_UssClassName.WithUssModifier("drop-highlighted");
+        public static readonly string k_ConstantEditorPartName = "constant-editor";
 
         VseGraphView VseGraphView => GraphView as VseGraphView;
-        new PortModel PortModel => base.PortModel as PortModel;
 
         /// <summary>
         /// Used to highlight the port when it is triggered during tracing
         /// </summary>
         public bool ExecutionPortActive
         {
-            set => EnableInClassList("execution-active", value);
+            set => EnableInClassList(k_PortExecutionActiveModifer, value);
         }
 
-        static void OnDropOutsideCallback(Overdrive.Store store, Vector2 pos, Edge edge)
+        public Port()
+        {
+            RegisterCallback<CustomStyleResolvedEvent>(OnCustomStyleResolved);
+        }
+
+        void OnCustomStyleResolved(CustomStyleResolvedEvent e)
+        {
+            if (PartList.GetPart(k_ConnectorPartName) is PortConnectorWithIconPart portConnector)
+            {
+                portConnector.UpdateFromModel();
+            }
+        }
+
+        protected override void BuildPartList()
+        {
+            if (!(PortModel as PortModel)?.Options.HasFlag(PortModelOptions.Hidden) ?? true)
+            {
+                base.BuildPartList();
+
+                PartList.ReplacePart(k_ConnectorPartName, PortConnectorWithIconPart.Create(k_ConnectorPartName, Model, this, k_UssClassName));
+                PartList.AppendPart(PortConstantEditorPart.Create(k_ConstantEditorPartName, Model, this, k_UssClassName, Store.GetState()?.EditorDataModel));
+            }
+        }
+
+        protected override void BuildSelfUI()
+        {
+            if (!(PortModel as PortModel)?.Options.HasFlag(PortModelOptions.Hidden) ?? true)
+            {
+                base.BuildSelfUI();
+            }
+        }
+
+        protected override void PostBuildUI()
+        {
+            if (!(PortModel as PortModel)?.Options.HasFlag(PortModelOptions.Hidden) ?? true)
+            {
+                base.PostBuildUI();
+
+                EdgeConnector?.SetDropOutsideDelegate((s, edge, pos) => OnDropOutsideCallback(s, pos, edge));
+                styleSheets.Add(AssetDatabase.LoadAssetAtPath<StyleSheet>(UICreationHelper.templatePath + "Port.uss"));
+            }
+        }
+
+        static void OnDropOutsideCallback(Store store, Vector2 pos, Edge edge)
         {
             VseGraphView graphView = edge.GetFirstAncestorOfType<VseGraphView>();
             Vector2 localPos = graphView.contentViewContainer.WorldToLocal(pos);
@@ -56,63 +101,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             ((Store)store)?.GetState().CurrentGraphModel?.Stencil.CreateNodesFromPort((Store)store, existingPortModel, localPos, pos, edgesToDelete);
         }
 
-        public Port()
-        {
-            RegisterCallback<CustomStyleResolvedEvent>(OnCustomStyleResolved);
-        }
-
-        void OnCustomStyleResolved(CustomStyleResolvedEvent e)
-        {
-            if (PartList.GetPart(k_ConnectorPartName) is PortConnectorWithIconPart portConnector)
-            {
-                portConnector.UpdateFromModel();
-            }
-        }
-
-        public static readonly string k_ConstantEditorPartName = "constant-editor";
-
-        static readonly string k_PortTypeModifierClassNamePrefix = "ge-port--type-";
-        static string GetClassNameModifierForType(PortType t)
-        {
-            return k_PortTypeModifierClassNamePrefix + t.ToString().ToLower();
-        }
-
-        protected override void BuildPartList()
-        {
-            if (!PortModel.Options.HasFlag(PortModel.PortModelOptions.Hidden))
-            {
-                base.BuildPartList();
-
-                PartList.ReplacePart(k_ConnectorPartName, PortConnectorWithIconPart.Create(k_ConnectorPartName, Model, this, k_UssClassName));
-                PartList.AppendPart(PortConstantEditorPart.Create(k_ConstantEditorPartName, Model, this, k_UssClassName, Store.GetState()?.EditorDataModel));
-            }
-        }
-
-        protected override void BuildSelfUI()
-        {
-            if (!PortModel.Options.HasFlag(PortModel.PortModelOptions.Hidden))
-            {
-                base.BuildSelfUI();
-            }
-        }
-
-        protected override void PostBuildUI()
-        {
-            if (!PortModel.Options.HasFlag(PortModel.PortModelOptions.Hidden))
-            {
-                base.PostBuildUI();
-
-                EdgeConnector?.SetDropOutsideDelegate((s, edge, pos) => OnDropOutsideCallback(s, pos, edge));
-                styleSheets.Add(AssetDatabase.LoadAssetAtPath<StyleSheet>(UICreationHelper.templatePath + "Port.uss"));
-            }
-        }
-
         protected override void UpdateSelfFromModel()
         {
             base.UpdateSelfFromModel();
 
             this.PrefixRemoveFromClassList(k_PortTypeModifierClassNamePrefix);
             AddToClassList(GetClassNameModifierForType(PortModel.PortType));
+        }
+
+        static string GetClassNameModifierForType(PortType t)
+        {
+            return k_PortTypeModifierClassNamePrefix + t.ToString().ToLower();
         }
 
         public bool CanAcceptDrop(List<ISelectableGraphElement> dragSelection)
@@ -128,7 +127,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         {
             return selectable is Token token
                 && token.Model is IGTFVariableNodeModel varModel
-                && !varModel.OutputPort.ConnectionPortModels.Any(p => p == PortModel)
+                && !varModel.OutputPort.GetConnectedPorts().Any(p => p == PortModel)
                 && !ReferenceEquals(PortModel.NodeModel, token.Model);
         }
 
@@ -147,7 +146,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
             Assert.IsTrue(dropElements.Count == 1);
 
-            var edgesVMToDelete = PortModel.Capacity == PortCapacity.Multi ? new List<IEdgeModel>() : PortModel.ConnectedEdges;
+            var edgesVMToDelete = PortModel.Capacity == PortCapacity.Multi ? new List<IGTFEdgeModel>() : PortModel.GetConnectedEdges();
             var edgesToDelete = edgesVMToDelete;
 
             if (IsTokenToDrop(selectionList[0]))
@@ -158,7 +157,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                 return true;
             }
 
-            var variablesToCreate = DragAndDropHelper.ExtractVariablesFromDroppedElements(dropElements, VseGraphView, evt.mousePosition);
+            var variablesToCreate = DragAndDropHelper.ExtractVariablesFromDroppedElements(dropElements, GraphView, evt.mousePosition);
 
             PortType type = PortModel.PortType;
             if (type != PortType.Data) // do not connect loop/exec ports to variables

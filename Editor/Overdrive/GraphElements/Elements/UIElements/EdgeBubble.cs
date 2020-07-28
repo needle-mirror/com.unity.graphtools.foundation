@@ -6,9 +6,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 {
     public class EdgeBubble : Label
     {
-        TextField TextField { get; }
-
         Attacher m_Attacher;
+
+        TextField TextField { get; }
 
         public override string text
         {

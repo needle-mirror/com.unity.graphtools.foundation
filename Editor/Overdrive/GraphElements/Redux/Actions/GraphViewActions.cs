@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
+using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
@@ -33,21 +34,21 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         }
     }
 
-    public class AlignElementsAction : IAction
+    public class AutoPlaceElementsAction : IAction
     {
         public IPositioned[] Models;
         public Vector2[] Deltas;
-        public AlignElementsAction()
+        public AutoPlaceElementsAction()
         {
         }
 
-        public AlignElementsAction(IReadOnlyCollection<Vector2> delta, IReadOnlyCollection<IPositioned> models)
+        public AutoPlaceElementsAction(IReadOnlyCollection<Vector2> delta, IReadOnlyCollection<IPositioned> models)
         {
             Models = models.ToArray();
             Deltas = delta.ToArray();
         }
 
-        public static TState DefaultReducer<TState>(TState previousState, AlignElementsAction action) where TState : State
+        public static TState DefaultReducer<TState>(TState previousState, AutoPlaceElementsAction action) where TState : State
         {
             if (action.Models == null || action.Deltas == null || action.Models.Length != action.Deltas.Length)
                 return previousState;

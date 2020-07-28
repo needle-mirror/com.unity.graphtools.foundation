@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -35,8 +36,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         public string StringValue
         {
-            get => Value.name;
-            set => Value.name = value;
+            get => m_Value.name;
+            set => m_Value.name = value;
         }
 
         public string Label => "Input";

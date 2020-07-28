@@ -3,8 +3,7 @@ using System;
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Redux
 {
     class PassThroughAction : object, IAction
-    {
-    }
+    {}
 
     class ChangeFooAction : object, IAction
     {
@@ -27,6 +26,5 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Redux
     }
 
     class UnregisteredAction : object, IAction
-    {
-    }
+    {}
 }

@@ -8,9 +8,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 {
     public static class BadgeContainerExtensions
     {
-        const string k_HasErrorBadge = "hasErrorIconBadge";
-        const string k_HasValueBadge = "hasValueIconBadge";
-
         public static void ShowErrorBadge(
             this IBadgeContainer self,
             VisualElement parent,
@@ -35,7 +32,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                 parent.Add(self.ErrorBadge);
                 self.ErrorBadge.AttachTo(target, alignment);
 
-                target.EnableInClassList(k_HasErrorBadge, true);
                 if (errorQuickFix != null)
                     self.ErrorBadge.RegisterCallback<MouseDownEvent>(e => errorQuickFix.quickFix(store));
 
@@ -48,8 +44,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         public static void HideErrorBadge(this IBadgeContainer self)
         {
             Assert.IsTrue(self is VisualElement);
-
-            ((VisualElement)self).RemoveFromClassList(k_HasErrorBadge);
 
             self.ErrorBadge?.RemoveFromHierarchy();
             self.ErrorBadge = null;
@@ -76,15 +70,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
             self.ValueBadge.BadgeColor = badgeColor;
             self.ValueBadge.Text = description;
-
-            target.EnableInClassList(k_HasValueBadge, true);
         }
 
         public static void HideValueBadge(this IBadgeContainer self)
         {
             Assert.IsTrue(self is VisualElement);
 
-            ((VisualElement)self).RemoveFromClassList(k_HasValueBadge);
             if (self.ValueBadge != null)
                 self.ValueBadge.style.visibility = Visibility.Hidden;
         }

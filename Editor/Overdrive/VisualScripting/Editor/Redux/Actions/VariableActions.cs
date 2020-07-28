@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
@@ -115,9 +114,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
     public class ConvertConstantNodesToVariableNodesAction : IAction
     {
-        public readonly IConstantNodeModel[] ConstantModels;
+        public readonly IGTFConstantNodeModel[] ConstantModels;
 
-        public ConvertConstantNodesToVariableNodesAction(params IConstantNodeModel[] constantModels)
+        public ConvertConstantNodesToVariableNodesAction(params IGTFConstantNodeModel[] constantModels)
         {
             ConstantModels = constantModels;
         }
@@ -125,10 +124,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
     public class ReorderVariableDeclarationAction : IAction
     {
-        public readonly IVariableDeclarationModel VariableDeclarationModel;
+        public readonly IGTFVariableDeclarationModel VariableDeclarationModel;
         public readonly int Index;
 
-        public ReorderVariableDeclarationAction(IVariableDeclarationModel variableDeclarationModel, int index)
+        public ReorderVariableDeclarationAction(IGTFVariableDeclarationModel variableDeclarationModel, int index)
         {
             VariableDeclarationModel = variableDeclarationModel;
             Index = index;

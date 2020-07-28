@@ -13,12 +13,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch
         StickyNote
     }
 
-    public interface ITaggedSearcherTag : ISearcherItemData
-    {
-        CommonSearcherTags Tag { get; }
-    }
-
-    public readonly struct TagSearcherItemData : ITaggedSearcherTag
+    public readonly struct TagSearcherItemData : ISearcherItemData
     {
         public CommonSearcherTags Tag { get; }
 
@@ -30,26 +25,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch
 
     public readonly struct TypeSearcherItemData : ISearcherItemData
     {
-        public enum CommonSearcherTags
-        {
-            Type,
-            Constant
-        }
-
-        public bool IsConstant => Tag == CommonSearcherTags.Constant;
         public TypeHandle Type { get; }
 
-        public CommonSearcherTags Tag { get; }
-
-        public TypeSearcherItemData(TypeHandle type, CommonSearcherTags tag = CommonSearcherTags.Type)
+        public TypeSearcherItemData(TypeHandle type)
         {
             Type = type;
-            Tag = tag;
-        }
-
-        public static TypeSearcherItemData Constant(TypeHandle type)
-        {
-            return new TypeSearcherItemData(type, CommonSearcherTags.Constant);
         }
     }
 
@@ -60,16 +40,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch
         public NodeSearcherItemData(Type type)
         {
             Type = type;
-        }
-    }
-
-    public readonly struct GraphAssetSearcherItemData : ISearcherItemData
-    {
-        public IGTFGraphAssetModel GraphAssetModel { get; }
-
-        public GraphAssetSearcherItemData(IGTFGraphAssetModel graphAssetModel)
-        {
-            GraphAssetModel = graphAssetModel;
         }
     }
 }

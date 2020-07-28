@@ -1,8 +1,8 @@
 using System;
 using System.Collections;
 using NUnit.Framework;
+using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEngine.UIElements;
 using UnityEngine.TestTools;
 using UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utilities;
 using UnityEngine;
@@ -63,8 +63,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 yield return null;
             }
 
-            Assert.AreEqual(positionA, m_SnappedNode.layout.xMax);
-            Assert.AreNotEqual(m_SnappingNodePos.x + moveOffset.x, m_SnappedNode.layout.x);
+            Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(positionA), m_SnappedNode.layout.xMax);
+            Assert.AreNotEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.x + moveOffset.x),
+                m_SnappedNode.layout.x);
 
             yield return null;
         }
@@ -102,8 +103,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 yield return null;
             }
 
-            Assert.AreEqual(positionB, m_SnappedNode.layout.center.x);
-            Assert.AreNotEqual(m_SnappingNodePos.x + moveOffset.x, m_SnappedNode.layout.x);
+            Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(positionB),
+                GraphViewStaticBridge.RoundToPixelGrid(m_SnappedNode.layout.center.x));
+            Assert.AreNotEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.x + moveOffset.x),
+                m_SnappedNode.layout.x);
         }
 
         [UnityTest]
@@ -140,8 +143,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 yield return null;
             }
 
-            Assert.AreEqual(positionC, m_SnappedNode.layout.xMin);
-            Assert.AreNotEqual(m_SnappingNodePos.x + moveOffset.x, m_SnappedNode.layout.x);
+            Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(positionC), m_SnappedNode.layout.xMin);
+            Assert.AreNotEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.x + moveOffset.x),
+                m_SnappedNode.layout.x);
 
             yield return null;
         }
@@ -179,8 +183,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 yield return null;
             }
 
-            Assert.AreNotEqual(positionA, m_SnappedNode.layout.xMax);
-            Assert.AreEqual(m_SnappingNodePos.x + moveOffset.x, m_SnappedNode.layout.x);
+            Assert.AreNotEqual(GraphViewStaticBridge.RoundToPixelGrid(positionA), m_SnappedNode.layout.xMax);
+            Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.x + moveOffset.x),
+                m_SnappedNode.layout.x);
 
             yield return null;
         }
@@ -219,8 +224,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 yield return null;
             }
 
-            Assert.AreNotEqual(positionB, m_SnappedNode.layout.center.x);
-            Assert.AreEqual(m_SnappingNodePos.x + moveOffset.x, m_SnappedNode.layout.x);
+            Assert.AreNotEqual(GraphViewStaticBridge.RoundToPixelGrid(positionB), m_SnappedNode.layout.center.x);
+            Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.x + moveOffset.x),
+                m_SnappedNode.layout.x);
 
             yield return null;
         }
@@ -258,8 +264,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 yield return null;
             }
 
-            Assert.AreNotEqual(positionC, m_SnappedNode.layout.xMin);
-            Assert.AreEqual(m_SnappingNodePos.x + moveOffset.x, m_SnappedNode.layout.x);
+            Assert.AreNotEqual(GraphViewStaticBridge.RoundToPixelGrid(positionC), m_SnappedNode.layout.xMin);
+            Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.x + moveOffset.x),
+                m_SnappedNode.layout.x);
 
             yield return null;
         }
@@ -304,8 +311,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 yield return null;
             }
 
-            Assert.AreEqual(positionA, m_SnappedNode.layout.yMax);
-            Assert.AreNotEqual(m_SnappingNodePos.y + moveOffset.y, m_SnappedNode.layout.y);
+            Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(positionA), m_SnappedNode.layout.yMax);
+            Assert.AreNotEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.y + moveOffset.y),
+                m_SnappedNode.layout.y);
         }
 
         [UnityTest]
@@ -344,8 +352,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 yield return null;
             }
 
-            Assert.AreEqual(positionB, m_SnappedNode.layout.center.y);
-            Assert.AreNotEqual(m_SnappingNodePos.y + moveOffset.y, m_SnappedNode.layout.y);
+            Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(positionB),
+                GraphViewStaticBridge.RoundToPixelGrid(m_SnappedNode.layout.center.y));
+            Assert.AreNotEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.y + moveOffset.y),
+                m_SnappedNode.layout.y);
 
             yield return null;
         }
@@ -389,8 +399,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 yield return null;
             }
 
-            Assert.AreEqual(positionC, m_SnappedNode.layout.yMin);
-            Assert.AreNotEqual(m_SnappingNodePos.y + moveOffset.y, m_SnappedNode.layout.y);
+            Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(positionC), m_SnappedNode.layout.yMin);
+            Assert.AreNotEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.y + moveOffset.y),
+                m_SnappedNode.layout.y);
 
             yield return null;
         }
@@ -434,8 +445,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 yield return null;
             }
 
-            Assert.AreNotEqual(positionA, m_SnappedNode.layout.yMax);
-            Assert.AreEqual(m_SnappingNodePos.y + moveOffset.y, m_SnappedNode.layout.y);
+            Assert.AreNotEqual(GraphViewStaticBridge.RoundToPixelGrid(positionA), m_SnappedNode.layout.yMax);
+            Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.y + moveOffset.y),
+                m_SnappedNode.layout.y);
         }
 
         [UnityTest]
@@ -475,8 +487,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 yield return null;
             }
 
-            Assert.AreNotEqual(positionB, m_SnappedNode.layout.center.y);
-            Assert.AreEqual(m_SnappingNodePos.y + moveOffset.y, m_SnappedNode.layout.y);
+            Assert.AreNotEqual(GraphViewStaticBridge.RoundToPixelGrid(positionB), m_SnappedNode.layout.center.y);
+            Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.y + moveOffset.y),
+                m_SnappedNode.layout.y);
         }
 
         [UnityTest]
@@ -518,8 +531,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 yield return null;
             }
 
-            Assert.AreNotEqual(positionC, m_SnappedNode.layout.yMin);
-            Assert.AreEqual(m_SnappingNodePos.y + moveOffset.y, m_SnappedNode.layout.y);
+            Assert.AreNotEqual(GraphViewStaticBridge.RoundToPixelGrid(positionC), m_SnappedNode.layout.yMin);
+            Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.y + moveOffset.y),
+                m_SnappedNode.layout.y);
 
             yield return null;
         }

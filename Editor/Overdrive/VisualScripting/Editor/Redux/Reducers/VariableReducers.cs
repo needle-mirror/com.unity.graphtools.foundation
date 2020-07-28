@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Properties;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
@@ -66,6 +67,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         static State DuplicateGraphVariableDeclarations(State previousState, DuplicateGraphVariableDeclarationsAction action)
         {
+            Undo.RegisterCompleteObjectUndo((Object)previousState.AssetModel, "Create Graph Variables");
+
             List<IGTFVariableDeclarationModel> duplicatedModels = previousState.CurrentGraphModel.DuplicateGraphVariableDeclarations(action.VariableDeclarationModels);
             previousState.EditorDataModel?.SelectElementsUponCreation(duplicatedModels, true);
             return previousState;
@@ -97,13 +100,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         {
             var graphModel = previousState.CurrentGraphModel;
             var variableDeclaration = graphModel.CreateGraphVariableDeclaration(action.Name, action.TypeHandle, action.ModifierFlags, action.IsExposed, null, action.Guid);
-            previousState.EditorDataModel.ElementModelToRename = variableDeclaration as IGTFGraphElementModel;
+            previousState.EditorDataModel.ElementModelToRename = variableDeclaration;
             previousState.MarkForUpdate(UpdateFlags.RequestRebuild);
             return previousState;
         }
 
         static State ReorderGraphVariableDeclaration(State previousState, ReorderGraphVariableDeclarationAction action)
         {
+            Undo.RegisterCompleteObjectUndo((Object)previousState.AssetModel, "Reorder Graph Variable Declaration");
             previousState.CurrentGraphModel.ReorderGraphVariableDeclaration(action.VariableDeclarationModel, action.Index);
             return previousState;
         }

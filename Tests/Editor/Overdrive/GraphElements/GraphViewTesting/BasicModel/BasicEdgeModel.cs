@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 
@@ -11,9 +12,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
         public IGTFGraphModel GraphModel { get; set; }
 
         GUID m_GUID = GUID.Generate();
-        public GUID Guid => m_GUID;
+        public GUID Guid
+        {
+            get => m_GUID;
+            set => m_GUID = value;
+        }
 
-        public IGTFGraphAssetModel AssetModel => GraphModel.AssetModel;
+        public IGTFGraphAssetModel AssetModel
+        {
+            get => GraphModel.AssetModel;
+            set => GraphModel.AssetModel = value;
+        }
 
         public void AssignNewGuid()
         {
@@ -21,23 +30,29 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
         }
 
         public bool IsDeletable => true;
-        public IGTFPortModel FromPort { get; }
-        public IGTFPortModel ToPort { get; }
+        public IGTFPortModel FromPort { get; set; }
+        public IGTFPortModel ToPort { get; set; }
+
+        public string FromPortId => FromPort?.UniqueName;
+
+        public string ToPortId => ToPort?.UniqueName;
+
+        public GUID FromNodeGuid => FromPort?.NodeModel?.Guid ?? default;
+
+        public GUID ToNodeGuid => FromPort?.NodeModel?.Guid ?? default;
+
         static ReadOnlyCollection<EdgeControlPointModel> s_EdgeControlPoints = new List<EdgeControlPointModel>().AsReadOnly();
         public ReadOnlyCollection<EdgeControlPointModel> EdgeControlPoints => s_EdgeControlPoints;
-        public void InsertEdgeControlPoint(int atIndex, Vector2 point, float tightness)
+        public void SetPorts(IGTFPortModel toPortModel, IGTFPortModel fromPortModel)
+        {
+            FromPort = fromPortModel;
+            ToPort = toPortModel;
+        }
+
+        public void ResetPorts()
         {
         }
 
-        public void ModifyEdgeControlPoint(int index, Vector2 point, float tightness)
-        {
-        }
-
-        public void RemoveEdgeControlPoint(int index)
-        {
-        }
-
-        public bool EditMode { get; set; }
         public string EdgeLabel { get; set; }
 
         public BasicEdgeModel(IGTFPortModel to, IGTFPortModel from)

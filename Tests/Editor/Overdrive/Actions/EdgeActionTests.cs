@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using NUnit.Framework;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
 using UnityEngine;
 using static UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.VSPreferences;
@@ -105,13 +105,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
             }
         }
 
-        static object[] MakeItemizeTestCase(TestingMode testingMode, ItemizeOptions options, ItemizeTestType itemizeTest, Func<GraphModel, IGTFNodeModel> makeNode)
+        static object[] MakeItemizeTestCase(TestingMode testingMode, ItemizeOptions options, ItemizeTestType itemizeTest, Func<GraphModel, IInOutPortsNode> makeNode)
         {
             return new object[] { testingMode, options, itemizeTest, makeNode };
         }
 
         [Test, TestCaseSource(nameof(GetItemizeTestCases))]
-        public void Test_CreateEdgeAction_Itemize(TestingMode testingMode, ItemizeOptions options, ItemizeTestType itemizeTest, Func<GraphModel, IGTFNodeModel> makeNode)
+        public void Test_CreateEdgeAction_Itemize(TestingMode testingMode, ItemizeOptions options, ItemizeTestType itemizeTest, Func<GraphModel, IInOutPortsNode> makeNode)
         {
             // save initial itemize options
             VSPreferences pref = ((TestState)m_Store.GetState()).Preferences as VSPreferences;
@@ -121,7 +121,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
             try
             {
                 // create int node
-                IGTFNodeModel node0 = makeNode(GraphModel);
+                IInOutPortsNode node0 = makeNode(GraphModel);
 
                 var opNode = GraphModel.CreateNode<Type0FakeNodeModel>("Node0", Vector2.zero);
 
@@ -165,7 +165,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                         if (itemizeTest == ItemizeTestType.Enabled)
                         {
                             Assert.That(GetNodeCount(), Is.EqualTo(3));
-                            IHasSingleOutputPort newNode = GetNode(2) as IHasSingleOutputPort;
+                            ISingleOutputPortNode newNode = GetNode(2) as ISingleOutputPortNode;
                             Assert.NotNull(newNode);
                             Assert.That(newNode, Is.TypeOf(node0.GetType()));
                             IGTFPortModel output1 = newNode.OutputPort;
@@ -332,7 +332,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
         [Test, TestCaseSource(nameof(GetCreateTestCases))]
         public void Test_CreateNodeFromOutputPort_NoConnection(TestingMode testingMode)
         {
-            var gedb = new GraphElementSearcherDatabase(Stencil);
+            var gedb = new GraphElementSearcherDatabase(Stencil, GraphModel);
             Type0FakeNodeModel.AddToSearcherDatabase(gedb);
             var db = gedb.Build();
             var item = (GraphNodeModelSearcherItem)db.Search(nameof(Type0FakeNodeModel), out _)[0];
@@ -356,14 +356,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                     Assert.That(newNode, Is.TypeOf<Type0FakeNodeModel>());
 
                     var portModel = node0.OutputsByDisplayOrder.First();
-                    Assert.That(portModel?.ConnectionPortModels.Count(), Is.EqualTo(0));
+                    Assert.That(portModel?.GetConnectedPorts().Count(), Is.EqualTo(0));
                 });
         }
 
         [Test, TestCaseSource(nameof(GetCreateTestCases))]
         public void Test_CreateNodeFromOutputPort(TestingMode testingMode)
         {
-            var gedb = new GraphElementSearcherDatabase(Stencil);
+            var gedb = new GraphElementSearcherDatabase(Stencil, GraphModel);
             Type3FakeNodeModel.AddToSearcherDatabase(gedb);
             var db = gedb.Build();
             var item = (GraphNodeModelSearcherItem)db.Search(nameof(Type3FakeNodeModel), out _)[0];
@@ -392,7 +392,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                     Assert.That(newEdge.ToPort.DataTypeHandle, Is.EqualTo(newEdge.FromPort.DataTypeHandle));
 
                     var portModel = node0.Output;
-                    Assert.That(portModel.ConnectionPortModels.Single(), Is.EqualTo(newNode.InputsByDisplayOrder.First()));
+                    Assert.That(portModel.GetConnectedPorts().Single(), Is.EqualTo(newNode.InputsByDisplayOrder.First()));
                 });
         }
 
@@ -538,7 +538,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
             var constant = GraphModel.CreateConstantNode("Constant", typeof(int).GenerateTypeHandle(), Vector2.zero);
             var binary0 = GraphModel.CreateNode<Type0FakeNodeModel>("Node0", Vector2.zero);
             var binary1 = GraphModel.CreateNode<Type0FakeNodeModel>("Node1", Vector2.zero);
-            var edge = GraphModel.CreateEdge(binary0.Input0, constant.OutputPort);
+            GraphModel.CreateEdge(binary0.Input0, constant.OutputPort);
 
             TestPrereqActionPostreq(mode,
                 () =>
@@ -546,7 +546,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                     RefreshReference(ref constant);
                     RefreshReference(ref binary0);
                     RefreshReference(ref binary1);
-                    edge = GetEdge(0);
+                    var edge = GetEdge(0);
                     Assert.That(GetNodeCount(), Is.EqualTo(3));
                     Assert.That(GetEdgeCount(), Is.EqualTo(1));
                     Assert.That(binary0.Input0, Is.ConnectedTo(constant.OutputPort));
@@ -571,7 +571,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
             var unary = GraphModel.CreateNode<Type0FakeNodeModel>("Node0", Vector2.zero);
             var edge = GraphModel.CreateEdge(unary.Input0, constant.OutputPort);
 
-            var gedb = new GraphElementSearcherDatabase(Stencil);
+            var gedb = new GraphElementSearcherDatabase(Stencil, GraphModel);
             Type0FakeNodeModel.AddToSearcherDatabase(gedb);
             var db = gedb.Build();
             var item = (GraphNodeModelSearcherItem)db.Search(nameof(Type0FakeNodeModel), out _)[0];
@@ -599,7 +599,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                     Assert.That(GetEdgeCount(), Is.EqualTo(2));
                     Assert.That(constant.OutputPort, Is.ConnectedTo(unary2.Input0));
                     Assert.That(unary2.Output0, Is.ConnectedTo(unary.Input0));
-                    Assert.IsFalse(GraphModel.EdgeModels.Contains(edge as IEdgeModel));
+                    Assert.IsFalse(GraphModel.EdgeModels.Contains(edge));
                 }
             );
         }
@@ -612,7 +612,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
             GraphModel.CreateEdge(addNode.Input0, constantNode.OutputPort);
             GraphModel.CreateEdge(addNode.Input1, constantNode.OutputPort);
 
-            var gedb = new GraphElementSearcherDatabase(Stencil);
+            var gedb = new GraphElementSearcherDatabase(Stencil, GraphModel);
             Type0FakeNodeModel.AddToSearcherDatabase(gedb);
             var db = gedb.Build();
             var item = (GraphNodeModelSearcherItem)db.Search(nameof(Type0FakeNodeModel), out _)[0];

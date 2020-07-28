@@ -14,7 +14,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         internal const float k_ConnectionDistanceThreshold = 10f;
 
-        public EdgeConnector(Overdrive.Store store, GraphView graphView, EdgeConnectorListener listener, Func<IGTFGraphModel, GhostEdgeModel> ghostEdgeViewModelCreator = null)
+        public EdgeConnector(Store store, GraphView graphView, EdgeConnectorListener listener, Func<IGTFGraphModel, GhostEdgeModel> ghostEdgeViewModelCreator = null)
         {
             m_EdgeConnectorListener = listener;
             m_EdgeDragHelper = new EdgeDragHelper(store, graphView, listener, ghostEdgeViewModelCreator);
@@ -24,12 +24,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         public virtual EdgeDragHelper edgeDragHelper => m_EdgeDragHelper;
 
-        public void SetDropOutsideDelegate(Action<Overdrive.Store, Edge, Vector2> action)
+        public void SetDropOutsideDelegate(Action<Store, Edge, Vector2> action)
         {
             m_EdgeConnectorListener.SetDropOutsideDelegate(action);
         }
 
-        public void SetDropDelegate(Action<Overdrive.Store, Edge> action)
+        public void SetDropDelegate(Action<Store, Edge> action)
         {
             m_EdgeConnectorListener.SetDropDelegate(action);
         }

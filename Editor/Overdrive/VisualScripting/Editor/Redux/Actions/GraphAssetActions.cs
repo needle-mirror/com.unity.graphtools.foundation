@@ -66,5 +66,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         }
     }
 
-    public class UnloadGraphAssetAction : IAction {}
+    public class UnloadGraphAssetAction : IAction
+    {}
 }

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using JetBrains.Annotations;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
@@ -103,8 +104,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         PluginRepository m_PluginRepository;
 
-        public new Store Store => base.Store as Store;
-
         GtfErrorToolbar m_ErrorToolbar;
 
         bool m_Focused;
@@ -156,7 +155,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                 AssetDatabase.SaveAssets();
 
             CompilationResult r = graphModel.Compile(translator);
-            if (base.Store?.GetState()?.CompilationResultModel is CompilationResultModel compilationResultModel) // TODO: could have disappeared during the await
+            if (Store?.GetState()?.CompilationResultModel is CompilationResultModel compilationResultModel) // TODO: could have disappeared during the await
             {
                 compilationResultModel.lastResult = r;
                 OnCompilationDone(graphModel, compilationOptions, r);
@@ -242,7 +241,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             // Create the store.
             DataModel = CreateDataModel();
             State initialState = CreateInitialState();
-            base.Store = new Store(initialState);
+            Store = new Store(initialState, StoreHelper.RegisterReducers);
 
             m_GraphContainer = new VisualElement { name = "graphContainer" };
             m_GraphView = CreateGraphView();
@@ -270,7 +269,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
                 m_ElementShownInSidePanel?.NodeModel.DefineNode();
                 m_ElementShownInSidePanel?.UpdateFromModel();
-                Store.Dispatch(new RefreshUIAction(UpdateFlags.RequestCompilation));
+                Store.ForceRefreshUI(UpdateFlags.RequestCompilation);
             };
             m_SidePanel.Add(m_SidePanelPropertyElement);
             ShowNodeInSidePanel(null, false);
@@ -312,7 +311,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                     }
                 }
                 else             // will display the blank page. not needed otherwise as the LoadGraphAsset reducer will refresh
-                    Store.Dispatch(new RefreshUIAction(UpdateFlags.All));
+                    Store.ForceRefreshUI(UpdateFlags.All);
             }).ExecuteLater(0);
 
 
@@ -370,7 +369,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                 { Event.KeyboardEvent("space"), OnSpaceKeyDown },
                 { Event.KeyboardEvent("C"), () =>
               {
-                  IGTFGraphElementModel[] selectedModels = m_GraphView.selection
+                  IGTFGraphElementModel[] selectedModels = m_GraphView.Selection
                       .OfType<IGraphElement>()
                       .Select(x => x.Model)
                       .ToArray();
@@ -383,7 +382,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                       return EventPropagation.Stop;
                   }
 
-                  IConstantNodeModel[] constantModels = selectedModels.OfType<IConstantNodeModel>().ToArray();
+                  IGTFConstantNodeModel[] constantModels = selectedModels.OfType<IGTFConstantNodeModel>().ToArray();
                   if (constantModels.Any())
                       Store.Dispatch(new ConvertConstantNodesToVariableNodesAction(constantModels));
                   return EventPropagation.Stop;
@@ -401,7 +400,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         EventPropagation RenameElement()
         {
-            var renamableSelection = m_GraphView.selection.OfType<GraphElement>().Where(x => x.IsRenamable()).ToList();
+            var renamableSelection = m_GraphView.Selection.OfType<GraphElement>().Where(x => x.IsRenamable()).ToList();
 
             var lastSelectedItem = renamableSelection.LastOrDefault() as ISelectableGraphElement;
 
@@ -565,15 +564,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                 UpdateGraphContainer();
                 m_BlankPage.UpdateUI();
                 Menu.UpdateUI();
-
-                m_GraphView.schedule.Execute(() =>
-                {
-                    if (editorDataModel.NodeToFrameGuid != default)
-                    {
-                        GraphView.PanToNode(editorDataModel.NodeToFrameGuid);
-                        editorDataModel.NodeToFrameGuid = default;
-                    }
-                }).ExecuteLater(1);
             }
 
             if (currentUpdateFlags.HasFlag(UpdateFlags.GraphTopology))
@@ -643,7 +633,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         {
             Profiler.BeginSample("VseWindow_UndoRedoPerformed");
             if (!RefreshUIDisabled)
-                Store.Dispatch(new RefreshUIAction(UpdateFlags.All));
+                Store.ForceRefreshUI(UpdateFlags.All);
             Profiler.EndSample();
         }
 
@@ -715,12 +705,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             m_Focused = false;
         }
 
-        void Update()
+        protected virtual void Update()
         {
             if (Store == null)
                 return;
 
-            Store.GetState().EditorDataModel.UpdateCounter++;
             Store.Update();
 
             if (Preferences.GetBool(BoolPref.AutoRecompile) &&
@@ -761,7 +750,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             if (m_GraphView.panel == null)
                 return EventPropagation.Continue;
 
-            var selectedToken = m_GraphView.selection?.OfType<Token>().ToList();
+            var selectedToken = m_GraphView.Selection?.OfType<Token>().ToList();
             if (selectedToken?.Any() == true)
             {
                 var latestSelectedToken = selectedToken.LastOrDefault();
@@ -837,7 +826,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         public void RefreshUI(UpdateFlags updateFlags)
         {
-            Store.Dispatch(new RefreshUIAction(updateFlags));
+            Store.ForceRefreshUI(updateFlags);
         }
 
         string GetCurrentAssetPath()

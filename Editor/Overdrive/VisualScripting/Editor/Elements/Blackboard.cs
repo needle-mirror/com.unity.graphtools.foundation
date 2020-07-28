@@ -2,7 +2,6 @@ using System;
 using System.Linq;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
@@ -11,8 +10,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 {
     public class Blackboard : GraphElements.Blackboard
     {
-        public new Store Store => base.Store as Store;
-
         public new VseGraphView GraphView => base.GraphView as VseGraphView;
 
 
@@ -52,8 +49,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                     return;
 
                 if (currentGraphModel == GraphView.UIController.LastGraphModel &&
-                    (GraphView.selection.LastOrDefault() is BlackboardField ||
-                     GraphView.selection.LastOrDefault() is IVisualScriptingField))
+                    (GraphView.Selection.LastOrDefault() is BlackboardField ||
+                     GraphView.Selection.LastOrDefault() is IVisualScriptingField))
                 {
                     currentGraphModel.LastChanges.RequiresRebuild = true;
                     return;
@@ -81,7 +78,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         void OnAttachToPanel(AttachToPanelEvent evt)
         {
-            Selection.selectionChanged += OnSelectionChange;
+            UnityEditor.Selection.selectionChanged += OnSelectionChange;
 
             RegisterCallback<DragUpdatedEvent>(OnDragUpdated);
             RegisterCallback<DragPerformEvent>(OnDragPerform);
@@ -90,7 +87,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         void OnDetachFromPanel(DetachFromPanelEvent evt)
         {
             // ReSharper disable once DelegateSubtraction
-            Selection.selectionChanged -= OnSelectionChange;
+            UnityEditor.Selection.selectionChanged -= OnSelectionChange;
 
             UnregisterCallback<DragUpdatedEvent>(OnDragUpdated);
             UnregisterCallback<DragPerformEvent>(OnDragPerform);
@@ -125,8 +122,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                 return;
 
             if (currentGraphModel == GraphView.UIController.LastGraphModel &&
-                (GraphView.selection.LastOrDefault() is BlackboardField ||
-                 GraphView.selection.LastOrDefault() is IVisualScriptingField))
+                (GraphView.Selection.LastOrDefault() is BlackboardField ||
+                 GraphView.Selection.LastOrDefault() is IVisualScriptingField))
             {
                 currentGraphModel.LastChanges.RequiresRebuild = true;
                 return;
@@ -143,13 +140,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         void OnMoveItemRequested(GraphElements.Blackboard blackboard, int index, VisualElement field)
         {
-            // TODO: Workaround to prevent moving item above a BlackboardThisField, as all check code is executed
-            // within Unity.GraphElements.BlackboardSection in private or internal functions
-            bool hasBlackboardThisField = (blackboard as Blackboard)?.Sections ? [0]?.Children()
-                ?.Any(x => x is BlackboardThisField) ?? false;
-            if (index == 0 && hasBlackboardThisField)
-                return;
-
             var currentGraphModel = Store.GetState().CurrentGraphModel;
             currentGraphModel.Stencil.GetBlackboardProvider().MoveItemRequested(Store, index, field);
         }
@@ -158,8 +148,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         {
             base.RebuildBlackboard();
 
-            var editorDataModel = Store.GetState().EditorDataModel as IEditorDataModel;
-            IGTFGraphElementModel elementModelToRename = editorDataModel?.ElementModelToRename;
+            IGTFGraphElementModel elementModelToRename = Store.GetState().EditorDataModel?.ElementModelToRename;
             if (elementModelToRename != null)
             {
                 IRenamable elementToRename = GraphVariables.OfType<IRenamable>()
@@ -176,12 +165,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             GraphView.BuildContextualMenu(evt);
         }
 
-        public void NotifyTopologyChange(IGraphModel graphModel)
+        public void NotifyTopologyChange(IGTFGraphModel graphModel)
         {
             SetPersistenceKeyFromGraphModel(graphModel);
         }
 
-        void SetPersistenceKeyFromGraphModel(IGraphModel graphModel)
+        void SetPersistenceKeyFromGraphModel(IGTFGraphModel graphModel)
         {
             viewDataKey = graphModel?.GetAssetPath() + "__" + k_PersistenceKey;
         }

@@ -39,7 +39,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             styleSheets.Add(AssetDatabase.LoadAssetAtPath<StyleSheet>(UICreationHelper.templatePath + "Node.uss"));
         }
 
-        public Func<Node, Overdrive.Store, Vector2, SearcherFilter, bool> CustomSearcherHandler { get; set; }
+        public Func<Node, Store, Vector2, SearcherFilter, bool> CustomSearcherHandler { get; set; }
 
         public bool HandleCustomSearcher(Vector2 mousePosition, SearcherFilter filter = null)
         {

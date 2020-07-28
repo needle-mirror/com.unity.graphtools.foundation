@@ -11,6 +11,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         {
             const string k_SettingsUniqueKey = "UnityEditor.Graph/";
 
+            const string k_SpacingMarginValueKey = k_SettingsUniqueKey + "GraphEditorSetting.spacingMarginValue";
             const string k_EnableSnapToPortKey = k_SettingsUniqueKey + "GraphEditorSetting.enableSnapToPort";
             const string k_EnableSnapToBordersKey = k_SettingsUniqueKey + "GraphEditorSetting.enableSnapToBorders";
             const string k_EnableSnapToGridKey = k_SettingsUniqueKey + "GraphEditorSetting.enableSnapToGrid";
@@ -30,6 +31,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                 {typeof(SnapToGridStrategy), EnableSnapToGrid},
                 {typeof(SnapToSpacingStrategy), EnableSnapToSpacing}
             };
+
+            public static float SpacingMarginValue
+            {
+                get => EditorPrefs.GetFloat(k_SpacingMarginValueKey, 100f);
+                set => EditorPrefs.SetFloat(k_SpacingMarginValueKey, value);
+            }
+
 
             public static Color SnappingLineColor
             {
@@ -94,11 +102,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         class Styles
         {
-            public static readonly GUIContent kEnableSnapToPortLabel = EditorGUIUtility.TrTextContent("Node Port Snapping", "If enabled, Nodes align to connected ports.");
-            public static readonly GUIContent kEnableSnapToBordersLabel = EditorGUIUtility.TrTextContent("Graph Snapping", "If enabled, GraphElements in Graph Views align with one another when you move them. If disabled, GraphElements move freely.");
-            public static readonly GUIContent kEnableSnapToGridLabel = EditorGUIUtility.TrTextContent("Grid Snapping", "If enabled, GraphElements in Graph Views align with the grid.");
-            public static readonly GUIContent kEnableSnapToSpacingLabel = EditorGUIUtility.TrTextContent("Spacing Snapping", "If enabled, GraphElements align to keep equal spacing with their neighbors.");
+            public static readonly GUIContent kEnableSnapToPortLabel = EditorGUIUtility.TrTextContent("Connected Port Snapping", "If enabled, nodes align to connected ports.");
+            public static readonly GUIContent kEnableSnapToBordersLabel = EditorGUIUtility.TrTextContent("Element Snapping", "If enabled, graph elements align with one another when you move them.");
+            public static readonly GUIContent kEnableSnapToGridLabel = EditorGUIUtility.TrTextContent("Grid Snapping", "If enabled, graph elements align with the grid.");
+            public static readonly GUIContent kEnableSnapToSpacingLabel = EditorGUIUtility.TrTextContent("Equal Spacing Snapping", "If enabled, graph elements align to keep equal spacing with their neighbors.");
             public static readonly GUIContent kSnappingLineColorLabel = new GUIContent("Snapping Line Color", "The color for the snapping guidelines");
+            public static readonly GUIContent kSpacingMarginValueLabel = new GUIContent("Automatic Spacing Margin", "The margin between each selected graph elements during automatic spacing.");
         }
 
         [SettingsProvider]
@@ -155,6 +164,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                 UserSettings.SnappingLineColor = UserSettings.k_DefaultSnappingLineColor;
             }
             EditorGUILayout.EndHorizontal();
+
+            EditorGUI.BeginChangeCheck();
+            var spacingMarginValue = EditorGUILayout.FloatField(Styles.kSpacingMarginValueLabel, UserSettings.SpacingMarginValue);
+            if (EditorGUI.EndChangeCheck())
+            {
+                UserSettings.SpacingMarginValue = spacingMarginValue;
+            }
         }
     }
 }

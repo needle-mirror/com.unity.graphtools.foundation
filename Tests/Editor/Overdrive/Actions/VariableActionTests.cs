@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
@@ -335,7 +336,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
             TestPrereqActionPostreq(mode,
                 () =>
                 {
-                    var c = GraphModel.NodeModels.OfType<IConstantNodeModel>().First();
+                    var c = GraphModel.NodeModels.OfType<IGTFConstantNodeModel>().First();
                     Assert.That(GetNodeCount(), Is.EqualTo(2));
                     Assert.That(GetEdgeCount(), Is.EqualTo(1));
                     Assert.That(GetVariableDeclarationCount(), Is.EqualTo(0));

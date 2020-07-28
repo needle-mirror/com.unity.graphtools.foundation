@@ -17,34 +17,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
             m_Stencil = stencil;
         }
 
-        public virtual SearcherFilter GetGraphSearcherFilter()
-        {
-            return new SearcherFilter(SearcherContext.Graph)
-                .WithVisualScriptingNodes()
-                .WithStickyNote();
-        }
+        public virtual SearcherFilter GetGraphSearcherFilter() => new SearcherFilter();
 
-        public virtual SearcherFilter GetOutputToGraphSearcherFilter(IGTFPortModel portModel)
-        {
-            return new SearcherFilter(SearcherContext.Graph)
-                .WithVisualScriptingNodes();
-        }
+        public virtual SearcherFilter GetOutputToGraphSearcherFilter(IGTFPortModel portModel) => new SearcherFilter();
 
-        public virtual SearcherFilter GetInputToGraphSearcherFilter(IGTFPortModel portModel)
-        {
-            return new SearcherFilter(SearcherContext.Graph)
-                .WithVisualScriptingNodes();
-        }
+        public virtual SearcherFilter GetInputToGraphSearcherFilter(IGTFPortModel portModel) => new SearcherFilter();
 
-        public virtual SearcherFilter GetEdgeSearcherFilter(IGTFEdgeModel edgeModel)
-        {
-            return new SearcherFilter(SearcherContext.Graph)
-                .WithVisualScriptingNodesExcept(new[] { typeof(ThisNodeModel) }); // TODO : We should be able to determine if a VSNode type has input port instead of doing this
-        }
-
-        public virtual SearcherFilter GetTypeSearcherFilter()
-        {
-            return SearcherFilter.Empty;
-        }
+        public virtual SearcherFilter GetEdgeSearcherFilter(IGTFEdgeModel edgeModel) => new SearcherFilter();
     }
 }

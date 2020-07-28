@@ -56,11 +56,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
     public class AddControlPointOnEdgeAction : IAction
     {
-        public readonly IGTFEdgeModel EdgeModel;
+        public readonly IEditableEdge EdgeModel;
         public readonly int AtIndex;
         public readonly Vector2 Position;
 
-        public AddControlPointOnEdgeAction(IGTFEdgeModel edgeModel, int atIndex, Vector2 position)
+        public AddControlPointOnEdgeAction(IEditableEdge edgeModel, int atIndex, Vector2 position)
         {
             EdgeModel = edgeModel;
             AtIndex = atIndex;
@@ -79,12 +79,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
     public class MoveEdgeControlPointAction : IAction
     {
-        public readonly IGTFEdgeModel EdgeModel;
+        public readonly IEditableEdge EdgeModel;
         public readonly int EdgeIndex;
         public readonly Vector2 NewPosition;
         public readonly float NewTightness;
 
-        public MoveEdgeControlPointAction(IGTFEdgeModel edgeModel, int edgeIndex, Vector2 newPosition, float newTightness)
+        public MoveEdgeControlPointAction(IEditableEdge edgeModel, int edgeIndex, Vector2 newPosition, float newTightness)
         {
             EdgeModel = edgeModel;
             EdgeIndex = edgeIndex;
@@ -103,10 +103,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
     public class RemoveEdgeControlPointAction : IAction
     {
-        public readonly IGTFEdgeModel EdgeModel;
+        public readonly IEditableEdge EdgeModel;
         public readonly int EdgeIndex;
 
-        public RemoveEdgeControlPointAction(IGTFEdgeModel edgeModel, int edgeIndex)
+        public RemoveEdgeControlPointAction(IEditableEdge edgeModel, int edgeIndex)
         {
             EdgeModel = edgeModel;
             EdgeIndex = edgeIndex;
@@ -124,10 +124,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
     public class SetEdgeEditModeAction : IAction
     {
-        public readonly IGTFEdgeModel EdgeModel;
+        public readonly IEditableEdge EdgeModel;
         public readonly bool Value;
 
-        public SetEdgeEditModeAction(IGTFEdgeModel edgeModel, bool value)
+        public SetEdgeEditModeAction(IEditableEdge edgeModel, bool value)
         {
             EdgeModel = edgeModel;
             Value = value;
@@ -162,10 +162,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         public static TState DefaultReducer<TState>(TState previousState, ReorderEdgeAction action) where TState : State
         {
-            var fromPort = action.EdgeModel?.FromPort;
-            if (fromPort != null && fromPort.HasReorderableEdges)
+            if (action.EdgeModel?.FromPort is IReorderableEdgesPort fromPort && fromPort.HasReorderableEdges)
             {
-                var siblingEdges = fromPort.ConnectedEdges.ToList();
+                var siblingEdges = fromPort.GetConnectedEdges().ToList();
                 var siblingEdgesCount = siblingEdges.Count;
                 if (siblingEdgesCount > 1)
                 {

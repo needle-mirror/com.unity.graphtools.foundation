@@ -127,7 +127,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                 return;
 
             // Then can be resize in all direction
-            if (ce.resizeRestriction == ResizeRestriction.None)
+            if (ce.ResizeRestriction == ResizeRestriction.None)
             {
                 if (ClassListContains("resizeAllDir") == false)
                 {
@@ -181,7 +181,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                         ce.SetPosition(new Rect(ce.layout.x, ce.layout.y, newSize.x, newSize.y));
                         resized = true;
                     }
-                    else if (ce.resizeRestriction == ResizeRestriction.None)
+                    else if (ce.ResizeRestriction == ResizeRestriction.None)
                     {
                         ce.style.width = newSize.x;
                         ce.style.height = newSize.y;
@@ -202,9 +202,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                 if (resized)
                 {
                     GraphView graphView = ce.GetFirstAncestorOfType<GraphView>();
-                    if (graphView != null && graphView.elementResized != null)
+                    if (graphView != null && graphView.ElementResizedCallback != null)
                     {
-                        graphView.elementResized(ce);
+                        graphView.ElementResizedCallback(ce);
                     }
                 }
 

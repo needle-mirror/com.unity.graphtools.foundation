@@ -9,27 +9,58 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 {
     public class Port : VisualElementBridge, IGraphElement, IBadgeContainer
     {
-        public GraphElementPartList PartList { get; private set; }
-
-        public GraphView GraphView { get; private set; }
-        public IGTFPortModel PortModel { get; private set; }
-        public IGTFGraphElementModel Model => PortModel;
-        public Overdrive.Store Store { get; private set; }
-
-        protected ContextualMenuManipulator m_ContextualMenuManipulator;
-
-        public Orientation Orientation { get; set; }
-
         public static readonly string k_UssClassName = "ge-port";
         public static readonly string k_WillConnectModifierUssClassName = k_UssClassName.WithUssModifier("will-connect");
         public static readonly string k_ConnectedModifierUssClassName = k_UssClassName.WithUssModifier("connected");
         public static readonly string k_NotConnectedModifierUssClassName = k_UssClassName.WithUssModifier("not-connected");
         public static readonly string k_InputModifierUssClassName = k_UssClassName.WithUssModifier("direction-input");
         public static readonly string k_OutputModifierUssClassName = k_UssClassName.WithUssModifier("direction-output");
-
         public static readonly string k_PortDataTypeClassNamePrefix = k_UssClassName.WithUssModifier("data-type-");
-
         public static readonly string k_ConnectorPartName = "connector-container";
+
+        Node m_Node;
+
+        CustomStyleProperty<Color> m_PortColorProperty = new CustomStyleProperty<Color>("--port-color");
+
+        protected ContextualMenuManipulator m_ContextualMenuManipulator;
+
+        public GraphElementPartList PartList { get; private set; }
+
+        public GraphView GraphView { get; private set; }
+
+        public IGTFPortModel PortModel { get; private set; }
+
+        public IGTFGraphElementModel Model => PortModel;
+
+        public Store Store { get; private set; }
+
+        public EdgeConnector EdgeConnector { get; protected set; }
+
+        public bool WillConnect
+        {
+            set => EnableInClassList(k_WillConnectModifierUssClassName, value);
+        }
+
+        public bool Highlighted
+        {
+            set
+            {
+                EnableInClassList("ge-port--highlighted", value);
+                foreach (var edgeModel in PortModel.GetConnectedEdges())
+                {
+                    var edge = edgeModel.GetUI<Edge>(GraphView);
+                    edge?.UpdateFromModel();
+                }
+            }
+        }
+
+        public Orientation Orientation { get; set; }
+
+        public Color PortColor { get; private set; }
+
+        public IconBadge ErrorBadge { get; set; }
+
+        public ValueBadge ValueBadge { get; set; }
 
         public Port()
         {
@@ -39,14 +70,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             RegisterCallback<CustomStyleResolvedEvent>(OnCustomStyleResolved);
         }
 
-        public void SetupBuildAndUpdate(IGTFGraphElementModel model, Overdrive.Store store, GraphView graphView)
+        public void SetupBuildAndUpdate(IGTFGraphElementModel model, Store store, GraphView graphView)
         {
             Setup(model, store, graphView);
             BuildUI();
             UpdateFromModel();
         }
 
-        public void Setup(IGTFGraphElementModel portModel, Overdrive.Store store, GraphView graphView)
+        public void Setup(IGTFGraphElementModel portModel, Store store, GraphView graphView)
         {
             PortModel = portModel as IGTFPortModel;
             Store = store;
@@ -104,8 +135,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         protected virtual void UpdateSelfFromModel()
         {
-            EnableInClassList(k_ConnectedModifierUssClassName, PortModel.IsConnected);
-            EnableInClassList(k_NotConnectedModifierUssClassName, !PortModel.IsConnected);
+            EnableInClassList(k_ConnectedModifierUssClassName, PortModel.IsConnected());
+            EnableInClassList(k_NotConnectedModifierUssClassName, !PortModel.IsConnected());
 
             EnableInClassList(k_InputModifierUssClassName, PortModel.Direction == Direction.Input);
             EnableInClassList(k_OutputModifierUssClassName, PortModel.Direction == Direction.Output);
@@ -118,7 +149,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         protected virtual void BuildContextualMenu(ContextualMenuPopulateEvent evt) {}
 
-        CustomStyleProperty<Color> m_PortColorProperty = new CustomStyleProperty<Color>("--port-color");
         void OnCustomStyleResolved(CustomStyleResolvedEvent e)
         {
             if (e.customStyle.TryGetValue(m_PortColorProperty, out var portColorValue))
@@ -149,37 +179,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             return k_PortDataTypeClassNamePrefix + thisPortType.Name.ToKebabCase();
         }
 
-        public EdgeConnector EdgeConnector { get; protected set; }
-
-        public bool WillConnect
-        {
-            set => EnableInClassList(k_WillConnectModifierUssClassName, value);
-        }
-
-        public bool Highlighted
-        {
-            set
-            {
-                EnableInClassList("ge-port--highlighted", value);
-                foreach (var edgeModel in PortModel.ConnectedEdges)
-                {
-                    var edge = edgeModel.GetUI<Edge>(GraphView);
-                    edge?.UpdateFromModel();
-                }
-            }
-        }
-
-        Node m_Node;
-
-        public Node node
-        {
-            get
-            {
-                var nodeModel = PortModel.NodeModel;
-                return nodeModel.GetUI<Node>(GraphView);
-            }
-        }
-
         public Vector3 GetGlobalCenter()
         {
             Vector2 overriddenPosition;
@@ -193,9 +192,5 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             var connector = portConnector?.Root.Q(PortConnectorPart.k_ConnectorUssName) ?? portConnector?.Root ?? this;
             return connector.LocalToWorld(connector.GetRect().center);
         }
-
-        public Color PortColor { get; private set; }
-        public IconBadge ErrorBadge { get; set; }
-        public ValueBadge ValueBadge { get; set; }
     }
 }

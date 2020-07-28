@@ -5,13 +5,30 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 {
     public class CollapseButton : VisualElement, INotifyValueChanged<bool>
     {
-        bool m_Collapsed;
-
         public static readonly string k_UssClassName = "ge-collapse-button";
         public static readonly string k_CollapsedUssClassName = k_UssClassName.WithUssModifier("collapsed");
 
         public static readonly string k_IconElementName = "icon";
         public static readonly string k_IconElementUssClassName = k_UssClassName.WithUssElement(k_IconElementName);
+
+        bool m_Collapsed;
+
+        public bool value
+        {
+            get => m_Collapsed;
+            set
+            {
+                if (m_Collapsed != value)
+                {
+                    using (var e = ChangeEvent<bool>.GetPooled(m_Collapsed, value))
+                    {
+                        e.target = this;
+                        SetValueWithoutNotify(value);
+                        SendEvent(e);
+                    }
+                }
+            }
+        }
 
         public CollapseButton()
         {
@@ -37,23 +54,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         {
             m_Collapsed = newValue;
             EnableInClassList(k_CollapsedUssClassName, m_Collapsed);
-        }
-
-        public bool value
-        {
-            get => m_Collapsed;
-            set
-            {
-                if (m_Collapsed != value)
-                {
-                    using (var e = ChangeEvent<bool>.GetPooled(m_Collapsed, value))
-                    {
-                        e.target = this;
-                        SetValueWithoutNotify(value);
-                        SendEvent(e);
-                    }
-                }
-            }
         }
     }
 }

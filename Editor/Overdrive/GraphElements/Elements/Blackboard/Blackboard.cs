@@ -39,11 +39,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         public Action<Blackboard, VisualElement, string> editTextRequested { get; set; }
 
         // ISelection implementation
-        public List<ISelectableGraphElement> selection
+        public List<ISelectableGraphElement> Selection
         {
             get
             {
-                return GraphView?.selection;
+                return GraphView?.Selection;
             }
         }
 
@@ -115,7 +115,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                     m_ContentContainer.RemoveFromHierarchy();
                     m_Root.Add(m_ScrollView);
                     m_ScrollView.Add(m_ContentContainer);
-                    resizeRestriction = ResizeRestriction.None; // As both the width and height can be changed by the user using a resizer
+                    ResizeRestriction = ResizeRestriction.None; // As both the width and height can be changed by the user using a resizer
 
                     AddToClassList("scrollable");
                 }
@@ -124,7 +124,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                     if (m_ScrollView != null)
                     {
                         // Remove the sections container from the scrollview and add it to the content item
-                        resizeRestriction = ResizeRestriction.FlexDirection; // As the height is automatically computed from the content but the width can be changed by the user using a resizer
+                        ResizeRestriction = ResizeRestriction.FlexDirection; // As the height is automatically computed from the content but the width can be changed by the user using a resizer
                         m_ScrollView.RemoveFromHierarchy();
                         m_ContentContainer.RemoveFromHierarchy();
                         m_Root.Add(m_ContentContainer);
@@ -226,7 +226,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
             // Select upon creation...
             if (element is IGraphElement hasElementGraphModel &&
-                (editorDataModel?.ShouldSelectElementUponCreation(hasElementGraphModel) ?? false))
+                (editorDataModel?.ShouldSelectElementUponCreation(hasElementGraphModel.Model) ?? false))
                 element.Select(GraphView, true);
 
             // ...or regular selection
@@ -234,12 +234,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             // non layered elements (like Blackboard fields for example)
             {
                 if (!GraphView.PersistentSelectionContainsElement(element) ||
-                    GraphView.selection.Contains(element) && element.selected)
+                    GraphView.Selection.Contains(element) && element.Selected)
                     return;
 
-                element.selected = true;
-                if (!GraphView.selection.Contains(element))
-                    selection.Add(element);
+                element.Selected = true;
+                if (!GraphView.Selection.Contains(element))
+                    Selection.Add(element);
                 element.OnSelected();
 
                 // To ensure that the selected GraphElement gets unselected if it is removed from the GraphView.
@@ -255,8 +255,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             if (!(selectable is GraphElement graphElement))
                 return;
 
-            graphElement.selected = false;
-            selection.Remove(selectable);
+            graphElement.Selected = false;
+            Selection.Remove(selectable);
             graphElement.OnUnselected();
             graphElement.UnregisterCallback<DetachFromPanelEvent>(OnSelectedElementDetachedFromPanel);
             graphElement.MarkDirtyRepaint();
@@ -321,7 +321,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             }
 
             if (rebuildMode == RebuildMode.BlackboardAndGraphView)
-                Store.Dispatch(new RefreshUIAction(UpdateFlags.GraphTopology));
+                Store.ForceRefreshUI(UpdateFlags.GraphTopology);
             else
                 RebuildBlackboard();
         }

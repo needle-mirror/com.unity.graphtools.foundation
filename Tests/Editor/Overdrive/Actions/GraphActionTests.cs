@@ -2,11 +2,11 @@ using System;
 using System.Collections;
 using System.Linq;
 using NUnit.Framework;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
@@ -217,10 +217,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
             var nodeA = GraphModel.CreateNode<Type0FakeNodeModel>("A");
             var nodeB = GraphModel.CreateNode<Type0FakeNodeModel>("B");
 
-            Store.Dispatch(new RefreshUIAction(UpdateFlags.All));
+            Store.ForceRefreshUI(UpdateFlags.All);;
             yield return null;
 
-            GraphView.viewTransformChanged += view => m_Changed = true;
+            GraphView.ViewTransformChangedCallback += view => m_Changed = true;
 
             yield return SendPanToNodeAndRefresh(operatorModel);
             yield return SendPanToNodeAndRefresh(nodeA);
@@ -230,18 +230,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
             {
                 m_Changed = false;
 
-                Store.Dispatch(new PanToNodeAction(nodeModel.Guid));
-                yield return null;
-                Store.Dispatch(new RefreshUIAction(UpdateFlags.All));
+                GraphView.PanToNode(nodeModel.Guid);
                 yield return null;
 
                 Assert.IsTrue(m_Changed, "ViewTransform didn't change");
-                Assert.That(GraphView.selection.
+                Assert.That(GraphView.Selection.
                     OfType<IGraphElement>().
                     Where(x => x.Model is IGTFNodeModel n && n.Guid == nodeModel.Guid).Any,
                     () =>
                     {
-                        var graphViewSelection = String.Join(",", GraphView.selection);
+                        var graphViewSelection = String.Join(",", GraphView.Selection);
                         return $"Selection doesn't contain {nodeModel} {nodeModel.Title} but {graphViewSelection}";
                     });
             }
@@ -253,7 +251,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
             var nodeA = GraphModel.CreateNode<Type0FakeNodeModel>("A", new Vector2(100, -100));
             var nodeB = GraphModel.CreateNode<Type0FakeNodeModel>("B", new Vector2(100, 100));
 
-            Store.Dispatch(new RefreshUIAction(UpdateFlags.All));
+            Store.ForceRefreshUI(UpdateFlags.All);;
             yield return null;
 
             GraphView.ClearSelection();
@@ -265,14 +263,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
 
             IEnumerator SendPanToNodeAndRefresh(NodeModel nodeModel)
             {
-                Store.Dispatch(new RefreshUIAction(UpdateFlags.All));
+                Store.ForceRefreshUI(UpdateFlags.All);;
                 yield return null;
-                Assert.That(GraphView.selection.
+                Assert.That(GraphView.Selection.
                     OfType<IGraphElement>().
                     Where(x => x.Model is IGTFNodeModel n && n.Guid == nodeModel.Guid).Any,
                     () =>
                     {
-                        var graphViewSelection = String.Join(",", GraphView.selection.Select(x =>
+                        var graphViewSelection = String.Join(",", GraphView.Selection.Select(x =>
                             x is IGraphElement hasModel ? hasModel.Model.ToString() : x.ToString()));
                         return $"Selection doesn't contain {nodeModel} {nodeModel.Title} but {graphViewSelection}";
                     });
@@ -289,7 +287,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
 
             var edge = GraphModel.CreateEdge(nodeB.Input0, nodeA.OutputPort) as EdgeModel;
 
-            Store.Dispatch(new RefreshUIAction(UpdateFlags.All));
+            Store.ForceRefreshUI(UpdateFlags.All);;
             yield return null;
 
             GraphView.ClearSelection();
@@ -302,7 +300,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                 evt.target = GraphView;
                 GraphView.SendEvent(evt);
             }
-            Store.Dispatch(new RefreshUIAction(UpdateFlags.All));
+            Store.ForceRefreshUI(UpdateFlags.All);;
             yield return null;
 
             Assert.AreEqual(3, GraphModel.NodeModels.Count);

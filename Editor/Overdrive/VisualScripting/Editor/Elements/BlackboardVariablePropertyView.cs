@@ -1,7 +1,10 @@
 using System;
+using System.Collections.Generic;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
+using UnityEditor.Searcher;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -12,15 +15,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         Toggle m_ExposedToggle;
         TextField m_TooltipTextField;
         readonly VisualElement m_InitializationElement;
-        readonly Overdrive.Store m_Store;
+        readonly Store m_Store;
         readonly Stencil m_Stencil;
 
-        protected IVariableDeclarationModel VariableDeclarationModel => userData as IVariableDeclarationModel;
+        protected IGTFVariableDeclarationModel VariableDeclarationModel => userData as IGTFVariableDeclarationModel;
         string TypeText => VariableDeclarationModel.DataType.GetMetadata(m_Stencil).FriendlyName;
 
         static readonly GUIContent k_InitializationContent = new GUIContent("");
 
-        public BlackboardVariablePropertyView(Overdrive.Store store, IGTFVariableDeclarationModel variableDeclarationModel,
+        public BlackboardVariablePropertyView(Store store, IGTFVariableDeclarationModel variableDeclarationModel,
                                               GraphElements.Blackboard.RebuildCallback rebuildCallback, Stencil stencil)
             : base(variableDeclarationModel, rebuildCallback)
         {
@@ -54,14 +57,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             }
         }
 
-        public BlackboardVariablePropertyView WithTypeSelector(SearcherFilter filter = null)
+        public BlackboardVariablePropertyView WithTypeSelector()
         {
             var typeButton = new Button(() =>
-                SearcherService.ShowTypes(
+                SearcherService.ShowVariableTypes(
                     m_Stencil,
                     Event.current.mousePosition,
-                    (t, i) => OnTypeChanged(t),
-                    filter
+                    (t, i) => OnTypeChanged(t)
                 )
                 ) { text = TypeText };
             typeButton.AddToClassList("rowButton");
@@ -113,7 +115,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             m_TooltipTextField.RegisterValueChangedCallback(OnTooltipChanged);
         }
 
-        void RefreshUI(Blackboard.RebuildMode rebuildMode = Blackboard.RebuildMode.BlackboardAndGraphView)
+        void RefreshUI(GraphElements.Blackboard.RebuildMode rebuildMode = GraphElements.Blackboard.RebuildMode.BlackboardAndGraphView)
         {
             m_ExposedToggle?.UnregisterValueChangedCallback(OnExposedChanged);
             m_RebuildCallback?.Invoke(rebuildMode);

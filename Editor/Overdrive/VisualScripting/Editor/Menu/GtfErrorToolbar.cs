@@ -2,15 +2,14 @@ using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.UIElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 {
     public class GtfErrorToolbar : VisualElement
     {
-        private readonly Store m_Store;
-        private readonly VseGraphView m_GraphView;
+        readonly Store m_Store;
+        readonly VseGraphView m_GraphView;
 
         VisualElement m_ErrorIconLabel;
         ToolbarButton m_PreviousErrorButton;

@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using NUnit.Framework;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
 using UnityEngine;
 
@@ -79,7 +79,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.SmartSearch
             var var1 = GraphModel.CreateGraphVariableDeclaration(name,
                 typeof(int).GenerateTypeHandle(), ModifierFlags.None, false);
 
-            var db = new GraphElementSearcherDatabase(Stencil)
+            var db = new GraphElementSearcherDatabase(Stencil, GraphModel)
                 .AddGraphVariables(GraphModel)
                 .Build();
 
@@ -103,7 +103,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.SmartSearch
         [TestCase(SearcherContext.Graph, "sti", CommonSearcherTags.StickyNote)]
         public void TestSingleItem(SearcherContext context, string query, CommonSearcherTags expectedTag)
         {
-            var db = new GraphElementSearcherDatabase(Stencil)
+            var db = new GraphElementSearcherDatabase(Stencil, GraphModel)
                 .AddStickyNote()
                 .Build();
 
@@ -122,7 +122,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.SmartSearch
         [Test]
         public void TestConstants()
         {
-            var db = new GraphElementSearcherDatabase(Stencil)
+            var db = new GraphElementSearcherDatabase(Stencil, GraphModel)
                 .AddConstants(new[] { typeof(string) })
                 .Build();
 

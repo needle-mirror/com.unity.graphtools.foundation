@@ -2,22 +2,15 @@ using System;
 using UnityEngine;
 using UnityEngine.UIElements;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine.Profiling;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 {
     public class EdgeControl : VisualElement
     {
-        static CustomStyleProperty<int> s_EdgeWidthProperty = new CustomStyleProperty<int>("--edge-width");
-        static CustomStyleProperty<Color> s_EdgeColorProperty = new CustomStyleProperty<Color>("--edge-color");
-
-        static readonly int k_DefaultLineWidth = 2;
-        static readonly Color k_DefaultColor = new Color(146 / 255f, 146 / 255f, 146 / 255f);
-
-        int DefaultLineWidth { get; set; } = k_DefaultLineWidth;
-        Color DefaultColor { get; set; } = k_DefaultColor;
-
         struct BezierSegment
         {
             // P0 is previous segment last point.
@@ -26,11 +19,116 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             public Vector2 p3;
         }
 
+        static CustomStyleProperty<int> s_EdgeWidthProperty = new CustomStyleProperty<int>("--edge-width");
+        static CustomStyleProperty<Color> s_EdgeColorProperty = new CustomStyleProperty<Color>("--edge-color");
+        static readonly int k_DefaultLineWidth = 2;
+        static readonly Color k_DefaultColor = new Color(146 / 255f, 146 / 255f, 146 / 255f);
+        static readonly float k_ContainsPointDistance = 25f;
+
+        Edge m_Edge;
+
         VisualElement m_ControlPointContainer;
+
         List<BezierSegment> m_BezierSegments = new List<BezierSegment>();
+
         List<int> m_LineSegmentIndex = new List<int>();
 
-        const float k_ContainsPointDistance = 25f;
+        // The control points in graph coordinates.
+        Vector2[] m_ControlPoints;
+
+        Mesh m_Mesh;
+
+        Orientation m_InputOrientation;
+
+        Orientation m_OutputOrientation;
+
+        Color m_InputColor = Color.grey;
+
+        Color m_OutputColor = Color.grey;
+
+        bool m_ColorOverridden;
+
+        bool m_WidthOverridden;
+
+        int m_LineWidth = 2;
+
+        int DefaultLineWidth { get; set; } = k_DefaultLineWidth;
+
+        Color DefaultColor { get; set; } = k_DefaultColor;
+
+        Edge EdgeParent => m_Edge ?? (m_Edge = GetFirstAncestorOfType<Edge>());
+
+        // The start of the edge in graph coordinates.
+        Vector2 From => EdgeParent?.From ?? Vector2.zero;
+
+        // The end of the edge in graph coordinates.
+        Vector2 To => EdgeParent?.To ?? Vector2.zero;
+
+        public Orientation InputOrientation
+        {
+            get => m_InputOrientation;
+            set
+            {
+                if (m_InputOrientation != value)
+                {
+                    m_InputOrientation = value;
+                    MarkDirtyRepaint();
+                }
+            }
+        }
+
+        public Orientation OutputOrientation
+        {
+            get => m_OutputOrientation;
+            set => m_OutputOrientation = value;
+        }
+
+        public Color InputColor
+        {
+            get => m_InputColor;
+            private set
+            {
+                if (m_InputColor != value)
+                {
+                    m_InputColor = value;
+                    MarkDirtyRepaint();
+                }
+            }
+        }
+
+        public Color OutputColor
+        {
+            get => m_OutputColor;
+            private set
+            {
+                if (m_OutputColor != value)
+                {
+                    m_OutputColor = value;
+                    MarkDirtyRepaint();
+                }
+            }
+        }
+
+        public int LineWidth
+        {
+            get => m_LineWidth;
+            set
+            {
+                m_WidthOverridden = true;
+
+                if (m_LineWidth == value)
+                    return;
+
+                m_LineWidth = value;
+                UpdateLayout(); // The layout depends on the edges width
+                MarkDirtyRepaint();
+            }
+        }
+
+        public Vector2 ControlPointOffset { get; set; }
+
+        // The points that will be rendered. Expressed in coordinates local to the element.
+        public List<Vector2> RenderPoints { get; } = new List<Vector2>();
 
         public EdgeControl()
         {
@@ -82,8 +180,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             }
         }
 
-        bool m_ColorOverridden;
-        bool m_WidthOverridden;
         public void SetColor(Color inputColor, Color outputColor)
         {
             m_ColorOverridden = true;
@@ -166,14 +262,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             return dx * dx + dy * dy;
         }
 
-        Edge m_Edge;
-        Edge EdgeParent => m_Edge ?? (m_Edge = GetFirstAncestorOfType<Edge>());
-
         public void RebuildControlPointsUI()
         {
-            var edgeModel = EdgeParent?.EdgeModel;
-
-            if (edgeModel == null)
+            if (!(EdgeParent?.EdgeModel is IEditableEdge edgeModel))
                 return;
 
             while (m_ControlPointContainer.childCount > edgeModel.EdgeControlPoints.Count)
@@ -187,89 +278,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                 m_ControlPointContainer.Add(cp);
             }
         }
-
-        Mesh m_Mesh;
-
-        Orientation m_InputOrientation;
-
-        public Orientation InputOrientation
-        {
-            get { return m_InputOrientation; }
-            set
-            {
-                if (m_InputOrientation == value)
-                    return;
-                m_InputOrientation = value;
-                MarkDirtyRepaint();
-            }
-        }
-
-        Orientation m_OutputOrientation;
-
-        public Orientation OutputOrientation
-        {
-            get => m_OutputOrientation;
-            set => m_OutputOrientation = value;
-        }
-
-        Color m_InputColor = Color.grey;
-
-        public Color InputColor
-        {
-            get => m_InputColor;
-            private set
-            {
-                if (m_InputColor != value)
-                {
-                    m_InputColor = value;
-                    MarkDirtyRepaint();
-                }
-            }
-        }
-
-        Color m_OutputColor = Color.grey;
-
-        public Color OutputColor
-        {
-            get => m_OutputColor;
-            private set
-            {
-                if (m_OutputColor != value)
-                {
-                    m_OutputColor = value;
-                    MarkDirtyRepaint();
-                }
-            }
-        }
-
-        int m_LineWidth = 2;
-
-        public int LineWidth
-        {
-            get => m_LineWidth;
-            set
-            {
-                m_WidthOverridden = true;
-
-                if (m_LineWidth == value)
-                    return;
-
-                m_LineWidth = value;
-                UpdateLayout(); // The layout depends on the edges width
-                MarkDirtyRepaint();
-            }
-        }
-
-        // The start of the edge in graph coordinates.
-        Vector2 From => EdgeParent?.From ?? Vector2.zero;
-
-        // The end of the edge in graph coordinates.
-        Vector2 To => EdgeParent?.To ?? Vector2.zero;
-
-        public Vector2 ControlPointOffset { get; set; }
-
-        // The control points in graph coordinates.
-        Vector2[] m_ControlPoints;
 
         void OnGenerateVisualContent(MeshGenerationContext mgc)
         {
@@ -288,19 +296,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         {
             if (base.Overlaps(rect))
             {
-                for (int a = 0; a < m_RenderPoints.Count - 1; a++)
+                for (int a = 0; a < RenderPoints.Count - 1; a++)
                 {
-                    if (RectUtils.IntersectsSegment(rect, m_RenderPoints[a], m_RenderPoints[a + 1]))
+                    if (RectUtils.IntersectsSegment(rect, RenderPoints[a], RenderPoints[a + 1]))
                         return true;
                 }
             }
 
             return false;
         }
-
-        // The points that will be rendered. Expressed in coordinates local to the element.
-        List<Vector2> m_RenderPoints = new List<Vector2>();
-        public List<Vector2> RenderPoints => m_RenderPoints;
 
         public void UpdateLayout()
         {
@@ -452,39 +456,44 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             var directionFrom = fromOrientation == Orientation.Horizontal ? Vector2.right : Vector2.up;
             Vector2 directionTo;
             float length;
-            for (var i = 0; i < edgeModel?.EdgeControlPoints.Count; i++)
+
+            if (edgeModel is IEditableEdge editableEdgeModel)
             {
-                var tightness = edgeModel.EdgeControlPoints[i].Tightness / 100;
-
-                var splitPoint = edgeModel.EdgeControlPoints[i].Position;
-                splitPoint += ControlPointOffset;
-                var localSplitPoint = graphView.contentViewContainer.ChangeCoordinatesTo(parent, splitPoint);
-                length = ControlPointDistance(previous, localSplitPoint, fromOrientation);
-
-                Vector2 next;
-                if (i == edgeModel.EdgeControlPoints.Count - 1)
+                for (var i = 0; i < editableEdgeModel.EdgeControlPoints.Count; i++)
                 {
-                    next = To;
+                    var tightness = editableEdgeModel.EdgeControlPoints.ElementAt(i).Tightness / 100;
+
+                    var splitPoint = editableEdgeModel.EdgeControlPoints.ElementAt(i).Position;
+                    splitPoint += ControlPointOffset;
+                    var localSplitPoint = graphView.contentViewContainer.ChangeCoordinatesTo(parent, splitPoint);
+                    length = ControlPointDistance(previous, localSplitPoint, fromOrientation);
+
+                    Vector2 next;
+                    if (i == editableEdgeModel.EdgeControlPoints.Count - 1)
+                    {
+                        next = To;
+                    }
+                    else
+                    {
+                        next = editableEdgeModel.EdgeControlPoints.ElementAt(i + 1).Position;
+                        next += ControlPointOffset;
+                        next = graphView.contentViewContainer.ChangeCoordinatesTo(parent, next);
+                    }
+
+                    directionTo = (previous - next).normalized;
+
+                    var segment = new BezierSegment()
+                    {
+                        p1 = previous + directionFrom * (length * previousTightness),
+                        p2 = localSplitPoint + directionTo * (length * tightness),
+                        p3 = localSplitPoint,
+                    };
+                    m_BezierSegments.Add(segment);
+
+                    previous = localSplitPoint;
+                    previousTightness = tightness;
+                    directionFrom = -directionTo;
                 }
-                else
-                {
-                    next = edgeModel.EdgeControlPoints[i + 1].Position;
-                    next += ControlPointOffset;
-                    next = graphView.contentViewContainer.ChangeCoordinatesTo(parent, next);
-                }
-                directionTo = (previous - next).normalized;
-
-                var segment = new BezierSegment()
-                {
-                    p1 = previous + directionFrom * (length * previousTightness),
-                    p2 = localSplitPoint + directionTo * (length * tightness),
-                    p3 = localSplitPoint,
-                };
-                m_BezierSegments.Add(segment);
-
-                previous = localSplitPoint;
-                previousTightness = tightness;
-                directionFrom = -directionTo;
             }
 
             length = ControlPointDistance(previous, To, fromOrientation);
@@ -542,7 +551,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                 return;
 
             UpdateRenderPoints();
-            if (m_RenderPoints.Count == 0)
+            if (RenderPoints.Count == 0)
                 return; // Don't draw anything
 
             Color inColor = InputColor;
@@ -553,7 +562,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             outColor *= GraphViewStaticBridge.EditorPlayModeTint;
 #endif // UNITY_EDITOR
 
-            uint cpt = (uint)m_RenderPoints.Count;
+            uint cpt = (uint)RenderPoints.Count;
             uint wantedLength = (cpt) * 2;
             uint indexCount = (wantedLength - 2) * 3;
 
@@ -563,7 +572,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
             float polyLineLength = 0;
             for (int i = 1; i < cpt; ++i)
-                polyLineLength += (m_RenderPoints[i - 1] - m_RenderPoints[i]).sqrMagnitude;
+                polyLineLength += (RenderPoints[i - 1] - RenderPoints[i]).sqrMagnitude;
 
             float halfWidth = LineWidth * 0.5f;
             float currentLength = 0;
@@ -577,7 +586,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
                 if (i < cpt - 1)
                 {
-                    nextSegment = (m_RenderPoints[i + 1] - m_RenderPoints[i]);
+                    nextSegment = (RenderPoints[i + 1] - RenderPoints[i]);
                     unitNextSegment = nextSegment.normalized;
                 }
 
@@ -596,7 +605,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                     dir = unitNextSegment;
                 }
 
-                Vector2 pos = m_RenderPoints[i];
+                Vector2 pos = RenderPoints[i];
                 Vector2 uv = new Vector2(dir.y * halfWidth, -dir.x * halfWidth); // Normal scaled by half width
                 Color32 tint = Color.LerpUnclamped(outColor, inColor, currentLength / polyLineLength);
 

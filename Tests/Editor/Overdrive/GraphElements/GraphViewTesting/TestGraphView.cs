@@ -12,7 +12,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
         public readonly RectangleSelector rectangleSelector;
         public readonly FreehandSelector freehandSelector;
 
-        public TestGraphView(Overdrive.GraphElements.Store store) : base(store)
+        public TestGraphView(Store store) : base(store)
         {
             SetupZoom(ContentZoomer.DefaultMinScale, ContentZoomer.DefaultMaxScale);
 
@@ -33,30 +33,30 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
 
         public void RebuildUI(BasicGraphModel graphModel, Store store)
         {
-            var nodeList = nodes.ToList();
+            var nodeList = Nodes.ToList();
             foreach (var node in nodeList)
             {
                 RemoveElement(node);
             }
 
-            var edgeList = edges.ToList();
+            var edgeList = Edges.ToList();
             foreach (var edge in edgeList)
             {
                 RemoveElement(edge);
             }
 
-            var stickyList = stickies.ToList();
+            var stickyList = Stickies.ToList();
             foreach (var sticky in stickyList)
             {
                 RemoveElement(sticky);
             }
 
-            var placematList = placematContainer.Placemats;
+            var placematList = PlacematContainer.Placemats;
             foreach (var placemat in placematList)
             {
                 RemoveElement(placemat);
             }
-            placematContainer.RemoveAllPlacemats();
+            PlacematContainer.RemoveAllPlacemats();
 
             GraphElementFactory.RemoveAll(this);
 

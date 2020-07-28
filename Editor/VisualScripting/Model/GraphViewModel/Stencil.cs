@@ -83,7 +83,7 @@ namespace UnityEditor.VisualScripting.Model.Stencils
 
         public virtual ITranslator CreateTranslator()
         {
-            throw new NotImplementedException("You have to define a translator as the RoslynTranslator is not supported at the moment");
+            return new NoOpTranslator();
         }
 
         public virtual TypeHandle GetThisType()

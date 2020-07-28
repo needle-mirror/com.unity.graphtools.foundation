@@ -7,10 +7,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 {
     public class Node : GraphElement, IMovableGraphElement, IHighlightable, IBadgeContainer
     {
-        public IGTFNodeModel NodeModel => Model as IGTFNodeModel;
-
-        protected ContextualMenuManipulator m_ContextualMenuManipulator;
-
         public new static readonly string k_UssClassName = "ge-node";
         public static readonly string k_NotConnectedModifierUssClassName = k_UssClassName.WithUssModifier("not-connected");
         public static readonly string k_EmptyModifierUssClassName = k_UssClassName.WithUssModifier("empty");
@@ -24,7 +20,24 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         public static readonly string k_PortContainerPartName = "port-top-container";
 
         VisualElement m_ContentContainer;
+
+        protected ContextualMenuManipulator m_ContextualMenuManipulator;
+
+        public IGTFNodeModel NodeModel => Model as IGTFNodeModel;
+
         public override VisualElement contentContainer => m_ContentContainer ?? this;
+
+        public IconBadge ErrorBadge { get; set; }
+
+        public ValueBadge ValueBadge { get; set; }
+
+        public bool Highlighted
+        {
+            get => ClassListContains(k_HighlightedModifierUssClassName);
+            set => EnableInClassList(k_HighlightedModifierUssClassName, value);
+        }
+
+        public virtual bool IsMovable => true;
 
         public Node()
         {
@@ -73,11 +86,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             EnableInClassList(k_EmptyModifierUssClassName, childCount == 0);
             EnableInClassList(k_DisabledModifierUssClassName, NodeModel.State == ModelState.Disabled);
 
-            if (NodeModel is IHasPorts portHolder && portHolder.Ports != null)
+            if (NodeModel is IPortNode portHolder && portHolder.Ports != null)
             {
-                bool noPortConnected = portHolder.Ports.All(port => !port.IsConnected);
+                bool noPortConnected = portHolder.Ports.All(port => !port.IsConnected());
                 EnableInClassList(k_NotConnectedModifierUssClassName, noPortConnected);
             }
+
+            tooltip = NodeModel.Tooltip;
         }
 
         protected virtual void BuildContextualMenu(ContextualMenuPopulateEvent evt)
@@ -91,11 +106,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         internal virtual void UpdateEdges()
         {
-            if (NodeModel is IHasPorts portContainer && portContainer.Ports != null)
+            if (NodeModel is IPortNode portContainer && portContainer.Ports != null)
             {
                 foreach (var portModel in portContainer.Ports)
                 {
-                    foreach (var edgeModel in portModel.ConnectedEdges)
+                    foreach (var edgeModel in portModel.GetConnectedEdges())
                     {
                         var edge = edgeModel.GetUI<Edge>(GraphView);
                         edge?.UpdateFromModel();
@@ -115,9 +130,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             if (ports == null)
                 return;
 
-            foreach (var port in ports.Where(p => p.IsConnected))
+            foreach (var port in ports.Where(p => p.IsConnected()))
             {
-                foreach (var c in port.ConnectedEdges.Where(c => c.IsDeletable))
+                foreach (var c in port.GetConnectedEdges().Where(c => c.IsDeletable))
                 {
                     toDelete.Add(c);
                 }
@@ -126,7 +141,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         void DisconnectAll(DropdownMenuAction a)
         {
-            if (NodeModel is IHasPorts portHolder)
+            if (NodeModel is IPortNode portHolder)
             {
                 HashSet<IGTFGraphElementModel> toDeleteModels = new HashSet<IGTFGraphElementModel>();
                 AddConnectionsToDeleteSet(portHolder.Ports, ref toDeleteModels);
@@ -136,7 +151,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         DropdownMenuAction.Status DisconnectAllStatus(DropdownMenuAction a)
         {
-            if (NodeModel is IHasPorts portHolder && portHolder.Ports != null && portHolder.Ports.Any(port => port.IsConnected))
+            if (NodeModel is IPortNode portHolder && portHolder.Ports != null && portHolder.Ports.Any(port => port.IsConnected()))
             {
                 return DropdownMenuAction.Status.Normal;
             }
@@ -144,33 +159,22 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             return DropdownMenuAction.Status.Disabled;
         }
 
-        public virtual bool IsMovable => true;
-
-        public bool Highlighted
-        {
-            get => ClassListContains(k_HighlightedModifierUssClassName);
-            set => EnableInClassList(k_HighlightedModifierUssClassName, value);
-        }
-
-        public bool ShouldHighlightItemUsage(IGTFGraphElementModel graphElementModel)
+        public virtual bool ShouldHighlightItemUsage(IGTFGraphElementModel graphElementModel)
         {
             return false;
         }
 
-        public IconBadge ErrorBadge { get; set; }
-        public ValueBadge ValueBadge { get; set; }
-
         // TODO JOCE: This is required until we have a dirtying mechanism (see ShowConnectedExecutionEdgesOrder in NodeModel.cs)
         internal void UpdateOutgoingExecutionEdges()
         {
-            foreach (var edge in ((IHasPorts)NodeModel).ConnectedPortsWithReorderableEdges().SelectMany(p => p.ConnectedEdges))
+            foreach (var edge in ((IPortNode)NodeModel).ConnectedPortsWithReorderableEdges().SelectMany(p => p.GetConnectedEdges()))
                 edge.GetUI<Edge>(GraphView)?.UpdateFromModel();
         }
 
         public override void OnSelected()
         {
             base.OnSelected();
-            if (!(NodeModel is IHasPorts hasPorts))
+            if (!(NodeModel is IPortNode hasPorts))
                 return;
             hasPorts.RevealReorderableEdgesOrder(true);
             UpdateOutgoingExecutionEdges();
@@ -179,15 +183,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         public override void OnUnselected()
         {
             base.OnUnselected();
-            if (!(NodeModel is IHasPorts hasPorts))
+
+            GraphView.ClearGraphElementsHighlight(ShouldHighlightItemUsage);
+
+            if (!(NodeModel is IPortNode hasPorts))
                 return;
+
             hasPorts.RevealReorderableEdgesOrder(false);
             UpdateOutgoingExecutionEdges();
         }
 
         public override bool IsSelected(VisualElement selectionContainer)
         {
-            return GraphView.selection.Contains(this);
+            return GraphView.Selection.Contains(this);
         }
     }
 }

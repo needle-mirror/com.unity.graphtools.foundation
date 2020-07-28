@@ -1,4 +1,5 @@
 using System;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
@@ -14,8 +15,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         readonly Pill m_Pill;
         TextField m_TitleTextfield;
 
-        public new Store Store => base.Store as Store;
-
         public string TitleValue => Declaration.DisplayTitle;
 
         public VisualElement TitleEditor => m_TitleTextfield ?? (m_TitleTextfield = new TextField { name = "titleEditor", isDelayed = true });
@@ -23,7 +22,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         public bool EditTitleCancelled { get; set; } = false;
 
         public VisualElement TitleElement => this;
-        public IVariableDeclarationModel Declaration => Model as IVariableDeclarationModel;
+        public IGTFVariableDeclarationModel Declaration => Model as IGTFVariableDeclarationModel;
 
         public bool IsFramable() => true;
 
@@ -38,7 +37,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             AddToClassList(Declaration?.VariableType == VariableType.GraphVariable ? "graphVariable" : "functionVariable");
         }
 
-        public TokenDeclaration(Store store, IVariableDeclarationModel model, GraphView graphView)
+        public TokenDeclaration(Store store, IGTFVariableDeclarationModel model, GraphView graphView)
         {
             m_Pill = new Pill();
             Add(m_Pill);
@@ -84,7 +83,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             {
                 case IGTFVariableNodeModel variableModel
                     when ReferenceEquals(variableModel.VariableDeclarationModel, Declaration):
-                case IVariableDeclarationModel variableDeclarationModel
+                case IGTFVariableDeclarationModel variableDeclarationModel
                     when ReferenceEquals(variableDeclarationModel, Declaration):
                     return true;
             }
@@ -95,7 +94,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         public override bool IsSelected(VisualElement selectionContainer)
         {
             var gView = selectionContainer?.GetFirstOfType<GraphView>();
-            return gView != null && gView.selection.Contains(this);
+            return gView != null && gView.Selection.Contains(this);
         }
 
         public int FindIndexInParent()

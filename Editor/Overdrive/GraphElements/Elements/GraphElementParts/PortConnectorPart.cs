@@ -7,6 +7,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 {
     public class PortConnectorPart : BaseGraphElementPart
     {
+        public static readonly string k_UssClassName = "ge-port-connector-part";
+        public static readonly string k_ConnectorUssName = "connector";
+        public static readonly string k_ConnectorCapUssName = "cap";
+        public static readonly string k_LabelName = "label";
+
         public static PortConnectorPart Create(string name, IGTFGraphElementModel model, IGraphElement graphElement, string parentClassName)
         {
             if (model is IGTFPortModel)
@@ -17,21 +22,20 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             return null;
         }
 
-        protected PortConnectorPart(string name, IGTFGraphElementModel model, IGraphElement ownerElement, string parentClassName)
-            : base(name, model, ownerElement, parentClassName) {}
-
         Label m_ConnectorLabel;
+
         VisualElement m_ConnectorBox;
+
         VisualElement m_ConnectorBoxCap;
 
         VisualElement m_Root;
 
+        bool m_Hovering;
+
         public override VisualElement Root => m_Root;
 
-        public static readonly string k_UssClassName = "ge-port-connector-part";
-        public static readonly string k_ConnectorUssName = "connector";
-        public static readonly string k_ConnectorCapUssName = "cap";
-        public static readonly string k_LabelName = "label";
+        protected PortConnectorPart(string name, IGTFGraphElementModel model, IGraphElement ownerElement, string parentClassName)
+            : base(name, model, ownerElement, parentClassName) {}
 
         protected override void BuildPartUI(VisualElement container)
         {
@@ -82,7 +86,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             ShowCap();
         }
 
-        bool m_Hovering;
         void OnMouseEnter(MouseEnterEvent evt)
         {
             m_Hovering = true;
@@ -101,7 +104,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             {
                 bool showCap = m_Hovering || ((m_OwnerElement as VisualElement)?.ClassListContains(Port.k_WillConnectModifierUssClassName) ?? false);
 
-                if ((m_Model is IGTFPortModel portModel && portModel.IsConnected) || showCap)
+                if ((m_Model is IGTFPortModel portModel && portModel.IsConnected()) || showCap)
                 {
                     m_ConnectorBoxCap.style.visibility = StyleKeyword.Null;
                 }

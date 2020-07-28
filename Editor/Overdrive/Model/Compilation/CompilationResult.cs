@@ -54,7 +54,7 @@ namespace  UnityEditor.GraphToolsFoundation.Overdrive
 
         void AddError(string desc, IGTFNodeModel node, bool isWarning, CompilerQuickFix quickFix)
         {
-            errors.Add(new CompilerError { description = desc, sourceNode = node, isWarning = isWarning, quickFix = quickFix });
+            errors.Add(new CompilerError { description = desc, sourceNode = node, sourceNodeGuid = node.Guid, isWarning = isWarning, quickFix = quickFix });
         }
     }
 

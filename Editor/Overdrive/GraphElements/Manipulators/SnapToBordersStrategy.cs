@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -109,12 +110,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         List<Rect> GetNotSelectedElementRectsInView(GraphElement selectedElement)
         {
             List<Rect> notSelectedElementRects = new List<Rect>();
-            List<GraphElement> ignoredElements = m_GraphView.selection.OfType<GraphElement>().ToList();
+            List<GraphElement> ignoredElements = m_GraphView.Selection.OfType<GraphElement>().ToList();
 
             // Consider only the visible nodes.
             Rect rectToFit = m_GraphView.layout;
 
-            foreach (GraphElement element in m_GraphView.graphElements.ToList())
+            foreach (GraphElement element in m_GraphView.GraphElements.ToList())
             {
                 if (selectedElement is Placemat placemat && element.layout.Overlaps(placemat.layout))
                 {

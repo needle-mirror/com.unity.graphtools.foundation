@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using NUnit.Framework;
+using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine.UIElements;
@@ -59,8 +60,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             // The node should snap to the reference node's position in Y, but the X should be dragged normally
             Assert.AreEqual(outputPortUI.GetGlobalCenter().y, inputPortUI.GetGlobalCenter().y);
-            Assert.AreNotEqual(m_SnappingNodePos.y + moveOffset.y, m_SnappedNode.layout.y);
-            Assert.AreEqual(m_SnappingNodePos.x + moveOffset.x, m_SnappedNode.layout.x);
+            Assert.AreNotEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.y + moveOffset.y),
+                m_SnappedNode.layout.y);
+            Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.x + moveOffset.x),
+                m_SnappedNode.layout.x);
 
             yield return null;
         }
@@ -94,8 +97,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             // The port should not snap to the reference node's port in Y: the Y and X should be dragged normally
             Assert.AreNotEqual(outputPortUI.GetGlobalCenter().y, inputPortUI.GetGlobalCenter().y);
-            Assert.AreEqual(m_SnappingNodePos.x + moveOffset.x, m_SnappedNode.layout.x);
-            Assert.AreEqual(m_SnappingNodePos.y + moveOffset.y, m_SnappedNode.layout.y);
+            Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.x + moveOffset.x),
+                m_SnappedNode.layout.x);
+            Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.y + moveOffset.y),
+                m_SnappedNode.layout.y);
 
             yield return null;
         }
@@ -137,8 +142,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             // The node should snap to the reference node's position in X: the Y should be dragged normally
             Assert.AreEqual(outputPortUI.GetGlobalCenter().x, inputPortUI.GetGlobalCenter().x);
-            Assert.AreNotEqual(m_SnappingNodePos.x + moveOffset.x, m_SnappedNode.GetPosition().x);
-            Assert.AreEqual(m_SnappingNodePos.y + moveOffset.y, m_SnappedNode.GetPosition().y);
+            Assert.AreNotEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.x + moveOffset.x),
+                m_SnappedNode.layout.x);
+            Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.y + moveOffset.y),
+                m_SnappedNode.layout.y);
 
             yield return null;
         }
@@ -180,8 +187,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             // The node should not snap to the reference node's position in X: the X and Y should be dragged normally
             Assert.AreNotEqual(outputPortUI.GetGlobalCenter().x, inputPortUI.GetGlobalCenter().x);
-            Assert.AreEqual(m_SnappingNodePos.y + moveOffset.y, m_SnappedNode.GetPosition().y);
-            Assert.AreEqual(m_SnappingNodePos.x + moveOffset.x, m_SnappedNode.GetPosition().x);
+            Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.y + moveOffset.y),
+                m_SnappedNode.layout.y);
+            Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.x + moveOffset.x),
+                m_SnappedNode.layout.x);
 
             yield return null;
         }
@@ -196,13 +205,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             //             +-------+ o Node3 |
             //                       +-------+
 
-            referenceNode1Model = CreateNode("Node1", k_ReferenceNodePos);
+            referenceNode1Model = CreateNode("Node1", GraphViewStaticBridge.RoundToPixelGrid(k_ReferenceNodePos));
 
-            m_SnappingNodePos = new Vector2(k_ReferenceNodePos.x + k_NodeSize.x, k_ReferenceNodePos.y + k_NodeSize.y * 0.5f);
+            m_SnappingNodePos = GraphViewStaticBridge.RoundToPixelGrid(new Vector2(k_ReferenceNodePos.x + k_NodeSize.x, k_ReferenceNodePos.y + k_NodeSize.y * 0.5f));
             snappingNodeModel = CreateNode("Node2", m_SnappingNodePos);
 
             // Third node
-            Vector2 secondReferenceNodePos = new Vector2(m_SnappingNodePos.x + k_NodeSize.x, m_SnappingNodePos.y + k_NodeSize.y * 0.5f);
+            Vector2 secondReferenceNodePos = GraphViewStaticBridge.RoundToPixelGrid(new Vector2(m_SnappingNodePos.x + k_NodeSize.x, m_SnappingNodePos.y + k_NodeSize.y * 0.5f));
             BasicNodeModel secondReferenceNodeModel = CreateNode("Node3", secondReferenceNodePos);
 
             // Add a horizontal port on each node
@@ -235,7 +244,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             // We move the snapping Node2 toward reference Node1 within the snapping range
             float offSetY = k_SnapDistance - k_NodeSize.y * 0.5f;
-            Vector2 moveOffset = new Vector2(0, offSetY);
+            Vector2 moveOffset = GraphViewStaticBridge.RoundToPixelGrid(new Vector2(0, offSetY));
 
             // Move the snapping node.
             helpers.MouseDownEvent(start);
@@ -270,8 +279,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             start = worldNodePos + m_SelectionOffset;
 
             // We move the snapping Node2 toward Node3 within the snapping range
-            offSetY = k_NodeSize.y + k_SnapDistance;
-            moveOffset = new Vector2(0, offSetY);
+            offSetY = k_NodeSize.y + k_SnapDistance - 1;
+            moveOffset = GraphViewStaticBridge.RoundToPixelGrid(new Vector2(0, offSetY));
 
             // Move the snapping node.
             helpers.MouseDownEvent(start);
@@ -391,8 +400,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             // Node3 should not snap to Node1's port
             Assert.AreNotEqual(node1OutputPortUI.GetGlobalCenter().y, node3InputPortUI.GetGlobalCenter().y);
             // Node 3 should have moved by the move offset in x and the same y offset as Node2
-            Assert.AreEqual(secondSelectedNodePos.x + moveOffset.x, node3.layout.x);
-            Assert.AreEqual(secondSelectedNodePos.y - topToTopDistance, node3.layout.y);
+            Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(secondSelectedNodePos.x + moveOffset.x), node3.layout.x);
+            Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(secondSelectedNodePos.y - topToTopDistance), node3.layout.y);
 
             yield return null;
         }

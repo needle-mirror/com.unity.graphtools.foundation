@@ -31,8 +31,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
     {
         public new class UxmlFactory : UxmlFactory<StickyNote> {}
 
-        public IGTFStickyNoteModel StickyNoteModel => Model as IGTFStickyNoteModel;
-
         public static readonly Vector2 defaultSize = new Vector2(200, 160);
 
         public new static readonly string k_UssClassName = "ge-sticky-note";
@@ -46,12 +44,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         public static readonly string k_ResizerPartName = "resizer";
 
         VisualElement m_ContentContainer;
+
         public override VisualElement contentContainer => m_ContentContainer ?? this;
+
+        public IGTFStickyNoteModel StickyNoteModel => Model as IGTFStickyNoteModel;
+
+        public bool IsMovable => true;
 
         public StickyNote()
         {
             this.AddManipulator(new ContextualMenuManipulator(BuildContextualMenu));
-            layer = -100;
+            Layer = -100;
         }
 
         protected override void BuildPartList()
@@ -200,7 +203,5 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                 element.resolvedStyle.marginTop + element.resolvedStyle.marginBottom + element.resolvedStyle.paddingTop + element.resolvedStyle.paddingBottom + element.resolvedStyle.borderBottomWidth + element.resolvedStyle.borderTopWidth
             );
         }
-
-        public bool IsMovable => true;
     }
 }

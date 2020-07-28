@@ -116,7 +116,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                 return;
 
             // Since we didn't drag after all, update selection with current element only
-            if (!selectionContainer.selection.Contains(selectedElement))
+            if (!selectionContainer.Selection.Contains(selectedElement))
             {
                 if (!e.actionKey)
                     selectionContainer.ClearSelection();
@@ -145,7 +145,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             if (m_Active && !m_Dragging && selectionContainer != null)
             {
                 // Keep a copy of the selection
-                var selection = selectionContainer.selection.ToList();
+                var selection = selectionContainer.Selection.ToList();
 
                 if (selection.Count > 0)
                 {
@@ -195,7 +195,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                     selectionContainer.ClearSelection();
                     selectionContainer.AddToSelection(selectedElement);
                 }
-                else if (m_AddedByMouseDown && !m_Dragging && selectionContainer.selection.Contains(selectedElement))
+                else if (m_AddedByMouseDown && !m_Dragging && selectionContainer.Selection.Contains(selectedElement))
                 {
                     selectionContainer.RemoveFromSelection(selectedElement);
                 }

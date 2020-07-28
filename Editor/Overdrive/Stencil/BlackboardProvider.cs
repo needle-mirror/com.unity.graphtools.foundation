@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -50,7 +48,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         static bool MainCanAcceptDrop(ISelectableGraphElement selected)
         {
-            return !(selected is BlackboardThisField);
+            return true;
         }
 
         public string GetSubTitle()
@@ -58,12 +56,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             return k_ClassLibrarySubTitle;
         }
 
-        public void AddItemRequested<TAction>(VisualScripting.Store store, TAction _) where TAction : IAction
+        public void AddItemRequested<TAction>(Store store, TAction _) where TAction : IAction
         {
             store.Dispatch(new CreateGraphVariableDeclarationAction(k_FieldName, true, typeof(float).GenerateTypeHandle()));
         }
 
-        public void MoveItemRequested(VisualScripting.Store store, int index, VisualElement field)
+        public void MoveItemRequested(Store store, int index, VisualElement field)
         {
             if (field is BlackboardVariableField blackboardField)
             {
@@ -88,25 +86,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 {
                     if (visualElement is BlackboardRow row)
                     {
-                        if (row.Model is IVariableDeclarationModel model)
+                        if (row.Model is IGTFVariableDeclarationModel model)
                             expandedRows[model] = row.expanded;
                     }
                 }
             }
 
             blackboard.ClearContents();
-
-            if (CanDisplayThisToken)
-            {
-                var thisNodeModel = currentGraphModel.NodeModels.OfType<ThisNodeModel>().FirstOrDefault();
-                if (thisNodeModel != null)
-                {
-                    var thisField = new BlackboardThisField(blackboard.GraphView, thisNodeModel, currentGraphModel);
-                    blackboard.Sections[k_MainSection].Add(thisField);
-                    blackboard.GraphVariables.Add(thisField);
-                    blackboard.RestoreSelectionForElement(thisField);
-                }
-            }
 
             // Fetch all fields from the GraphModel in the main section
             foreach (var variableDeclarationModel in currentGraphModel.VariableDeclarations)
@@ -132,7 +118,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 return;
             }
 
-            SearcherService.ShowTypes(
+            SearcherService.ShowVariableTypes(
                 store.GetState().CurrentGraphModel.Stencil,
                 pos,
                 (t, i) =>
@@ -145,10 +131,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                         true
                     );
 
-                    if (store.GetState().EditorDataModel is IEditorDataModel editorDataModel)
-                        editorDataModel.ElementModelToRename = declaration;
-
-                    store.Dispatch(new RefreshUIAction(UpdateFlags.All));
+                    store.GetState().EditorDataModel.ElementModelToRename = declaration;
+                    store.ForceRefreshUI(UpdateFlags.All);
                 });
         }
 
@@ -160,15 +144,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             // optimization: stop at the first IVsBlackboardField, but still exclude BlackboardThisFields
             if (picked != null && picked is BlackboardVariableField field)
-                (blackboard.GraphView as VseGraphView)?.DisplayTokenDeclarationSearcher((VariableDeclarationModel)field.VariableDeclarationModel, mousePosition);
+                (blackboard.GraphView as VseGraphView)?.DisplayTokenDeclarationSearcher(field.VariableDeclarationModel, mousePosition);
             else
                 DisplayAddVariableSearcher(blackboard.Store, mousePosition);
         }
 
         public bool CanAddItems => true;
 
-        public void BuildContextualMenu(DropdownMenu evtMenu, VisualElement visualElement, VisualScripting.Store store, Vector2 mousePosition) {}
-
-        static bool CanDisplayThisToken => true;
+        public void BuildContextualMenu(DropdownMenu evtMenu, VisualElement visualElement, Store store, Vector2 mousePosition) {}
     }
 }

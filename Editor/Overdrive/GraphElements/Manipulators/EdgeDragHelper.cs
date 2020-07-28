@@ -18,7 +18,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         GhostEdgeModel m_GhostEdgeModel;
         Edge m_GhostEdge;
         public GraphView GraphView { get; }
-        readonly Overdrive.Store m_Store;
+        readonly Store m_Store;
         readonly EdgeConnectorListener m_Listener;
         readonly Func<IGTFGraphModel, GhostEdgeModel> m_GhostEdgeViewModelCreator;
 
@@ -28,7 +28,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         bool resetPositionOnPan { get; set; }
 
-        public EdgeDragHelper(Overdrive.Store store, GraphView graphView, EdgeConnectorListener listener, Func<IGTFGraphModel, GhostEdgeModel> ghostEdgeViewModelCreator)
+        public EdgeDragHelper(Store store, GraphView graphView, EdgeConnectorListener listener, Func<IGTFGraphModel, GhostEdgeModel> ghostEdgeViewModelCreator)
         {
             m_Store = store;
             GraphView = graphView;
@@ -78,7 +78,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             if (m_CompatiblePorts != null)
             {
                 // Reset the highlights.
-                GraphView.ports.ForEach((p) =>
+                GraphView.Ports.ForEach((p) =>
                 {
                     p.SetEnabled(true);
                     p.Highlighted = false;
@@ -161,7 +161,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             m_CompatiblePorts = m_Store.GetState().CurrentGraphModel.GetCompatiblePorts(draggedPort);
 
             // Only light compatible anchors when dragging an edge.
-            GraphView.ports.ForEach((p) =>
+            GraphView.Ports.ForEach((p) =>
             {
                 p.SetEnabled(false);
                 p.Highlighted = false;
@@ -187,7 +187,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
             m_WasPanned = false;
 
-            m_EdgeCandidate.layer = Int32.MaxValue;
+            m_EdgeCandidate.Layer = Int32.MaxValue;
 
             return true;
         }
@@ -304,7 +304,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             Vector2 mousePosition = evt.mousePosition;
 
             // Reset the highlights.
-            GraphView.ports.ForEach((p) =>
+            GraphView.Ports.ForEach((p) =>
             {
                 p.SetEnabled(true);
                 p.Highlighted = false;

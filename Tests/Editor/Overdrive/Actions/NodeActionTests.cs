@@ -23,7 +23,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
         [Test]
         public void Test_CreateNodeFromSearcherAction([Values] TestingMode mode)
         {
-            var gedb = new GraphElementSearcherDatabase(Stencil);
+            var gedb = new GraphElementSearcherDatabase(Stencil, GraphModel);
             Type0FakeNodeModel.AddToSearcherDatabase(gedb);
             var db = gedb.Build();
             var item = (GraphNodeModelSearcherItem)db.Search(nameof(Type0FakeNodeModel), out _)[0];
@@ -222,7 +222,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                     Assert.That(GetEdgeCount(), Is.EqualTo(2));
                     Assert.That(nodeToDeleteAndBypass.Input0, Is.ConnectedTo(constantA.OutputPort));
                     Assert.That(binary1.Input0, Is.ConnectedTo(nodeToDeleteAndBypass.Output0));
-                    return new RemoveNodesAction(new IGTFNodeModel[] {nodeToDeleteAndBypass}, new IGTFNodeModel[] {nodeToDeleteAndBypass});
+                    return new RemoveNodesAction(new IInOutPortsNode[] {nodeToDeleteAndBypass}, new IGTFNodeModel[] {nodeToDeleteAndBypass});
                 },
                 () =>
                 {

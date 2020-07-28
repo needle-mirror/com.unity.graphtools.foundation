@@ -77,11 +77,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
             m_FreehandElement.points.Add(e.localMousePosition);
 
-            List<ISelectableGraphElement> selection = m_GraphView.selection;
+            List<ISelectableGraphElement> selection = m_GraphView.Selection;
 
             // a copy is necessary because Add To selection might cause a SendElementToFront which will change the order.
             List<ISelectableGraphElement> newSelection = new List<ISelectableGraphElement>();
-            m_GraphView.graphElements.ForEach(element =>
+            m_GraphView.GraphElements.ForEach(element =>
             {
                 if (element.IsSelectable())
                 {

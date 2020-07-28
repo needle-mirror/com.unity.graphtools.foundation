@@ -31,7 +31,7 @@ namespace UnityEditor.VisualScriptingTests.Actions
             var stack = GraphModel.CreateStack("stack", Vector2.zero);
             var set = stack.CreateSetPropertyGroupNode(-1);
             var db = new GraphElementSearcherDatabase(Stencil).AddUnaryOperators().Build();
-            var item = (StackNodeModelSearcherItem)db.Search("postdecr", out _)[0];
+            var item = (StackNodeModelSearcherItem)db.Search("post decr", out _)[0];
 
             TestPrereqActionPostreq(mode,
                 () =>
@@ -78,7 +78,7 @@ namespace UnityEditor.VisualScriptingTests.Actions
                     {
                         var db = new GraphElementSearcherDatabase(stencil).AddControlFlows().Build();
                         var items = db.Search("if complete", out _);
-                        return (StackNodeModelSearcherItem)items[0];
+                        return (StackNodeModelSearcherItem)items[2];
                     });
             }
         }
@@ -297,7 +297,7 @@ namespace UnityEditor.VisualScriptingTests.Actions
             GraphModel.CreateEdge(unaryNode.InputPort, variableNode.OutputPort);
 
             var db = new GraphElementSearcherDatabase(Stencil).AddUnaryOperators().Build();
-            var item = (StackNodeModelSearcherItem)db.Search("postincr", out _)[0];
+            var item = (StackNodeModelSearcherItem)db.Search("post incr", out _)[0];
 
             TestPrereqActionPostreq(mode,
                 () =>

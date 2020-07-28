@@ -10,7 +10,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
     public class ClassSearcherDatabaseProvider : ISearcherDatabaseProvider
     {
         readonly Stencil m_Stencil;
-        List<SearcherDatabase> m_GraphElementsSearcherDatabases;
+        List<SearcherDatabaseBase> m_GraphElementsSearcherDatabases;
         SearcherDatabase m_StaticTypesSearcherDatabase;
         int m_AssetVersion = AssetWatcher.Version;
         int m_AssetModificationVersion = AssetModificationWatcher.Version;
@@ -20,7 +20,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
             m_Stencil = stencil;
         }
 
-        public virtual List<SearcherDatabase> GetGraphElementsSearcherDatabases(IGTFGraphModel graphModel)
+        public virtual List<SearcherDatabaseBase> GetGraphElementsSearcherDatabases(IGTFGraphModel graphModel)
         {
             if (AssetWatcher.Version != m_AssetVersion || AssetModificationWatcher.Version != m_AssetModificationVersion)
             {
@@ -29,41 +29,36 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
                 ClearGraphElementsSearcherDatabases();
             }
 
-            return m_GraphElementsSearcherDatabases ?? (m_GraphElementsSearcherDatabases = new List<SearcherDatabase>
+            return m_GraphElementsSearcherDatabases ?? (m_GraphElementsSearcherDatabases = new List<SearcherDatabaseBase>
             {
-                new GraphElementSearcherDatabase(m_Stencil)
+                new GraphElementSearcherDatabase(m_Stencil, graphModel)
                     .AddNodesWithSearcherItemAttribute()
                     .AddStickyNote()
                     .Build()
             });
         }
 
-        public virtual List<SearcherDatabase> GetTypesSearcherDatabases()
+        public virtual List<SearcherDatabase> GetVariableTypesSearcherDatabases()
         {
             return new List<SearcherDatabase>
             {
-                m_StaticTypesSearcherDatabase ?? (m_StaticTypesSearcherDatabase = new TypeSearcherDatabase(m_Stencil, m_Stencil.GetAssembliesTypesMetadata())
-                        .AddClasses()
-                        .AddEnums()
-                        .Build()),
-                new TypeSearcherDatabase(m_Stencil, new List<ITypeMetadata>())
-                    .Build()
+                m_StaticTypesSearcherDatabase ?? (m_StaticTypesSearcherDatabase = TypeSearcherDatabase.FromTypes(m_Stencil, new Type[] {typeof(float), typeof(bool)}))
             };
         }
 
-        public virtual List<SearcherDatabase> GetGraphVariablesSearcherDatabases(IGTFGraphModel graphModel)
+        public virtual List<SearcherDatabaseBase> GetGraphVariablesSearcherDatabases(IGTFGraphModel graphModel)
         {
-            return new List<SearcherDatabase>
+            return new List<SearcherDatabaseBase>
             {
-                new GraphElementSearcherDatabase(m_Stencil)
+                new GraphElementSearcherDatabase(m_Stencil, graphModel)
                     .AddGraphVariables(graphModel)
                     .Build()
             };
         }
 
-        public virtual List<SearcherDatabase> GetDynamicSearcherDatabases(IGTFPortModel portModel)
+        public virtual List<SearcherDatabaseBase> GetDynamicSearcherDatabases(IGTFPortModel portModel)
         {
-            return new List<SearcherDatabase>();
+            return new List<SearcherDatabaseBase>();
         }
 
         public virtual void ClearGraphElementsSearcherDatabases()

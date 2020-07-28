@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
 using UnityEngine;
 using UnityEngine.GraphToolsFoundation.Overdrive;
 
@@ -46,7 +45,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
         public IReadOnlyList<IGTFStickyNoteModel> StickyNoteModels => m_StickyNoteModels;
         public IReadOnlyList<IGTFPlacematModel> PlacematModels => m_Placemats;
         public IList<IGTFVariableDeclarationModel> VariableDeclarations { get; }
-        public IReadOnlyList<IGTFVariableDeclarationModel> PortalDeclarations { get; }
+        public IReadOnlyList<IDeclarationModel> PortalDeclarations { get; }
 
         public string GetAssetPath()
         {
@@ -70,7 +69,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
             throw new NotImplementedException();
         }
 
-        public void DeleteVariableDeclarations(IEnumerable<IGTFVariableDeclarationModel> variableModels, bool deleteUsages, bool registerUndo)
+        public void DeleteVariableDeclarations(IEnumerable<IGTFVariableDeclarationModel> variableModels, bool deleteUsages)
         {
             throw new NotImplementedException();
         }
@@ -85,7 +84,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
             throw new NotImplementedException();
         }
 
-        public IGTFVariableDeclarationModel CreateGraphPortalDeclaration(string portalName)
+        public IGTFVariableDeclarationModel CreateGraphPortalDeclaration(string portalName, SpawnFlags spawnFlags = SpawnFlags.Default)
         {
             throw new NotImplementedException();
         }
@@ -101,6 +100,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
         }
 
         public IGTFConstantNodeModel CreateConstantNode(string constantName, TypeHandle constantTypeHandle, Vector2 position, SpawnFlags spawnFlags = SpawnFlags.Default, GUID? guid = null, Action<IGTFConstantNodeModel> preDefine = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IConstant CreateConstantValue(TypeHandle constantTypeHandle, Action<IConstant> preDefine = null)
         {
             throw new NotImplementedException();
         }
@@ -208,23 +212,26 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
 
         public List<IGTFPortModel> GetCompatiblePorts(IGTFPortModel startPort)
         {
-            return this.GetPortModels().ToList().Where(p =>
+            List<IGTFPortModel> compatiblePorts = this.GetPortModels().ToList().Where(p =>
                 p.Direction != startPort.Direction &&
-                p.NodeModel != startPort.NodeModel &&
                 p.PortDataType == startPort.PortDataType)
                 .ToList();
+
+            return startPort.NodeModel.AllowSelfConnect ? compatiblePorts : compatiblePorts.Where(p => p.NodeModel != startPort.NodeModel).ToList();
         }
 
         public IReadOnlyDictionary<GUID, IGTFNodeModel> NodesByGuid => NodeModels.ToDictionary(n => n.Guid);
-        public IGraphChangeList LastChanges => null;
+        public GraphChangeList LastChanges => null;
         public IEnumerable<IGTFPortModel> GetConnections(IGTFPortModel portModel)
         {
-            throw new NotImplementedException();
+            return GetEdgesConnections(portModel)
+                .Select(e => portModel.Direction == Direction.Input ? e.FromPort : e.ToPort)
+                .Where(p => p != null);
         }
 
         public IEnumerable<IGTFEdgeModel> GetEdgesConnections(IGTFPortModel portModel)
         {
-            throw new NotImplementedException();
+            return EdgeModels.Where(e => portModel.Direction == Direction.Input ? BasicPortModel.Equivalent(e.ToPort, portModel) : BasicPortModel.Equivalent(e.FromPort, portModel));
         }
 
         public void QuickCleanup()
@@ -238,6 +245,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
         }
 
         public CompilationResult Compile(ITranslator translator)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void ResetChangeList()
+        {
+        }
+
+        public void Repair()
         {
             throw new NotImplementedException();
         }
@@ -258,5 +274,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
         }
 
         public void Dispose() {}
+
+        public void UndoRedoPerformed() {}
     }
 }

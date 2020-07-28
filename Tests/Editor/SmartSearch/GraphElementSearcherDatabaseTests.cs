@@ -265,10 +265,10 @@ namespace UnityEditor.VisualScriptingTests.SmartSearch
 
         [TestCase(SearcherContext.Graph, "mi", UnaryOperatorKind.Minus, SpawnFlags.Default)]
         [TestCase(SearcherContext.Graph, "mi", UnaryOperatorKind.Minus, SpawnFlags.Orphan)]
-        [TestCase(SearcherContext.Stack, "postD", UnaryOperatorKind.PostDecrement, SpawnFlags.Default)]
-        [TestCase(SearcherContext.Stack, "postD", UnaryOperatorKind.PostDecrement, SpawnFlags.Orphan)]
-        [TestCase(SearcherContext.Stack, "postI", UnaryOperatorKind.PostIncrement, SpawnFlags.Default)]
-        [TestCase(SearcherContext.Stack, "postI", UnaryOperatorKind.PostIncrement, SpawnFlags.Orphan)]
+        [TestCase(SearcherContext.Stack, "post d", UnaryOperatorKind.PostDecrement, SpawnFlags.Default)]
+        [TestCase(SearcherContext.Stack, "post D", UnaryOperatorKind.PostDecrement, SpawnFlags.Orphan)]
+        [TestCase(SearcherContext.Stack, "post I", UnaryOperatorKind.PostIncrement, SpawnFlags.Default)]
+        [TestCase(SearcherContext.Stack, "post I", UnaryOperatorKind.PostIncrement, SpawnFlags.Orphan)]
         [TestCase(SearcherContext.Graph, "lo", UnaryOperatorKind.LogicalNot, SpawnFlags.Default)]
         [TestCase(SearcherContext.Graph, "lo", UnaryOperatorKind.LogicalNot, SpawnFlags.Orphan)]
         public void TestUnaryOperators(SearcherContext context, string query, UnaryOperatorKind kind,
@@ -279,7 +279,7 @@ namespace UnityEditor.VisualScriptingTests.SmartSearch
                 .Build();
 
             var results = db.Search(query, out _);
-            Assert.AreEqual(1, results.Count);
+            Assert.AreNotEqual(0, results.Count);
 
             var item = results[0] as ISearcherItemDataProvider;
             Assert.IsNotNull(item);
@@ -583,7 +583,7 @@ namespace UnityEditor.VisualScriptingTests.SmartSearch
                 .AddMacros()
                 .Build();
 
-            var result = db.Search(graphName, out _);
+            var result = db.Search(graphName, out _).OfType<GraphNodeModelSearcherItem>().ToList();
             Assert.AreEqual(1, result.Count);
 
             var item = (GraphNodeModelSearcherItem)result[0];

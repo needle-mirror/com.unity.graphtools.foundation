@@ -1,6 +1,6 @@
 using System;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -8,12 +8,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 {
     public abstract class GraphElement : VisualElementBridge, ISelectableGraphElement, IGraphElement
     {
-        public Color MinimapColor { get; protected set; }
+        static readonly CustomStyleProperty<int> s_LayerProperty = new CustomStyleProperty<int>("--layer");
+        static readonly Color k_MinimapColor = new Color(0.9f, 0.9f, 0.9f, 0.5f);
+
+        public static readonly string k_UssClassName = "ge-graph-element";
+        public static readonly string k_SelectableModifierUssClassName = k_UssClassName.WithUssModifier("selectable");
 
         int m_Layer;
+
         bool m_LayerIsInline;
 
-        public int layer
+        bool m_Selected;
+
+        public int Layer
         {
             get => m_Layer;
             set
@@ -23,7 +30,47 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             }
         }
 
+        public Color MinimapColor { get; protected set; }
+
         public virtual bool ShowInMiniMap { get; set; } = true;
+
+        internal ResizeRestriction ResizeRestriction { get; set; }
+
+        public bool Selected
+        {
+            get => m_Selected;
+            set
+            {
+                // Set new value (toggle old value)
+                if (!IsSelectable())
+                    return;
+
+                if (m_Selected == value)
+                    return;
+
+                m_Selected = value;
+
+                this.SetCheckedPseudoState(m_Selected);
+            }
+        }
+
+        public GraphElementPartList PartList { get; private set; }
+
+        protected ClickSelector ClickSelector { get; private set; }
+
+        public IGTFGraphElementModel Model { get; private set; }
+
+        // PF make setter private (needed by Blackboard)
+        public Store Store { get; protected set; }
+
+        // PF make setter private (needed by Blackboard)
+        public GraphView GraphView { get; protected set; }
+
+        protected GraphElement()
+        {
+            MinimapColor = k_MinimapColor;
+            RegisterCallback<CustomStyleResolvedEvent>(OnCustomStyleResolved);
+        }
 
         public void ResetLayer()
         {
@@ -33,8 +80,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             customStyle.TryGetValue(s_LayerProperty, out m_Layer);
             UpdateLayer(prevLayer);
         }
-
-        static CustomStyleProperty<int> s_LayerProperty = new CustomStyleProperty<int>("--layer");
 
         void OnCustomStyleResolved(CustomStyleResolvedEvent e)
         {
@@ -62,46 +107,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             }
         }
 
-        internal ResizeRestriction resizeRestriction { get; set; }
-
-        bool m_Selected;
-        public bool selected
-        {
-            get => m_Selected;
-            set
-            {
-                // Set new value (toggle old value)
-                if (!IsSelectable())
-                    return;
-
-                if (m_Selected == value)
-                    return;
-
-                m_Selected = value;
-
-                this.SetCheckedPseudoState(m_Selected);
-            }
-        }
-
-        public GraphElementPartList PartList { get; private set; }
-
-        public static readonly string k_UssClassName = "ge-graph-element";
-        public static readonly string k_SelectableModifierUssClassName = k_UssClassName.WithUssModifier("selectable");
-
-        protected GraphElement()
-        {
-            MinimapColor = new Color(0.9f, 0.9f, 0.9f, 0.5f);
-            RegisterCallback<CustomStyleResolvedEvent>(OnCustomStyleResolved);
-        }
-
-        public void SetupBuildAndUpdate(IGTFGraphElementModel model, Overdrive.Store store, GraphView graphView)
+        public void SetupBuildAndUpdate(IGTFGraphElementModel model, Store store, GraphView graphView)
         {
             Setup(model, store, graphView);
             BuildUI();
             UpdateFromModel();
         }
 
-        public void Setup(IGTFGraphElementModel model, Overdrive.Store store, GraphView graphView)
+        public void Setup(IGTFGraphElementModel model, Store store, GraphView graphView)
         {
             Model = model;
             Store = store;
@@ -171,16 +184,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             EnableInClassList(k_SelectableModifierUssClassName, IsSelectable() && ClickSelector != null);
         }
 
-        protected ClickSelector ClickSelector { get; private set; }
-
-        public IGTFGraphElementModel Model { get; private set; }
-
-        // PF make setter private (needed by Blackboard)
-        public Overdrive.Store Store { get; protected set; }
-        // PF make setter private (needed by Blackboard)
-        public GraphView GraphView { get; protected set; }
-
-
         public virtual bool IsSelectable()
         {
             return Model is ISelectable;
@@ -216,14 +219,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             return Model is ICopiable copiable && copiable.IsCopiable;
         }
 
-        static Vector2 MultiplyMatrix44Point2(Matrix4x4 lhs, Vector2 point)
-        {
-            Vector2 res;
-            res.x = lhs.m00 * point.x + lhs.m01 * point.y + lhs.m03;
-            res.y = lhs.m10 * point.x + lhs.m11 * point.y + lhs.m13;
-            return res;
-        }
-
         // PF: remove
         public Rect GetPosition()
         {
@@ -249,7 +244,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             var selection = selectionContainer as ISelection;
             if (selection != null)
             {
-                if (!selection.selection.Contains(this))
+                if (!selection.Selection.Contains(this))
                 {
                     if (!additive)
                         selection.ClearSelection();
@@ -264,7 +259,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             var selection = selectionContainer as ISelection;
             if (selection != null)
             {
-                if (selection.selection.Contains(this))
+                if (selection.Selection.Contains(this))
                 {
                     selection.RemoveFromSelection(this);
                 }
@@ -276,7 +271,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             var selection = selectionContainer as ISelection;
             if (selection != null)
             {
-                if (selection.selection.Contains(this))
+                if (selection.Selection.Contains(this))
                 {
                     return true;
                 }

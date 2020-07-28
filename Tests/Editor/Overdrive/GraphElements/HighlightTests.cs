@@ -1,11 +1,11 @@
 using System;
 using System.Collections;
 using NUnit.Framework;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
@@ -24,7 +24,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             var model1 = creator(declarationModel, Vector2.zero);
             var model2 = creator(declarationModel, Vector2.one * 50);
 
-            Store.Dispatch(new RefreshUIAction(UpdateFlags.All));
+            Store.ForceRefreshUI(UpdateFlags.All);;
             yield return null;
 
             var token1 = model1.GetUI<E>(GraphView);
@@ -45,7 +45,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             GraphView.AddToSelection(token1);
 
-            Store.Dispatch(new RefreshUIAction(UpdateFlags.All));
+            Store.ForceRefreshUI(UpdateFlags.All);;
             yield return null;
 
             token1 = model1.GetUI<E>(GraphView);

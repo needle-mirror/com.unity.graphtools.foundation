@@ -7,7 +7,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
     public class CollapsibleInOutNode : Node
     {
         public static readonly string k_CollapsedUssClassName = k_UssClassName.WithUssModifier("collapsed");
-
         public static readonly string k_CollapseButtonPartName = "collapse-button";
 
         protected override void BuildPartList()

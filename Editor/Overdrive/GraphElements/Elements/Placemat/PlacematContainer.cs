@@ -15,10 +15,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             Down
         }
 
+        GraphView m_GraphView;
+
         LinkedList<Placemat> m_Placemats;
+
         public IEnumerable<Placemat> Placemats => m_Placemats;
 
-        GraphView m_GraphView;
+        public static int PlacematsLayer => Int32.MinValue;
 
         public PlacematContainer(GraphView graphView)
         {
@@ -35,13 +38,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         void OnAttachToPanel(AttachToPanelEvent evt)
         {
-            m_GraphView.graphViewChanged += OnGraphViewChange;
+            m_GraphView.GraphViewChangedCallback += OnGraphViewChange;
         }
 
         void OnDetachFromPanel(DetachFromPanelEvent evt)
         {
             // ReSharper disable once DelegateSubtraction
-            m_GraphView.graphViewChanged -= OnGraphViewChange;
+            m_GraphView.GraphViewChangedCallback -= OnGraphViewChange;
         }
 
         GraphViewChange OnGraphViewChange(GraphViewChange graphViewChange)
@@ -52,8 +55,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
             return graphViewChange;
         }
-
-        public static int PlacematsLayer => Int32.MinValue;
 
         public void AddPlacemat(Placemat placemat)
         {
@@ -74,7 +75,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         public bool GetPortCenterOverride(Port port, out Vector2 overriddenPosition)
         {
-            Node rootNode = port.node;
+            Node rootNode = port.PortModel.NodeModel.GetUI<Node>(port.GraphView);
             if (rootNode != null)
             {
                 Node currNode;

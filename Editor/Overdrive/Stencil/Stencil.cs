@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
 using UnityEngine;
@@ -9,7 +10,6 @@ using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Compilation;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEditor.Searcher;
 using UnityEngine.GraphToolsFoundation.Overdrive;
 
@@ -103,10 +103,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         // PF: To preference
         public virtual bool MoveNodeDependenciesByDefault => true;
 
-        public virtual void RegisterReducers(VisualScripting.Store store)
-        {
-        }
-
         static Dictionary<TypeHandle, Type> s_TypeToConstantNodeModelTypeCache;
         public virtual IDebugger Debugger => null;
 
@@ -140,7 +136,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             return null;
         }
 
-        public virtual void CreateNodesFromPort(VisualScripting.Store store, IGTFPortModel portModel, Vector2 localPosition, Vector2 worldPosition,
+        public virtual void CreateNodesFromPort(Store store, IGTFPortModel portModel, Vector2 localPosition, Vector2 worldPosition,
             IEnumerable<IGTFEdgeModel> edgesToDelete)
         {
             switch (portModel.Direction)
@@ -201,7 +197,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             return Enumerable.Empty<IGTFEdgePortalModel>();
         }
 
-        public virtual void OnDragAndDropVariableDeclarations(VisualScripting.Store store, List<(IGTFVariableDeclarationModel, SerializableGUID, Vector2)> variablesToCreate)
+        public virtual void OnDragAndDropVariableDeclarations(Store store, List<(IGTFVariableDeclarationModel, SerializableGUID, Vector2)> variablesToCreate)
         {
             store.Dispatch(new CreateVariableNodesAction(variablesToCreate));
         }
@@ -226,10 +222,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         /// <returns>If the node can be pasted/duplicated</returns>
         public virtual bool CanPasteNode(IGTFNodeModel originalModel, IGTFGraphModel graph) => true;
 
-        public virtual bool MigrateNode(IGTFNodeModel nodeModel, out NodeModel migrated)
+        public virtual bool MigrateNode(IGTFNodeModel nodeModel, out IGTFNodeModel migrated)
         {
             migrated = null;
             return false;
         }
+
+        public virtual string GetNodeDocumentation(SearcherItem node, IGTFGraphElementModel model) =>
+            null;
     }
 }

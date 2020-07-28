@@ -33,7 +33,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         public IReadOnlyList<IGTFStickyNoteModel> StickyNoteModels => new IGTFStickyNoteModel[0];
         public IReadOnlyList<IGTFPlacematModel> PlacematModels => new IGTFPlacematModel[0];
         public IList<IGTFVariableDeclarationModel> VariableDeclarations { get; }
-        public IReadOnlyList<IGTFVariableDeclarationModel> PortalDeclarations { get; }
+        public IReadOnlyList<IDeclarationModel> PortalDeclarations { get; }
 
         public string GetAssetPath()
         {
@@ -57,7 +57,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             throw new NotImplementedException();
         }
 
-        public void DeleteVariableDeclarations(IEnumerable<IGTFVariableDeclarationModel> variableModels, bool deleteUsages, bool registerUndo)
+        public void DeleteVariableDeclarations(IEnumerable<IGTFVariableDeclarationModel> variableModels, bool deleteUsages)
         {
             throw new NotImplementedException();
         }
@@ -72,7 +72,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             throw new NotImplementedException();
         }
 
-        public IGTFVariableDeclarationModel CreateGraphPortalDeclaration(string portalName)
+        public IGTFVariableDeclarationModel CreateGraphPortalDeclaration(string portalName, SpawnFlags spawnFlags = SpawnFlags.Default)
         {
             throw new NotImplementedException();
         }
@@ -88,6 +88,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         }
 
         public IGTFConstantNodeModel CreateConstantNode(string constantName, TypeHandle constantTypeHandle, Vector2 position, SpawnFlags spawnFlags = SpawnFlags.Default, GUID? guid = null, Action<IGTFConstantNodeModel> preDefine = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IConstant CreateConstantValue(TypeHandle constantTypeHandle, Action<IConstant> preDefine = null)
         {
             throw new NotImplementedException();
         }
@@ -174,7 +179,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         }
 
         public IReadOnlyDictionary<GUID, IGTFNodeModel> NodesByGuid => NodeModels.ToDictionary(e => e.Guid);
-        public IGraphChangeList LastChanges { get; }
+        public GraphChangeList LastChanges { get; }
         public IEnumerable<IGTFPortModel> GetConnections(IGTFPortModel portModel)
         {
             throw new NotImplementedException();
@@ -199,5 +204,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         {
             throw new NotImplementedException();
         }
+
+        public void ResetChangeList()
+        {
+        }
+
+        public void Repair()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void UndoRedoPerformed() {}
     }
 }

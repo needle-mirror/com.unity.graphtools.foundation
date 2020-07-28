@@ -163,7 +163,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             {
                 if (m_PrevDropTarget != null && m_GraphView != null)
                 {
-                    if (m_PrevDropTarget.CanAcceptDrop(m_GraphView.selection))
+                    if (m_PrevDropTarget.CanAcceptDrop(m_GraphView.Selection))
                     {
                         m_PrevDropTarget.DragExited();
                     }
@@ -174,7 +174,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                 m_PrevDropTarget = null;
                 m_Active = false;
 
-                if (m_GraphView.selection.Any())
+                if (m_GraphView.Selection.Any())
                 {
                     m_Snapper.EndSnap();
                 }
@@ -213,7 +213,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                 // If we hit this, this likely because the element has just been unselected
                 // It is important for this manipulator to receive the event so the previous one did not stop it
                 // but we shouldn't let it propagate to other manipulators to avoid a re-selection
-                if (!m_GraphView.selection.Contains(clickedElement))
+                if (!m_GraphView.Selection.Contains(clickedElement))
                 {
                     e.StopImmediatePropagation();
                     return;
@@ -223,7 +223,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
                 m_OriginalPos = new Dictionary<GraphElement, OriginalPos>();
 
-                HashSet<GraphElement> elementsToMove = new HashSet<GraphElement>(m_GraphView.selection.OfType<GraphElement>());
+                HashSet<GraphElement> elementsToMove = new HashSet<GraphElement>(m_GraphView.Selection.OfType<GraphElement>());
 
                 var selectedPlacemats = new HashSet<Placemat>(elementsToMove.OfType<Placemat>());
                 foreach (var placemat in selectedPlacemats)
@@ -231,7 +231,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
                 m_EdgesToUpdate.Clear();
                 HashSet<IGTFNodeModel> nodeModelsToMove = new HashSet<IGTFNodeModel>(elementsToMove.Select(element => element.Model).OfType<IGTFNodeModel>());
-                foreach (var edge in m_GraphView.edges.ToList())
+                foreach (var edge in m_GraphView.Edges.ToList())
                 {
                     if (nodeModelsToMove.Contains(edge.Input.NodeModel) && nodeModelsToMove.Contains(edge.Output.NodeModel))
                     {
@@ -371,7 +371,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                 SnapOrMoveEdge(edge, selectedElementGeom);
             }
 
-            List<ISelectableGraphElement> selection = m_GraphView.selection;
+            List<ISelectableGraphElement> selection = m_GraphView.Selection;
 
             // TODO: Replace with a temp drawing or something...maybe manipulator could fake position
             // all this to let operation know which element sits under cursor...or is there another way to draw stuff that is being dragged?
@@ -515,7 +515,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                 return;
             }
 
-            List<ISelectableGraphElement> selection = m_GraphView.selection;
+            List<ISelectableGraphElement> selection = m_GraphView.Selection;
 
             if (CanStopManipulation(evt))
             {
@@ -529,11 +529,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
                         // PF: remove graphViewChanged and all.
                         var graphView = target as GraphView;
-                        if (graphView?.graphViewChanged != null)
+                        if (graphView?.GraphViewChangedCallback != null)
                         {
                             KeyValuePair<GraphElement, OriginalPos> firstPos = m_OriginalPos.First();
                             m_GraphViewChange.moveDelta = firstPos.Key.GetPosition().position - firstPos.Value.pos.position;
-                            graphView.graphViewChanged(m_GraphViewChange);
+                            graphView.GraphViewChangedCallback(m_GraphViewChange);
                         }
 
                         if (m_GraphView != null)
@@ -623,7 +623,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
             using (DragExitedEvent dexit = DragExitedEvent.GetPooled())
             {
-                List<ISelectableGraphElement> selection = m_GraphView.selection;
+                List<ISelectableGraphElement> selection = m_GraphView.Selection;
                 SendDragAndDropEvent(dexit, selection, m_PrevDropTarget, m_GraphView);
             }
 

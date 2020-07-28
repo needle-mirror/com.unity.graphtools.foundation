@@ -3,10 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.Tests.Stylesheets;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 using UnityEngine.TestTools;
 
@@ -43,7 +43,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             GraphModel.CreatePlacemat(string.Empty, new Rect(205, 0, 200, 200));
             var nodeModel = GraphModel.CreateNode<Type0FakeNodeModel>("Node0", new Vector2(190, 100));
 
-            Store.Dispatch(new RefreshUIAction(UpdateFlags.All));
+            Store.ForceRefreshUI(UpdateFlags.All);;
             yield return null;
 
             var nodeUI = nodeModel.GetUI<Node>(GraphView);
@@ -87,7 +87,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                     switch (frame)
                     {
                         case 0:
-                            Store.Dispatch(new RefreshUIAction(UpdateFlags.All));
+                            Store.ForceRefreshUI(UpdateFlags.All);;
                             return TestPhase.WaitForNextFrame;
                         case 1:
                             {
@@ -97,7 +97,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                                 return TestPhase.WaitForNextFrame;
                             }
                         case 2:
-                            Store.Dispatch(new RefreshUIAction(UpdateFlags.All));
+                            Store.ForceRefreshUI(UpdateFlags.All);;
                             return TestPhase.WaitForNextFrame;
                         default:
                             return TestPhase.Done;
@@ -149,7 +149,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             {
                 // Create a placemat and collapse it.
                 var placemat = GraphModel.CreatePlacemat(string.Empty, new Rect(0, 0, 200, 500)) as PlacematModel;
-                Store.Dispatch(new RefreshUIAction(UpdateFlags.All));
+                Store.ForceRefreshUI(UpdateFlags.All);;
                 yield return null;
 
                 Store.Dispatch(new ExpandOrCollapsePlacematAction(true, new IGTFGraphElementModel[] {}, placemat));
@@ -157,7 +157,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
 
                 // Add a node under it.
                 GraphModel.CreateNode<Type0FakeNodeModel>("Node0", new Vector2(10, 100));
-                Store.Dispatch(new RefreshUIAction(UpdateFlags.All));
+                Store.ForceRefreshUI(UpdateFlags.All);;
                 yield return null;
             }
 
@@ -178,7 +178,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                     switch (frame)
                     {
                         case 0:
-                            Store.Dispatch(new RefreshUIAction(UpdateFlags.All));
+                            Store.ForceRefreshUI(UpdateFlags.All);;
                             return TestPhase.WaitForNextFrame;
                         case 1:
                             {
@@ -187,7 +187,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                                 return TestPhase.WaitForNextFrame;
                             }
                         case 2:
-                            Store.Dispatch(new RefreshUIAction(UpdateFlags.All));
+                            Store.ForceRefreshUI(UpdateFlags.All);;
                             return TestPhase.WaitForNextFrame;
                         default:
                             return TestPhase.Done;
@@ -228,7 +228,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             {
                 // Create a placemat and collapse it.
                 var placemat = GraphModel.CreatePlacemat(string.Empty, new Rect(0, 0, 200, 500)) as PlacematModel;
-                Store.Dispatch(new RefreshUIAction(UpdateFlags.All));
+                Store.ForceRefreshUI(UpdateFlags.All);;
                 yield return null;
 
                 Store.Dispatch(new ExpandOrCollapsePlacematAction(true, new IGTFGraphElementModel[] {}, placemat));
@@ -236,7 +236,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
 
                 // Add a node under it.
                 GraphModel.CreateNode<Type0FakeNodeModel>("Node0", new Vector2(10, 100));
-                Store.Dispatch(new RefreshUIAction(UpdateFlags.All));
+                Store.ForceRefreshUI(UpdateFlags.All);;
                 yield return null;
             }
 
@@ -257,7 +257,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                     switch (frame)
                     {
                         case 0:
-                            Store.Dispatch(new RefreshUIAction(UpdateFlags.All));
+                            Store.ForceRefreshUI(UpdateFlags.All);;
                             return TestPhase.WaitForNextFrame;
                         case 1:
                             {
@@ -266,7 +266,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                                 return TestPhase.WaitForNextFrame;
                             }
                         case 2:
-                            Store.Dispatch(new RefreshUIAction(UpdateFlags.All));
+                            Store.ForceRefreshUI(UpdateFlags.All);;
                             return TestPhase.WaitForNextFrame;
                         default:
                             return TestPhase.Done;

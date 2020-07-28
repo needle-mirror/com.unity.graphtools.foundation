@@ -20,7 +20,8 @@
         "System.Composition.Runtime.dll",
         "System.Composition.TypedParts.dll",
         "System.Reflection.Metadata.dll",
-        "System.Runtime.Loader.dll"
+        "System.Runtime.Loader.dll",
+        "Lucene.Net.dll"
     ],
     "autoReferenced": true,
     "defineConstraints": [],

@@ -7,10 +7,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 {
     public class IconTitleProgressPart : EditableTitlePart
     {
-        public ProgressBar CoroutineProgressBar;
-
         public static new readonly string k_UssClassName = "ge-icon-title-progress";
-
         public static readonly string k_CollapseButtonPartName = "collapse-button";
 
         public static IconTitleProgressPart Create(string name, IGTFGraphElementModel model, IGraphElement graphElement, string parentClassName)
@@ -23,6 +20,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             return null;
         }
 
+        VisualElement m_Root;
+
+        public override VisualElement Root => m_Root;
+
+        public ProgressBar CoroutineProgressBar;
+
         protected IconTitleProgressPart(string name, IGTFGraphElementModel model, IGraphElement ownerElement, string parentClassName)
             : base(name, model, ownerElement, parentClassName, multiline: false)
         {
@@ -32,9 +35,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                 PartList.AppendPart(collapseButtonPart);
             }
         }
-
-        VisualElement m_Root;
-        public override VisualElement Root => m_Root;
 
         protected override void BuildPartUI(VisualElement container)
         {

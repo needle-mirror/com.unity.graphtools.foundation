@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
+using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utilities;
@@ -60,7 +61,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
         IEnumerator PlacematTestMove(Vector2 startElementPos, Vector2 startSecondPmPos, ElementType elementType, TestType testType, EventModifiers modifier)
         {
-            BasicPlacematModel pmModel = CreatePlacemat(k_DefaultPlacematRect, "", 1);
+            BasicPlacematModel pmModel = CreatePlacemat(GraphViewStaticBridge.RoundToPixelGrid(k_DefaultPlacematRect), "", 1);
             GraphElement element;
             Placemat pm;
             Placemat pm2;
@@ -71,10 +72,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 switch (elementType)
                 {
                     case ElementType.Node:
-                        elementModel = AddNode(startElementPos);
+                        elementModel = AddNode(GraphViewStaticBridge.RoundToPixelGrid(startElementPos));
                         break;
                     case ElementType.StickyNote:
-                        elementModel = AddSticky(startElementPos);
+                        elementModel = AddSticky(GraphViewStaticBridge.RoundToPixelGrid(startElementPos));
                         break;
                 }
             }
@@ -82,7 +83,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             BasicPlacematModel pm2Model = null;
             if (!float.IsInfinity(startSecondPmPos.magnitude))
             {
-                pm2Model = CreatePlacemat(new Rect(startSecondPmPos, k_SecondPlacematSize), "", 2);
+                pm2Model = CreatePlacemat(new Rect(GraphViewStaticBridge.RoundToPixelGrid(startSecondPmPos), k_SecondPlacematSize), "", 2);
                 pm2Model.Color = Color.red;
             }
 
@@ -120,7 +121,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                     Assert.IsFalse(pm2.visible, "Overlapping placemat should not be visible after main placemat collapsing.");
             }
 
-            Vector2 moveDelta = new Vector2(20, 20);
+            Vector2 moveDelta = GraphViewStaticBridge.RoundToPixelGrid(new Vector2(20, 20));
 
             // Move!
             {
@@ -144,9 +145,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             // Main placemat will always move.
             // The node and second placemat will not move if and only if Shift is pressed (so we move only the main
             // placemat) and the main placemat is not collapsed.
-            Vector2 expectedPlacematPos = k_DefaultPlacematRect.position + moveDelta;
-            Vector2 expectedNodePos = startElementPos;
-            Vector2 expectedSecondPlacematPos = startSecondPmPos;
+            Vector2 expectedPlacematPos = GraphViewStaticBridge.RoundToPixelGrid(k_DefaultPlacematRect.position + moveDelta);
+            Vector2 expectedNodePos = GraphViewStaticBridge.RoundToPixelGrid(startElementPos);
+            Vector2 expectedSecondPlacematPos = GraphViewStaticBridge.RoundToPixelGrid(startSecondPmPos);
             string errorMessage = "have moved following manipulation.";
             if (testCollapsed || modifier != EventModifiers.Shift)
             {
@@ -194,7 +195,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             graphView.RebuildUI(GraphModel, Store);
             yield return null;
 
-            var actions = ConnectPorts(node1Model.OutputPorts.First(), node2Model.InputPorts.First());
+            var actions = ConnectPorts(node1Model.GetOutputPorts().First(), node2Model.GetInputPorts().First());
             while (actions.MoveNext())
                 yield return null;
 
@@ -202,7 +203,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             var node2 = node2Model.GetUI<Node>(graphView);
             var pm = pmModel.GetUI<Placemat>(graphView);
 
-            var edgeModel = node1Model.OutputPorts.First().ConnectedEdges.First();
+            var edgeModel = node1Model.GetOutputPorts().First().GetConnectedEdges().First();
             var edge = edgeModel.GetUI<Edge>(graphView);
 
             bool node1Overlaps = pm.worldBound.Overlaps(node1.worldBound);
@@ -211,7 +212,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Assert.IsTrue((node1Overlaps || node2Overlaps) && !(node1Overlaps && node2Overlaps),
                 "One and only one node should be over the placemat");
 
-            var overridenPort = node1Overlaps ? node1Model.OutputPorts.First() : node2Model.InputPorts.First();
+            var overridenPort = node1Overlaps ? node1Model.GetOutputPorts().First() : node2Model.GetInputPorts().First();
 
             Assert.IsTrue(node1.visible, "Node should be visible prior to placemat collapsing.");
             Assert.IsTrue(node2.visible, "Node should be visible prior to placemat collapsing.");
@@ -278,7 +279,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Placemat pm = null;
 
             int zOrder = 1;
-            var pmModels = positions.Select(p => CreatePlacemat(p, "", zOrder++)).ToList();
+            var pmModels = positions.Select(p => CreatePlacemat(GraphViewStaticBridge.RoundToPixelGrid(p), "", zOrder++)).ToList();
             graphView.RebuildUI(GraphModel, Store);
             yield return null;
 
@@ -293,7 +294,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             for (int i = 0; i < positions.Length; i++)
             {
                 pm = pmModels[i].GetUI<Placemat>(graphView);
-                Assert.AreEqual(positions[i].position + delta, pm.layout.position, $"Placemat with zOrder {i+1} did not move properly");
+                AssertVector2AreEqualWithinDelta(GraphViewStaticBridge.RoundToPixelGrid(positions[i].position + delta),
+                    pm.layout.position, 0.0001f, $"Placemat with zOrder {i+1} did not move properly");
             }
 
             // Test Collapse
@@ -352,7 +354,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [Test]
         public void PlacematsCanBeZCycledUpAndDown()
         {
-            var pmContainer = graphView.placematContainer;
+            var pmContainer = graphView.PlacematContainer;
 
             var pm1Model = CreatePlacemat(k_DefaultPlacematRect);
             var pm2Model = CreatePlacemat(k_DefaultPlacematRect);
@@ -409,7 +411,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [Test]
         public void PlacematsCanBeBroughtToFrontAndBack()
         {
-            var pmContainer = graphView.placematContainer;
+            var pmContainer = graphView.PlacematContainer;
 
             var pm1Model = CreatePlacemat(k_DefaultPlacematRect);
             var pm2Model = CreatePlacemat(k_DefaultPlacematRect);
@@ -446,9 +448,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator PlacematsCanGrowToFitNodesOnTop()
         {
-            var pmModel = CreatePlacemat(k_DefaultPlacematRect);
-            var node1Model = CreateNode("", pmModel.PositionAndSize.position - Vector2.one * 10);
-            var node2Model = CreateNode("", pmModel.PositionAndSize.position + pmModel.PositionAndSize.size - Vector2.one * 10);
+            var pmModel = CreatePlacemat(GraphViewStaticBridge.RoundToPixelGrid(k_DefaultPlacematRect));
+            var node1Model = CreateNode("", GraphViewStaticBridge.RoundToPixelGrid(pmModel.PositionAndSize.position - Vector2.one * 10));
+            var node2Model = CreateNode("", GraphViewStaticBridge.RoundToPixelGrid(pmModel.PositionAndSize.position + pmModel.PositionAndSize.size - Vector2.one * 10));
 
             graphView.RebuildUI(GraphModel, Store);
             yield return null;
@@ -466,9 +468,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             node1 = node1Model.GetUI<Node>(graphView);
             node2 = node2Model.GetUI<Node>(graphView);
 
-            Assert.AreEqual(node1.layout.position - new Vector2(Placemat.k_Bounds, Placemat.k_Bounds + Placemat.k_BoundTop), pm.layout.position,
+            var placematBounds = new Vector2(GraphViewStaticBridge.RoundToPixelGrid(Placemat.k_Bounds),
+                GraphViewStaticBridge.RoundToPixelGrid(Placemat.k_Bounds));
+
+            AssertVector2AreEqualWithinDelta(node1.layout.position -
+                new Vector2(GraphViewStaticBridge.RoundToPixelGrid(Placemat.k_Bounds),
+                    GraphViewStaticBridge.RoundToPixelGrid(Placemat.k_Bounds + Placemat.k_BoundTop)),
+                pm.layout.position,
+                0.0001f,
                 "Incorrect placemat top left position after growing it to fit nodes over it.");
-            Assert.AreEqual(node2.layout.position + node2.layout.size + Vector2.one * Placemat.k_Bounds, pm.layout.position + pm.layout.size,
+            // Have a 1px tolerance to account for math errors at various pixel per points values.
+            AssertVector2AreEqualWithinDelta(node2.layout.max + placematBounds,
+                pm.layout.max,
+                1f / GraphViewStaticBridge.PixelPerPoint + 0.0001f,
                 "Incorrect placemat bottom right position after growing it to fit nodes over it.");
             yield return null;
         }
@@ -476,9 +488,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator PlacematsCanGrowToFitAnyNodes()
         {
-            var pmModel = CreatePlacemat(k_DefaultPlacematRect);
-            var node1Model = CreateNode("", pmModel.PositionAndSize.position + pmModel.PositionAndSize.size + Vector2.one * 10);
-            var node2Model = CreateNode("", pmModel.PositionAndSize.position + pmModel.PositionAndSize.size + Vector2.one * 60);
+            var pmModel = CreatePlacemat(GraphViewStaticBridge.RoundToPixelGrid(k_DefaultPlacematRect));
+            var node1Model = CreateNode("", GraphViewStaticBridge.RoundToPixelGrid(pmModel.PositionAndSize.position + pmModel.PositionAndSize.size + Vector2.one * 10));
+            var node2Model = CreateNode("", GraphViewStaticBridge.RoundToPixelGrid(pmModel.PositionAndSize.position + pmModel.PositionAndSize.size + Vector2.one * 60));
 
             graphView.RebuildUI(GraphModel, Store);
             yield return null;
@@ -496,10 +508,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             pm = pmModel.GetUI<Placemat>(graphView);
             node2 = node2Model.GetUI<Node>(graphView);
 
+            var placematBounds = new Vector2(GraphViewStaticBridge.RoundToPixelGrid(Placemat.k_Bounds),
+                GraphViewStaticBridge.RoundToPixelGrid(Placemat.k_Bounds));
+
             // Since we're not snugging, the position of the placemat will remain unchanged.
-            Assert.AreEqual(k_DefaultPlacematRect.position, pm.layout.position,
+            Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(k_DefaultPlacematRect.position), pm.layout.position,
                 "Incorrect placemat top left position after growing it to fit nodes not over it.");
-            Assert.AreEqual(node2.layout.position + node2.layout.size + Vector2.one * Placemat.k_Bounds, pm.layout.position + pm.layout.size,
+            // Have a 1px tolerance to account for math errors at various pixel per points values.
+            AssertVector2AreEqualWithinDelta(node2.layout.max + placematBounds,
+                pm.layout.max,
+                1f / GraphViewStaticBridge.PixelPerPoint + 0.0001f,
                 "Incorrect placemat bottom right position after growing it to fit nodes not over it.");
             yield return null;
         }
@@ -507,12 +525,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator PlacematsCanShrinkToSnugNodesOnTop()
         {
-            var largeRectSize = new Rect(k_DefaultPlacematPos, k_DefaultPlacematSize * 5);
+            var largeRectSize = new Rect(GraphViewStaticBridge.RoundToPixelGrid(k_DefaultPlacematPos),
+                k_DefaultPlacematSize * 5);
             var pmModel = CreatePlacemat(largeRectSize);
 
             var baseNodePos = k_DefaultPlacematPos + largeRectSize.size / 2;
-            var node1Model = CreateNode("", baseNodePos);
-            var node2Model = CreateNode("", baseNodePos + k_DefaultNodeSize * 2);
+            var node1Model = CreateNode("", GraphViewStaticBridge.RoundToPixelGrid(baseNodePos));
+            var node2Model = CreateNode("", GraphViewStaticBridge.RoundToPixelGrid(baseNodePos + k_DefaultNodeSize * 2));
 
             graphView.RebuildUI(GraphModel, Store);
             yield return null;
@@ -531,10 +550,20 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             node1 = node1Model.GetUI<Node>(graphView);
             node2 = node2Model.GetUI<Node>(graphView);
 
-            Assert.AreEqual(node1.layout.position - new Vector2(Placemat.k_Bounds, Placemat.k_Bounds + Placemat.k_BoundTop), pm.layout.position,
-                "Incorrect placemat top left position after shrinking it to snug nodes over it.");
-            Assert.AreEqual(node2.layout.position + node2.layout.size + Vector2.one * Placemat.k_Bounds, pm.layout.position + pm.layout.size,
-                "Incorrect placemat bottom right position after shrinking it to snug nodes over it.");
+            var placematBounds = new Vector2(GraphViewStaticBridge.RoundToPixelGrid(Placemat.k_Bounds),
+                GraphViewStaticBridge.RoundToPixelGrid(Placemat.k_Bounds));
+
+            AssertVector2AreEqualWithinDelta(node1.layout.position -
+                new Vector2(GraphViewStaticBridge.RoundToPixelGrid(Placemat.k_Bounds),
+                    GraphViewStaticBridge.RoundToPixelGrid(Placemat.k_Bounds + Placemat.k_BoundTop)),
+                pm.layout.position,
+                0.0001f,
+                "Incorrect placemat top left position after growing it to fit nodes over it.");
+            // Have a 1px tolerance to account for math errors at various pixel per points values.
+            AssertVector2AreEqualWithinDelta(node2.layout.max + placematBounds,
+                pm.layout.max,
+                1f / GraphViewStaticBridge.PixelPerPoint + 0.0001f,
+                "Incorrect placemat bottom right position after growing it to fit nodes over it.");
             yield return null;
         }
 
@@ -604,16 +633,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator PlacematMoveUnderExternalNodeWithoutEffect()
         {
-            var pmModel = CreatePlacemat(k_DefaultPlacematRect);
+            var pmModel = CreatePlacemat(GraphViewStaticBridge.RoundToPixelGrid(k_DefaultPlacematRect));
 
             Vector2 startNodePos = k_DefaultPlacematPos + new Vector2(k_DefaultPlacematSize.x + k_DefaultNodeSize.x, k_DefaultNodeSize.y / 2);
-            var nodeModel = AddNode(startNodePos);
+            var nodeModel = AddNode(GraphViewStaticBridge.RoundToPixelGrid(startNodePos));
 
             graphView.RebuildUI(GraphModel, Store);
             yield return null;
 
             const int steps = 10;
-            Vector2 moveDelta = new Vector2(2 * k_DefaultPlacematSize.x / steps, 0);
+            Vector2 moveDelta = GraphViewStaticBridge.RoundToPixelGrid(new Vector2(2 * k_DefaultPlacematSize.x / steps, 0));
 
             // Move!
             {
@@ -638,8 +667,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             }
 
             // The placemat will have moved, but not the node.
-            Vector2 expectedPlacematPos = k_DefaultPlacematRect.position + moveDelta * steps;
-            Vector2 expectedNodePos = startNodePos;
+            Vector2 expectedPlacematPos = GraphViewStaticBridge.RoundToPixelGrid(k_DefaultPlacematRect.position + moveDelta * steps);
+            Vector2 expectedNodePos = GraphViewStaticBridge.RoundToPixelGrid(startNodePos);
             var pm = pmModel.GetUI<Placemat>(graphView);
             var node = nodeModel.GetUI<Node>(graphView);
             Assert.AreEqual(expectedPlacematPos, pm.GetPosition().position, "Placemat should have moved following manipulation.");
@@ -796,11 +825,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator PlacematDoesNotMoveSingleNodeFullyOverPlacematUnder()
         {
-            var pm2Pos = k_DefaultPlacematPos + new Vector2(k_DefaultPlacematSize.x - 25, 50);
-            var nodePos = pm2Pos + Vector2.one * 50;
+            var pm2Pos = GraphViewStaticBridge.RoundToPixelGrid(k_DefaultPlacematPos + new Vector2(k_DefaultPlacematSize.x - 25, 50));
+            var nodePos = GraphViewStaticBridge.RoundToPixelGrid(pm2Pos + Vector2.one * 50);
 
-            var pmContainer = graphView.placematContainer;
-            var pmModel = CreatePlacemat(k_DefaultPlacematRect);
+            var pmContainer = graphView.PlacematContainer;
+            var pmModel = CreatePlacemat(GraphViewStaticBridge.RoundToPixelGrid(k_DefaultPlacematRect));
             var pm2Model = CreatePlacemat(new Rect(pm2Pos, k_SecondPlacematSize));
             pm2Model.Color = Color.red;
             var nodeModel = AddNode(nodePos);
@@ -825,7 +854,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 yield return null;
             }
 
-            Vector2 expectedPlacematPos = k_DefaultPlacematRect.position + moveDelta;
+            Vector2 expectedPlacematPos = GraphViewStaticBridge.RoundToPixelGrid(k_DefaultPlacematRect.position + moveDelta);
 
             // Node and second placemat should not have moved since they are below main placemat
             Vector2 expectedNodePos = nodePos;
@@ -955,7 +984,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             graphView.RebuildUI(GraphModel, Store);
             yield return null;
 
-            var actions = ConnectPorts(node1Model.OutputPorts.First(), node2Model.InputPorts.First());
+            var actions = ConnectPorts(node1Model.GetOutputPorts().First(), node2Model.GetInputPorts().First());
             while (actions.MoveNext())
             {
                 yield return null;
@@ -963,7 +992,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             var node1 = node1Model.GetUI<Node>(graphView);
             var node2 = node2Model.GetUI<Node>(graphView);
-            var edge = node1Model.OutputPorts.First().ConnectedEdges.First().GetUI<Edge>(graphView);
+            var edge = node1Model.GetOutputPorts().First().GetConnectedEdges().First().GetUI<Edge>(graphView);
 
             Assert.IsTrue(node1.visible, "Node should be visible prior to placemat collapsing.");
             Assert.IsTrue(node2.visible, "Node should be visible prior to placemat collapsing.");
@@ -977,7 +1006,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             node1 = node1Model.GetUI<Node>(graphView);
             node2 = node2Model.GetUI<Node>(graphView);
-            edge = node1Model.OutputPorts.First().ConnectedEdges.First().GetUI<Edge>(graphView);
+            edge = node1Model.GetOutputPorts().First().GetConnectedEdges().First().GetUI<Edge>(graphView);
 
             Assert.IsFalse(node1.visible, "Node over placemat should not be visible after placemat collapse.");
             Assert.IsFalse(node2.visible, "Node over placemat should not be visible after placemat collapse.");
@@ -990,7 +1019,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             node1 = node1Model.GetUI<Node>(graphView);
             node2 = node2Model.GetUI<Node>(graphView);
-            edge = node1Model.OutputPorts.First().ConnectedEdges.First().GetUI<Edge>(graphView);
+            edge = node1Model.GetOutputPorts().First().GetConnectedEdges().First().GetUI<Edge>(graphView);
 
             Assert.IsTrue(node1.visible, "Node should be visible after to placemat uncollapsing.");
             Assert.IsTrue(node2.visible, "Node should be visible after to placemat uncollapsing.");
@@ -1239,7 +1268,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             graphView.RebuildUI(GraphModel, Store);
             yield return null;
 
-            var actions = ConnectPorts(node1Model.OutputPorts.First(), node2Model.InputPorts.First());
+            var actions = ConnectPorts(node1Model.GetOutputPorts().First(), node2Model.GetInputPorts().First());
             while (actions.MoveNext())
             {
                 yield return null;
@@ -1247,7 +1276,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             var node1 = node1Model.GetUI<Node>(graphView);
             var node2 = node2Model.GetUI<Node>(graphView);
-            var edge = node1Model.OutputPorts.First().ConnectedEdges.First().GetUI<Edge>(graphView);
+            var edge = node1Model.GetOutputPorts().First().GetConnectedEdges().First().GetUI<Edge>(graphView);
             var pm2 = pm2Model.GetUI<Placemat>(graphView);
 
             Assert.True(node1.visible, "Node should be visible prior to collapse");
@@ -1259,14 +1288,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             node1 = node1Model.GetUI<Node>(graphView);
             node2 = node2Model.GetUI<Node>(graphView);
-            edge = node1Model.OutputPorts.First().ConnectedEdges.First().GetUI<Edge>(graphView);
+            edge = node1Model.GetOutputPorts().First().GetConnectedEdges().First().GetUI<Edge>(graphView);
             pm2 = pm2Model.GetUI<Placemat>(graphView);
 
             Assert.False(node1.visible, "Node should not be visible after collapse");
             Assert.True(node2.visible, "Node should still be visible after collapse");
             Assert.True(edge.visible, "Edge should still be visible after collapse");
 
-            var isPortOverridden = pm2.GetPortCenterOverride(node1Model.OutputPorts.First(), out var portOverridePos);
+            var isPortOverridden = pm2.GetPortCenterOverride(node1Model.GetOutputPorts().First(), out var portOverridePos);
             Assert.IsTrue(isPortOverridden, "Port of hidden node should be overridden.");
             var edgeFromPos = graphView.contentViewContainer.LocalToWorld(edge.From);
             Assert.AreEqual(portOverridePos, edgeFromPos, "Overriden port position is not what it was expected.");
@@ -1282,9 +1311,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             yield return null;
 
             pm2 = pm2Model.GetUI<Placemat>(graphView);
-            edge = node1Model.OutputPorts.First().ConnectedEdges.First().GetUI<Edge>(graphView);
+            edge = node1Model.GetOutputPorts().First().GetConnectedEdges().First().GetUI<Edge>(graphView);
 
-            isPortOverridden = pm2.GetPortCenterOverride(node1Model.OutputPorts.First(), out portOverridePos);
+            isPortOverridden = pm2.GetPortCenterOverride(node1Model.GetOutputPorts().First(), out portOverridePos);
             Assert.IsTrue(isPortOverridden, "Port of hidden node should still be overridden.");
             edgeFromPos = graphView.contentViewContainer.LocalToWorld(edge.From);
             Assert.AreEqual(portOverridePos, edgeFromPos, "Overriden port position is not what it was expected after move.");

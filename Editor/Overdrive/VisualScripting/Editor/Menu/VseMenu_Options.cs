@@ -1,10 +1,10 @@
 using System;
 using System.Linq;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.UIElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 using UnityEngine.UIElements;
 using static UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.VSPreferences;
@@ -49,7 +49,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             }
 
             MenuItem("Show Graph in inspector", false, () => Selection.activeObject = graphModel?.AssetModel as Object);
-            MenuToggle("Show unused nodes", BoolPref.ShowUnusedNodes, () => m_Store.Dispatch(new RefreshUIAction(UpdateFlags.All)));
+            MenuToggle("Show unused nodes", BoolPref.ShowUnusedNodes, () => m_Store.ForceRefreshUI(UpdateFlags.All));
             MenuItemDisable("Compile", false, () =>
             {
                 m_Store.GetState().EditorDataModel.RequestCompilation(RequestCompilationOptions.SaveGraph);
@@ -95,7 +95,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
                 MenuItem("Rebuild UI", false, () =>
                 {
-                    m_Store.Dispatch(new RefreshUIAction(UpdateFlags.All));
+                    m_Store.ForceRefreshUI(UpdateFlags.All);
                 });
                 MenuItem("Rebuild Blackboard", false, () =>
                 {
@@ -104,14 +104,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
                 menu.AddSeparator("");
 
-                MenuItem("Clear Searcher Databases", false, () =>
-                {
-                    var provider = m_Store.GetState().CurrentGraphModel.Stencil.GetSearcherDatabaseProvider();
-                    provider.ClearTypesItemsSearcherDatabases();
-                    provider.ClearTypeMembersSearcherDatabases();
-                    provider.ClearGraphElementsSearcherDatabases();
-                    provider.ClearGraphVariablesSearcherDatabases();
-                });
                 MenuItem("Integrity Check", false, () => graphModel.CheckIntegrity(Verbosity.Verbose));
                 MenuItem("Graph cleanup", false, () =>
                 {

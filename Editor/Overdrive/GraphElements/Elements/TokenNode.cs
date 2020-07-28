@@ -28,7 +28,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         static IGTFGraphElementModel ExtractInputPortModel(IGTFGraphElementModel model)
         {
-            if (model is IHasSingleInputPort inputPortHolder && inputPortHolder.InputPort != null)
+            if (model is ISingleInputPortNode inputPortHolder && inputPortHolder.InputPort != null)
             {
                 Debug.Assert(inputPortHolder.InputPort.Direction == Direction.Input);
                 return inputPortHolder.InputPort;
@@ -39,7 +39,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         static IGTFGraphElementModel ExtractOutputPortModel(IGTFGraphElementModel model)
         {
-            if (model is IHasSingleOutputPort outputPortHolder && outputPortHolder.OutputPort != null)
+            if (model is ISingleOutputPortNode outputPortHolder && outputPortHolder.OutputPort != null)
             {
                 Debug.Assert(outputPortHolder.OutputPort.Direction == Direction.Output);
                 return outputPortHolder.OutputPort;

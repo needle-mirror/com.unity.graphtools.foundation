@@ -29,7 +29,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         {
             bool elementDeleted = false;
 
-            graphView.graphViewChanged += graphViewChange =>
+            graphView.GraphViewChangedCallback += graphViewChange =>
             {
                 elementDeleted = (graphViewChange.elementsToRemove.Count == 1);
                 return graphViewChange;
@@ -41,7 +41,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             var nodeUI = node1.GetUI<Node>(graphView);
             GraphViewChange change = new GraphViewChange { elementsToRemove = new List<GraphElement> { nodeUI } };
-            window.GraphView.graphViewChanged(change);
+            window.GraphView.GraphViewChangedCallback(change);
 
             yield return null;
 
@@ -55,7 +55,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         {
             int elementsDraggedCount = 0;
 
-            graphView.graphViewChanged += graphViewChange =>
+            graphView.GraphViewChangedCallback += graphViewChange =>
             {
                 elementsDraggedCount = graphViewChange.movedElements.Count();
                 return graphViewChange;
@@ -112,7 +112,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         {
             bool elementResized = false;
 
-            graphView.elementResized += elements => elementResized = true;
+            graphView.ElementResizedCallback += elements => elementResized = true;
 
             var graphElement = new TestGraphElement();
             graphElement.SetPosition(new Rect(50, 50, 50, 50));
@@ -144,7 +144,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         {
             bool viewTransformChanged = false;
 
-            graphView.viewTransformChanged += elements => viewTransformChanged = true;
+            graphView.ViewTransformChangedCallback += elements => viewTransformChanged = true;
 
             graphView.UpdateViewTransform(new Vector3(10, 10, 10), new Vector3(10, 10));
 
@@ -161,7 +161,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             float minZoomScale = 0.1f;
             float maxZoomScale = 3;
 
-            graphView.viewTransformChanged += elements => viewTransformChanged = true;
+            graphView.ViewTransformChangedCallback += elements => viewTransformChanged = true;
             graphView.SetupZoom(minZoomScale, maxZoomScale);
             yield return null;
 
@@ -176,7 +176,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         public IEnumerator ChangingGraphViewTransformRoundsToPixelGrid()
         {
             var capturedPos = Vector3.zero;
-            graphView.viewTransformChanged += graphView => capturedPos = graphView.contentViewContainer.transform.position;
+            graphView.ViewTransformChangedCallback += graphView => capturedPos = graphView.contentViewContainer.transform.position;
 
             var pos = new Vector3(10.3f, 10.6f, 10.0f);
             graphView.UpdateViewTransform(pos, new Vector3(10, 10));

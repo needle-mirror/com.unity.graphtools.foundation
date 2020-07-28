@@ -9,7 +9,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 {
     public interface IEditorDataModel : IGTFEditorDataModel
     {
-        IGTFGraphElementModel ElementModelToRename { get; set; }
         GameObject BoundObject { get; set; }
     }
 }

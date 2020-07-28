@@ -38,7 +38,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             var node1 = GraphModel.CreateNode<Type0FakeNodeModel>(string.Empty, new Vector2(100, 100));
             GraphModel.CreateEdge(node1.Input0, node0.Output0);
 
-            Store.Dispatch(new RefreshUIAction(UpdateFlags.All));
+            Store.ForceRefreshUI(UpdateFlags.All);;
             yield return null;
             GraphView.FrameAll();
             yield return null;
@@ -58,7 +58,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                     Vector2 target = new Vector2(Window.rootVisualElement.layout.xMax - 20, pos.y);
                     needsMouseUp = true;
                     bool changed = false;
-                    GraphView.viewTransformChanged += view => changed = true;
+                    GraphView.ViewTransformChangedCallback += view => changed = true;
                     Helpers.MouseDownEvent(pos);
                     yield return null;
 

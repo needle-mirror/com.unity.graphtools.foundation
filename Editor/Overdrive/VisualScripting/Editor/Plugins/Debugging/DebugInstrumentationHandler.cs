@@ -19,7 +19,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
         const int k_UpdateIntervalMs = 10;
 
         VisualElement m_IconsParent;
-        Overdrive.Store m_Store;
+        Store m_Store;
         GraphView m_GraphView;
         List<TracingStep> GraphDebuggingData => m_Store.GetState()?.TracingDataModel.DebuggingData;
         PauseState m_PauseState = PauseState.Unpaused;
@@ -32,7 +32,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
 
         TracingToolbar m_TimelineToolbar;
 
-        public void Register(Overdrive.Store store, GraphViewEditorWindow window)
+        public void Register(Store store, GraphViewEditorWindow window)
         {
             m_Store = store;
             m_GraphView = window.GraphViews.First();
@@ -201,7 +201,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
         void ClearHighlights()
         {
             VseGraphView gv = (VseGraphView)m_GraphView;
-            foreach (GraphElements.Node x in m_GraphView.nodes.ToList())
+            foreach (GraphElements.Node x in m_GraphView.Nodes.ToList())
             {
                 x.RemoveFromClassList(k_TraceHighlight);
                 x.RemoveFromClassList(k_TraceSecondaryHighlight);
@@ -241,7 +241,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
                 }
             }
             m_GraphView.schedule.Execute(() =>
-                m_GraphView.edges.ForEach(e => e.MarkDirtyRepaint())).StartingIn(1);
+                m_GraphView.Edges.ForEach(e => e.MarkDirtyRepaint())).StartingIn(1);
         }
 
         void DisplayStepValues(TracingStep step)

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utilities;
 using UnityEngine;
 
@@ -26,8 +27,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             m_Node2 = CreateNode("Node 2", new Vector2(200, 200), 2, 2);
             m_Node3 = CreateNode("Node 3", new Vector2(400, 400));
             m_Node4 = CreateNode("Node 4", new Vector2(500, 500));
-            m_Edge1 = GraphModel.CreateEdge(m_Node1.InputPorts.First(), m_Node2.OutputPorts.First()) as BasicEdgeModel;
-            m_Edge2 = GraphModel.CreateEdge(m_Node1.InputPorts.First(), m_Node2.OutputPorts.ElementAt(1)) as BasicEdgeModel;
+            m_Edge1 = GraphModel.CreateEdge(m_Node1.GetInputPorts().First(), m_Node2.GetOutputPorts().First()) as BasicEdgeModel;
+            m_Edge2 = GraphModel.CreateEdge(m_Node1.GetInputPorts().First(), m_Node2.GetOutputPorts().ElementAt(1)) as BasicEdgeModel;
         }
 
         IEnumerable<GraphElement> GetElements<T>() where T : GraphElement
@@ -55,7 +56,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         public void QueryAllElements()
         {
             graphView.RebuildUI(GraphModel, Store);
-            List<GraphElement> allElements = graphView.graphElements.ToList();
+            List<GraphElement> allElements = graphView.GraphElements.ToList();
 
             Assert.AreEqual(6, allElements.Count);
             Assert.IsFalse(allElements.OfType<Port>().Any());
@@ -70,7 +71,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         public void QueryAllNodes()
         {
             graphView.RebuildUI(GraphModel, Store);
-            List<Node> allNodes = graphView.nodes.ToList();
+            List<Node> allNodes = graphView.Nodes.ToList();
 
             Assert.AreEqual(4, allNodes.Count);
 
@@ -84,7 +85,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         public void QueryAllEdges()
         {
             graphView.RebuildUI(GraphModel, Store);
-            List<Edge> allEdges = graphView.edges.ToList();
+            List<Edge> allEdges = graphView.Edges.ToList();
 
             Assert.AreEqual(2, allEdges.Count);
 
@@ -98,7 +99,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         public void QueryAllPorts()
         {
             graphView.RebuildUI(GraphModel, Store);
-            Assert.AreEqual(8, graphView.ports.ToList().Count);
+            Assert.AreEqual(8, graphView.Ports.ToList().Count);
         }
     }
 }

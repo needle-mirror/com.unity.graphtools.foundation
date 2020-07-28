@@ -7,6 +7,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public static class TypeSerializer
     {
+        static System.Text.RegularExpressions.Regex s_GenericTypeExtractionRegex = new System.Text.RegularExpressions.Regex(@"(?<=\[\[)(.*?)(?=\]\])");
+
         static List<ValueTuple<string, TypeHandle>> s_CustomIdToTypeHandle = new List<ValueTuple<string, TypeHandle>>();
         static List<ValueTuple<string, Type>> s_CustomIdToType = new List<ValueTuple<string, Type>>();
 
@@ -100,21 +102,38 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 {
                     // Check if the type has moved
 
-                    // remove the assembly version string
-                    var versionIdx = assemblyQualifiedName.IndexOf(", Version=");
-                    if (versionIdx > 0)
-                        assemblyQualifiedName = assemblyQualifiedName.Substring(0, versionIdx);
-                    // replace all '+' with '/' to follow the Unity serialization convention for nested types
-                    assemblyQualifiedName = assemblyQualifiedName.Replace("+", "/");
+                    assemblyQualifiedName = ExtractAssemblyQualifiedName(assemblyQualifiedName, out var isList);
                     if (MovedFromTypes.ContainsKey(assemblyQualifiedName))
                     {
                         type = MovedFromTypes[assemblyQualifiedName];
+                        if (isList)
+                        {
+                            type = typeof(List<>).MakeGenericType(type);
+                        }
                     }
                 }
 
                 retType = type ?? retType;
             }
             return retType;
+        }
+
+        static string ExtractAssemblyQualifiedName(string fullTypeName, out bool isList)
+        {
+            isList = false;
+            if (fullTypeName.StartsWith("System.Collections.Generic.List"))
+            {
+                fullTypeName = s_GenericTypeExtractionRegex.Match(fullTypeName).Value;
+                isList = true;
+            }
+
+            // remove the assembly version string
+            var versionIdx = fullTypeName.IndexOf(", Version=");
+            if (versionIdx > 0)
+                fullTypeName = fullTypeName.Substring(0, versionIdx);
+            // replace all '+' with '/' to follow the Unity serialization convention for nested types
+            fullTypeName = fullTypeName.Replace("+", "/");
+            return fullTypeName;
         }
 
         public static Type ResolveType(TypeHandle th)

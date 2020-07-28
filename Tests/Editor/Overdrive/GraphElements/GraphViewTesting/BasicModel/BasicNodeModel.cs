@@ -1,19 +1,27 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utilities
 {
-    public class BasicNodeModel : IGTFNodeModel, IHasIOPorts, IHasTitle, ICollapsible
+    public class BasicNodeModel : IInOutPortsNode, IHasTitle, ICollapsible
     {
         public IGTFGraphModel GraphModel { get; set; }
 
         GUID m_GUID = GUID.Generate();
-        public GUID Guid => m_GUID;
-        public IGTFGraphAssetModel AssetModel => GraphModel.AssetModel;
+        public GUID Guid
+        {
+            get => m_GUID;
+            set => m_GUID = value;
+        }
+
+        public IGTFGraphAssetModel AssetModel
+        {
+            get => GraphModel.AssetModel;
+            set => GraphModel.AssetModel = value;
+        }
 
         public void AssignNewGuid()
         {
@@ -33,14 +41,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
 
         List<IGTFPortModel> m_InputPorts;
         List<IGTFPortModel> m_OutputPorts;
-        public IEnumerable<IGTFPortModel> InputPorts => m_InputPorts;
-        public IEnumerable<IGTFPortModel> OutputPorts => m_OutputPorts;
-        public IEnumerable<IGTFPortModel> Ports => InputPorts.Concat(OutputPorts);
+        public IEnumerable<IGTFPortModel> Ports => m_InputPorts.Concat(m_OutputPorts);
 
         public string Title { get; set; }
         public string DisplayTitle => Title;
-
-        static readonly Vector2 k_DefaultSize = new Vector2(200, 100);
+        public string Tooltip { get; set; }
 
         public BasicNodeModel()
             : this("") {}
@@ -74,14 +79,20 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
 
         public bool IsCopiable => true;
         public Color Color => Color.black;
+        public bool AllowSelfConnect => true;
         public bool HasUserColor => false;
         public bool HasProgress => false;
         public string IconTypeString => null;
-        public ModelState State { get; }
+        public ModelState State => ModelState.Enabled;
         public IReadOnlyDictionary<string, IGTFPortModel> InputsById => m_InputPorts.ToDictionary(e => e.Guid.ToString());
         public IReadOnlyDictionary<string, IGTFPortModel> OutputsById => m_OutputPorts.ToDictionary(e => e.Guid.ToString());
         public IReadOnlyList<IGTFPortModel> InputsByDisplayOrder => m_InputPorts;
         public IReadOnlyList<IGTFPortModel> OutputsByDisplayOrder => m_OutputPorts;
+        public virtual IEnumerable<IGTFEdgeModel> GetConnectedEdges()
+        {
+            return NodeModelDefaultImplementations.GetConnectedEdges(this);
+        }
+
         public void DefineNode()
         {
         }
@@ -106,10 +117,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
         {
             var portsToChooseFrom = portModel.Direction == Direction.Input ? OutputsByDisplayOrder : InputsByDisplayOrder;
             return portsToChooseFrom.First(p => p.DataTypeHandle == portModel.DataTypeHandle);
-        }
-
-        public void UndoRedoPerformed()
-        {
         }
     }
 }

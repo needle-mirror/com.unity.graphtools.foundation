@@ -7,9 +7,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 {
     public static class GraphElementHelper
     {
-        public static string WithUssElement(this string blockName, string elementName) => blockName + "__" + elementName;
-        public static string WithUssModifier(this string blockName, string modifier) => blockName + "--" + modifier;
-
         public static void LoadTemplateAndStylesheet(VisualElement container, string name, string rootClassName, IEnumerable<string> additionalStylesheets = null)
         {
             if (name != null && container != null)

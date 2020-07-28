@@ -17,12 +17,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             return null;
         }
 
-        protected EdgeControlPart(string name, IGTFGraphElementModel model, IGraphElement ownerElement, string parentClassName)
-            : base(name, model, ownerElement, parentClassName) {}
+        public override VisualElement Root => m_EdgeControl;
 
         EdgeControl m_EdgeControl;
 
-        public override VisualElement Root => m_EdgeControl;
+        protected EdgeControlPart(string name, IGTFGraphElementModel model, IGraphElement ownerElement, string parentClassName)
+            : base(name, model, ownerElement, parentClassName) {}
 
         protected override void BuildPartUI(VisualElement container)
         {
@@ -54,7 +54,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         {
             var parent = m_OwnerElement as Edge;
 
-            if (parent?.selected ?? false)
+            if (parent?.Selected ?? false)
             {
                 m_EdgeControl.ResetColor();
             }

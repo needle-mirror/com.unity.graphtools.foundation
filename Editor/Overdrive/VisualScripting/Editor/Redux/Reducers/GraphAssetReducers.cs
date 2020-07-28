@@ -2,8 +2,8 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Text;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -109,7 +109,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                     $"Click the Clean button to remove all the invalid elements from the graph.",
                     "Clean",
                     "Cancel"))
-                    graphModel.CleanUp();
+                    graphModel.Repair();
         }
 
         static State LoadGraphAsset(State previousState, LoadGraphAssetAction action)

@@ -16,12 +16,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             return null;
         }
 
-        protected StickyNoteContentPart(string name, IGTFGraphElementModel model, IGraphElement ownerElement, string parentClassName)
-            : base(name, model, ownerElement, parentClassName) {}
-
         protected EditableLabel TextLabel { get; set; }
 
         public override VisualElement Root => TextLabel;
+
+        protected StickyNoteContentPart(string name, IGTFGraphElementModel model, IGraphElement ownerElement, string parentClassName)
+            : base(name, model, ownerElement, parentClassName) {}
 
         protected override void BuildPartUI(VisualElement container)
         {

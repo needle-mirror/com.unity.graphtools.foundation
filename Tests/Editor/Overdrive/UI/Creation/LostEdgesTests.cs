@@ -3,11 +3,11 @@ using System.Collections;
 using System.Reflection;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.Tests;
 using UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
@@ -27,14 +27,14 @@ namespace UnityEditor.VisualScriptingTests.UI
 
             // simulate a renamed port by changing the edge's port id
 
-            var field = typeof(EdgeModel).GetField("m_InputPortReference", BindingFlags.Instance | BindingFlags.NonPublic);
-            var inputPortReference = (EdgeModel.PortReference)field.GetValue(edge);
+            var field = typeof(EdgeModel).GetField("m_ToPortReference", BindingFlags.Instance | BindingFlags.NonPublic);
+            var inputPortReference = (PortReference)field.GetValue(edge);
             inputPortReference.UniqueId = "asd";
             field.SetValue(edge, inputPortReference);
 
             edge.ResetPorts(); // get rid of cached port models
 
-            Store.Dispatch(new RefreshUIAction(UpdateFlags.All));
+            Store.ForceRefreshUI(UpdateFlags.All);
             yield return null;
 
             var lostPortsAdded = GraphView.Query(className: "ge-port--data-type-missing-port").Build().ToList().Count;

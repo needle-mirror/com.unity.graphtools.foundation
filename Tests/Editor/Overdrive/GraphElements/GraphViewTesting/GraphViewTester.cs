@@ -21,14 +21,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
         }
     }
 
-    public class TestStore : Overdrive.GraphElements.Store
-    {
-        public TestStore(State initialState)
-            : base(initialState)
-        {
-        }
-    }
-
     public class GraphViewTester
     {
         static readonly Rect k_WindowRect = new Rect(Vector2.zero, new Vector2(SelectionDragger.k_PanAreaWidth * 8, SelectionDragger.k_PanAreaWidth * 6));
@@ -36,12 +28,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
         bool m_SnapToPortEnabled;
         bool m_SnapToBorderEnabled;
         bool m_SnapToGridEnabled;
+        bool m_SnapToSpacingEnabled;
+        float m_SpacingMarginValue;
 
         protected TestGraphViewWindow window { get; private set; }
         protected TestGraphView graphView { get; private set; }
         protected TestEventHelpers helpers { get; private set; }
         protected BasicGraphModel GraphModel => window.GraphModel;
-        protected TestStore Store => window.Store;
+        protected Store Store => window.Store;
 
         bool m_EnablePersistence;
 
@@ -57,10 +51,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
             m_SnapToPortEnabled = GraphViewSettings.UserSettings.EnableSnapToPort;
             m_SnapToBorderEnabled = GraphViewSettings.UserSettings.EnableSnapToBorders;
             m_SnapToGridEnabled = GraphViewSettings.UserSettings.EnableSnapToGrid;
+            m_SnapToSpacingEnabled = GraphViewSettings.UserSettings.EnableSnapToSpacing;
+            m_SpacingMarginValue = GraphViewSettings.UserSettings.SpacingMarginValue;
 
             GraphViewSettings.UserSettings.EnableSnapToPort = false;
             GraphViewSettings.UserSettings.EnableSnapToBorders = false;
             GraphViewSettings.UserSettings.EnableSnapToGrid = false;
+            GraphViewSettings.UserSettings.EnableSnapToSpacing = false;
 
             m_SavedUseNewStylesheets = GraphElementHelper.UseNewStylesheets;
             GraphElementHelper.UseNewStylesheets = true;
@@ -92,6 +89,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
             GraphViewSettings.UserSettings.EnableSnapToPort = m_SnapToPortEnabled;
             GraphViewSettings.UserSettings.EnableSnapToBorders = m_SnapToBorderEnabled;
             GraphViewSettings.UserSettings.EnableSnapToGrid = m_SnapToGridEnabled;
+            GraphViewSettings.UserSettings.EnableSnapToSpacing = m_SnapToSpacingEnabled;
+            GraphViewSettings.UserSettings.SpacingMarginValue = m_SpacingMarginValue;
         }
 
         protected void Clear()
@@ -151,6 +150,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
         protected BasicStickyNoteModel CreateSticky(string title = "", string contents = "", Rect stickyRect = default)
         {
             return GraphModel.CreateStickyNodeGTF(title, contents, stickyRect);
+        }
+
+        public static void AssertVector2AreEqualWithinDelta(Vector2 expected, Vector2 actual, float withinDelta, string message = null)
+        {
+            Assert.AreEqual(expected.x, actual.x, withinDelta, message);
+            Assert.AreEqual(expected.y, actual.y, withinDelta, message);
         }
     }
 }

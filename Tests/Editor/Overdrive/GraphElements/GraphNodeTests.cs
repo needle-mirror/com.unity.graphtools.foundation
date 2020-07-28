@@ -5,6 +5,7 @@ using System.Linq;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utilities;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -28,8 +29,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             // Add the minimap.
             var miniMap = new MiniMap();
             miniMap.SetPosition(new Rect(10, 100, 100, 100));
-            miniMap.maxWidth = 100;
-            miniMap.maxHeight = 100;
+            miniMap.MaxWidth = 100;
+            miniMap.MaxHeight = 100;
             graphView.Add(miniMap);
         }
 
@@ -37,7 +38,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         public void CollapseButtonOnlyEnabledWhenNodeHasUnconnectedPorts()
         {
             graphView.RebuildUI(GraphModel, Store);
-            List<Node> nodeList = graphView.nodes.ToList();
+            List<Node> nodeList = graphView.Nodes.ToList();
 
             // Nothing is connected. The collapse button should be enabled.
             Assert.AreEqual(2, nodeList.Count);
@@ -47,9 +48,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 Assert.False(collapseButton.GetDisabledPseudoState());
             }
 
-            var edge = GraphModel.CreateEdge(m_Node1.OutputPorts.First(), m_Node2.InputPorts.First());
+            var edge = GraphModel.CreateEdge(m_Node1.GetOutputPorts().First(), m_Node2.GetInputPorts().First());
             graphView.RebuildUI(GraphModel, Store);
-            nodeList = graphView.nodes.ToList();
+            nodeList = graphView.Nodes.ToList();
 
             // Ports are connected. The collapse button should be disabled.
             Assert.AreEqual(2, nodeList.Count);
@@ -62,7 +63,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             // Disconnect the ports of the 2 nodes.
             GraphModel.Disconnect(edge);
             graphView.RebuildUI(GraphModel, Store);
-            nodeList = graphView.nodes.ToList();
+            nodeList = graphView.Nodes.ToList();
 
             // Once more, nothing is connected. The collapse button should be enabled.
             Assert.AreEqual(2, nodeList.Count);
@@ -79,26 +80,26 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             graphView.RebuildUI(GraphModel, Store);
             yield return null;
 
-            int initialCount = graphView.nodes.ToList().Count;
+            int initialCount = graphView.Nodes.ToList().Count;
             Assert.Greater(initialCount, 0);
 
-            Node node = graphView.nodes.First();
+            Node node = graphView.Nodes.First();
             graphView.AddToSelection(node);
             graphView.DeleteSelection();
             graphView.RebuildUI(GraphModel, Store);
             yield return null;
 
-            Assert.AreEqual(initialCount - 1, graphView.nodes.ToList().Count);
+            Assert.AreEqual(initialCount - 1, graphView.Nodes.ToList().Count);
         }
 
         [UnityTest]
         public IEnumerator SelectedEdgeCanBeDeleted()
         {
-            var edge = GraphModel.CreateEdge(m_Node1.OutputPorts.First(), m_Node2.InputPorts.First());
+            var edge = GraphModel.CreateEdge(m_Node1.GetOutputPorts().First(), m_Node2.GetInputPorts().First());
             graphView.RebuildUI(GraphModel, Store);
             yield return null;
 
-            int initialCount = window.GraphView.edges.ToList().Count;
+            int initialCount = window.GraphView.Edges.ToList().Count;
             Assert.Greater(initialCount, 0);
 
             window.GraphView.AddToSelection(edge.GetUI<Edge>(graphView));
@@ -106,7 +107,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             graphView.RebuildUI(GraphModel, Store);
             yield return null;
 
-            Assert.AreEqual(initialCount - 1, window.GraphView.edges.ToList().Count);
+            Assert.AreEqual(initialCount - 1, window.GraphView.Edges.ToList().Count);
         }
 
         [UnityTest]
@@ -114,13 +115,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         {
             graphView.AddToClassList("EdgeColorsMatchCustomPortColors");
 
-            var edge = GraphModel.CreateEdge(m_Node2.InputPorts.First(), m_Node1.OutputPorts.First());
+            var edge = GraphModel.CreateEdge(m_Node2.GetInputPorts().First(), m_Node1.GetOutputPorts().First());
             graphView.RebuildUI(GraphModel, Store);
             // Resolve custom styles.
             yield return null;
 
-            var outputPort = m_Node1.OutputPorts.First().GetUI<Port>(graphView);
-            var inputPort = m_Node2.InputPorts.First().GetUI<Port>(graphView);
+            var outputPort = m_Node1.GetOutputPorts().First().GetUI<Port>(graphView);
+            var inputPort = m_Node2.GetInputPorts().First().GetUI<Port>(graphView);
             var edgeControl = edge.GetUI<Edge>(graphView)?.EdgeControl;
 
             Assert.IsNotNull(outputPort);

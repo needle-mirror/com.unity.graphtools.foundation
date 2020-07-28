@@ -5,10 +5,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 {
     public class GraphViewMinimapWindow : GraphViewToolWindow
     {
-        MiniMap m_MiniMap;
-        Label m_ZoomLabel;
+        static readonly string k_ToolName = "MiniMap";
 
-        const string k_ToolName = "MiniMap";
+        MiniMap m_MiniMap;
+
+        Label m_ZoomLabel;
 
         protected override string ToolName => k_ToolName;
 
@@ -17,8 +18,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             base.OnEnable();
             var root = rootVisualElement;
             m_MiniMap = new MiniMap();
-            m_MiniMap.windowed = true;
-            m_MiniMap.zoomFactorTextChanged += ZoomFactorTextChanged;
+            m_MiniMap.Windowed = true;
+            m_MiniMap.ZoomFactorTextChanged += ZoomFactorTextChanged;
             root.Add(m_MiniMap);
 
             OnGraphViewChanged();
@@ -50,7 +51,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             if (m_MiniMap == null) // Probably called from base.OnEnable(). We're not ready just yet.
                 return;
 
-            m_MiniMap.graphView = m_SelectedGraphView;
+            m_MiniMap.GraphView = m_SelectedGraphView;
             m_MiniMap.MarkDirtyRepaint();
         }
 

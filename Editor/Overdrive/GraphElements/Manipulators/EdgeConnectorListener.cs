@@ -8,15 +8,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 {
     public class EdgeConnectorListener
     {
-        Action<Overdrive.Store, Edge, Vector2> m_OnDropOutsideDelegate;
-        Action<Overdrive.Store, Edge> m_OnDropDelegate;
+        Action<Store, Edge, Vector2> m_OnDropOutsideDelegate;
+        Action<Store, Edge> m_OnDropDelegate;
 
-        public void SetDropOutsideDelegate(Action<Overdrive.Store, Edge, Vector2> action)
+        public void SetDropOutsideDelegate(Action<Store, Edge, Vector2> action)
         {
             m_OnDropOutsideDelegate = action;
         }
 
-        public void SetDropDelegate(Action<Overdrive.Store, Edge> action)
+        public void SetDropDelegate(Action<Store, Edge> action)
         {
             m_OnDropDelegate = action;
         }
@@ -27,7 +27,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
             if (edge.ToPort != null && edge.ToPort.Capacity == PortCapacity.Single)
             {
-                foreach (var edgeToDelete in edge.ToPort.ConnectedEdges)
+                foreach (var edgeToDelete in edge.ToPort.GetConnectedEdges())
                 {
                     if (!ReferenceEquals(edgeToDelete, edge) && !(edgeToDelete is GhostEdgeModel))
                         edgeModelsToDelete.Add(edgeToDelete);
@@ -36,7 +36,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
             if (edge.FromPort != null && edge.FromPort.Capacity == PortCapacity.Single)
             {
-                foreach (var edgeToDelete in edge.FromPort.ConnectedEdges)
+                foreach (var edgeToDelete in edge.FromPort.GetConnectedEdges())
                 {
                     if (!ReferenceEquals(edgeToDelete, edge) && !(edgeToDelete is GhostEdgeModel))
                         edgeModelsToDelete.Add(edgeToDelete);
@@ -46,7 +46,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             return edgeModelsToDelete;
         }
 
-        public void OnDropOutsidePort(Overdrive.Store store, Edge edge, Vector2 position, Edge originalEdge)
+        public void OnDropOutsidePort(Store store, Edge edge, Vector2 position, Edge originalEdge)
         {
             if (m_OnDropOutsideDelegate != null)
             {
@@ -89,7 +89,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             }
         }
 
-        public void OnDrop(Overdrive.Store store, Edge edge, Edge originalEdge)
+        public void OnDrop(Store store, Edge edge, Edge originalEdge)
         {
             if (m_OnDropDelegate != null)
             {

@@ -4,11 +4,10 @@ using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using NUnit.Framework;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Compilation;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -166,25 +165,25 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             // Create a entry portal
             var portalEntry = GraphModel.CreateNode<ExecutionEdgePortalEntryModel>("Portal", Vector2.zero);
             portalEntry.DeclarationModel = portalDecl;
-            Store.Dispatch(new RefreshUIAction(UpdateFlags.All));
+            Store.ForceRefreshUI(UpdateFlags.All);;
             yield return null;
             TestEntryDependencies(portalEntry, new ExecutionEdgePortalExitModel[0]);
 
             // Create a first exit portal connected to the entry
             var portalExit = (ExecutionEdgePortalExitModel)GraphModel.CreateOppositePortal(portalEntry);
-            Store.Dispatch(new RefreshUIAction(UpdateFlags.All));
+            Store.ForceRefreshUI(UpdateFlags.All);;
             yield return null;
             TestEntryDependencies(portalEntry, new[] {portalExit});
 
             // Create a second exit portal connected to the entry
             var portalExit2 = (ExecutionEdgePortalExitModel)GraphModel.CreateOppositePortal(portalEntry);
-            Store.Dispatch(new RefreshUIAction(UpdateFlags.All));
+            Store.ForceRefreshUI(UpdateFlags.All);;
             yield return null;
             TestEntryDependencies(portalEntry, new[] {portalExit, portalExit2});
 
             // Create a second entry for the existing exits
             var portalEntry2 = (ExecutionEdgePortalEntryModel)GraphModel.CreateOppositePortal(portalExit);
-            Store.Dispatch(new RefreshUIAction(UpdateFlags.All));
+            Store.ForceRefreshUI(UpdateFlags.All);;
             yield return null;
             TestEntryDependencies(portalEntry, new[] {portalExit, portalExit2});
             TestEntryDependencies(portalEntry2, new[] {portalExit, portalExit2});
@@ -201,35 +200,35 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             var portalExit = (ExecutionEdgePortalExitModel)GraphModel.CreateOppositePortal(portalEntry);
             var portalExit2 = (ExecutionEdgePortalExitModel)GraphModel.CreateOppositePortal(portalEntry);
             var portalEntry2 = (ExecutionEdgePortalEntryModel)GraphModel.CreateOppositePortal(portalExit);
-            Store.Dispatch(new RefreshUIAction(UpdateFlags.All));
+            Store.ForceRefreshUI(UpdateFlags.All);;
             yield return null;
             TestEntryDependencies(portalEntry, new[] {portalExit, portalExit2});
             TestEntryDependencies(portalEntry2, new[] {portalExit, portalExit2});
 
             // Delete the second entry portal. Attempting to get its dependencies should return null
             GraphModel.DeleteNode(portalEntry2, DeleteConnections.True);
-            Store.Dispatch(new RefreshUIAction(UpdateFlags.All));
+            Store.ForceRefreshUI(UpdateFlags.All);;
             yield return null;
             TestEntryDependencies(portalEntry, new[] {portalExit, portalExit2});
             Assert.IsNull(GraphView.PositionDependenciesManagers.GetPortalDependencies(portalEntry2));
 
             // Delete the second exit.
             GraphModel.DeleteNode(portalExit2, DeleteConnections.True);
-            Store.Dispatch(new RefreshUIAction(UpdateFlags.All));
+            Store.ForceRefreshUI(UpdateFlags.All);;
             yield return null;
             TestEntryDependencies(portalEntry, new[] {portalExit});
             Assert.IsNull(GraphView.PositionDependenciesManagers.GetPortalDependencies(portalEntry2));
 
             // Delete the first exit. There should be no dependencies to the remaining entry
             GraphModel.DeleteNode(portalExit, DeleteConnections.True);
-            Store.Dispatch(new RefreshUIAction(UpdateFlags.All));
+            Store.ForceRefreshUI(UpdateFlags.All);;
             yield return null;
             TestEntryDependencies(portalEntry, new ExecutionEdgePortalExitModel[0]);
             Assert.IsNull(GraphView.PositionDependenciesManagers.GetPortalDependencies(portalEntry2));
 
             // Delete the first entry. There should be no more dependencies registered in the manager.
             GraphModel.DeleteNode(portalEntry, DeleteConnections.True);
-            Store.Dispatch(new RefreshUIAction(UpdateFlags.All));
+            Store.ForceRefreshUI(UpdateFlags.All);;
             yield return null;
             Assert.IsNull(GraphView.PositionDependenciesManagers.GetPortalDependencies(portalEntry));
             Assert.IsNull(GraphView.PositionDependenciesManagers.GetPortalDependencies(portalEntry2));
@@ -272,7 +271,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             GraphModel.CreateEdge(dataPortalEntry.InputPort, dataNode.DataOut0);
             GraphModel.CreateEdge(node0.DataIn0, dataPortalExit.OutputPort);
 
-            Store.Dispatch(new RefreshUIAction(UpdateFlags.All));
+            Store.ForceRefreshUI(UpdateFlags.All);;
 
             yield return null;
 

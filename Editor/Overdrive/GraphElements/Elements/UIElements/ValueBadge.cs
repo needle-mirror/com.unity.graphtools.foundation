@@ -8,12 +8,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     public class ValueBadge : VisualElement
     {
         static VisualTreeAsset s_ValueTemplate;
+
         Label m_TextElement;
+
         Attacher m_Attacher;
+
         VisualElement m_OriginalParent;
+
         bool m_IsAttached;
+
         VisualElement m_Target;
+
         SpriteAlignment m_Alignment;
+
         Image m_Image;
 
         public Color BadgeColor
@@ -27,6 +34,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 style.borderTopColor = value;
                 style.borderBottomColor = value;
             }
+        }
+
+        public string Text
+        {
+            get => m_TextElement.text;
+            set => m_TextElement.text = value;
         }
 
         public ValueBadge()
@@ -104,12 +117,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             ReleaseAttacher();
             m_OriginalParent = null;
-        }
-
-        public string Text
-        {
-            get => m_TextElement.text;
-            set => m_TextElement.text = value;
         }
     }
 }

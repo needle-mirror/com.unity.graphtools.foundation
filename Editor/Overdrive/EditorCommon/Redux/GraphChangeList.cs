@@ -5,7 +5,7 @@ using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public class GraphChangeList : IGraphChangeList
+    public class GraphChangeList
     {
         public List<IGTFEdgeModel> DeletedEdges { get; set; } = new List<IGTFEdgeModel>();
         public List<IGTFGraphElementModel> ChangedElements { get; } = new List<IGTFGraphElementModel>();

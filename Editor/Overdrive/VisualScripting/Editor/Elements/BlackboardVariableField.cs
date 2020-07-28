@@ -1,8 +1,8 @@
 using System;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -17,8 +17,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         TextField m_TitleTextfield;
         Label m_TitleLabel;
 
-        public new Store Store => base.Store as Store;
-
         public IGTFGraphElementModel ExpandableGraphElementModel => null;
 
         public string TitleValue => VariableDeclarationModel.DisplayTitle.Nicify();
@@ -26,7 +24,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         public VisualElement TitleEditor => m_TitleTextfield ?? (m_TitleTextfield = new TextField { name = "titleEditor", isDelayed = true });
         public VisualElement TitleElement => this;
 
-        public IVariableDeclarationModel VariableDeclarationModel => Model as IVariableDeclarationModel;
+        public IGTFVariableDeclarationModel VariableDeclarationModel => Model as IGTFVariableDeclarationModel;
 
         public void Expand() {}
         public virtual bool CanInstantiateInGraph() => true;
@@ -48,7 +46,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         public RenameDelegate RenameDelegate => OpenTextEditor;
 
-        public BlackboardVariableField(Overdrive.Store store, IGTFVariableDeclarationModel variableDeclarationModel, GraphView graphView)
+        public BlackboardVariableField(Store store, IGTFVariableDeclarationModel variableDeclarationModel, GraphView graphView)
         {
             SetupBuildAndUpdate(variableDeclarationModel, store, graphView);
 
@@ -84,7 +82,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         public bool ShouldHighlightItemUsage(IGTFGraphElementModel model)
         {
             var variableModel = model as IGTFVariableNodeModel;
-            var candidate = model as IVariableDeclarationModel;
+            var candidate = model as IGTFVariableDeclarationModel;
             return variableModel != null
                 && Equals(variableModel.VariableDeclarationModel, VariableDeclarationModel)
                 || Equals(candidate, VariableDeclarationModel);

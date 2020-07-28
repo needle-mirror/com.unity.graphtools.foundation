@@ -1,20 +1,10 @@
 using System;
 using System.Collections.Generic;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 {
-    public class PanToNodeAction : IAction
-    {
-        public readonly GUID nodeGuid;
-
-        public PanToNodeAction(GUID nodeGuid)
-        {
-            this.nodeGuid = nodeGuid;
-        }
-    }
-
     public class ResetElementColorAction : IAction
     {
         public readonly IReadOnlyCollection<NodeModel> NodeModels;

@@ -13,10 +13,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         public static readonly string k_EdgeControlPartName = "edge-control";
         public static readonly string k_EdgeBubblePartName = "edge-bubble";
 
-        public IGTFEdgeModel EdgeModel => Model as IGTFEdgeModel;
-
         protected EdgeManipulator m_EdgeManipulator;
+
         protected ContextualMenuManipulator m_ContextualMenuManipulator;
+
+        EdgeControl m_EdgeControl;
+
+        public IGTFEdgeModel EdgeModel => Model as IGTFEdgeModel;
 
         public bool IsGhostEdge => EdgeModel is IGhostEdge;
 
@@ -74,7 +77,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             }
         }
 
-        EdgeControl m_EdgeControl;
         public EdgeControl EdgeControl
         {
             get
@@ -95,9 +97,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         public override bool ShowInMiniMap => false;
 
+        public bool IsMovable => true;
+
         public Edge()
         {
-            layer = -1;
+            Layer = -1;
 
             m_EdgeManipulator = new EdgeManipulator();
             this.AddManipulator(m_EdgeManipulator);
@@ -126,7 +130,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         protected override void UpdateElementFromModel()
         {
             base.UpdateElementFromModel();
-            EnableInClassList(k_EditModeModifierUssClassName, EdgeModel.EditMode);
+
+            if (EdgeModel is IEditableEdge editableEdge)
+                EnableInClassList(k_EditModeModifierUssClassName, editableEdge.EditMode);
         }
 
         protected virtual void BuildContextualMenu(ContextualMenuPopulateEvent evt) {}
@@ -148,7 +154,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             var edgeControlPart = PartList.GetPart(k_EdgeControlPartName);
             edgeControlPart?.UpdateFromModel();
 
-            ((IHasPorts)EdgeModel.FromPort.NodeModel).RevealReorderableEdgesOrder(true, EdgeModel);
+            ((IPortNode)EdgeModel.FromPort.NodeModel).RevealReorderableEdgesOrder(true, EdgeModel);
             // TODO JOCE: This is required until we have a dirtying mechanism (see ShowConnectedExecutionEdgesOrder in NodeModel.cs)
             EdgeModel.FromPort.NodeModel.GetUI<Node>(GraphView)?.UpdateOutgoingExecutionEdges();
         }
@@ -162,7 +168,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
             if (EdgeModel.FromPort != null)
             {
-                ((IHasPorts)EdgeModel.FromPort.NodeModel).RevealReorderableEdgesOrder(false);
+                ((IPortNode)EdgeModel.FromPort.NodeModel).RevealReorderableEdgesOrder(false);
 
                 // TODO JOCE: This is required until we have a dirtying mechanism (see ShowConnectedExecutionEdgesOrder in NodeModel.cs)
                 EdgeModel.FromPort.NodeModel.GetUI<Node>(GraphView)?.UpdateOutgoingExecutionEdges();
@@ -173,7 +179,5 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         {
             UpdateFromModel();
         }
-
-        public bool IsMovable => true;
     }
 }

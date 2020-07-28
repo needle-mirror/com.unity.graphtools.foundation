@@ -29,8 +29,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             var firstNodeModel = CreateNode("First Node", firstNodePosition, 0, 2);
             var secondNodeModel = CreateNode("Second Node", secondNodePosition, 2);
 
-            var startPort = firstNodeModel.OutputPorts.First();
-            var endPort = secondNodeModel.InputPorts.First();
+            var startPort = firstNodeModel.GetOutputPorts().First();
+            var endPort = secondNodeModel.GetInputPorts().First();
 
             graphView.RebuildUI(GraphModel, Store);
             yield return null;
@@ -41,7 +41,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 yield return null;
             }
 
-            var edgeModel = startPort.ConnectedEdges.First();
+            var edgeModel = startPort.GetConnectedEdges().First();
             var edge = edgeModel.GetUI<Edge>(graphView);
             var secondNode = secondNodeModel.GetUI<Node>(graphView);
 
@@ -59,10 +59,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
         void AssertSingleSelectedElementTypeAndName(Type modelType, string name)
         {
-            Assert.That(graphView.selection.Count, NUnit.Framework.Is.EqualTo(1));
-            Assert.That(graphView.selection[0], NUnit.Framework.Is.AssignableTo(typeof(Node)));
-            Assert.That((graphView.selection[0] as Node)?.Model, NUnit.Framework.Is.AssignableTo(modelType));
-            Assert.That(((graphView.selection[0] as Node)?.Model as IHasTitle)?.Title, NUnit.Framework.Is.EqualTo(name));
+            Assert.That(graphView.Selection.Count, NUnit.Framework.Is.EqualTo(1));
+            Assert.That(graphView.Selection[0], NUnit.Framework.Is.AssignableTo(typeof(Node)));
+            Assert.That((graphView.Selection[0] as Node)?.Model, NUnit.Framework.Is.AssignableTo(modelType));
+            Assert.That(((graphView.Selection[0] as Node)?.Model as IHasTitle)?.Title, NUnit.Framework.Is.EqualTo(name));
         }
 
         [Test]
@@ -76,7 +76,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             graphView.RebuildUI(GraphModel, Store);
 
             graphView.ClearSelection();
-            graphView.AddToSelection(graphView.graphElements.First());
+            graphView.AddToSelection(graphView.GraphElements.First());
 
             graphView.FrameNext();
             AssertSingleSelectedElementTypeAndName(typeof(FooNode), "N1");
@@ -139,7 +139,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             graphView.RebuildUI(GraphModel, Store);
 
             graphView.ClearSelection();
-            graphView.AddToSelection(graphView.graphElements.First());
+            graphView.AddToSelection(graphView.GraphElements.First());
 
             graphView.FrameNext(x => x.Model is FooNode);
             AssertSingleSelectedElementTypeAndName(typeof(FooNode), "F1");
@@ -154,7 +154,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             AssertSingleSelectedElementTypeAndName(typeof(FooNode), "F2");
 
             graphView.ClearSelection();
-            graphView.AddToSelection(graphView.graphElements.First());
+            graphView.AddToSelection(graphView.GraphElements.First());
 
             graphView.FrameNext(x => (x.Model as IHasTitle)?.Title.Contains("0") ?? false);
             AssertSingleSelectedElementTypeAndName(typeof(BasicNodeModel), "B0");

@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
@@ -12,7 +12,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         int m_NumDeleted, m_NumCreated;
 
         HashSet<IGTFNodeModel> m_NodesToRebuild;
-        HashSet<IEdgeModel> m_EdgesToRebuild;
+        HashSet<IGTFEdgeModel> m_EdgesToRebuild;
         HashSet<IGTFEdgeModel> m_EdgesToDelete;
         HashSet<IGTFGraphElementModel> m_OtherElementsToRebuild;
         HashSet<GraphElement> m_GraphElementsToDelete;
@@ -32,7 +32,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             BlackboardChanged = false;
 
             m_NodesToRebuild = new HashSet<IGTFNodeModel>();
-            m_EdgesToRebuild = new HashSet<IEdgeModel>();
+            m_EdgesToRebuild = new HashSet<IGTFEdgeModel>();
             m_EdgesToDelete = new HashSet<IGTFEdgeModel>();
             m_OtherElementsToRebuild = new HashSet<IGTFGraphElementModel>();
             m_GraphElementsToDelete = new HashSet<GraphElement>();
@@ -51,7 +51,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             m_GraphElementsToDelete.Clear();
         }
 
-        public void ComputeChanges(IGraphChangeList graphChangeList, Dictionary<IGTFGraphElementModel, GraphElement> existingElements)
+        public void ComputeChanges(GraphChangeList graphChangeList, Dictionary<IGTFGraphElementModel, GraphElement> existingElements)
         {
             BlackboardChanged = graphChangeList.BlackBoardChanged;
 
@@ -68,7 +68,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         void MarkEdgesToBeRebuiltToDelete(Dictionary<IGTFGraphElementModel, GraphElement> existingElements)
         {
-            foreach (IEdgeModel edgeModel in m_EdgesToRebuild)
+            foreach (var edgeModel in m_EdgesToRebuild)
             {
                 if (existingElements.ContainsKey(edgeModel))
                 {
@@ -77,11 +77,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             }
         }
 
-        void GetChangesFromChangelist(IGraphChangeList graphChanges)
+        void GetChangesFromChangelist(GraphChangeList graphChanges)
         {
             foreach (var model in graphChanges.ChangedElements)
             {
-                if (model is IEdgeModel edgeModel)
+                if (model is IGTFEdgeModel edgeModel)
                 {
                     if (graphChanges.DeletedEdges.Contains(edgeModel))
                         m_EdgesToDelete.Add(edgeModel);
@@ -97,7 +97,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                         BlackboardChanged = true;
                     }
                 }
-                else if (model is IVariableDeclarationModel decl)
+                else if (model is IGTFVariableDeclarationModel)
                 {
                     BlackboardChanged = true;
                 }
@@ -117,7 +117,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             }
         }
 
-        void GatherDeletedElements(Dictionary<IGTFGraphElementModel, GraphElement> existingElements, IGraphChangeList graphChangeList)
+        void GatherDeletedElements(Dictionary<IGTFGraphElementModel, GraphElement> existingElements, GraphChangeList graphChangeList)
         {
             foreach (var elementModel in existingElements.Keys)
             {
@@ -158,9 +158,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             {
                 if (!nodeModel.Destroyed)
                 {
-                    foreach (var gtfEdgeModel in nodeModel.GetConnectedEdges())
+                    foreach (var edgeModel in nodeModel.GetConnectedEdges())
                     {
-                        var edgeModel = (IEdgeModel)gtfEdgeModel;
                         m_EdgesToRebuild.Add(edgeModel);
                     }
                 }
@@ -219,9 +218,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             }
         }
 
-        public void RebuildEdges(Action<IEdgeModel> rebuildEdge)
+        public void RebuildEdges(Action<IGTFEdgeModel> rebuildEdge)
         {
-            foreach (IEdgeModel edgeModel in m_EdgesToRebuild)
+            foreach (IGTFEdgeModel edgeModel in m_EdgesToRebuild)
             {
                 rebuildEdge(edgeModel);
                 m_NumCreated++;

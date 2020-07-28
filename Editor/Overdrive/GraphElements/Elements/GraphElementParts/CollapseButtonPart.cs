@@ -17,11 +17,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             return null;
         }
 
-        protected CollapseButtonPart(string name, IGTFGraphElementModel model, IGraphElement ownerElement, string parentClassName)
-            : base(name, model, ownerElement, parentClassName) {}
+        public override VisualElement Root => CollapseButton;
 
         protected CollapseButton CollapseButton { get; set; }
-        public override VisualElement Root => CollapseButton;
+
+        protected CollapseButtonPart(string name, IGTFGraphElementModel model, IGraphElement ownerElement, string parentClassName)
+            : base(name, model, ownerElement, parentClassName) {}
 
         protected override void BuildPartUI(VisualElement container)
         {

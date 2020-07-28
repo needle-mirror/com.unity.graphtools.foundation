@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using JetBrains.Annotations;
+using Lucene.Net.Documents;
+using Lucene.Net.Index;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.Searcher;
 using UnityEngine;
@@ -19,13 +21,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch
         // TODO: our builder methods ("AddStack",...) all use this field. Users should be able to create similar methods. making it public until we find a better solution
         public readonly List<SearcherItem> Items;
         public readonly Stencil Stencil;
+        private IGTFGraphModel m_GraphModel;
 
-        public GraphElementSearcherDatabase(Stencil stencil)
+        public GraphElementSearcherDatabase(Stencil stencil, IGTFGraphModel graphModel)
         {
             Stencil = stencil;
             Items = new List<SearcherItem>();
+            m_GraphModel = graphModel;
         }
 
+        private Dictionary<SearcherItem, IEnumerable<IIndexableField>> docs;
         public GraphElementSearcherDatabase AddNodesWithSearcherItemAttribute()
         {
             var types = TypeCache.GetTypesWithAttribute<SearcherItemAttribute>();
@@ -52,6 +57,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch
                                 data => data.CreateNode(type, name),
                                 name
                             );
+
                             Items.AddAtPath(node, path);
                             break;
                         }
@@ -67,6 +73,25 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch
             }
 
             return this;
+        }
+
+        private void IndexNodeAndGetDocumentation(GraphNodeModelSearcherItem node)
+        {
+            var model = Enumerable.FirstOrDefault(node.CreateElements(
+                new GraphNodeCreationData(m_GraphModel, Vector2.zero, SpawnFlags.Orphan)));
+            string help = Stencil.GetNodeDocumentation(node, model);
+            node.Help = help;
+            if (Stencil.GetSearcherDatabaseProvider() is IIndexableSearcherDatabaseProvider indexableSearcherDatabaseProvider)
+            {
+                var documentIndexer = new DocumentIndexer();
+                if (indexableSearcherDatabaseProvider.Index(node, model, ref documentIndexer))
+                {
+                    if (docs == null)
+                        docs = new Dictionary<SearcherItem, IEnumerable<IIndexableField>>();
+                    if (documentIndexer.Document != null)
+                        docs.Add(node, documentIndexer.Document);
+                }
+            }
         }
 
         public GraphElementSearcherDatabase AddStickyNote()
@@ -131,9 +156,22 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch
             return this;
         }
 
-        public SearcherDatabase Build()
+        public LuceneSearcherDatabase Build()
         {
-            return SearcherDatabase.Create(Items, "", false);
+            Recurse(Items);
+
+            return LuceneSearcherDatabase.Create(Items, docs);
+
+            void Recurse(List<SearcherItem> searcherItems)
+            {
+                foreach (var searcherItem in searcherItems)
+                {
+                    if (searcherItem.HasChildren)
+                        Recurse(searcherItem.Children);
+                    if (searcherItem is GraphNodeModelSearcherItem graphNodeModelSearcherItem)
+                        IndexNodeAndGetDocumentation(graphNodeModelSearcherItem);
+                }
+            }
         }
     }
 }

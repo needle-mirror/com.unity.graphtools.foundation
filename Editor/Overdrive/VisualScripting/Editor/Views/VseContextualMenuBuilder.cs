@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -23,6 +23,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         readonly IList<ISelectableGraphElement> m_Selection;
         readonly VseGraphView m_GraphView;
         static GraphElementModelComparer s_GraphElementModelComparer = new GraphElementModelComparer();
+        readonly AutoSpacingHelper m_AutoSpacingHelper;
+        readonly AutoAlignmentHelper m_AutoAlignmentHelper;
 
         public VseContextualMenuBuilder(Store store, ContextualMenuPopulateEvent evt, IList<ISelectableGraphElement> selection, VseGraphView graphView)
         {
@@ -30,13 +32,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             m_Evt = evt;
             m_Selection = selection;
             m_GraphView = graphView;
+            m_AutoAlignmentHelper = new AutoAlignmentHelper(m_GraphView);
+            m_AutoSpacingHelper = new AutoSpacingHelper(m_GraphView);
         }
 
         public void BuildContextualMenu()
         {
             var selectedModelsDictionary = m_Selection
                 .OfType<IGraphElement>()
-                .Where(x => !(x is BlackboardThisField)) // this blackboard field
                 .Distinct(s_GraphElementModelComparer)
                 .ToDictionary(x => x.Model);
 
@@ -133,20 +136,20 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             if (!(m_Evt.target is GraphView))
                 return;
 
-            m_Evt.menu.AppendAction("Cut", menuAction => m_GraphView.InvokeCutSelectionCallback(),
-                x => m_GraphView.CanCutSelection() ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+            m_Evt.menu.AppendAction("Cut", menuAction => m_GraphView.CutSelectionCallback(),
+                x => m_GraphView.CanCutSelection ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
 
-            m_Evt.menu.AppendAction("Copy", menuAction => m_GraphView.InvokeCopySelectionCallback(),
-                x => m_GraphView.CanCopySelection() ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+            m_Evt.menu.AppendAction("Copy", menuAction => m_GraphView.CopySelectionCallback(),
+                x => m_GraphView.CanCopySelection ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
 
-            m_Evt.menu.AppendAction("Paste", menuAction => m_GraphView.InvokePasteCallback(),
-                x => m_GraphView.CanPaste() ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+            m_Evt.menu.AppendAction("Paste", menuAction => m_GraphView.PasteCallback(),
+                x => m_GraphView.CanPaste ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
 
             if (Unsupported.IsDeveloperBuild())
             {
                 m_Evt.menu.AppendSeparator();
 
-                m_Evt.menu.AppendAction("Internal/Refresh All UI", menuAction => m_Store.Dispatch(new RefreshUIAction(UpdateFlags.All)));
+                m_Evt.menu.AppendAction("Internal/Refresh All UI", menuAction => m_Store.ForceRefreshUI(UpdateFlags.All));
             }
         }
 
@@ -165,7 +168,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                 return;
 
             var models = selectedModelsKeys.OfType<NodeModel>().ToArray();
-            var connectedModels = models.Where(x => x.InputsByDisplayOrder.Any(y => y.IsConnected) && x.OutputsByDisplayOrder.Any(y => y.IsConnected)).ToArray();
+            var connectedModels = models.Where(x => x.InputsByDisplayOrder.Any(y => y.IsConnected()) && x.OutputsByDisplayOrder.Any(y => y.IsConnected())).ToArray();
             bool canSelectionBeBypassed = connectedModels.Any();
 
             m_Evt.menu.AppendSeparator();
@@ -177,7 +180,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             m_Evt.menu.AppendAction("Create Placemat Under Selection", menuAction =>
             {
                 Rect bounds = new Rect();
-                if (GraphElements.Placemat.ComputeElementBounds(ref bounds, content))
+                if (Placemat.ComputeElementBounds(ref bounds, content))
                 {
                     m_Store.Dispatch(new CreatePlacematAction(null, bounds));
                 }
@@ -185,14 +188,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
             m_Evt.menu.AppendSeparator();
 
-            m_Evt.menu.AppendAction("Cut", menuAction => m_GraphView.InvokeCutSelectionCallback(),
-                x => m_GraphView.CanCutSelection() ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+            m_Evt.menu.AppendAction("Cut", menuAction => m_GraphView.CutSelectionCallback(),
+                x => m_GraphView.CanCutSelection ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
 
-            m_Evt.menu.AppendAction("Copy", menuAction => m_GraphView.InvokeCopySelectionCallback(),
-                x => m_GraphView.CanCopySelection() ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+            m_Evt.menu.AppendAction("Copy", menuAction => m_GraphView.CopySelectionCallback(),
+                x => m_GraphView.CanCopySelection ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
 
-            m_Evt.menu.AppendAction("Paste", menuAction => m_GraphView.InvokePasteCallback(),
-                x => m_GraphView.CanPaste() ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+            m_Evt.menu.AppendAction("Paste", menuAction => m_GraphView.PasteCallback(),
+                x => m_GraphView.CanPaste ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
 
             m_Evt.menu.AppendSeparator();
 
@@ -247,14 +250,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                     m_Store.Dispatch(new ResetElementColorAction(models, placemats));
                 }, eventBase => DropdownMenuAction.Status.Normal);
 
-                if (m_GraphView.selection.OfType<GraphElement>().Where(elem => !(elem is Edge) && elem.visible).ToList().Count > 1)
+                if (m_GraphView.Selection.OfType<GraphElement>().Where(elem => !(elem is Edge) && elem.visible).ToList().Count > 1)
                 {
-                    m_Evt.menu.AppendAction("Alignment/Top", menuAction => AutoAlignmentHelper.SendAlignAction(m_GraphView, AutoAlignmentHelper.AlignmentReference.Top));
-                    m_Evt.menu.AppendAction("Alignment/Bottom", menuAction => AutoAlignmentHelper.SendAlignAction(m_GraphView, AutoAlignmentHelper.AlignmentReference.Bottom));
-                    m_Evt.menu.AppendAction("Alignment/Left", menuAction => AutoAlignmentHelper.SendAlignAction(m_GraphView, AutoAlignmentHelper.AlignmentReference.Left));
-                    m_Evt.menu.AppendAction("Alignment/Right", menuAction => AutoAlignmentHelper.SendAlignAction(m_GraphView, AutoAlignmentHelper.AlignmentReference.Right));
-                    m_Evt.menu.AppendAction("Alignment/Horizontal Center", menuAction => AutoAlignmentHelper.SendAlignAction(m_GraphView, AutoAlignmentHelper.AlignmentReference.HorizontalCenter));
-                    m_Evt.menu.AppendAction("Alignment/Vertical Center", menuAction => AutoAlignmentHelper.SendAlignAction(m_GraphView, AutoAlignmentHelper.AlignmentReference.VerticalCenter));
+                    m_Evt.menu.AppendAction("Alignment/Top", menuAction => m_AutoAlignmentHelper.SendAlignAction(AutoAlignmentHelper.AlignmentReference.Top));
+                    m_Evt.menu.AppendAction("Alignment/Bottom", menuAction => m_AutoAlignmentHelper.SendAlignAction(AutoAlignmentHelper.AlignmentReference.Bottom));
+                    m_Evt.menu.AppendAction("Alignment/Left", menuAction => m_AutoAlignmentHelper.SendAlignAction(AutoAlignmentHelper.AlignmentReference.Left));
+                    m_Evt.menu.AppendAction("Alignment/Right", menuAction => m_AutoAlignmentHelper.SendAlignAction(AutoAlignmentHelper.AlignmentReference.Right));
+                    m_Evt.menu.AppendAction("Alignment/Horizontal Center", menuAction => m_AutoAlignmentHelper.SendAlignAction(AutoAlignmentHelper.AlignmentReference.HorizontalCenter));
+                    m_Evt.menu.AppendAction("Alignment/Vertical Center", menuAction => m_AutoAlignmentHelper.SendAlignAction(AutoAlignmentHelper.AlignmentReference.VerticalCenter));
+                    m_Evt.menu.AppendAction("Spacing/Horizontal", menuAction => m_AutoSpacingHelper.SendSpacingAction(Orientation.Horizontal));
+                    m_Evt.menu.AppendAction("Spacing/Vertical", menuAction => m_AutoSpacingHelper.SendSpacingAction(Orientation.Vertical));
                 }
             }
             else
@@ -265,7 +270,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         void BuildEdgeContextualMenu(Dictionary<IGTFGraphElementModel, IGraphElement> selectedModels)
         {
-            var allEdgeModels = selectedModels.Keys.OfType<IEdgeModel>().ToList();
+            var allEdgeModels = selectedModels.Keys.OfType<IGTFEdgeModel>().ToList();
             bool addSeparator = false;
 
             if (allEdgeModels.Any())
@@ -293,7 +298,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
             var eventTarget = m_Evt.triggerEvent.target as VisualElement;
             var edge = eventTarget?.GetFirstAncestorOfType<Edge>();
-            if (edge?.EdgeModel != null)
+            if (edge?.EdgeModel is IEditableEdge editableEdge)
             {
                 if (eventTarget is EdgeControl edgeControlElement)
                 {
@@ -303,22 +308,22 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                     var p = edgeControlElement.WorldToLocal(m_Evt.triggerEvent.originalMousePosition);
                     edgeControlElement.FindNearestCurveSegment(p, out _, out var controlPointIndex, out _);
                     p = edge.WorldToLocal(m_Evt.triggerEvent.originalMousePosition);
-                    if (edge.EdgeModel.EditMode)
+                    if (editableEdge.EditMode)
                     {
                         m_Evt.menu.AppendAction("Stop editing edge", menuAction =>
                         {
-                            m_Store.Dispatch(new SetEdgeEditModeAction(edge.EdgeModel, false));
+                            m_Store.Dispatch(new SetEdgeEditModeAction(editableEdge, false));
                         });
                         m_Evt.menu.AppendAction("Add control point", menuAction =>
                         {
-                            m_Store.Dispatch(new AddControlPointOnEdgeAction(edge.EdgeModel, controlPointIndex, p));
+                            m_Store.Dispatch(new AddControlPointOnEdgeAction(editableEdge, controlPointIndex, p));
                         });
                     }
                     else
                     {
-                        if (edge.EdgeModel.FromPort.HasReorderableEdges)
+                        if ((edge.EdgeModel.FromPort as IReorderableEdgesPort)?.HasReorderableEdges ?? false)
                         {
-                            var siblingEdges = edge.EdgeModel.FromPort.ConnectedEdges.ToList();
+                            var siblingEdges = edge.EdgeModel.FromPort.GetConnectedEdges().ToList();
                             var siblingEdgesCount = siblingEdges.Count;
 
                             var index = siblingEdges.IndexOf(edge.EdgeModel);
@@ -337,14 +342,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                             {
                                 m_Store.Dispatch(new ReorderEdgeAction(edge.EdgeModel, reorderType));
                                 // Refresh the edge bubbles
-                                ((IHasPorts)edge.EdgeModel.FromPort.NodeModel).RevealReorderableEdgesOrder(true, edge.EdgeModel);
+                                ((IPortNode)edge.EdgeModel.FromPort.NodeModel).RevealReorderableEdgesOrder(true, edge.EdgeModel);
                                 edge.EdgeModel.FromPort.NodeModel.GetUI<Node>(m_GraphView)?.UpdateOutgoingExecutionEdges();
                             }
                         }
 
                         m_Evt.menu.AppendAction("Edit edge", menuAction =>
                         {
-                            m_Store.Dispatch(new SetEdgeEditModeAction(edge.EdgeModel, true));
+                            m_Store.Dispatch(new SetEdgeEditModeAction(editableEdge, true));
                         });
                     }
                 }
@@ -355,7 +360,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
                     m_Evt.menu.AppendAction("Stop editing edge", menuAction =>
                     {
-                        m_Store.Dispatch(new SetEdgeEditModeAction(edge.EdgeModel, false));
+                        m_Store.Dispatch(new SetEdgeEditModeAction(editableEdge, false));
                     });
                     m_Evt.menu.AppendAction("Remove control point", menuAction =>
                     {
@@ -364,7 +369,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                             return;
 
                         int controlPointIndex = edgeControlPointElement.parent.Children().IndexOf(edgeControlPointElement);
-                        graphView.store.Dispatch(new RemoveEdgeControlPointAction(edge.EdgeModel, controlPointIndex));
+                        graphView.store.Dispatch(new RemoveEdgeControlPointAction(editableEdge, controlPointIndex));
                     });
                 }
             }
@@ -405,7 +410,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         void BuildConstantNodeContextualMenu(IReadOnlyCollection<IGTFGraphElementModel> selectedModels)
         {
-            var models = selectedModels.Where(x => x is IConstantNodeModel).Cast<IConstantNodeModel>().ToArray();
+            var models = selectedModels.Where(x => x is IGTFConstantNodeModel).Cast<IGTFConstantNodeModel>().ToArray();
             if (!models.Any())
                 return;
 
@@ -422,8 +427,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             var graphElementModels = selectedModels.ToList();
             if (graphElementModels.Count == 2)
             {
-                if (graphElementModels.FirstOrDefault(x => x is IEdgeModel) is IEdgeModel edgeModel &&
-                    graphElementModels.FirstOrDefault(x => x is IGTFNodeModel) is IGTFNodeModel nodeModel)
+                if (graphElementModels.FirstOrDefault(x => x is IGTFEdgeModel) is IGTFEdgeModel edgeModel &&
+                    graphElementModels.FirstOrDefault(x => x is IInOutPortsNode) is IInOutPortsNode nodeModel)
                 {
                     m_Evt.menu.AppendAction("Insert", menuAction => m_Store.Dispatch(new SplitEdgeAndInsertNodeAction(edgeModel, nodeModel)),
                         eventBase => DropdownMenuAction.Status.Normal);
@@ -472,12 +477,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                 return stickyNoteModels.First().TextSize == (a.userData as string) ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.Normal;
             }
 
-            foreach (var value in GraphElements.StickyNote.GetThemes())
+            foreach (var value in StickyNote.GetThemes())
                 m_Evt.menu.AppendAction("Theme/" + value,
                     menuAction => m_Store.Dispatch(new UpdateStickyNoteThemeAction(stickyNoteModels, menuAction.userData as string)),
                     GetThemeStatus, value);
 
-            foreach (var value in GraphElements.StickyNote.GetSizes())
+            foreach (var value in StickyNote.GetSizes())
                 m_Evt.menu.AppendAction("Text Size/" + value,
                     menuAction => m_Store.Dispatch(new UpdateStickyNoteTextSizeAction(stickyNoteModels, menuAction.userData as string)),
                     GetSizeStatus, value);
@@ -509,7 +514,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                     }, _ => DropdownMenuAction.Status.Normal);
 
                 m_Evt.menu.AppendAction("Internal/Refresh Selected Element(s)",
-                    menuAction => { m_Store.Dispatch(new RefreshUIAction(selectedModels.Cast<IGTFGraphElementModel>().ToList())); },
+                    menuAction =>
+                    {
+                        m_Store.GetState().CurrentGraphModel.LastChanges.ChangedElements.AddRange(selectedModels);
+                        m_Store.ForceRefreshUI(UpdateFlags.None);
+                    },
                     _ => DropdownMenuAction.Status.Normal);
             }
         }

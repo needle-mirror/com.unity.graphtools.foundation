@@ -53,9 +53,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
     public class SplitEdgeAndInsertNodeAction : IAction
     {
         public readonly IGTFEdgeModel EdgeModel;
-        public readonly IGTFNodeModel NodeModel;
+        public readonly IInOutPortsNode NodeModel;
 
-        public SplitEdgeAndInsertNodeAction(IGTFEdgeModel edgeModel, IGTFNodeModel nodeModel)
+        public SplitEdgeAndInsertNodeAction(IGTFEdgeModel edgeModel, IInOutPortsNode nodeModel)
         {
             EdgeModel = edgeModel;
             NodeModel = nodeModel;

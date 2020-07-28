@@ -37,13 +37,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.SmartSearch
         [Test]
         public void TestClasses()
         {
-            var source = new List<ITypeMetadata>
-            {
-                TypeSerializer.GenerateTypeHandle(typeof(string)).GetMetadata(m_Stencil),
-                TypeSerializer.GenerateTypeHandle(typeof(ClassForTest)).GetMetadata(m_Stencil),
-            };
-
-            var db = new TypeSearcherDatabase(m_Stencil, source).AddClasses().Build();
+            var db = TypeSearcherDatabase.FromTypes(m_Stencil, new[] {typeof(string), typeof(ClassForTest)});
             ValidateHierarchy(db.Search("", out _), new[]
             {
                 new SearcherItem("Classes", "", new List<SearcherItem>

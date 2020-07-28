@@ -31,6 +31,13 @@ Layer {
     flex-direction: row;
 }
 
+.graphView {
+    --dragndrop-highlight-color: rgb(37,89,145);
+    --dragndrop-highlight-background-color: rgba(37,89,145, 0.33);
+    --dragndrop-denied-color: rgb(145, 29, 19);
+    --dragndrop-denied-background-color: rgba(145, 29, 19, 0.33);
+}
+
 .resizer-icon {
     background-image: resource("Builtin Skins/DarkSkin/Images/WindowBottomResize.png");
     flex: 1 0 0;

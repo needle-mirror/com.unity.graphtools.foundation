@@ -40,7 +40,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             // We need to get the graphView in focus for the commands to be properly sent.
             graphView.Focus();
 
-            Assert.AreEqual(2, graphView.graphElements.ToList().Count);
+            Assert.AreEqual(2, graphView.GraphElements.ToList().Count);
 
             const bool noAdditiveSelect = false;
             node1.Select(graphView, noAdditiveSelect);
@@ -49,7 +49,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             graphView.RebuildUI(GraphModel, Store);
             yield return null;
 
-            Assert.AreEqual(1, graphView.graphElements.ToList().Count);
+            Assert.AreEqual(1, graphView.GraphElements.ToList().Count);
 
             // Node 2 is not deletable.
             // Selecting it and sending the Delete command should leave the node count unchanged.
@@ -59,7 +59,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             graphView.RebuildUI(GraphModel, Store);
             yield return null;
 
-            Assert.AreEqual(1, graphView.graphElements.ToList().Count);
+            Assert.AreEqual(1, graphView.GraphElements.ToList().Count);
             yield return null;
         }
 

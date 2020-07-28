@@ -125,11 +125,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
             selectionRect = ComputeAxisAlignedBound(selectionRect, graphView.viewTransform.matrix.inverse);
 
-            List<ISelectableGraphElement> selection = graphView.selection;
+            List<ISelectableGraphElement> selection = graphView.Selection;
 
             // a copy is necessary because Add To selection might cause a SendElementToFront which will change the order.
             List<ISelectableGraphElement> newSelection = new List<ISelectableGraphElement>();
-            graphView.graphElements.ForEach(child =>
+            graphView.GraphElements.ForEach(child =>
             {
                 var localSelRect = graphView.contentViewContainer.ChangeCoordinatesTo(child, selectionRect);
                 if (child.IsSelectable() && child.Overlaps(localSelRect))

@@ -39,8 +39,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch
             ISearcherItemData data,
             Func<GraphNodeCreationData, IGTFGraphElementModel> createElement,
             Func<string> getName,
-            List<SearcherItem> children = null
-        ) : this(data, createElement, getName(), children, getName)
+            List<SearcherItem> children = null,
+            string help = null
+        ) : this(data, createElement, getName(), children, getName, help)
         {
         }
 
@@ -49,8 +50,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch
             Func<GraphNodeCreationData, IGTFGraphElementModel> createElement,
             string name,
             List<SearcherItem> children = null,
-            Func<string> getName = null
-        ) : base(name, children: children)
+            Func<string> getName = null,
+            string help = null
+        ) : base(name, children: children, help: help)
         {
             m_Name = name;
             m_GetName = getName;

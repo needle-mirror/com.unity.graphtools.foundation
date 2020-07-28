@@ -52,7 +52,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         protected override bool IsGraphViewSupported(GraphView gv)
         {
-            return gv.supportsWindowedBlackboard;
+            return gv.SupportsWindowedBlackboard;
         }
     }
 }

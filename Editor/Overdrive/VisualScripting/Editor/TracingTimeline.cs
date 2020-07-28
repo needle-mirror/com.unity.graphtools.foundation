@@ -84,7 +84,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
                 if (framesPerNode != null)
                 {
-                    IGTFNodeModel nodeModelSelected = m_GraphView.selection
+                    IGTFNodeModel nodeModelSelected = m_GraphView.Selection
                         .OfType<IGraphElement>()
                         .Select(x => x.Model)
                         .OfType<IGTFNodeModel>()

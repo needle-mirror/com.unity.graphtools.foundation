@@ -214,7 +214,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                 }
             }
 
-            m_GraphView.nodes.ForEach(node =>
+            m_GraphView.Nodes.ForEach(node =>
             {
                 var nodeModel = node.NodeModel;
                 if (nodeModel.State == ModelState.Disabled)

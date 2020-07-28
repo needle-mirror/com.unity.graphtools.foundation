@@ -3,7 +3,6 @@ using JetBrains.Annotations;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
 using UnityEngine;
-using UnityEngine.Assertions;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
@@ -14,7 +13,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         public static VisualElement CreateEditorForNodeModel(IGTFConstantNodeModel model,
             Action<IChangeEvent, object> onValueChanged, IGTFEditorDataModel editorDataModel)
         {
-            return CreateEditorForConstant(((IConstantNodeModel)model).AssetModel, model.Value, onValueChanged, editorDataModel, model.IsLocked);
+            return CreateEditorForConstant(model.AssetModel, model.Value, onValueChanged, editorDataModel, model.IsLocked);
         }
 
         public static VisualElement CreateEditorForConstant(IGTFGraphAssetModel graphAsset, IConstant constant,

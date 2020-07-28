@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using NUnit.Framework;
+using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEngine.UIElements;
 using UnityEngine.TestTools;
@@ -304,8 +305,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             // The snapping node's top border should not snap to the reference node's top border, but the X and Y should be dragged normally
             Assert.AreNotEqual(m_ReferenceNode1.layout.yMin, m_SnappedNode.layout.yMin);
-            Assert.AreEqual(m_SnappingNodePos.y + moveOffset.y, m_SnappedNode.layout.y);
-            Assert.AreEqual(m_SnappingNodePos.x + moveOffset.x, m_SnappedNode.layout.x);
+            Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.y + moveOffset.y), m_SnappedNode.layout.y);
+            Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.x + moveOffset.x), m_SnappedNode.layout.x);
         }
 
         [UnityTest]
@@ -342,8 +343,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             // The snapping node's top border should not snap to the reference node's top border: the X and Y should be dragged normally
             Assert.AreNotEqual(m_ReferenceNode1.layout.yMin, m_SnappedNode.layout.yMin);
-            Assert.AreEqual(m_SnappingNodePos.y + moveOffset.y, m_SnappedNode.layout.y);
-            Assert.AreEqual(m_SnappingNodePos.x + moveOffset.x, m_SnappedNode.layout.x);
+            Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.y + moveOffset.y), m_SnappedNode.layout.y);
+            Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.x + moveOffset.x), m_SnappedNode.layout.x);
         }
 
         [UnityTest]
@@ -380,8 +381,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             // The snapping node's center should not snap to the reference node's top border in Y: the X and Y should be dragged normally
             Assert.AreNotEqual(m_ReferenceNode1.layout.yMin, m_SnappedNode.layout.center.y);
-            Assert.AreEqual(m_SnappingNodePos.y + moveOffset.y, m_SnappedNode.layout.y);
-            Assert.AreEqual(m_SnappingNodePos.x + moveOffset.x, m_SnappedNode.layout.x);
+            Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.y + moveOffset.y), m_SnappedNode.layout.y);
+            Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.x + moveOffset.x), m_SnappedNode.layout.x);
 
             yield return null;
         }
@@ -420,8 +421,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             // The snapping node's center should not snap to the reference node's bottom border in Y: the X and Y should be dragged normally
             Assert.AreNotEqual(m_ReferenceNode1.layout.yMax, m_SnappedNode.layout.center.y);
-            Assert.AreEqual(m_SnappingNodePos.y + moveOffset.y, m_SnappedNode.layout.y);
-            Assert.AreEqual(m_SnappingNodePos.x + moveOffset.x, m_SnappedNode.layout.x);
+            Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.y + moveOffset.y), m_SnappedNode.layout.y);
+            Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.x + moveOffset.x), m_SnappedNode.layout.x);
 
             yield return null;
         }
@@ -460,8 +461,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             // The snapping node's bottom should not snap to the reference node's top border in Y: the X and Y should be dragged normally
             Assert.AreNotEqual(m_ReferenceNode1.layout.yMin, m_SnappedNode.layout.yMax);
-            Assert.AreEqual(m_SnappingNodePos.y + moveOffset.y, m_SnappedNode.layout.y);
-            Assert.AreEqual(m_SnappingNodePos.x + moveOffset.x, m_SnappedNode.layout.x);
+            Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.y + moveOffset.y), m_SnappedNode.layout.y, 0.0001f);
+            Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.x + moveOffset.x), m_SnappedNode.layout.x, 0.0001f);
 
             yield return null;
         }
@@ -500,8 +501,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             // The snapping node's center should not snap to the reference node's top border in Y: the X and Y should be dragged normally
             Assert.AreNotEqual(m_ReferenceNode1.layout.yMax, m_SnappedNode.layout.yMax);
-            Assert.AreEqual(m_SnappingNodePos.y + moveOffset.y, m_SnappedNode.layout.y);
-            Assert.AreEqual(m_SnappingNodePos.x + moveOffset.x, m_SnappedNode.layout.x);
+            Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.y + moveOffset.y), m_SnappedNode.layout.y);
+            Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.x + moveOffset.x), m_SnappedNode.layout.x);
 
             yield return null;
         }

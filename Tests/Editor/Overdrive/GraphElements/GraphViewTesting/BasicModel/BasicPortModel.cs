@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 
@@ -11,15 +10,24 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
         public IGTFGraphModel GraphModel { get; }
 
         GUID m_GUID = GUID.Generate();
-        public GUID Guid => m_GUID;
-        public IGTFGraphAssetModel AssetModel => GraphModel.AssetModel;
+        public GUID Guid
+        {
+            get => m_GUID;
+            set => m_GUID = value;
+        }
+
+        public IGTFGraphAssetModel AssetModel
+        {
+            get => GraphModel.AssetModel;
+            set => GraphModel.AssetModel = value;
+        }
 
         public void AssignNewGuid()
         {
             m_GUID = GUID.Generate();
         }
 
-        public IGTFNodeModel NodeModel { get; }
+        public IPortNode NodeModel { get; }
         public Direction Direction { get; }
         public PortType PortType => PortType.Data;
         public Orientation Orientation { get; }
@@ -30,50 +38,31 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
         }
 
         public Type PortDataType { get; }
-        public bool IsConnected => ConnectedEdges.Any();
-        public bool IsConnectedTo(IGTFPortModel port)
-        {
-            if (GraphModel is BasicGraphModel bgm)
-                return bgm.Edges.Any(e =>
-                    (e.FromPort == this && e.ToPort == port) || (e.FromPort == port && e.ToPort == this));
 
-            return false;
+        public virtual IEnumerable<IGTFPortModel> GetConnectedPorts()
+        {
+            return PortModelDefaultImplementations.GetConnectedPorts(this);
         }
 
-        public IEnumerable<IGTFEdgeModel> ConnectedEdges
+        public virtual IEnumerable<IGTFEdgeModel> GetConnectedEdges()
         {
-            get { return (GraphModel as BasicGraphModel)?.Edges.Where(e => e.FromPort == this || e.ToPort == this); }
+            return PortModelDefaultImplementations.GetConnectedEdges(this);
+        }
+
+        public virtual bool IsConnectedTo(IGTFPortModel toPort)
+        {
+            return PortModelDefaultImplementations.IsConnectedTo(this, toPort);
         }
 
         public bool HasReorderableEdges => false;
-        public void MoveEdgeFirst(IGTFEdgeModel edge)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void MoveEdgeUp(IGTFEdgeModel edge)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void MoveEdgeDown(IGTFEdgeModel edge)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void MoveEdgeLast(IGTFEdgeModel edge)
-        {
-            throw new NotImplementedException();
-        }
 
         public string ToolTip => "";
         public IConstant EmbeddedValue => null;
         public bool DisableEmbeddedValueEditor => false;
         public string UniqueName => m_GUID.ToString();
-        public IEnumerable<IGTFPortModel> ConnectionPortModels => Enumerable.Empty<IGTFPortModel>();
         public TypeHandle DataTypeHandle { get; } = TypeHandle.Int;
 
-        public BasicPortModel(IGTFNodeModel nodeModel, Direction direction, Orientation orientation, PortCapacity capacity, Type type = null)
+        public BasicPortModel(IPortNode nodeModel, Direction direction, Orientation orientation, PortCapacity capacity, Type type = null)
         {
             GraphModel = nodeModel.GraphModel;
             NodeModel = nodeModel;
@@ -81,6 +70,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
             Orientation = orientation;
             Capacity = capacity;
             PortDataType = type != null ? type : typeof(float);
+        }
+
+        public static bool Equivalent(IGTFPortModel a, IGTFPortModel b)
+        {
+            if (a == null || b == null)
+                return a == b;
+
+            return a.Direction == b.Direction && a.NodeModel.Guid == b.NodeModel.Guid && a.UniqueName == b.UniqueName;
         }
     }
 }

@@ -32,7 +32,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         List<IGTFGraphElementModel> m_ModelsToUpdate = new List<IGTFGraphElementModel>();
         public IEnumerable<IGTFGraphElementModel> ModelsToUpdate => m_ModelsToUpdate;
         public IGTFGraphElementModel ElementModelToRename { get; set; }
-        public GUID NodeToFrameGuid { get; set; } = default;
         public int CurrentGraphIndex => 0;
         public Preferences Preferences => s_EditorPrefs;
 
@@ -54,8 +53,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         }
 
         public List<OpenedGraph> PreviousGraphModels => m_Win.PreviousGraphModels;
-
-        public int UpdateCounter { get; set; }
 
         public IPluginRepository PluginRepository { get; set; }
 
@@ -109,9 +106,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             }
         }
 
-        public bool ShouldSelectElementUponCreation(IGraphElement hasGraphElementModel)
+        public bool ShouldSelectElementUponCreation(IGTFGraphElementModel model)
         {
-            return ElementModelsToSelectUponCreation.Contains(hasGraphElementModel?.Model?.Guid.ToString());
+            return ElementModelsToSelectUponCreation.Contains(model.Guid.ToString());
         }
 
         public void SelectElementsUponCreation(IEnumerable<IGTFGraphElementModel> graphElementModels, bool select)

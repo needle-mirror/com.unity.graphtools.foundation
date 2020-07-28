@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using JetBrains.Annotations;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEditor.ProjectWindowCallback;
 using UnityEngine;
 

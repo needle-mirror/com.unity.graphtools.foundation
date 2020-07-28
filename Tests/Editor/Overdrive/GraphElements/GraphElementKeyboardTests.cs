@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using NUnit.Framework;
+using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utilities;
 using UnityEngine;
@@ -51,8 +52,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             helpers.MouseClickEvent(originalNode1GlobalCenter);
             yield return null;
 
-            Assert.True(node1.selected);
-            Assert.False(node2.selected);
+            Assert.True(node1.Selected);
+            Assert.False(node2.Selected);
 
             // Frame selection
             bool frameSelectedCommandIsValid = helpers.ValidateCommand("FrameSelected");
@@ -62,9 +63,25 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             helpers.ExecuteCommand("FrameSelected");
             yield return null;
 
+            void AssertLayoutTransformAreEquals(Matrix4x4 expected, Matrix4x4 actual)
+            {
+                for (var i = 0; i < 16; i++)
+                {
+                    if (i == 12 || i == 13 || i == 14)
+                    {
+                        Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(transform[i]),
+                            GraphViewStaticBridge.RoundToPixelGrid(vc.transform.matrix[i]), 0.0001);
+                    }
+                    else
+                    {
+                        Assert.AreEqual(transform[i], vc.transform.matrix[i], 0.0001);
+                    }
+                }
+            }
+
             Vector3 currentNode1GlobalCenter = node1.LocalToWorld(node1.layout.center);
             transform *= Matrix4x4.Translate(currentNode1GlobalCenter - originalNode1GlobalCenter);
-            Assert.AreEqual(transform, vc.transform.matrix);
+            AssertLayoutTransformAreEquals(transform, vc.transform.matrix);
 
             // Frame all
             helpers.KeyPressed(KeyCode.A);
@@ -73,7 +90,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             // (-115, -115) is the difference between originalNode1GlobalCenter and the center of the box
             // that bounds node1 and node2
             transform *= Matrix4x4.Translate(new Vector3(-115, -115, 0));
-            Assert.AreEqual(transform, vc.transform.matrix);
+            AssertLayoutTransformAreEquals(transform, vc.transform.matrix);
 
             // Reset view to origin
             window.SendEvent(new Event {type = EventType.KeyDown, character = 'o', keyCode = (KeyCode)'o'});
@@ -91,8 +108,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             window.SendEvent(new Event {type = EventType.KeyUp, character = ']', keyCode = (KeyCode)']' });
             yield return null;
 
-            Assert.False(node1.selected);
-            Assert.True(node2.selected);
+            Assert.False(node1.Selected);
+            Assert.True(node2.Selected);
 
             yield return null;
         }

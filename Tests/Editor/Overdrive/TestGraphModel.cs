@@ -1,6 +1,6 @@
 using System;
 using System.IO;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
 {
@@ -11,7 +11,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
 
         public override string GetSourceFilePath()
         {
-            return Path.Combine(k_AssemblyRelativePath, TypeName + ".asset");
+            return Path.Combine(k_AssemblyRelativePath, FriendlyScriptName + ".asset");
         }
 
         public override CompilationResult Compile(UnityEngine.GraphToolsFoundation.Overdrive.ITranslator translator)

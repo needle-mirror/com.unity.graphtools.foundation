@@ -13,7 +13,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         public abstract VisualElement Root { get; }
 
         protected IGTFGraphElementModel m_Model;
+
         protected IGraphElement m_OwnerElement;
+
         protected string m_ParentClassName;
 
         protected BaseGraphElementPart(string name, IGTFGraphElementModel model, IGraphElement ownerElement, string parentClassName)

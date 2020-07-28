@@ -12,7 +12,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
     {
         public static List<(IGTFVariableDeclarationModel, SerializableGUID, Vector2)> ExtractVariablesFromDroppedElements(
             IReadOnlyCollection<GraphElement> dropElements,
-            VseGraphView graphView,
+            GraphView graphView,
             Vector2 initialPosition)
         {
             var elementOffset = Vector2.zero;

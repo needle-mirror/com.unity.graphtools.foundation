@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -109,7 +110,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         {
             List<Edge> connectedEdges = new List<Edge>();
 
-            foreach (Edge edge in m_GraphView.edges.ToList())
+            foreach (Edge edge in m_GraphView.Edges.ToList())
             {
                 if (edge.Output.NodeModel == selectedNode.NodeModel || edge.Input.NodeModel == selectedNode.NodeModel)
                 {

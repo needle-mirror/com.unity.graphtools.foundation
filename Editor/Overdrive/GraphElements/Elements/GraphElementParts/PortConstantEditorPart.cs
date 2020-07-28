@@ -6,6 +6,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 {
     public class PortConstantEditorPart : BaseGraphElementPart
     {
+        public static readonly string k_ConstantEditorUssName = "constant-editor";
+
         public static PortConstantEditorPart Create(string name, IGTFGraphElementModel model,
             IGraphElement graphElement, string parentClassName, IGTFEditorDataModel editorDataModel)
         {
@@ -17,21 +19,22 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             return null;
         }
 
+        readonly IGTFEditorDataModel m_EditorDataModel;
+
+        VisualElement m_Editor;
+
+        Type m_EditorDataType;
+
+        VisualElement m_Root;
+
+        public override VisualElement Root => m_Root;
+
         protected PortConstantEditorPart(string name, IGTFGraphElementModel model, IGraphElement ownerElement,
                                          string parentClassName, IGTFEditorDataModel editorDataModel)
             : base(name, model, ownerElement, parentClassName)
         {
             m_EditorDataModel = editorDataModel;
         }
-
-        public static readonly string k_ConstantEditorUssName = "constant-editor";
-
-        readonly IGTFEditorDataModel m_EditorDataModel;
-        VisualElement m_Editor;
-        Type m_EditorDataType;
-
-        VisualElement m_Root;
-        public override VisualElement Root => m_Root;
 
         protected override void BuildPartUI(VisualElement container)
         {

@@ -1,16 +1,31 @@
 using System;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 {
-    public class Token : TokenNode, IHighlightable
+    public class Token : TokenNode
     {
         SerializedObject m_SerializedObject;
+
+        bool m_IsMovable = true;
+
+        public override bool IsMovable => m_IsMovable;
+
+        public static readonly string k_TitleIconContainerPartName = "title-icon-container";
+        public static readonly string k_ConstantEditorPartName = "constant-editor";
+
+        public static readonly string k_ConstantModifierUssClassName = k_UssClassName.WithUssModifier("constant-token");
+        public static readonly string k_VariableModifierUssClassName = k_UssClassName.WithUssModifier("variable-token");
+        public static readonly string k_ReadOnlyModifierUssClassName = k_UssClassName.WithUssModifier("read-only");
+        public static readonly string k_WriteOnlyModifierUssClassName = k_UssClassName.WithUssModifier("write-only");
+        public static readonly string k_PortalModifierUssClassName = k_UssClassName.WithUssModifier("portal");
+        public static readonly string k_PortalEntryModifierUssClassName = k_UssClassName.WithUssModifier("portal-entry");
+        public static readonly string k_PortalExitModifierUssClassName = k_UssClassName.WithUssModifier("portal-exit");
 
         public override bool IsRenamable()
         {
@@ -23,17 +38,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             var declarationModel = (NodeModel as IGTFVariableNodeModel)?.VariableDeclarationModel;
             return declarationModel is Overdrive.Model.IRenamable;
         }
-
-        public static readonly string k_TitleIconContainerPartName = "title-icon-container";
-        public static readonly string k_ConstantEditorPartName = "constant-editor";
-
-        public static readonly string k_ConstantModifierUssClassName = k_UssClassName.WithUssModifier("constant-token");
-        public static readonly string k_VariableModifierUssClassName = k_UssClassName.WithUssModifier("variable-token");
-        public static readonly string k_ReadOnlyModifierUssClassName = k_UssClassName.WithUssModifier("read-only");
-        public static readonly string k_WriteOnlyModifierUssClassName = k_UssClassName.WithUssModifier("write-only");
-        public static readonly string k_PortalModifierUssClassName = k_UssClassName.WithUssModifier("portal");
-        public static readonly string k_PortalEntryModifierUssClassName = k_UssClassName.WithUssModifier("portal-entry");
-        public static readonly string k_PortalExitModifierUssClassName = k_UssClassName.WithUssModifier("portal-exit");
 
         protected override void BuildPartList()
         {
@@ -116,33 +120,23 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             }
         }
 
-        bool m_IsMovable = true;
-        public override bool IsMovable => m_IsMovable;
-
         public void SetMovable(bool movable)
         {
             m_IsMovable = movable;
         }
 
-        public override void OnUnselected()
-        {
-            base.OnUnselected();
-            ((VseGraphView)GraphView).ClearGraphElementsHighlight(ShouldHighlightItemUsage);
-        }
-
-        public new bool ShouldHighlightItemUsage(IGTFGraphElementModel elementModel)
+        public override bool ShouldHighlightItemUsage(IGTFGraphElementModel elementModel)
         {
             var currentVariableModel = NodeModel as IGTFVariableNodeModel;
             var currentEdgePortalModel = Model as IGTFEdgePortalModel;
-            // 'this' tokens have a null declaration model
             if (currentVariableModel?.VariableDeclarationModel == null && currentEdgePortalModel == null)
-                return NodeModel is ThisNodeModel && elementModel is ThisNodeModel;
+                return false;
 
             switch (elementModel)
             {
                 case IGTFVariableNodeModel variableModel
                     when ReferenceEquals(variableModel.VariableDeclarationModel, currentVariableModel?.VariableDeclarationModel):
-                case IVariableDeclarationModel variableDeclarationModel
+                case IGTFVariableDeclarationModel variableDeclarationModel
                     when ReferenceEquals(variableDeclarationModel, currentVariableModel?.VariableDeclarationModel):
                 case IGTFEdgePortalModel edgePortalModel
                     when ReferenceEquals(edgePortalModel.DeclarationModel, currentEdgePortalModel?.DeclarationModel):
