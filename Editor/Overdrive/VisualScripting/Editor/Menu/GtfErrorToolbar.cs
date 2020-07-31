@@ -1,4 +1,6 @@
+using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.UIElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine.UIElements;
@@ -65,7 +67,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
             int errorCount = 0;
 
-            IGraphModel graphModel = m_Store.GetState().CurrentGraphModel;
+            IGTFGraphModel graphModel = m_Store.GetState().CurrentGraphModel;
             if (graphModel != null)
             {
                 if (m_Store.GetState().CompilationResultModel != null)

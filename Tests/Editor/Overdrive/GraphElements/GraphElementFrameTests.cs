@@ -27,7 +27,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Vector2 secondNodePosition = new Vector2(800, 800);
 
             var firstNodeModel = CreateNode("First Node", firstNodePosition, 0, 2);
-            var secondNodeModel = CreateNode("Second Node", secondNodePosition, 2, 0);
+            var secondNodeModel = CreateNode("Second Node", secondNodePosition, 2);
 
             var startPort = firstNodeModel.OutputPorts.First();
             var endPort = secondNodeModel.InputPorts.First();

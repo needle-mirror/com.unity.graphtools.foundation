@@ -1,9 +1,7 @@
 using System;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
 using UnityEngine;
 
 // ReSharper disable AccessToStaticMemberViaDerivedType
@@ -71,7 +69,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                     Assert.That(GetEdgeCount(), Is.EqualTo(0));
                     Assert.That(GetStickyNoteCount(), Is.EqualTo(1));
                     Assert.That(GetStickyNote(0).PositionAndSize, Is.EqualTo(k_StickyNoteRect));
-                    return new ResizeStickyNoteAction(stickyNote as IGTFStickyNoteModel, k_StickyNote2Rect, ResizeFlags.All);
+                    return new ResizeStickyNoteAction(stickyNote, k_StickyNote2Rect, ResizeFlags.All);
                 },
                 () =>
                 {
@@ -96,7 +94,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                     Assert.That(GetStickyNoteCount(), Is.EqualTo(1));
                     Assert.That(string.IsNullOrEmpty(GetStickyNote(0).Title));
                     Assert.IsTrue(string.IsNullOrEmpty(GetStickyNote(0).Contents));
-                    return new UpdateStickyNoteAction(stickyNote as IGTFStickyNoteModel, "stickyNote2", "This is a note");
+                    return new UpdateStickyNoteAction(stickyNote, "stickyNote2", "This is a note");
                 },
                 () =>
                 {
@@ -120,7 +118,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                     Assert.That(GetEdgeCount(), Is.EqualTo(0));
                     Assert.That(GetStickyNoteCount(), Is.EqualTo(1));
                     Assert.That(GetStickyNote(0).Theme, Is.EqualTo(StickyNoteColorTheme.Classic.ToString()));
-                    return new UpdateStickyNoteThemeAction(new[] { stickyNote as IGTFStickyNoteModel }, StickyNoteColorTheme.Teal.ToString());
+                    return new UpdateStickyNoteThemeAction(new[] { stickyNote }, StickyNoteColorTheme.Teal.ToString());
                 },
                 () =>
                 {
@@ -143,7 +141,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                     Assert.That(GetEdgeCount(), Is.EqualTo(0));
                     Assert.That(GetStickyNoteCount(), Is.EqualTo(1));
                     Assert.That(GetStickyNote(0).TextSize, Is.EqualTo(StickyNoteTextSize.Small.ToString()));
-                    return new UpdateStickyNoteTextSizeAction(new[] { stickyNote as IGTFStickyNoteModel }, StickyNoteTextSize.Huge.ToString());
+                    return new UpdateStickyNoteTextSizeAction(new[] { stickyNote }, StickyNoteTextSize.Huge.ToString());
                 },
                 () =>
                 {

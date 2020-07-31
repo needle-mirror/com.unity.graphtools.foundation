@@ -12,7 +12,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
     class VSEditorDataModel : IEditorDataModel
     {
         readonly VseWindow m_Win;
-        static VSEditorPrefs s_EditorPrefs;
+        static VSPreferences s_EditorPrefs;
 
         public Action<RequestCompilationOptions> OnCompilationRequest;
 
@@ -26,16 +26,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         List<string> BlackboardExpandedRowStates => m_Win?.BlackboardExpandedRowStates;
         List<string> ElementModelsToSelectUponCreation => m_Win?.ElementModelsToSelectUponCreation;
-        List<string> ElementModelsToExpandUponCreation => m_Win?.ElementModelsToExpandUponCreation;
 
         // IEditorDataModel
         public UpdateFlags UpdateFlags { get; private set; }
         List<IGTFGraphElementModel> m_ModelsToUpdate = new List<IGTFGraphElementModel>();
         public IEnumerable<IGTFGraphElementModel> ModelsToUpdate => m_ModelsToUpdate;
-        public IGraphElementModel ElementModelToRename { get; set; }
+        public IGTFGraphElementModel ElementModelToRename { get; set; }
         public GUID NodeToFrameGuid { get; set; } = default;
         public int CurrentGraphIndex => 0;
-        public VSPreferences Preferences => s_EditorPrefs;
+        public Preferences Preferences => s_EditorPrefs;
 
         public VSEditorDataModel(VseWindow win)
         {
@@ -44,7 +43,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         static VSEditorDataModel()
         {
-            s_EditorPrefs = new VSEditorPrefs();
+            s_EditorPrefs = VSPreferences.CreatePreferences();
         }
 
         // We actually serialize this object in VseWindow, so going through this interface should as well
@@ -110,42 +109,27 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             }
         }
 
-        public bool ShouldSelectElementUponCreation(IHasGraphElementModel hasGraphElementModel)
+        public bool ShouldSelectElementUponCreation(IGraphElement hasGraphElementModel)
         {
-            return ElementModelsToSelectUponCreation.Contains(hasGraphElementModel?.GraphElementModel?.GetId());
+            return ElementModelsToSelectUponCreation.Contains(hasGraphElementModel?.Model?.Guid.ToString());
         }
 
-        public void SelectElementsUponCreation(IEnumerable<IGraphElementModel> graphElementModels, bool select)
+        public void SelectElementsUponCreation(IEnumerable<IGTFGraphElementModel> graphElementModels, bool select)
         {
             if (select)
             {
-                ElementModelsToSelectUponCreation.AddRange(graphElementModels.Select(x => x.GetId()));
+                ElementModelsToSelectUponCreation.AddRange(graphElementModels.Select(x => x.Guid.ToString()));
             }
             else
             {
                 foreach (var graphElementModel in graphElementModels)
-                    ElementModelsToSelectUponCreation.Remove(graphElementModel.GetId());
+                    ElementModelsToSelectUponCreation.Remove(graphElementModel.Guid.ToString());
             }
         }
 
         public void ClearElementsToSelectUponCreation()
         {
             ElementModelsToSelectUponCreation.Clear();
-        }
-
-        public bool ShouldExpandElementUponCreation(IVisualScriptingField visualScriptingField)
-        {
-            return ElementModelsToExpandUponCreation?.Contains(visualScriptingField.GraphElementModel.GetId()) ?? false;
-        }
-
-        public void ExpandElementsUponCreation(IEnumerable<IVisualScriptingField> visualScriptingFields, bool expand)
-        {
-            if (expand)
-                ElementModelsToExpandUponCreation.AddRange(visualScriptingFields
-                    .Select(x => x.ExpandableGraphElementModel.GetId()));
-            else
-                foreach (var field in visualScriptingFields)
-                    ElementModelsToExpandUponCreation.Remove(field.GraphElementModel.GetId());
         }
     }
 }

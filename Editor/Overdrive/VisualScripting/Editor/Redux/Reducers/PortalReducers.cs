@@ -1,6 +1,6 @@
 using System;
 using System.Linq;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using Object = UnityEngine.Object;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
@@ -9,7 +9,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
     {
         public static void Register(Store store)
         {
-            store.Register<CreatePortalsOppositeAction>(CreatePortalOppositeAction);
+            store.RegisterReducer<State, CreatePortalsOppositeAction>(CreatePortalOppositeAction);
         }
 
         static State CreatePortalOppositeAction(State previousState, CreatePortalsOppositeAction action)
@@ -24,7 +24,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             EditorUtility.SetDirty((Object)previousState.AssetModel);
 
             foreach (var portalModel in portalsToOpen)
-                ((VSGraphModel)previousState.CurrentGraphModel).CreateOppositePortal(portalModel);
+                previousState.CurrentGraphModel.CreateOppositePortal(portalModel);
 
             previousState.MarkForUpdate(UpdateFlags.GraphTopology);
             return previousState;

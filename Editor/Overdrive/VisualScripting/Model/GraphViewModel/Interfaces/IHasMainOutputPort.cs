@@ -1,10 +1,11 @@
 using System;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel
 {
-    public interface IHasMainOutputPort : INodeModel
+    public interface IHasMainOutputPort : IGTFNodeModel
     {
-        IPortModel OutputPort { get; }
+        IGTFPortModel MainOutputPort { get; }
     }
 }

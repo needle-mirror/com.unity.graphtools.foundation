@@ -1,8 +1,5 @@
 using System;
 using System.Linq;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using UnityEditor.VisualScripting.GraphViewModel;
 using UnityEngine;
 
@@ -34,13 +31,6 @@ namespace UnityEditor.VisualScripting.Model
 
         void Parse()
         {
-            var parsed = CSharpSyntaxTree.ParseText(m_Expression, CSharpParseOptions.Default.WithKind(SourceCodeKind.Script));
-            var root = parsed.GetRoot();
-            foreach (var id in root.DescendantNodes()
-                     .OfType<IdentifierNameSyntax>()
-                     .Where(x => !(x.Parent is InvocationExpressionSyntax))
-                     .Select(x => x.Identifier.Text).Distinct())
-                AddDataInputPort<float>(id);
         }
 
         public void Rename(string newName)

@@ -1,12 +1,13 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEngine.UIElements;
-using UnityEngine.TestTools;
 using UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utilities;
 using UnityEngine;
+using UnityEngine.TestTools;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
@@ -69,7 +70,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             graphView.canPasteSerializedData = CanPasteSerializedDataImplementation;
             graphView.unserializeAndPaste = UnserializeAndPasteImplementation;
 
-            graphView.m_UseInternalClipboard = true;
+            graphView.useInternalClipboard = true;
             m_SelectedNodeCount = 0;
         }
 

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEngine.UIElements;
@@ -11,7 +12,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
         public readonly RectangleSelector rectangleSelector;
         public readonly FreehandSelector freehandSelector;
 
-        public TestGraphView(IStore store) : base(store)
+        public TestGraphView(Overdrive.GraphElements.Store store) : base(store)
         {
             SetupZoom(ContentZoomer.DefaultMinScale, ContentZoomer.DefaultMaxScale);
 
@@ -30,7 +31,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
             focusable = true;
         }
 
-        public void RebuildUI(BasicGraphModel graphModel, IStore store)
+        public void RebuildUI(BasicGraphModel graphModel, Store store)
         {
             var nodeList = nodes.ToList();
             foreach (var node in nodeList)

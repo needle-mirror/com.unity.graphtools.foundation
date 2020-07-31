@@ -157,7 +157,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         {
             this.AddStylesheet("Pill.uss");
 
-            var tpl = GraphElementsHelper.LoadUXML("Pill.uxml");
+            var tpl = GraphElementHelper.LoadUXML("Pill.uxml");
             VisualElement mainContainer = tpl.Instantiate();
 
             m_TitleLabel = mainContainer.Q<Label>("title-label");

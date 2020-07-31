@@ -11,6 +11,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         public static readonly string k_GhostModifierUssClassName = k_UssClassName.WithUssModifier("ghost");
 
         public static readonly string k_EdgeControlPartName = "edge-control";
+        public static readonly string k_EdgeBubblePartName = "edge-bubble";
 
         public IGTFEdgeModel EdgeModel => Model as IGTFEdgeModel;
 
@@ -96,6 +97,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         public Edge()
         {
+            layer = -1;
+
             m_EdgeManipulator = new EdgeManipulator();
             this.AddManipulator(m_EdgeManipulator);
 
@@ -106,6 +109,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         protected override void BuildPartList()
         {
             PartList.AppendPart(EdgeControlPart.Create(k_EdgeControlPartName, Model, this, k_UssClassName));
+            PartList.AppendPart(EdgeBubblePart.Create(k_EdgeBubblePartName, Model, this, k_UssClassName));
         }
 
         protected override void PostBuildUI()
@@ -168,10 +172,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         void OnEdgeGeometryChanged(GeometryChangedEvent evt)
         {
             UpdateFromModel();
-        }
-
-        public void UpdatePinning()
-        {
         }
 
         public bool IsMovable => true;

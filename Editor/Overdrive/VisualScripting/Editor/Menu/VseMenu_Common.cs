@@ -1,4 +1,5 @@
 using System;
+using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -53,7 +54,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                 existingToolWindow.Focus();
         }
 
-        protected virtual void UpdateCommonMenu(VSPreferences prefs, bool enabled)
+        protected virtual void UpdateCommonMenu(bool enabled)
         {
             m_NewGraphButton.SetEnabled(enabled);
             m_SaveAllButton.SetEnabled(enabled);

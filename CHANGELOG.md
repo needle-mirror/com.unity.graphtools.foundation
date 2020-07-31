@@ -3,6 +3,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
+## [0.3.0-preview.1] - 2020-07-31
+## [0.3.0-preview] - 2020-07-28
+Drop 11
+## [0.2.3-preview.3] - 2020-07-15
+
+### Added
+
+- Added dirty asset indicator in the window title
+- Made VseWindow.Update virtual to enable derived classes to override it
+
+### Fixed
+
+- Fixed copy / paste issues with graph edges
+- Mark graph asset dirty when edges are created or deleted
+- Fixed resize issues with the sticky notes
+
 ## [0.2.3-preview.2] - 2020-06-18
 ## [0.2.3-preview.1] - 2020-06-18
 ## [0.2.3-preview] - 2020-06-12

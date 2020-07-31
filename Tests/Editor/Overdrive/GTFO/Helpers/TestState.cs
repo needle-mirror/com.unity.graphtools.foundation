@@ -3,13 +3,14 @@ using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.Helpers
 {
-    public class TestState : GraphToolsFoundation.Overdrive.GraphElements.State
+    public class TestState : State
     {
-        public override IGTFGraphModel GraphModel { get; }
+        IGTFGraphModel m_GraphModel;
+        public override IGTFGraphModel CurrentGraphModel => m_GraphModel;
 
-        public TestState(IGTFGraphModel graphModel)
+        public TestState(IGTFGraphModel graphModel) : base(null)
         {
-            GraphModel = graphModel;
+            m_GraphModel = graphModel;
         }
     }
 }

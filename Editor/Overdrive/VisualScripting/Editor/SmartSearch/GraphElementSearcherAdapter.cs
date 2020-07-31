@@ -60,9 +60,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch
             }
 
             var elements = CreateGraphElements(searcherItem).ToList();
-            foreach (var element in elements.Where(element => element is INodeModel || element is IStickyNoteModel))
+            foreach (var element in elements.Where(element => element is IGTFNodeModel || element is IGTFStickyNoteModel))
             {
-                var node = GraphElementFactory.CreateUI<GraphElement>(graphView, graphView.Store, element as IGTFGraphElementModel);
+                var node = GraphElementFactory.CreateUI<GraphElement>(graphView, graphView.Store, element);
                 if (node != null)
                 {
                     node.style.position = Position.Relative;
@@ -73,36 +73,36 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch
             OnGraphElementsCreated(searcherItem, elements);
         }
 
-        protected virtual IEnumerable<IGraphElementModel> CreateGraphElements(SearcherItem item)
+        protected virtual IEnumerable<IGTFGraphElementModel> CreateGraphElements(SearcherItem item)
         {
             throw new NotImplementedException();
         }
 
         protected virtual void OnGraphElementsCreated(SearcherItem searcherItem,
-            IEnumerable<IGraphElementModel> elements) {}
+            IEnumerable<IGTFGraphElementModel> elements) {}
     }
 
     public class GraphNodeSearcherAdapter : GraphElementSearcherAdapter
     {
-        readonly IGraphModel m_GraphModel;
+        readonly IGTFGraphModel m_GraphModel;
 
-        public GraphNodeSearcherAdapter(IGraphModel graphModel, string title)
+        public GraphNodeSearcherAdapter(IGTFGraphModel graphModel, string title)
             : base(title)
         {
             m_GraphModel = graphModel;
         }
 
-        protected override IEnumerable<IGraphElementModel> CreateGraphElements(SearcherItem item)
+        protected override IEnumerable<IGTFGraphElementModel> CreateGraphElements(SearcherItem item)
         {
             return CreateGraphElementModels(m_GraphModel, item);
         }
 
-        public static IEnumerable<IGraphElementModel> CreateGraphElementModels(IGraphModel mGraphModel, SearcherItem item)
+        public static IEnumerable<IGTFGraphElementModel> CreateGraphElementModels(IGTFGraphModel mGraphModel, SearcherItem item)
         {
             return item is GraphNodeModelSearcherItem graphItem
                 ? graphItem.CreateElements.Invoke(
                 new GraphNodeCreationData(mGraphModel, Vector2.zero, SpawnFlags.Orphan))
-                : Enumerable.Empty<IGraphElementModel>();
+                : Enumerable.Empty<IGTFGraphElementModel>();
         }
     }
 }

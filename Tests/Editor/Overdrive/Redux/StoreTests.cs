@@ -12,12 +12,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Redux
     {
         const int k_MockStateDefault = 1;
 
-        class MockStore : Store<MockState>
+        class MockStore : Store
         {
             public MockStore(MockState initialState)
                 : base(initialState)
             {
             }
+
+            public new MockState GetState() => base.GetState() as MockState;
 
             public override void Dispatch<TAction>(TAction action)
             {
@@ -41,14 +43,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Redux
         {
             var observer = new MockObserver();
             var store = new MockStore(new MockState(k_MockStateDefault));
-            store.Register(observer.Observe);
+            store.RegisterObserver(observer.Observe);
 
-            store.Register<PassThroughAction>(MockReducers.PassThrough);
-            store.Register<ChangeFooAction>(MockReducers.ReplaceFoo);
-            store.Register<ChangeBarAction>(MockReducers.ReplaceBar);
+            store.RegisterReducer<MockState, PassThroughAction>(MockReducers.PassThrough);
+            store.RegisterReducer<MockState, ChangeFooAction>(MockReducers.ReplaceFoo);
+            store.RegisterReducer<MockState, ChangeBarAction>(MockReducers.ReplaceBar);
 
             Assert.That(store.GetState().Foo, Is.EqualTo(k_MockStateDefault));
-            store.Unregister(observer.Observe);
+            store.UnregisterObserver(observer.Observe);
         }
 
         [Test, Ignore("We allow overrides for now.")]
@@ -57,10 +59,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Redux
             var observer = new MockObserver();
             var store = new MockStore(new MockState(k_MockStateDefault));
 
-            store.Register<ChangeFooAction>(MockReducers.ReplaceFoo);
-            Assert.Throws(typeof(InvalidOperationException), () => store.Register<ChangeFooAction>(MockReducers.ReplaceFoo));
-            store.Register(observer.Observe);
-            Assert.Throws(typeof(InvalidOperationException), () => store.Register(observer.Observe));
+            store.RegisterReducer<MockState, ChangeFooAction>(MockReducers.ReplaceFoo);
+            Assert.Throws(typeof(InvalidOperationException), () => store.RegisterReducer<MockState, ChangeFooAction>(MockReducers.ReplaceFoo));
+            store.RegisterObserver(observer.Observe);
+            Assert.Throws(typeof(InvalidOperationException), () => store.RegisterObserver(observer.Observe));
         }
 
         [Test]
@@ -69,14 +71,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Redux
             var observer = new MockObserver();
             var store = new MockStore(new MockState(k_MockStateDefault));
 
-            store.Register<ChangeFooAction>(MockReducers.ReplaceFoo);
-            store.Register(observer.Observe);
+            store.RegisterReducer<MockState, ChangeFooAction>(MockReducers.ReplaceFoo);
+            store.RegisterObserver(observer.Observe);
 
-            store.Unregister(observer.Observe);
-            store.Unregister(observer.Observe);
+            store.UnregisterObserver(observer.Observe);
+            store.UnregisterObserver(observer.Observe);
 
-            store.Unregister<ChangeFooAction>();
-            store.Unregister<ChangeFooAction>();
+            store.UnregisterReducer<ChangeFooAction>();
+            store.UnregisterReducer<ChangeFooAction>();
         }
 
         [Test]
@@ -84,9 +86,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Redux
         {
             var store = new MockStore(new MockState(k_MockStateDefault));
 
-            store.Register<PassThroughAction>(MockReducers.PassThrough);
-            store.Register<ChangeFooAction>(MockReducers.ReplaceFoo);
-            store.Register<ChangeBarAction>(MockReducers.ReplaceBar);
+            store.RegisterReducer<MockState, PassThroughAction>(MockReducers.PassThrough);
+            store.RegisterReducer<MockState, ChangeFooAction>(MockReducers.ReplaceFoo);
+            store.RegisterReducer<MockState, ChangeBarAction>(MockReducers.ReplaceBar);
 
             store.Dispatch(new ChangeFooAction(10));
             Assert.That(store.GetState().Foo, Is.EqualTo(10));
@@ -115,8 +117,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Redux
             int stateChangedCount = 0;
             var store = new MockStore(new MockState(k_MockStateDefault));
 
-            store.Register<ChangeFooAction>(MockReducers.ReplaceFoo);
-            store.Register<ChangeBarAction>(MockReducers.ReplaceBar);
+            store.RegisterReducer<MockState, ChangeFooAction>(MockReducers.ReplaceFoo);
+            store.RegisterReducer<MockState, ChangeBarAction>(MockReducers.ReplaceBar);
 
             store.StateChanged += () => { stateChangedCount++; };
 
@@ -132,9 +134,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Redux
         {
             var store = new MockStore(new MockState(k_MockStateDefault));
 
-            store.Register<PassThroughAction>(MockReducers.PassThrough);
-            store.Register<ChangeFooAction>(MockReducers.ReplaceFoo);
-            store.Register<ChangeBarAction>(MockReducers.ReplaceBar);
+            store.RegisterReducer<MockState, PassThroughAction>(MockReducers.PassThrough);
+            store.RegisterReducer<MockState, ChangeFooAction>(MockReducers.ReplaceFoo);
+            store.RegisterReducer<MockState, ChangeBarAction>(MockReducers.ReplaceBar);
 
             LogAssert.Expect(LogType.Error, $"No reducer for action type {typeof(UnregisteredAction)}");
             store.Dispatch(new UnregisteredAction());
@@ -146,11 +148,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Redux
         {
             var observer = new MockObserver();
             var store = new MockStore(new MockState(k_MockStateDefault));
-            store.Register(observer.Observe);
+            store.RegisterObserver(observer.Observe);
 
-            store.Register<PassThroughAction>(MockReducers.PassThrough);
-            store.Register<ChangeFooAction>(MockReducers.ReplaceFoo);
-            store.Register<ChangeBarAction>(MockReducers.ReplaceBar);
+            store.RegisterReducer<MockState, PassThroughAction>(MockReducers.PassThrough);
+            store.RegisterReducer<MockState, ChangeFooAction>(MockReducers.ReplaceFoo);
+            store.RegisterReducer<MockState, ChangeBarAction>(MockReducers.ReplaceBar);
 
             store.Dispatch(new ChangeFooAction(20));
             Assert.That(observer.ActionObserved, Is.EqualTo(1));
@@ -162,7 +164,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Redux
             Assert.That(observer.ActionObserved, Is.EqualTo(3));
 
             // Unregistered observer should not be notified anymore
-            store.Unregister(observer.Observe);
+            store.UnregisterObserver(observer.Observe);
 
             store.Dispatch(new PassThroughAction());
             Assert.That(observer.ActionObserved, Is.EqualTo(3));
@@ -174,12 +176,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Redux
             var observer1 = new MockObserver();
             var observer2 = new MockObserver();
             var store = new MockStore(new MockState(k_MockStateDefault));
-            store.Register(observer1.Observe);
-            store.Register(observer2.Observe);
+            store.RegisterObserver(observer1.Observe);
+            store.RegisterObserver(observer2.Observe);
 
-            store.Register<PassThroughAction>(MockReducers.PassThrough);
-            store.Register<ChangeFooAction>(MockReducers.ReplaceFoo);
-            store.Register<ChangeBarAction>(MockReducers.ReplaceBar);
+            store.RegisterReducer<MockState, PassThroughAction>(MockReducers.PassThrough);
+            store.RegisterReducer<MockState, ChangeFooAction>(MockReducers.ReplaceFoo);
+            store.RegisterReducer<MockState, ChangeBarAction>(MockReducers.ReplaceBar);
 
             store.Dispatch(new ChangeFooAction(10));
             Assert.That(observer1.ActionObserved, Is.EqualTo(1));
@@ -189,8 +191,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Redux
             Assert.That(observer1.ActionObserved, Is.EqualTo(2));
             Assert.That(observer2.ActionObserved, Is.EqualTo(2));
 
-            store.Unregister(observer1.Observe);
-            store.Unregister(observer2.Observe);
+            store.UnregisterObserver(observer1.Observe);
+            store.UnregisterObserver(observer2.Observe);
         }
     }
 }

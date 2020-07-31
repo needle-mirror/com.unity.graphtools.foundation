@@ -1,8 +1,10 @@
+using System;
 using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Highlighting;
+using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Misc
@@ -11,8 +13,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Misc
     sealed class HighlightHelperTest
     {
         VseWindow m_Window;
-        Stencil m_Stencil;
-        VSGraphModel m_GraphModel;
+        IGTFGraphAssetModel m_GraphAssetModel;
         BlackboardVariableField m_IntField;
         BlackboardVariableField m_StringField;
         VariableNodeModel m_IntTokenModel;
@@ -22,25 +23,24 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Misc
         public void SetUp()
         {
             m_Window = EditorWindow.GetWindowWithRect<VseWindow>(new Rect(Vector2.zero, new Vector2(800, 600)));
-            m_Stencil = new ClassStencil();
 
-            var assetModel = ScriptableObject.CreateInstance<VSGraphAssetModel>();
-            m_GraphModel = assetModel.CreateGraph<VSGraphModel>("test", typeof(ClassStencil), false);
+            m_GraphAssetModel = ScriptableObject.CreateInstance<TestGraphAssetModel>();
+            m_GraphAssetModel.CreateGraph("test", typeof(ClassStencil), false);
 
-            VariableDeclarationModel intVariableModel = m_GraphModel.CreateGraphVariableDeclaration(
-                "int", typeof(int).GenerateTypeHandle(m_Stencil), false
+            IGTFVariableDeclarationModel intVariableModel = m_GraphAssetModel.GraphModel.CreateGraphVariableDeclaration(
+                "int", typeof(int).GenerateTypeHandle(), ModifierFlags.None, false
             );
-            VariableDeclarationModel stringVariableModel = m_GraphModel.CreateGraphVariableDeclaration(
-                "string", typeof(string).GenerateTypeHandle(m_Stencil), false
+            IGTFVariableDeclarationModel stringVariableModel = m_GraphAssetModel.GraphModel.CreateGraphVariableDeclaration(
+                "string", typeof(string).GenerateTypeHandle(), ModifierFlags.None, false
             );
 
-            m_IntField = new BlackboardVariableField(m_Window.Store, intVariableModel, m_Window.GraphView);
-            m_StringField = new BlackboardVariableField(m_Window.Store, stringVariableModel, m_Window.GraphView);
+            m_IntField = new BlackboardVariableField(((GraphViewEditorWindow)m_Window).Store, intVariableModel, m_Window.GraphView);
+            m_StringField = new BlackboardVariableField(((GraphViewEditorWindow)m_Window).Store, stringVariableModel, m_Window.GraphView);
 
-            m_IntTokenModel = m_GraphModel.CreateNode<VariableNodeModel>();
+            m_IntTokenModel = m_GraphAssetModel.GraphModel.CreateNode<VariableNodeModel>();
             m_IntTokenModel.DeclarationModel = intVariableModel;
 
-            m_StringTokenModel = m_GraphModel.CreateNode<VariableNodeModel>();
+            m_StringTokenModel = m_GraphAssetModel.GraphModel.CreateNode<VariableNodeModel>();
             m_StringTokenModel.DeclarationModel = stringVariableModel;
         }
 
@@ -53,8 +53,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Misc
             {
                 m_Window.Close();
             }
-
-            m_Stencil = null;
         }
 
         [Test]
@@ -64,10 +62,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Misc
                 { m_IntField, m_StringField }
             );
 
-            var intToken1 = GraphElementFactory.CreateUI<Token>(m_Window.GraphView, m_Window.Store, m_IntTokenModel);
-            var intToken2 = GraphElementFactory.CreateUI<Token>(m_Window.GraphView, m_Window.Store, m_IntTokenModel);
-            var stringToken1 = GraphElementFactory.CreateUI<Token>(m_Window.GraphView, m_Window.Store, m_StringTokenModel);
-            var stringToken2 = GraphElementFactory.CreateUI<Token>(m_Window.GraphView, m_Window.Store, m_StringTokenModel);
+            var intToken1 = GraphElementFactory.CreateUI<Token>(m_Window.GraphView, ((GraphViewEditorWindow)m_Window).Store, m_IntTokenModel);
+            var intToken2 = GraphElementFactory.CreateUI<Token>(m_Window.GraphView, ((GraphViewEditorWindow)m_Window).Store, m_IntTokenModel);
+            var stringToken1 = GraphElementFactory.CreateUI<Token>(m_Window.GraphView, ((GraphViewEditorWindow)m_Window).Store, m_StringTokenModel);
+            var stringToken2 = GraphElementFactory.CreateUI<Token>(m_Window.GraphView, ((GraphViewEditorWindow)m_Window).Store, m_StringTokenModel);
 
             m_Window.GraphView.AddElement(intToken1);
             m_Window.GraphView.AddElement(intToken2);
@@ -102,8 +100,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Misc
                 { m_IntField, m_StringField }
             );
 
-            var intToken1 = GraphElementFactory.CreateUI<Token>(m_Window.GraphView, m_Window.Store, m_IntTokenModel);
-            var stringToken1 = GraphElementFactory.CreateUI<Token>(m_Window.GraphView, m_Window.Store, m_StringTokenModel);
+            var intToken1 = GraphElementFactory.CreateUI<Token>(m_Window.GraphView, ((GraphViewEditorWindow)m_Window).Store, m_IntTokenModel);
+            var stringToken1 = GraphElementFactory.CreateUI<Token>(m_Window.GraphView, ((GraphViewEditorWindow)m_Window).Store, m_StringTokenModel);
 
             m_Window.GraphView.AddElement(intToken1);
             m_Window.GraphView.AddElement(stringToken1);

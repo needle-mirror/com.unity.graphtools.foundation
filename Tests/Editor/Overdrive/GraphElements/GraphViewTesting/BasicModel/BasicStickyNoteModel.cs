@@ -1,3 +1,4 @@
+using System;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 
@@ -18,6 +19,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
             set => PositionAndSize = new Rect(value, PositionAndSize.size);
         }
         public IGTFGraphModel GraphModel { get; set; }
+
+        GUID m_GUID = GUID.Generate();
+        public GUID Guid => m_GUID;
+        public IGTFGraphAssetModel AssetModel => GraphModel.AssetModel;
+
+        public void AssignNewGuid()
+        {
+            m_GUID = GUID.Generate();
+        }
+
         public bool IsDeletable => true;
         public bool IsCopiable => true;
         public void Move(Vector2 delta)
@@ -31,5 +42,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
         {
             Title = newName;
         }
+
+        public bool Destroyed { get; private set; }
+        public void Destroy() => Destroyed = true;
     }
 }

@@ -1,8 +1,10 @@
 using System;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
+using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
+using IRenamable = UnityEditor.GraphToolsFoundation.Overdrive.Model.IRenamable;
 
 // ReSharper disable AccessToStaticMemberViaDerivedType
 
@@ -25,26 +27,27 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
         [TestCase("VeryWeird Name", "veryWeirdName", "Very Weird Name")]
         public void SetNameFromUserNameTest(string userInput, string expectedName, string expectedTitle)
         {
-            VSGraphAssetModel graphAssetModel = (VSGraphAssetModel)GraphAssetModel.Create("test", "", typeof(VSGraphAssetModel));
-            VSGraphModel graph = graphAssetModel.CreateVSGraph<ClassStencil>("test");
+            var graphAssetModel = GraphAssetModel.Create("test", "", typeof(TestGraphAssetModel));
+            graphAssetModel.CreateGraph("test", typeof(ClassStencil));
 
-            var variable = graph.CreateGraphVariableDeclaration("originalName", TypeHandle.Float, true);
-            variable.SetNameFromUserName(userInput);
+            var variable = graphAssetModel.GraphModel.CreateGraphVariableDeclaration("originalName", TypeHandle.Float, ModifierFlags.None, true);
+            (variable as IRenamable)?.Rename(userInput);
             Assert.That(variable.VariableName, Is.EqualTo(expectedName));
-            Assert.That(variable.Title, Is.EqualTo(expectedTitle));
+            Assert.That(variable.DisplayTitle, Is.EqualTo(expectedTitle));
         }
 
         [Test]
         public void CloningAVariableClonesFields()
         {
-            VSGraphAssetModel graphAssetModel = (VSGraphAssetModel)GraphAssetModel.Create("test", "", typeof(VSGraphAssetModel));
-            VSGraphModel graph = graphAssetModel.CreateVSGraph<ClassStencil>("test");
-            var decl = graph.CreateGraphVariableDeclaration("asd", TypeHandle.Float, true);
+            var graphAssetModel = GraphAssetModel.Create("test", "", typeof(TestGraphAssetModel));
+            graphAssetModel.CreateGraph("test", typeof(ClassStencil));
+
+            var decl = graphAssetModel.GraphModel.CreateGraphVariableDeclaration("asd", TypeHandle.Float, ModifierFlags.None, true);
             decl.Tooltip = "asdasd";
-            var clone = ((VariableDeclarationModel)decl).Clone();
+            var clone = (decl as VariableDeclarationModel).Clone();
             Assert.IsFalse(ReferenceEquals(decl, clone));
             Assert.AreEqual(decl.Tooltip, clone.Tooltip);
-            Assert.AreNotEqual(decl.GetId(), clone.GetId());
+            Assert.AreNotEqual(decl.Guid, clone.Guid);
         }
     }
 }

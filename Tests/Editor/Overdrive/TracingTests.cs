@@ -1,10 +1,11 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Compilation;
+using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
 {
@@ -127,7 +128,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
             }
         }
 
-        internal class TestStencil : Stencil
+        class TestStencil : Stencil
         {
             public override ISearcherDatabaseProvider GetSearcherDatabaseProvider() => null;
 

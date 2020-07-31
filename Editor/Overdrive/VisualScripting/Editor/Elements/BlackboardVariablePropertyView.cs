@@ -1,5 +1,6 @@
 using System;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -11,7 +12,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         Toggle m_ExposedToggle;
         TextField m_TooltipTextField;
         readonly VisualElement m_InitializationElement;
-        readonly Store m_Store;
+        readonly Overdrive.Store m_Store;
         readonly Stencil m_Stencil;
 
         protected IVariableDeclarationModel VariableDeclarationModel => userData as IVariableDeclarationModel;
@@ -19,8 +20,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         static readonly GUIContent k_InitializationContent = new GUIContent("");
 
-        public BlackboardVariablePropertyView(Store store, IVariableDeclarationModel variableDeclarationModel,
-                                              Blackboard.RebuildCallback rebuildCallback, Stencil stencil)
+        public BlackboardVariablePropertyView(Overdrive.Store store, IGTFVariableDeclarationModel variableDeclarationModel,
+                                              GraphElements.Blackboard.RebuildCallback rebuildCallback, Stencil stencil)
             : base(variableDeclarationModel, rebuildCallback)
         {
             m_Store = store;
@@ -42,10 +43,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             }
             else
             {
-                m_InitializationElement = VisualScripting.VisualElementExtensions.CreateEditorForNodeModel(variableDeclarationModel.InitializationModel, e =>
+                m_InitializationElement = InlineValueEditor.CreateEditorForConstant(VariableDeclarationModel.AssetModel, variableDeclarationModel.InitializationModel, (_, v) =>
                 {
-                    m_Store.Dispatch(new RefreshUIAction(UpdateFlags.RequestCompilation));
-                }, store.GetState()?.EditorDataModel);
+                    m_Store.Dispatch(new UpdateConstantNodeActionValue(variableDeclarationModel.InitializationModel, v, null));
+                }, store.GetState()?.EditorDataModel, false);
 
 //                m_InitializationObject = new SerializedObject(variableDeclarationModel.InitializationModel.NodeAssetReference);
 //                m_InitializationObject.Update();

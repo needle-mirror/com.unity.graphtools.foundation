@@ -1,8 +1,6 @@
-using System;
 using System.Linq;
 using UnityEditor.VisualScripting.GraphViewModel;
 using UnityEditor.VisualScripting.Model;
-using UnityEngine;
 using Object = UnityEngine.Object;
 
 namespace UnityEditor.VisualScripting.Editor
@@ -26,8 +24,10 @@ namespace UnityEditor.VisualScripting.Editor
 
         static State ResizeStickyNote(State previousState, ResizeStickyNoteAction action)
         {
+            VSGraphModel graphModel = (VSGraphModel)previousState.CurrentGraphModel;
+            Undo.RegisterCompleteObjectUndo((Object)graphModel.AssetModel, "Resize StickyNote");
+
             var stickyNoteModel = (StickyNoteModel)action.StickyNoteModel;
-            Undo.RegisterCompleteObjectUndo(stickyNoteModel.SerializableAsset, "Resize StickyNote");
             stickyNoteModel.Move(action.Position);
             previousState.MarkForUpdate(UpdateFlags.GraphGeometry);
             return previousState;
@@ -35,10 +35,11 @@ namespace UnityEditor.VisualScripting.Editor
 
         static State UpdateStickyNote(State previousState, UpdateStickyNoteAction action)
         {
-            var stickyNoteModel = (StickyNoteModel)action.StickyNoteModel;
-            Undo.RegisterCompleteObjectUndo(stickyNoteModel.SerializableAsset, "Update Basic Settings");
-            stickyNoteModel.UpdateBasicSettings(action.Title, action.Contents);
             VSGraphModel graphModel = (VSGraphModel)previousState.CurrentGraphModel;
+            Undo.RegisterCompleteObjectUndo((Object)graphModel.AssetModel, "Update Basic Settings");
+
+            var stickyNoteModel = (StickyNoteModel)action.StickyNoteModel;
+            stickyNoteModel.UpdateBasicSettings(action.Title, action.Contents);
             graphModel.LastChanges.ChangedElements.Add(stickyNoteModel);
             return previousState;
         }

@@ -5,6 +5,7 @@ using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 using Random = UnityEngine.Random;
+
 // ReSharper disable AccessToStaticMemberViaDerivedType
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models

@@ -5,11 +5,11 @@ using System.Linq;
 using JetBrains.Annotations;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 using UnityEngine.UIElements;
-using State = UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.State;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
 {
@@ -20,7 +20,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             return new TestEditorDataModel();
         }
 
-        protected override State CreateInitialState()
+        protected override Overdrive.VisualScripting.State CreateInitialState()
         {
             return new TestState(DataModel);
         }
@@ -35,8 +35,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         protected VseWindow Window { get; set; }
         protected VseGraphView GraphView { get; private set; }
         protected TestEventHelpers Helpers { get; set; }
-        protected Store Store => Window.Store;
-        protected VSGraphModel GraphModel => (VSGraphModel)Store.GetState().CurrentGraphModel;
+        protected Store Store => ((GraphViewEditorWindow)Window).Store;
+        protected GraphModel GraphModel => (GraphModel)Store.GetState().CurrentGraphModel;
 
         protected abstract bool CreateGraphOnStartup { get; }
         protected virtual Type CreatedGraphType => typeof(ClassStencil);
@@ -69,7 +69,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
 
             if (CreateGraphOnStartup)
             {
-                Store.Dispatch(new CreateGraphAssetAction(CreatedGraphType, "Test", assetPath: string.Empty));
+                Store.Dispatch(new CreateGraphAssetAction(CreatedGraphType, typeof(TestGraphAssetModel), "Test", assetPath: string.Empty));
             }
             TestContext.Instance.Reset();
         }
@@ -98,29 +98,27 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             return GetGraphElements()[index];
         }
 
-        IList<IGraphElementModel> GetGraphElementModels()
+        IList<IGTFGraphElementModel> GetGraphElementModels()
         {
             return GetGraphElements()
-                .Where(x => x is IHasGraphElementModel)
-                .Cast<IHasGraphElementModel>()
-                .Select(x => x.GraphElementModel).ToList();
+                .Select(x => x.Model).ToList();
         }
 
-        protected IGraphElementModel GetGraphElementModel(int index)
+        protected IGTFGraphElementModel GetGraphElementModel(int index)
         {
             return GetGraphElementModels()[index];
         }
 
-        IList<INodeModel> GetNodeModels()
+        IList<IGTFNodeModel> GetNodeModels()
         {
             return GetGraphElements()
-                .Where(x => x is IHasGraphElementModel model && model.GraphElementModel is INodeModel)
-                .Select(x => ((IHasGraphElementModel)x).GraphElementModel)
-                .Cast<INodeModel>()
+                .Where(x => x is IGraphElement model && model.Model is IGTFNodeModel)
+                .Select(x => x.Model)
+                .Cast<IGTFNodeModel>()
                 .ToList();
         }
 
-        protected INodeModel GetNodeModel(int index)
+        protected IGTFNodeModel GetNodeModel(int index)
         {
             return GetNodeModels()[index];
         }

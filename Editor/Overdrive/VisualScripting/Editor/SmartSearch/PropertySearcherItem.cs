@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using UnityEditor.Searcher;
 using UnityEngine.UIElements;
 
@@ -22,7 +21,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch
             m_HashCode = hashcode;
         }
 
-        [SuppressMessage("ReSharper", "NonReadonlyMemberInGetHashCode")]
+        // ReSharper disable once NonReadonlyMemberInGetHashCode
         public override int GetHashCode() => m_HashCode;
     }
 

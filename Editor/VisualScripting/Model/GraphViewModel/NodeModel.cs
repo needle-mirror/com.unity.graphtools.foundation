@@ -279,6 +279,13 @@ namespace UnityEditor.VisualScripting.GraphViewModel
 
         public void DefineNode()
         {
+            OnEnable();
+            MigratePorts();
+            RemoveUnusedPorts();
+        }
+
+        public void OnEnable()
+        {
             OnPreDefineNode();
 
             m_PreviousInputs = m_InputsById;
@@ -287,11 +294,13 @@ namespace UnityEditor.VisualScripting.GraphViewModel
             m_OutputsById = new OrderedPorts(m_OutputsById?.Count ?? 0);
 
             OnDefineNode();
-
-            RemoveUnusedPorts();
         }
 
-        void RemoveUnusedPorts()
+        public virtual void MigratePorts()
+        {
+        }
+
+        internal void RemoveUnusedPorts()
         {
             foreach (var kv in m_PreviousInputs
                      .Where<KeyValuePair<string, IPortModel>>(kv => !m_InputsById.ContainsKey(kv.Key)))

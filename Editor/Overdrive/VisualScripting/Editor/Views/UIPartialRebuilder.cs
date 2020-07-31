@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 
@@ -10,30 +11,30 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
     {
         int m_NumDeleted, m_NumCreated;
 
-        HashSet<INodeModel> m_NodesToRebuild;
+        HashSet<IGTFNodeModel> m_NodesToRebuild;
         HashSet<IEdgeModel> m_EdgesToRebuild;
-        HashSet<IEdgeModel> m_EdgesToDelete;
-        HashSet<IGraphElementModel> m_OtherElementsToRebuild;
+        HashSet<IGTFEdgeModel> m_EdgesToDelete;
+        HashSet<IGTFGraphElementModel> m_OtherElementsToRebuild;
         HashSet<GraphElement> m_GraphElementsToDelete;
 
-        readonly State m_CurrentState;
-        readonly Func<IGraphElementModel, GraphElement> m_CreateElement;
+        readonly Overdrive.State m_CurrentState;
+        readonly Func<IGTFGraphElementModel, GraphElement> m_CreateElement;
         readonly Action<GraphElement> m_DeleteElement;
 
         public string DebugOutput => $"Graph UI: -{m_NumDeleted}/+{m_NumCreated} elements" + (BlackboardChanged ? " (+full blackboard)" : "");
         public bool AnyChangeMade => m_NumDeleted > 0 || m_NumCreated > 0;
         public bool BlackboardChanged { get; set; }
 
-        public UIPartialRebuilder(State currentState, Func<IGraphElementModel, GraphElement> createElement, Action<GraphElement> deleteElement)
+        public UIPartialRebuilder(Overdrive.State currentState, Func<IGTFGraphElementModel, GraphElement> createElement, Action<GraphElement> deleteElement)
         {
             m_NumDeleted = 0;
             m_NumCreated = 0;
             BlackboardChanged = false;
 
-            m_NodesToRebuild = new HashSet<INodeModel>();
+            m_NodesToRebuild = new HashSet<IGTFNodeModel>();
             m_EdgesToRebuild = new HashSet<IEdgeModel>();
-            m_EdgesToDelete = new HashSet<IEdgeModel>();
-            m_OtherElementsToRebuild = new HashSet<IGraphElementModel>();
+            m_EdgesToDelete = new HashSet<IGTFEdgeModel>();
+            m_OtherElementsToRebuild = new HashSet<IGTFGraphElementModel>();
             m_GraphElementsToDelete = new HashSet<GraphElement>();
 
             m_CurrentState = currentState;
@@ -50,7 +51,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             m_GraphElementsToDelete.Clear();
         }
 
-        public void ComputeChanges(IGraphChangeList graphChangeList, Dictionary<IGraphElementModel, GraphElement> existingElements)
+        public void ComputeChanges(IGraphChangeList graphChangeList, Dictionary<IGTFGraphElementModel, GraphElement> existingElements)
         {
             BlackboardChanged = graphChangeList.BlackBoardChanged;
 
@@ -65,7 +66,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             MarkEdgesToBeRebuiltToDelete(existingElements);
         }
 
-        void MarkEdgesToBeRebuiltToDelete(Dictionary<IGraphElementModel, GraphElement> existingElements)
+        void MarkEdgesToBeRebuiltToDelete(Dictionary<IGTFGraphElementModel, GraphElement> existingElements)
         {
             foreach (IEdgeModel edgeModel in m_EdgesToRebuild)
             {
@@ -78,19 +79,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         void GetChangesFromChangelist(IGraphChangeList graphChanges)
         {
-            foreach (IGraphElementModel model in graphChanges.ChangedElements)
+            foreach (var model in graphChanges.ChangedElements)
             {
                 if (model is IEdgeModel edgeModel)
                 {
-                    if (graphChanges.DeleteEdgeModels.Contains(edgeModel))
+                    if (graphChanges.DeletedEdges.Contains(edgeModel))
                         m_EdgesToDelete.Add(edgeModel);
                     else
                         m_EdgesToRebuild.Add(edgeModel);
                 }
-                else if (model is INodeModel nodeModel)
+                else if (model is IGTFNodeModel nodeModel)
                 {
                     m_NodesToRebuild.Add(nodeModel);
-                    if (nodeModel is IVariableModel variableModel && variableModel.DeclarationModel == null)
+                    if (nodeModel is IGTFVariableNodeModel variableModel && variableModel.VariableDeclarationModel == null)
                     {
                         // In particular, ThisNodeModel sometimes requires an update of the blackboard
                         BlackboardChanged = true;
@@ -98,14 +99,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                 }
                 else if (model is IVariableDeclarationModel decl)
                 {
-                    if (decl.Owner is IGraphModel)
-                        BlackboardChanged = true;
+                    BlackboardChanged = true;
                 }
-                else if (model is IStickyNoteModel)
+                else if (model is IGTFStickyNoteModel)
                 {
                     m_OtherElementsToRebuild.Add(model);
                 }
-                else if (model is IPlacematModel)
+                else if (model is IGTFPlacematModel)
                 {
                     m_OtherElementsToRebuild.Add(model);
                 }
@@ -117,39 +117,22 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             }
         }
 
-        void GatherDeletedElements(Dictionary<IGraphElementModel, GraphElement> existingElements, IGraphChangeList graphChangeList)
+        void GatherDeletedElements(Dictionary<IGTFGraphElementModel, GraphElement> existingElements, IGraphChangeList graphChangeList)
         {
-            foreach (IGraphElementModel elementModel in existingElements.Keys)
+            foreach (var elementModel in existingElements.Keys)
             {
-                if (elementModel is INodeModel node)
+                if ((elementModel as IDestroyable)?.Destroyed ?? false)
                 {
-                    if (node.Destroyed)
+                    var graphElement = existingElements[elementModel];
+                    if (elementModel is IGTFNodeModel node)
                     {
-                        var graphElement = existingElements[node];
-                        if (graphElement is GraphElements.CollapsibleInOutNode)
-                            m_EdgesToDelete.AddRange(node.GetConnectedEdges());
-                        m_GraphElementsToDelete.Add(graphElement);
+                        m_EdgesToDelete.AddRange(node.GetConnectedEdges());
                     }
-                }
-                else if (elementModel is IStickyNoteModel stickyNote)
-                {
-                    if (stickyNote.Destroyed)
-                    {
-                        var graphElement = existingElements[elementModel];
-                        m_GraphElementsToDelete.Add(graphElement);
-                    }
-                }
-                else if (elementModel is IPlacematModel placemat)
-                {
-                    if (placemat.Destroyed)
-                    {
-                        var graphElement = existingElements[elementModel];
-                        m_GraphElementsToDelete.Add(graphElement);
-                    }
+                    m_GraphElementsToDelete.Add(graphElement);
                 }
             }
 
-            foreach (IEdgeModel edge in graphChangeList.DeleteEdgeModels)
+            foreach (var edge in graphChangeList.DeletedEdges)
             {
                 if (existingElements.TryGetValue(edge, out GraphElement edgeGraphElement))
                     m_GraphElementsToDelete.Add(edgeGraphElement);
@@ -158,7 +141,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         public void DeleteEdgeModels()
         {
-            VSGraphModel graphModel = (VSGraphModel)m_CurrentState?.CurrentGraphModel;
+            var graphModel = m_CurrentState?.CurrentGraphModel;
             if (graphModel != null)
             {
                 foreach (var edgeModel1 in m_EdgesToDelete)
@@ -171,19 +154,20 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         void UpdateEdgesToRebuildFromNodesToRebuild()
         {
-            foreach (INodeModel nodeModel in m_NodesToRebuild)
+            foreach (IGTFNodeModel nodeModel in m_NodesToRebuild)
             {
                 if (!nodeModel.Destroyed)
                 {
-                    foreach (IEdgeModel edgeModel in nodeModel.GetConnectedEdges())
+                    foreach (var gtfEdgeModel in nodeModel.GetConnectedEdges())
                     {
+                        var edgeModel = (IEdgeModel)gtfEdgeModel;
                         m_EdgesToRebuild.Add(edgeModel);
                     }
                 }
             }
         }
 
-        void RemoveDeletedModelsFromRebuildLists(Dictionary<IGraphElementModel, GraphElement> existingElements)
+        void RemoveDeletedModelsFromRebuildLists(Dictionary<IGTFGraphElementModel, GraphElement> existingElements)
         {
             m_EdgesToRebuild.RemoveWhere(e => existingElements.ContainsKey(e) && m_GraphElementsToDelete.Contains(existingElements[e]));
             m_NodesToRebuild.RemoveWhere(n => existingElements.ContainsKey(n) && m_GraphElementsToDelete.Contains(existingElements[n]));
@@ -198,9 +182,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             }
         }
 
-        public void RebuildNodes(Dictionary<IGraphElementModel, GraphElement> existingElements)
+        public void RebuildNodes(Dictionary<IGTFGraphElementModel, GraphElement> existingElements)
         {
-            foreach (INodeModel nodeModel in m_NodesToRebuild)
+            foreach (var nodeModel in m_NodesToRebuild)
             {
                 // delete node if existing
                 if (existingElements.TryGetValue(nodeModel, out var oldElement))
@@ -218,7 +202,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                 }
             }
 
-            foreach (IGraphElementModel elementModel in m_OtherElementsToRebuild)
+            foreach (var elementModel in m_OtherElementsToRebuild)
             {
                 // delete node if existing
                 if (existingElements.TryGetValue(elementModel, out var oldElement))

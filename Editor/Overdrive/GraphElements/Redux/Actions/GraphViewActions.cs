@@ -8,12 +8,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
     // PF : Ponder: Unify with Change*PositionAction ?
     public class MoveElementsAction : IAction
     {
-        public readonly IReadOnlyCollection<IPositioned> Models;
-        public readonly Vector2 Delta;
+        public IPositioned[] Models;
+        public Vector2 Delta;
+
+        public MoveElementsAction()
+        {
+        }
 
         public MoveElementsAction(Vector2 delta, IReadOnlyCollection<IPositioned> models)
         {
-            Models = models;
+            Models = models.ToArray();
             Delta = delta;
         }
 
@@ -29,11 +33,49 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         }
     }
 
+    public class AlignElementsAction : IAction
+    {
+        public IPositioned[] Models;
+        public Vector2[] Deltas;
+        public AlignElementsAction()
+        {
+        }
+
+        public AlignElementsAction(IReadOnlyCollection<Vector2> delta, IReadOnlyCollection<IPositioned> models)
+        {
+            Models = models.ToArray();
+            Deltas = delta.ToArray();
+        }
+
+        public static TState DefaultReducer<TState>(TState previousState, AlignElementsAction action) where TState : State
+        {
+            if (action.Models == null || action.Deltas == null || action.Models.Length != action.Deltas.Length)
+                return previousState;
+
+            for (int i = 0; i < action.Deltas.Length; ++i)
+            {
+                action.Models[i].Move(action.Deltas[i]);
+                previousState.MarkForUpdate(UpdateFlags.UpdateView, action.Models[i] as IGTFGraphElementModel);
+            }
+
+            if (previousState.AssetModel != null)
+            {
+                EditorUtility.SetDirty((Object)previousState.AssetModel);
+            }
+
+            return previousState;
+        }
+    }
+
     public class DeleteElementsAction : IAction
     {
-        public readonly IReadOnlyCollection<IGTFGraphElementModel> ElementsToRemove;
-        public readonly string OperationName;
-        public readonly AskUser AskConfirmation;
+        public IGTFGraphElementModel[] ElementsToRemove;
+        public string OperationName;
+        public AskUser AskConfirmation;
+
+        public DeleteElementsAction()
+        {
+        }
 
         public DeleteElementsAction(string operationName, AskUser askUser, params IGTFGraphElementModel[] elementsToRemove)
         {
@@ -55,8 +97,24 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         {
             IGTFGraphElementModel[] deletables = action.ElementsToRemove.Where(x => x is IDeletable deletable && deletable.IsDeletable).Distinct().ToArray();
 
-            previousState.GraphModel.DeleteElements(deletables);
+            previousState.CurrentGraphModel.DeleteElements(deletables);
             return previousState;
+        }
+    }
+
+    public class UpdatePortConstantAction : IAction
+    {
+        public IGTFPortModel PortModel;
+        public object NewValue;
+
+        public UpdatePortConstantAction()
+        {
+        }
+
+        public UpdatePortConstantAction(IGTFPortModel portModel, object newValue)
+        {
+            PortModel = portModel;
+            NewValue = newValue;
         }
     }
 }

@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
 using NUnit.Framework;
-using UnityEditor.Searcher;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Compilation;
+using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
+using UnityEditor.Searcher;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.SmartSearch
@@ -39,8 +39,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.SmartSearch
         {
             var source = new List<ITypeMetadata>
             {
-                m_Stencil.GenerateTypeHandle(typeof(string)).GetMetadata(m_Stencil),
-                m_Stencil.GenerateTypeHandle(typeof(ClassForTest)).GetMetadata(m_Stencil),
+                TypeSerializer.GenerateTypeHandle(typeof(string)).GetMetadata(m_Stencil),
+                TypeSerializer.GenerateTypeHandle(typeof(ClassForTest)).GetMetadata(m_Stencil),
             };
 
             var db = new TypeSearcherDatabase(m_Stencil, source).AddClasses().Build();
@@ -51,7 +51,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.SmartSearch
                     new SearcherItem("System", "", new List<SearcherItem>
                     {
                         new TypeSearcherItem(
-                            typeof(string).GenerateTypeHandle(m_Stencil),
+                            typeof(string).GenerateTypeHandle(),
                             typeof(string).FriendlyName()
                         )
                     }),
@@ -66,7 +66,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.SmartSearch
                                     new SearcherItem("SmartSearch", "", new List<SearcherItem>
                                     {
                                         new TypeSearcherItem(
-                                            typeof(ClassForTest).GenerateTypeHandle(m_Stencil),
+                                            typeof(ClassForTest).GenerateTypeHandle(),
                                             typeof(ClassForTest).FriendlyName()
                                         )
                                     })

@@ -1,5 +1,5 @@
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
@@ -12,7 +12,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         private VisualElement m_PropertyViewContainer;
         private bool m_Expanded = true;
 
-        public IVariableDeclarationModel Model { get; set; }
+        public IGTFVariableDeclarationModel Model { get; set; }
 
         public bool expanded
         {
@@ -41,7 +41,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         public BlackboardRow(VisualElement item, VisualElement propertyView)
         {
-            var tpl = GraphElementsHelper.LoadUXML("BlackboardRow.uxml");
+            var tpl = GraphElementHelper.LoadUXML("BlackboardRow.uxml");
             this.AddStylesheet(Blackboard.StyleSheetPath);
 
             VisualElement mainContainer = tpl.Instantiate();

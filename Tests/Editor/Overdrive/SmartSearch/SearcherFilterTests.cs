@@ -4,9 +4,9 @@ using System.Reflection;
 using JetBrains.Annotations;
 using Moq;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
+using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.SmartSearch
@@ -55,7 +55,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.SmartSearch
         {
             get
             {
-                yield return new TestCaseData(new Mock<IGraphAssetModel>().Object, true);
+                yield return new TestCaseData(new Mock<IGTFGraphAssetModel>().Object, true);
                 yield return new TestCaseData(null, false);
             }
         }
@@ -68,31 +68,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.SmartSearch
                 yield return new TestCaseData(new Mock<MethodInfo>().Object, true);
                 yield return new TestCaseData(null, false);
             }
-        }
-
-        [TestCaseSource(nameof(WithGraphAssetsTestCaseData))]
-        public void TestWithGraphAssets(IGraphAssetModel graphAssetModel, bool result)
-        {
-            var filter = new SearcherFilter(SearcherContext.Graph).WithMacros();
-            var data = new GraphAssetSearcherItemData(graphAssetModel);
-
-            Assert.AreEqual(result, filter.ApplyFilters(data));
-        }
-
-        [TestCase(typeof(Unknown), typeof(string), true)]
-        [TestCase(typeof(Transform), typeof(Component), false)]
-        [TestCase(typeof(Component), typeof(Transform), true)]
-        public void TestWithVariables(Type portDataType, Type variableType, bool result)
-        {
-            var portMock = new Mock<IPortModel>();
-            portMock.Setup(p => p.DataTypeHandle).Returns(Stencil.GenerateTypeHandle(portDataType));
-            portMock.Setup(p => p.NodeModel).Returns(new Mock<INodeModel>().Object);
-
-            var filter = new SearcherFilter(SearcherContext.Graph).WithVariables(Stencil, portMock.Object);
-            var data = new TypeSearcherItemData(Stencil.GenerateTypeHandle(variableType));
-
-
-            Assert.AreEqual(result, filter.ApplyFilters(data));
         }
 
         [TestCase(typeof(ThisNodeModel), typeof(ThisNodeModel), false)]
@@ -114,41 +89,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.SmartSearch
             var data = new TagSearcherItemData(CommonSearcherTags.StickyNote);
 
             Assert.IsTrue(filter.ApplyFilters(data));
-        }
-
-        [TestCase(typeof(string), typeof(string), true)]
-        [TestCase(typeof(string), typeof(object), true)]
-        [TestCase(typeof(object), typeof(string), false)]
-        [TestCase(typeof(int), typeof(string), false)]
-        [TestCase(typeof(int), typeof(Unknown), true)]
-        public void TestWithConstantsOfType(Type constType, Type portDataType, bool result)
-        {
-            var portMock = new Mock<IPortModel>();
-            portMock.Setup(p => p.DataTypeHandle).Returns(Stencil.GenerateTypeHandle(portDataType));
-
-            var filter = new SearcherFilter(SearcherContext.Graph).WithConstants(Stencil, portMock.Object);
-            var data = TypeSearcherItemData.Constant(Stencil.GenerateTypeHandle(constType));
-
-            Assert.AreEqual(result, filter.ApplyFilters(data));
-        }
-
-        [Test]
-        public void TestWithConstants()
-        {
-            var filter = new SearcherFilter(SearcherContext.Graph).WithConstants();
-            var data = TypeSearcherItemData.Constant(Stencil.GenerateTypeHandle(typeof(string)));
-
-            Assert.IsTrue(filter.ApplyFilters(data));
-        }
-
-        [TestCase(typeof(TestingMode), true)]
-        [TestCase(typeof(SearcherFilter), false)]
-        public void TestWithEnums(Type type, bool expectedResult)
-        {
-            var filter = new SearcherFilter(SearcherContext.Type).WithEnums(Stencil);
-            var data = new TypeSearcherItemData(type.GenerateTypeHandle(Stencil));
-
-            Assert.AreEqual(expectedResult, filter.ApplyFilters(data));
         }
 
         class TestFilter : SearcherFilter
@@ -175,7 +115,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.SmartSearch
         public void TestMultipleFilters(Type type, bool expectedResult)
         {
             var filter = new TestFilter(SearcherContext.Type).WithInt().WithString();
-            var data = new TypeSearcherItemData(type.GenerateTypeHandle(Stencil));
+            var data = new TypeSearcherItemData(type.GenerateTypeHandle());
 
             Assert.AreEqual(expectedResult, filter.ApplyFilters(data));
         }

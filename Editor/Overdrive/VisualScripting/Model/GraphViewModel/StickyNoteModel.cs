@@ -5,15 +5,32 @@ using UnityEngine.Scripting.APIUpdating;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel
 {
+    public enum StickyNoteTextSize
+    {
+        Small,
+        Medium,
+        Large,
+        Huge
+    }
+
+    public enum StickyNoteColorTheme
+    {
+        Classic,
+        Dark,
+        Orange,
+        Green,
+        Blue,
+        Red,
+        Purple,
+        Teal
+    }
+
     [Serializable]
     [MovedFrom(false, "UnityEditor.VisualScripting.GraphViewModel", "Unity.GraphTools.Foundation.Overdrive.Editor")]
-    public sealed class StickyNoteModel : IStickyNoteModel, ISerializationCallbackReceiver, IGTFStickyNoteModel
+    public sealed class StickyNoteModel : IGTFStickyNoteModel, IGTFGraphElementModel, ISerializationCallbackReceiver, IGuidUpdate
     {
         [SerializeField]
         string m_Title;
-
-        [SerializeField]
-        string m_Id = Guid.NewGuid().ToString();
 
         public StickyNoteModel()
         {
@@ -54,12 +71,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
         }
 
         [SerializeField]
-#pragma warning disable 649
+#pragma warning disable 649 // Field is never assigned to.
         StickyNoteTextSize m_TextSize;
 #pragma warning restore 649
 
         [SerializeField]
+#pragma warning disable 649 // Field is never assigned to.
         string m_TextSizeName = String.Empty;
+#pragma warning restore 649
+
         public string TextSize
         {
             get => m_TextSizeName;
@@ -88,32 +108,70 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
             Position += delta;
         }
 
-        public ScriptableObject SerializableAsset => (ScriptableObject)AssetModel;
-        public IGraphAssetModel AssetModel => VSGraphModel?.AssetModel;
+        public IGTFGraphAssetModel AssetModel => GraphModel?.AssetModel;
 
         [SerializeField]
         GraphModel m_GraphModel;
 
-        public IGraphModel VSGraphModel
+        public IGTFGraphModel GraphModel
         {
             get => m_GraphModel;
             set => m_GraphModel = (GraphModel)value;
         }
 
-        public IGTFGraphModel GraphModel => VSGraphModel as IGTFGraphModel;
-
         public bool Destroyed { get; private set; }
 
         public void Destroy() => Destroyed = true;
 
-        public string GetId()
+        [SerializeField]
+        SerializableGUID m_Guid;
+
+        public GUID Guid
         {
-            return m_Id;
+            get
+            {
+                if (m_Guid.GUID.Empty())
+                    AssignNewGuid();
+                return m_Guid;
+            }
         }
 
         public void AssignNewGuid()
         {
-            m_Id = Guid.NewGuid().ToString();
+            m_Guid = GUID.Generate();
+        }
+
+        void IGuidUpdate.AssignGuid(string guidString)
+        {
+            m_Guid = new GUID(guidString);
+            if (m_Guid.GUID.Empty())
+                AssignNewGuid();
+        }
+
+        [SerializeField, Obsolete]
+        string m_Id = "";
+
+        public void OnBeforeSerialize()
+        {
+        }
+
+        public void OnAfterDeserialize()
+        {
+            if (m_Guid.GUID.Empty())
+            {
+#pragma warning disable 612
+                if (!String.IsNullOrEmpty(m_Id))
+                {
+                    (GraphModel as GraphModel)?.AddGuidToUpdate(this, m_Id);
+                }
+#pragma warning restore 612
+            }
+
+            if (String.IsNullOrEmpty(m_ThemeName))
+                m_ThemeName = m_Theme.ToString();
+
+            if (String.IsNullOrEmpty(m_TextSizeName))
+                m_TextSizeName = m_TextSize.ToString();
         }
 
         public StickyNoteModel Clone()
@@ -129,19 +187,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
         }
 
         public bool IsDeletable => true;
-
-        public void OnBeforeSerialize()
-        {
-        }
-
-        public void OnAfterDeserialize()
-        {
-            if (String.IsNullOrEmpty(m_ThemeName))
-                m_ThemeName = m_Theme.ToString();
-
-            if (String.IsNullOrEmpty(m_TextSizeName))
-                m_TextSizeName = m_TextSize.ToString();
-        }
 
         public bool IsCopiable => true;
         public bool IsRenamable => true;

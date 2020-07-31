@@ -1,4 +1,5 @@
 using System;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 
@@ -7,8 +8,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
     [Serializable]
     class Type1FakeNodeModel : NodeModel
     {
-        public IPortModel Input { get; private set; }
-        public IPortModel Output { get; private set; }
+        public IGTFPortModel Input { get; private set; }
+        public IGTFPortModel Output { get; private set; }
 
         protected override void OnDefineNode()
         {

@@ -2,7 +2,6 @@ using System;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Highlighting;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -20,10 +19,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         public new Store Store => base.Store as Store;
 
-        public IGraphElementModel GraphElementModel => Model as IVariableDeclarationModel;
-        public IGraphElementModel ExpandableGraphElementModel => null;
+        public IGTFGraphElementModel ExpandableGraphElementModel => null;
 
-        public string TitleValue => VariableDeclarationModel.Title.Nicify();
+        public string TitleValue => VariableDeclarationModel.DisplayTitle.Nicify();
 
         public VisualElement TitleEditor => m_TitleTextfield ?? (m_TitleTextfield = new TextField { name = "titleEditor", isDelayed = true });
         public VisualElement TitleElement => this;
@@ -50,13 +48,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         public RenameDelegate RenameDelegate => OpenTextEditor;
 
-        public BlackboardVariableField(Store store, IVariableDeclarationModel variableDeclarationModel, VseGraphView graphView)
+        public BlackboardVariableField(Overdrive.Store store, IGTFVariableDeclarationModel variableDeclarationModel, GraphView graphView)
         {
-            SetupBuildAndUpdate(variableDeclarationModel as IGTFGraphElementModel, store, graphView);
+            SetupBuildAndUpdate(variableDeclarationModel, store, graphView);
 
             UpdateTitleFromModel();
 
-            typeText = variableDeclarationModel.DataType.GetMetadata(variableDeclarationModel.VSGraphModel.Stencil).FriendlyName;
+            typeText = variableDeclarationModel.DataType.GetMetadata(variableDeclarationModel.GraphModel.Stencil).FriendlyName;
 
             icon = variableDeclarationModel.IsExposed
                 ? GraphViewStaticBridge.LoadIconRequired("GraphView/Nodes/BlackboardFieldExposed.png")
@@ -68,7 +66,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             pill.EnableInClassList("read-only", (variableDeclarationModel.Modifiers & ModifierFlags.ReadOnly) != 0);
             pill.EnableInClassList("write-only", (variableDeclarationModel.Modifiers & ModifierFlags.WriteOnly) != 0);
 
-            viewDataKey = variableDeclarationModel.GetId() + "__" + Blackboard.k_PersistenceKey;
+            viewDataKey = variableDeclarationModel.Guid.ToString() + "__" + Blackboard.k_PersistenceKey;
         }
 
         public override void OnSelected()
@@ -83,18 +81,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             (GraphView as VseGraphView).ClearGraphElementsHighlight(ShouldHighlightItemUsage);
         }
 
-        public bool ShouldHighlightItemUsage(IGraphElementModel model)
+        public bool ShouldHighlightItemUsage(IGTFGraphElementModel model)
         {
-            var variableModel = model as IVariableModel;
+            var variableModel = model as IGTFVariableNodeModel;
             var candidate = model as IVariableDeclarationModel;
             return variableModel != null
-                && Equals(variableModel.DeclarationModel, VariableDeclarationModel)
+                && Equals(variableModel.VariableDeclarationModel, VariableDeclarationModel)
                 || Equals(candidate, VariableDeclarationModel);
         }
 
         public void UpdateTitleFromModel()
         {
-            text = VariableDeclarationModel.Title;
+            text = VariableDeclarationModel.DisplayTitle;
         }
     }
 }

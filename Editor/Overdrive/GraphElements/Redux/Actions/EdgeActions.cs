@@ -18,10 +18,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             Output = 2,
         }
 
-        public readonly IGTFPortModel InputPortModel;
-        public readonly IGTFPortModel OutputPortModel;
-        public readonly IEnumerable<IGTFEdgeModel> EdgeModelsToDelete;
-        public readonly PortAlignmentType PortAlignment;
+        public IGTFPortModel InputPortModel;
+        public IGTFPortModel OutputPortModel;
+        public IGTFEdgeModel[] EdgeModelsToDelete;
+        public PortAlignmentType PortAlignment;
+
+        public CreateEdgeAction()
+        {
+        }
 
         public CreateEdgeAction(IGTFPortModel inputPortModel, IGTFPortModel outputPortModel,
                                 IEnumerable<IGTFEdgeModel> edgeModelsToDelete = null, PortAlignmentType portAlignment = PortAlignmentType.None)
@@ -30,13 +34,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             Assert.IsTrue(outputPortModel.Direction == Direction.Output);
             InputPortModel = inputPortModel;
             OutputPortModel = outputPortModel;
-            EdgeModelsToDelete = edgeModelsToDelete;
+            EdgeModelsToDelete = edgeModelsToDelete?.ToArray();
             PortAlignment = portAlignment;
         }
 
-        public static TState DefaultReducer<TState>(TState previousState, CreateEdgeAction action) where TState : State
+        public static State DefaultReducer(State previousState, CreateEdgeAction action)
         {
-            var graphModel = previousState.GraphModel;
+            var graphModel = previousState.CurrentGraphModel;
 
             if (action.EdgeModelsToDelete != null)
                 graphModel.DeleteElements(action.EdgeModelsToDelete);
@@ -44,7 +48,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             IGTFPortModel outputPortModel = action.OutputPortModel;
             IGTFPortModel inputPortModel = action.InputPortModel;
 
-            graphModel.CreateEdgeGTF(inputPortModel, outputPortModel);
+            graphModel.CreateEdge(inputPortModel, outputPortModel);
 
             return previousState;
         }

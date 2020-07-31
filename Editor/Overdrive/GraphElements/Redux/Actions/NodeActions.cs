@@ -53,28 +53,36 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
     public class DropEdgeInEmptyRegionAction : IAction
     {
-        public readonly IGTFPortModel PortController;
-        public readonly Vector2 Position;
-        public readonly IEnumerable<IGTFEdgeModel> EdgesToDelete;
+        public IGTFPortModel PortController;
+        public Vector2 Position;
+        public IGTFEdgeModel[] EdgesToDelete;
+
+        public DropEdgeInEmptyRegionAction()
+        {
+        }
 
         public DropEdgeInEmptyRegionAction(IGTFPortModel portController, Vector2 position, IEnumerable<IGTFEdgeModel> edgesToDelete)
         {
             PortController = portController;
             Position = position;
-            EdgesToDelete = edgesToDelete;
+            EdgesToDelete = edgesToDelete?.ToArray();
         }
 
         public static TState DefaultReducer<TState>(TState previousState, DropEdgeInEmptyRegionAction action) where TState : State
         {
-            previousState.GraphModel.DeleteElements(action.EdgesToDelete);
+            previousState.CurrentGraphModel.DeleteElements(action.EdgesToDelete);
             return previousState;
         }
     }
 
     public class RenameElementAction : IAction
     {
-        public readonly IRenamable RenamableModel;
-        public readonly string Name;
+        public IRenamable RenamableModel;
+        public string Name;
+
+        public RenameElementAction()
+        {
+        }
 
         public RenameElementAction(IRenamable renamableModel, string name)
         {

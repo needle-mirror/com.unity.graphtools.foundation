@@ -1,7 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
@@ -14,7 +11,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 {
     [Serializable]
     [MovedFrom(false, "UnityEditor.VisualScripting.Model", "Unity.GraphTools.Foundation.Overdrive.Editor")]
-    public class VariableDeclarationModel : IVariableDeclarationModel, IExposeTitleProperty, ISelectable, IDroppable, ICopiable, IDeletable, IModifiable, Overdrive.Model.IRenamable, IGTFGraphElementModel
+    public class VariableDeclarationModel : IVariableDeclarationModel, ISelectable, IDroppable, ICopiable, IDeletable, Overdrive.Model.IRenamable, ISerializationCallbackReceiver, IGuidUpdate
     {
         [FormerlySerializedAs("name")]
         [SerializeField]
@@ -29,8 +26,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         [SerializeField]
         string m_Tooltip;
 
-        [SerializeReference]
+        [SerializeReference, Obsolete]
         IConstantNodeModel m_InitializationModel;
+
+        [SerializeReference]
+        IConstant m_InitializationValue;
+
+
         [SerializeField]
         int m_Modifiers;
 
@@ -50,9 +52,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             set => m_Modifiers = (int)value;
         }
 
-        public string Title => Name.Nicify();
+        public string DisplayTitle => Title.Nicify();
 
-        public string Name
+        public string Title
         {
             get => m_Name;
             set => m_Name = value;
@@ -60,11 +62,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         public string VariableName
         {
-            get => TypeSystem.CodifyString(Name);
+            get => StringExtensions.CodifyString(Title);
             protected set
             {
-                if (Name != value)
-                    m_Name = ((VSGraphModel)GraphModel).GetUniqueName(value);
+                if (Title != value)
+                    m_Name = value;
             }
         }
 
@@ -85,9 +87,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                 if (m_DataType == value)
                     return;
                 m_DataType = value;
-                (m_InitializationModel as ConstantNodeModel)?.Destroy();
-                m_InitializationModel = null;
-                if (VSGraphModel.Stencil.RequiresInspectorInitialization(this))
+                (m_InitializationValue as ConstantNodeModel)?.Destroy();
+                m_InitializationValue = null;
+                if (GraphModel.Stencil.RequiresInspectorInitialization(this))
                     CreateInitializationValue();
             }
         }
@@ -115,13 +117,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             set => m_Tooltip = value;
         }
 
-        public ScriptableObject SerializableAsset => m_AssetModel;
-
         [SerializeField]
         GraphAssetModel m_AssetModel;
-        public IGraphAssetModel AssetModel => m_AssetModel;
+        public IGTFGraphAssetModel AssetModel => m_AssetModel;
 
-        public GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel.IGraphModel VSGraphModel
+        public IGTFGraphModel GraphModel
         {
             get
             {
@@ -130,85 +130,126 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                 return null;
             }
 
-            set => m_AssetModel = value?.AssetModel as GraphAssetModel;
+            private set => m_AssetModel = value?.AssetModel as GraphAssetModel;
         }
 
-        public IGTFGraphModel GraphModel => VSGraphModel as IGTFGraphModel;
+        public void SetGraphModel(IGTFGraphModel model)
+        {
+            GraphModel = model;
+        }
 
         [SerializeField]
-        string m_Id = Guid.NewGuid().ToString();
+        SerializableGUID m_Guid;
 
-        [SerializeReference]
-        private IVariableDeclarationMetadataModel m_MetadataModel;
-
-        public string GetId()
+        public GUID Guid
         {
-            return m_Id;
+            get
+            {
+                if (m_Guid.GUID.Empty())
+                    AssignNewGuid();
+                return m_Guid;
+            }
         }
 
-        public IEnumerable<IHasVariableDeclarationModel> FindReferencesInGraph()
+        public void AssignNewGuid()
         {
-            return VSGraphModel.NodeModels.OfType<IHasVariableDeclarationModel>().Where(v => v.DeclarationModel != null && GetId() == v.DeclarationModel.GetId() /* TODO temp until we get rid of node assets ReferenceEquals(v.DeclarationModel, this)*/);
+            if (!String.IsNullOrEmpty(m_Id))
+            {
+                if (GUID.TryParse(m_Id.Replace("-", null), out var migratedGuid))
+                    m_Guid = migratedGuid;
+                else
+                {
+                    Debug.Log("FAILED PARSING " + m_Id);
+                    m_Guid = GUID.Generate();
+                }
+            }
+            else
+                m_Guid = GUID.Generate();
+        }
+
+        void IGuidUpdate.AssignGuid(string guidString)
+        {
+            m_Guid = new GUID(guidString);
+            if (m_Guid.GUID.Empty())
+                AssignNewGuid();
+        }
+
+        [SerializeField]
+        string m_Id = "";
+
+        [SerializeReference]
+        IVariableDeclarationMetadataModel m_MetadataModel;
+
+        public void OnBeforeSerialize()
+        {
+        }
+
+        public void OnAfterDeserialize()
+        {
+            if (m_Guid.GUID.Empty())
+            {
+                if (!String.IsNullOrEmpty(m_Id))
+                {
+                    (GraphModel as GraphModel)?.AddGuidToUpdate(this, m_Id);
+                }
+            }
         }
 
         public void Rename(string newName)
         {
             SetNameFromUserName(newName);
-            ((VSGraphModel)GraphModel).LastChanges.RequiresRebuild = true;
+            GraphModel.LastChanges.RequiresRebuild = true;
         }
 
-        public IHasVariableDeclaration Owner
+        public IConstant InitializationModel
         {
-            get => (IHasVariableDeclaration)GraphModel;
-            set => VSGraphModel = (GraphModel)value;
-        }
-
-        public IConstantNodeModel InitializationModel
-        {
-            get => m_InitializationModel;
-            protected set => m_InitializationModel = value;
+            get => m_InitializationValue;
+            protected set => m_InitializationValue = value;
         }
 
         public void CreateInitializationValue()
         {
-            if (VSGraphModel.Stencil.GetConstantNodeModelType(DataType) != null)
+            if (VariableType == VariableType.EdgePortal)
             {
-                InitializationModel = ((VSGraphModel)GraphModel).CreateConstantNode(
-                    Name + "_init",
-                    DataType,
-                    Vector2.zero,
-                    SpawnFlags.Default | SpawnFlags.Orphan);
+                InitializationModel = null;
+                return;
+            }
+            if (GraphModel.Stencil.GetConstantNodeValueType(DataType) != null)
+            {
+                InitializationModel = ((GraphModel)GraphModel).CreateConstantValue(DataType);
 
-                Utility.SaveAssetIntoObject(InitializationModel, (Object)AssetModel);
+                EditorUtility.SetDirty((Object)AssetModel);
             }
         }
 
         public static T Create<T>(string variableName, TypeHandle dataType, bool isExposed,
             GraphModel graph, VariableType variableType, ModifierFlags modifierFlags,
             VariableFlags variableFlags = VariableFlags.None,
-            IConstantNodeModel initializationModel = null) where T : VariableDeclarationModel, new()
+            IConstant initializationModel = null,
+            GUID? guid = null) where T : VariableDeclarationModel, new()
         {
             VariableDeclarationModel decl = CreateDeclarationNoUndoRecord<T>(variableName, dataType, isExposed, graph, variableType, modifierFlags,
-                variableFlags, initializationModel);
+                variableFlags, initializationModel, guid: guid);
             return (T)decl;
         }
 
         public static VariableDeclarationModel Create(string variableName, TypeHandle dataType, bool isExposed,
             GraphModel graph, VariableType variableType, ModifierFlags modifierFlags,
-            IConstantNodeModel initializationModel = null)
+            IConstant initializationModel = null, GUID? guid = null)
         {
-            return Create<VariableDeclarationModel>(variableName, dataType, isExposed, graph, variableType, modifierFlags, initializationModel: initializationModel);
+            return Create<VariableDeclarationModel>(variableName, dataType, isExposed, graph, variableType, modifierFlags, initializationModel: initializationModel, guid: guid);
         }
 
         public static T CreateDeclarationNoUndoRecord<T>(string variableName, TypeHandle dataType, bool isExposed,
             GraphModel graph, VariableType variableType, ModifierFlags modifierFlags,
             VariableFlags variableFlags,
-            IConstantNodeModel initializationModel = null, SpawnFlags spawnFlags = SpawnFlags.Default) where T : VariableDeclarationModel, new()
+            IConstant initializationModel = null, SpawnFlags spawnFlags = SpawnFlags.Default, GUID? guid = null) where T : VariableDeclarationModel, new()
         {
             Assert.IsNotNull(graph);
             Assert.IsNotNull(graph.AssetModel);
 
             var decl = new T();
+            decl.m_Guid = guid ?? GUID.Generate();
             SetupDeclaration(variableName, dataType, isExposed, graph, variableType, modifierFlags, variableFlags, decl);
             if (initializationModel != null)
                 decl.InitializationModel = initializationModel;
@@ -217,7 +258,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
             if (spawnFlags.IsSerializable())
             {
-                ((VSGraphModel)graph).LastChanges.ChangedElements.Add(decl);
+                graph.LastChanges.ChangedElements.Add(decl);
                 EditorUtility.SetDirty((Object)graph.AssetModel);
             }
 
@@ -226,7 +267,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         internal static void SetupDeclaration<T>(string variableName, TypeHandle dataType, bool isExposed, GraphModel graph, VariableType variableType, ModifierFlags modifierFlags, VariableFlags variableFlags, T decl) where T : VariableDeclarationModel
         {
-            decl.VSGraphModel = graph;
+            decl.GraphModel = graph;
             decl.DataType = dataType;
             decl.VariableName = variableName;
             decl.IsExposed = isExposed;
@@ -236,18 +277,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         }
 
         public static VariableDeclarationModel CreateNoUndoRecord(string variableName, TypeHandle dataType, bool isExposed,
-            GraphModel graph, VariableType variableType, ModifierFlags modifierFlags, VariableFlags variableFlags, IConstantNodeModel initializationModel, SpawnFlags spawnFlags = SpawnFlags.Default)
+            GraphModel graph, VariableType variableType, ModifierFlags modifierFlags, VariableFlags variableFlags, IConstant initializationModel, SpawnFlags spawnFlags = SpawnFlags.Default)
         {
             return CreateDeclarationNoUndoRecord<VariableDeclarationModel>(variableName, dataType, isExposed, graph, variableType, modifierFlags, variableFlags, initializationModel, spawnFlags);
         }
 
-        public void SetNameFromUserName(string userName)
+        void SetNameFromUserName(string userName)
         {
             string newName = userName.ToUnityNameFormat();
             if (string.IsNullOrWhiteSpace(newName))
                 return;
 
-            Undo.RegisterCompleteObjectUndo(SerializableAsset, "Rename Graph Variable");
+            Undo.RegisterCompleteObjectUndo(AssetModel as ScriptableObject, "Rename Graph Variable");
             VariableName = newName;
         }
 
@@ -263,31 +304,35 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             return obj.GetType() == GetType() && Equals((VariableDeclarationModel)obj);
         }
 
-        [SuppressMessage("ReSharper", "NonReadonlyMemberInGetHashCode")]
         public override int GetHashCode()
         {
             unchecked
             {
+                // ReSharper disable once BaseObjectGetHashCodeCallInGetHashCode
                 int hashCode = base.GetHashCode();
+                // ReSharper disable once NonReadonlyMemberInGetHashCode
                 hashCode = (hashCode * 397) ^ m_DataType.GetHashCode();
+                // ReSharper disable once NonReadonlyMemberInGetHashCode
                 hashCode = (hashCode * 397) ^ (int)m_VariableType;
+                // ReSharper disable once NonReadonlyMemberInGetHashCode
                 hashCode = (hashCode * 397) ^ m_IsExposed.GetHashCode();
                 return hashCode;
             }
         }
 
-        public string TitlePropertyName => "m_Name";
-
-        public void UseDeclarationModelCopy(ConstantNodeModel constantModel)
-        {
-            m_InitializationModel = constantModel.Clone();
-        }
-
-        public void AssignNewGuid()
-        {
-            m_Id = Guid.NewGuid().ToString();
-        }
-
         public bool IsCopiable => true;
+
+        public void MigrateInitValue()
+        {
+#pragma warning disable 612
+            if (m_InitializationModel != null)
+            {
+                var oldValue = m_InitializationModel.ObjectValue;
+                CreateInitializationValue();
+                m_InitializationValue.ObjectValue = oldValue;
+                m_InitializationModel = null;
+            }
+#pragma warning restore 612
+        }
     }
 }

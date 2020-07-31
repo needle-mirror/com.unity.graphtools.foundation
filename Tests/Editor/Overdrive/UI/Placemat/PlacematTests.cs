@@ -6,11 +6,9 @@ using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.Tests.Stylesheets;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 using UnityEngine.TestTools;
-using Node = UnityEditor.GraphToolsFoundation.Overdrive.GraphElements.Node;
 
 // ReSharper disable AccessToStaticMemberViaDerivedType
 
@@ -53,7 +51,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             nodeUI.style.height = 200;
             yield return null;
 
-            IEnumerable<IGraphElementModel> modelsToMove = null;
+            IEnumerable<IGTFGraphElementModel> modelsToMove = null;
             HashSet<GraphElement> elementsToMove = new HashSet<GraphElement>();
 
             yield return TestPrereqActionPostreq(mode,
@@ -71,17 +69,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                     Assert.IsFalse(placemat1.Collapsed, "Placemat1 is collapsed");
 
                     var placematElement = GetGraphElements().
-                        OfType<VisualScripting.Placemat>().FirstOrDefault(e => e.GraphElementModel.GetId() == placemat0.GetId());
+                        OfType<Placemat>().FirstOrDefault(e => e.Model.Guid == placemat0.Guid);
                     elementsToMove.Clear();
-                    placematElement.GetElementsToMove(false, elementsToMove);
-                    modelsToMove = elementsToMove.OfType<IHasGraphElementModel>().Select(e => e.GraphElementModel);
+                    placematElement?.GetElementsToMove(false, elementsToMove);
+                    modelsToMove = elementsToMove.Select(e => e.Model);
                     Assert.IsTrue(modelsToMove.Contains(node), "Placemat0 models-to-move does not contain node");
 
                     placematElement = GetGraphElements().
-                        OfType<VisualScripting.Placemat>().FirstOrDefault(e => e.GraphElementModel.GetId() == placemat1.GetId());
+                        OfType<Placemat>().FirstOrDefault(e => e.Model.Guid == placemat1.Guid);
                     elementsToMove.Clear();
-                    placematElement.GetElementsToMove(false, elementsToMove);
-                    modelsToMove = elementsToMove.OfType<IHasGraphElementModel>().Select(e => e.GraphElementModel);
+                    placematElement?.GetElementsToMove(false, elementsToMove);
+                    modelsToMove = elementsToMove.Select(e => e.Model);
                     Assert.IsTrue(modelsToMove.Contains(node), "Placemat1 models-to-move does not contain node");
                 },
                 frame =>
@@ -94,7 +92,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                         case 1:
                             {
                                 var placemat0 = GetGraphElementModel(0) as PlacematModel;
-                                var node = GetGraphElementModel(2) as IGTFGraphElementModel;
+                                var node = GetGraphElementModel(2);
                                 Store.Dispatch(new ExpandOrCollapsePlacematAction(true, new[] { node }, placemat0));
                                 return TestPhase.WaitForNextFrame;
                             }
@@ -118,14 +116,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                     Assert.IsTrue(placemat0.Collapsed, "Placemat0 is not collapsed");
                     Assert.IsFalse(placemat1.Collapsed, "Placemat1 is collapsed");
 
-                    Assert.IsTrue(placemat0.HiddenElementsGuid.Contains(node.GetId()), "Placemat0 is not hiding node.");
+                    Assert.IsTrue(placemat0.HiddenElementsGuid.Contains(node.Guid.ToString()), "Placemat0 is not hiding node.");
 
                     var placematElement = GetGraphElements().
-                        OfType<VisualScripting.Placemat>().FirstOrDefault(e => e.GraphElementModel.GetId() == placemat1.GetId());
+                        OfType<Placemat>().FirstOrDefault(e => e.Model.Guid == placemat1.Guid);
 
                     elementsToMove.Clear();
-                    placematElement.GetElementsToMove(false, elementsToMove);
-                    modelsToMove = elementsToMove.OfType<IHasGraphElementModel>().Select(e => e.GraphElementModel);
+                    placematElement?.GetElementsToMove(false, elementsToMove);
+                    modelsToMove = elementsToMove.Select(e => e.Model);
                     Assert.IsFalse(modelsToMove.Contains(node), "Placemat1 models-to-move contains node");
                 });
         }
@@ -173,7 +171,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                     Assert.IsNotNull(node);
 
                     Assert.IsTrue(placemat.Collapsed, "Placemat is not collapsed");
-                    Assert.IsFalse(placemat.HiddenElementsGuid.Contains(node.GetId()), "Placemat is hiding node.");
+                    Assert.IsFalse(placemat.HiddenElementsGuid.Contains(node.Guid.ToString()), "Placemat is hiding node.");
                 },
                 frame =>
                 {
@@ -204,7 +202,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                     Assert.IsNotNull(node);
 
                     Assert.IsTrue(placemat.Collapsed, "Placemat is not collapsed");
-                    Assert.IsFalse(placemat.HiddenElementsGuid.Contains(node.GetId()), "Placemat is hiding node.");
+                    Assert.IsFalse(placemat.HiddenElementsGuid.Contains(node.Guid.ToString()), "Placemat is hiding node.");
                 }
             );
         }
@@ -252,7 +250,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                     Assert.IsNotNull(node);
 
                     Assert.IsTrue(placemat.Collapsed, "Placemat is not collapsed");
-                    Assert.IsFalse(placemat.HiddenElementsGuid.Contains(node.GetId()), "Placemat is hiding node.");
+                    Assert.IsFalse(placemat.HiddenElementsGuid.Contains(node.Guid.ToString()), "Placemat is hiding node.");
                 },
                 frame =>
                 {

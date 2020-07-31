@@ -8,6 +8,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         public string Title;
         public Rect Position;
 
+        public CreatePlacematAction()
+        {
+        }
+
         public CreatePlacematAction(string title, Rect position)
         {
             Title = title;

@@ -130,8 +130,7 @@ namespace UnityEditor.VisualScripting.Model
                             new CachedVariableInfos { Name = declaration.VariableName, Type = declaration.DataType });
                         break;
                     default:
-                        throw new ArgumentOutOfRangeException(
-                            $"Variable {declaration.Name} has modifiers '{declaration.Modifiers}'");
+                        break;
                 }
             }
         }

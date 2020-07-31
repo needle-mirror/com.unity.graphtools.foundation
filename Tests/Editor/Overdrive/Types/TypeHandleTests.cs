@@ -1,10 +1,6 @@
 using System;
-using System.Collections.Generic;
-using System.Reflection;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Compilation;
+using UnityEditor.GraphToolsFoundation.Overdrive.Tests.Types.NewNamespace;
 using UnityEngine;
 using UnityEngine.Scripting.APIUpdating;
 
@@ -29,33 +25,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Types
 
     class TypeHandleTests
     {
-        CSharpTypeSerializer m_TypeSerializer;
-
-        class TestStencil : Stencil
-        {
-            public override ISearcherDatabaseProvider GetSearcherDatabaseProvider()
-            {
-                return new ClassSearcherDatabaseProvider(this);
-            }
-
-            public override IBuilder Builder => null;
-        }
-
-        Stencil m_Stencil;
-
-        [SetUp]
-        public void SetUp()
-        {
-            m_Stencil = new TestStencil();
-            m_TypeSerializer = new CSharpTypeSerializer();
-        }
-
-        [TearDown]
-        public void TearDown()
-        {
-            m_Stencil = null;
-        }
-
         [Test]
         public void Test_TypeHandleSerializationOfCustomType_Unknown()
         {
@@ -78,23 +47,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Types
 
         class A {}
 
-        class B {}
-
-        [Test]
-        public void Test_TypeHandleDeserializationOfRenamedType()
-        {
-            var typeSerializer = new CSharpTypeSerializer(new Dictionary<string, string>
-            {
-                {typeof(A).AssemblyQualifiedName, typeof(B).AssemblyQualifiedName}
-            });
-
-            TypeHandle th = typeof(A).GenerateTypeHandle();
-
-            Type deserializedTypeHandle = th.Resolve(typeSerializer);
-
-            Assert.That(deserializedTypeHandle, Is.EqualTo(typeof(B)));
-        }
-
         [Test]
         public void Test_TypeHandleDeserializationOfRegularType()
         {
@@ -102,65 +54,54 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Types
             TypeHandle th = typeof(A).GenerateTypeHandle();
 
             //Act
-            Type deserializedTypeHandle = th.Resolve(m_TypeSerializer);
+            Type deserializedTypeHandle = th.Resolve();
 
             //Assert
             Assert.That(deserializedTypeHandle, Is.EqualTo(typeof(A)));
         }
 
-        [TestCase(typeof(int), true, false, false)]
-        [TestCase(typeof(object), false, true, false)]
-        [TestCase(typeof(BindingFlags), true, false, true)]
-        public void Test_TypeHandleMetadataProperties(Type type, bool isValueType, bool isClass, bool isEnum)
-        {
-            var metadata = type.GetMetadata(m_Stencil);
-            Assert.AreEqual(isValueType, metadata.IsValueType);
-            Assert.AreEqual(isClass, metadata.IsClass);
-            Assert.AreEqual(isEnum, metadata.IsEnum);
-        }
-
         [Test]
         public void Test_TypeHandle_Resolve_WorksWithRenamedTypes_WithMovedFromAttribute()
         {
-            var typeStr = typeof(NewNamespace.NewTypeName).AssemblyQualifiedName;
-            var originalTypeStr = typeStr
+            var typeStr = typeof(NewTypeName).AssemblyQualifiedName;
+            var originalTypeStr = typeStr ?
                 .Replace("NewNamespace", "OldNamespace")
                 .Replace("NewTypeName", "OldTypeName")
                 .Replace("GraphTools.", "OldAssemblyName.");
 
             var typeHandle = new TypeHandle(originalTypeStr);
 
-            var resolvedType = typeHandle.Resolve(m_TypeSerializer);
-            Assert.AreEqual(typeof(NewNamespace.NewTypeName), resolvedType);
+            var resolvedType = typeHandle.Resolve();
+            Assert.AreEqual(typeof(NewTypeName), resolvedType);
         }
 
         [Test]
         public void Test_TypeHandle_WithNestedType_Resolve_WorksWithRenamedTypes_WithMovedFromAttribute()
         {
-            var typeStr = typeof(NewNamespace.EnclosingType.InnerNew).AssemblyQualifiedName;
-            var originalTypeStr = typeStr
+            var typeStr = typeof(EnclosingType.InnerNew).AssemblyQualifiedName;
+            var originalTypeStr = typeStr ?
                 .Replace("NewNamespace", "OldNamespace")
                 .Replace("InnerNew", "InnerOld")
                 .Replace("GraphTools.", "OldAssemblyName.");
 
             var typeHandle = new TypeHandle(originalTypeStr);
 
-            var resolvedType = typeHandle.Resolve(m_TypeSerializer);
-            Assert.AreEqual(typeof(NewNamespace.EnclosingType.InnerNew), resolvedType);
+            var resolvedType = typeHandle.Resolve();
+            Assert.AreEqual(typeof(EnclosingType.InnerNew), resolvedType);
         }
 
         [Test]
         public void Test_TypeHandle_WithNestedType_Resolve_ChangedAssembly_WithMovedFromAttribute()
         {
-            var typeStr = typeof(NewNamespace.EnclosingType.InnerTypeUnchanged).AssemblyQualifiedName;
-            var originalTypeStr = typeStr
+            var typeStr = typeof(EnclosingType.InnerTypeUnchanged).AssemblyQualifiedName;
+            var originalTypeStr = typeStr ?
                 .Replace("NewNamespace", "OldNamespace")
                 .Replace("GraphTools.", "OldAssemblyName.");
 
             var typeHandle = new TypeHandle(originalTypeStr);
 
-            var resolvedType = typeHandle.Resolve(m_TypeSerializer);
-            Assert.AreEqual(typeof(NewNamespace.EnclosingType.InnerTypeUnchanged), resolvedType);
+            var resolvedType = typeHandle.Resolve();
+            Assert.AreEqual(typeof(EnclosingType.InnerTypeUnchanged), resolvedType);
         }
     }
 }

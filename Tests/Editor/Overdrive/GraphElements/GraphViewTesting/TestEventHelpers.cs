@@ -1,10 +1,11 @@
 //#define ENABLE_EVENTHELPER_TRACE
 
+using System;
 using System.Text.RegularExpressions;
-using UnityEngine;
-using UnityEngine.UIElements;
-using UnityEngine.TestTools;
 using UnityEditorInternal;
+using UnityEngine;
+using UnityEngine.TestTools;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utilities
 {
@@ -189,9 +190,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
         public void SendTabEvent(EventModifiers eventModifiers = EventModifiers.None)
         {
             // This is the event sequence we get when user presses tab.
-            m_Window.SendEvent(new Event() { type = EventType.KeyDown, keyCode = KeyCode.Tab, modifiers = eventModifiers });
-            m_Window.SendEvent(new Event() { type = EventType.KeyDown, character = '\t', modifiers = eventModifiers });
-            m_Window.SendEvent(new Event() { type = EventType.KeyUp, keyCode = KeyCode.Tab, modifiers = eventModifiers });
+            m_Window.SendEvent(new Event { type = EventType.KeyDown, keyCode = KeyCode.Tab, modifiers = eventModifiers });
+            m_Window.SendEvent(new Event { type = EventType.KeyDown, character = '\t', modifiers = eventModifiers });
+            m_Window.SendEvent(new Event { type = EventType.KeyUp, keyCode = KeyCode.Tab, modifiers = eventModifiers });
         }
 
         //-----------------------------------------------------------

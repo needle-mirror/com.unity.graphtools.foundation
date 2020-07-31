@@ -19,8 +19,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         static readonly Color s_DefaultThickLineColor = new Color(0f, 0f, 0f, 0.38f);
         static readonly Color s_DefaultGridBackgroundColor = new Color(0.17f, 0.17f, 0.17f, 1.0f);
 
-        float m_Spacing = s_DefaultSpacing;
-        private float spacing => m_Spacing;
+        public float Spacing { get; private set; } = s_DefaultSpacing;
 
         int m_ThickLines = s_DefaultThickLines;
         private int thickLines => m_ThickLines;
@@ -70,7 +69,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
             ICustomStyle customStyle = e.customStyle;
             if (customStyle.TryGetValue(s_SpacingProperty, out spacingValue))
-                m_Spacing = spacingValue;
+                Spacing = spacingValue;
 
             if (customStyle.TryGetValue(s_ThickLinesProperty, out thicklinesValue))
                 m_ThickLines = thickLines;
@@ -136,7 +135,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             float thickGridLineY = from.y;
 
             // Update from/to to start at beginning of clientRect
-            from.x = (from.x % (spacing * (containerScale.x)) - (spacing * (containerScale.x)));
+            from.x = (from.x % (Spacing * (containerScale.x)) - (Spacing * (containerScale.x)));
             to.x = from.x;
 
             from.y = clientRect.y;
@@ -144,8 +143,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
             while (from.x < clientRect.width)
             {
-                from.x += spacing * containerScale.x;
-                to.x += spacing * containerScale.x;
+                from.x += Spacing * containerScale.x;
+                to.x += Spacing * containerScale.x;
 
                 GL.Begin(GL.LINES);
                 GL.Color(lineColor);
@@ -154,7 +153,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                 GL.End();
             }
 
-            float thickLineSpacing = (spacing * thickLines);
+            float thickLineSpacing = (Spacing * thickLines);
             from.x = to.x = (thickGridLineX % (thickLineSpacing * (containerScale.x)) - (thickLineSpacing * (containerScale.x)));
 
             while (from.x < clientRect.width + thickLineSpacing)
@@ -165,8 +164,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                 GL.Vertex(Clip(clientRect, to));
                 GL.End();
 
-                from.x += (spacing * containerScale.x * thickLines);
-                to.x += (spacing * containerScale.x * thickLines);
+                from.x += (Spacing * containerScale.x * thickLines);
+                to.x += (Spacing * containerScale.x * thickLines);
             }
 
             // horizontal lines
@@ -181,14 +180,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             from = tx.MultiplyPoint(from);
             to = tx.MultiplyPoint(to);
 
-            from.y = to.y = (from.y % (spacing * (containerScale.y)) - (spacing * (containerScale.y)));
+            from.y = to.y = (from.y % (Spacing * (containerScale.y)) - (Spacing * (containerScale.y)));
             from.x = clientRect.x;
             to.x = clientRect.width;
 
             while (from.y < clientRect.height)
             {
-                from.y += spacing * containerScale.y;
-                to.y += spacing * containerScale.y;
+                from.y += Spacing * containerScale.y;
+                to.y += Spacing * containerScale.y;
 
                 GL.Begin(GL.LINES);
                 GL.Color(lineColor);
@@ -197,7 +196,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                 GL.End();
             }
 
-            thickLineSpacing = spacing * thickLines;
+            thickLineSpacing = Spacing * thickLines;
             from.y = to.y = (thickGridLineY % (thickLineSpacing * (containerScale.y)) - (thickLineSpacing * (containerScale.y)));
 
             while (from.y < clientRect.height + thickLineSpacing)
@@ -208,8 +207,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                 GL.Vertex(Clip(clientRect, to));
                 GL.End();
 
-                from.y += spacing * containerScale.y * thickLines;
-                to.y += spacing * containerScale.y * thickLines;
+                from.y += Spacing * containerScale.y * thickLines;
+                to.y += Spacing * containerScale.y * thickLines;
             }
         }
     }

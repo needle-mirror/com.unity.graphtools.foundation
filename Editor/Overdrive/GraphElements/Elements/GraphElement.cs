@@ -91,24 +91,24 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         protected GraphElement()
         {
             MinimapColor = new Color(0.9f, 0.9f, 0.9f, 0.5f);
-
-            viewDataKey = Guid.NewGuid().ToString();
-
             RegisterCallback<CustomStyleResolvedEvent>(OnCustomStyleResolved);
         }
 
-        public void SetupBuildAndUpdate(IGTFGraphElementModel model, IStore store, GraphView graphView)
+        public void SetupBuildAndUpdate(IGTFGraphElementModel model, Overdrive.Store store, GraphView graphView)
         {
             Setup(model, store, graphView);
             BuildUI();
             UpdateFromModel();
         }
 
-        public void Setup(IGTFGraphElementModel model, IStore store, GraphView graphView)
+        public void Setup(IGTFGraphElementModel model, Overdrive.Store store, GraphView graphView)
         {
             Model = model;
             Store = store;
             GraphView = graphView;
+
+            // Used by graph view to restore selection on graph rebuild.
+            viewDataKey = Model != null ? Model.Guid.ToString() : Guid.NewGuid().ToString();
 
             PartList = new GraphElementPartList();
             BuildPartList();
@@ -175,9 +175,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         public IGTFGraphElementModel Model { get; private set; }
 
-        // PF make setter private
-        public IStore Store { get; protected set; }
-        public GraphView GraphView { get; private set; }
+        // PF make setter private (needed by Blackboard)
+        public Overdrive.Store Store { get; protected set; }
+        // PF make setter private (needed by Blackboard)
+        public GraphView GraphView { get; protected set; }
 
 
         public virtual bool IsSelectable()

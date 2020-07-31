@@ -1,14 +1,14 @@
 using System;
+using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Highlighting;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 {
-    public class BlackboardThisField : BlackboardField, IHighlightable, IVisualScriptingField, IHasGraphElementModel
+    public class BlackboardThisField : BlackboardField, IHighlightable, IVisualScriptingField
     {
-        public IGraphElementModel GraphElementModel => Model as IGraphElementModel;
-        public IGraphElementModel ExpandableGraphElementModel => null;
+        public IGTFGraphElementModel ExpandableGraphElementModel => null;
 
         public void Expand() {}
         public bool CanInstantiateInGraph() => true;
@@ -19,7 +19,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             set => highlighted = value;
         }
 
-        public BlackboardThisField(VseGraphView graphView, ThisNodeModel nodeModel, IGraphModel graphModel)
+        public BlackboardThisField(GraphView graphView, ThisNodeModel nodeModel, IGTFGraphModel graphModel)
         {
             SetupBuildAndUpdate(nodeModel, null, graphView);
 
@@ -38,7 +38,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             return false;
         }
 
-        public bool ShouldHighlightItemUsage(IGraphElementModel candidate)
+        public bool ShouldHighlightItemUsage(IGTFGraphElementModel candidate)
         {
             return candidate is ThisNodeModel;
         }

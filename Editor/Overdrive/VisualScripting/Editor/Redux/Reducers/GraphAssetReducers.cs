@@ -2,9 +2,10 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Text;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 {
@@ -12,10 +13,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
     {
         public static void Register(Store store)
         {
-            store.Register<CreateGraphAssetAction>(CreateGraphAsset);
-            store.Register<CreateGraphAssetFromModelAction>(CreateGraphAssetFromModel);
-            store.Register<LoadGraphAssetAction>(LoadGraphAsset);
-            store.Register<UnloadGraphAssetAction>(UnloadGraphAsset);
+            store.RegisterReducer<State, CreateGraphAssetAction>(CreateGraphAsset);
+            store.RegisterReducer<State, CreateGraphAssetFromModelAction>(CreateGraphAssetFromModel);
+            store.RegisterReducer<State, LoadGraphAssetAction>(LoadGraphAsset);
+            store.RegisterReducer<State, UnloadGraphAssetAction>(UnloadGraphAsset);
         }
 
         static State CreateGraphAssetFromModel(State previousState, CreateGraphAssetFromModelAction action)
@@ -24,15 +25,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             using (new AssetWatcher.Scope())
             {
                 AssetDatabase.CreateAsset(
-                    action.AssetModel,
+                    action.AssetModel as Object,
                     AssetDatabase.GenerateUniqueAssetPath(action.Path));
 
-                var graphModel = action.AssetModel.CreateGraph(
-                    action.GraphType,
+                action.AssetModel.CreateGraph(
                     Path.GetFileNameWithoutExtension(action.Path),
                     action.GraphTemplate.StencilType);
 
-                InitTemplate(action.GraphTemplate, graphModel as VSGraphModel);
+                InitTemplate(action.GraphTemplate, action.AssetModel.GraphModel);
 
                 previousState.AssetModel = action.AssetModel;
             }
@@ -52,13 +52,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                     action.AssetPath,
                     action.AssetType,
                     action.WriteOnDisk);
-                var graphModel = graphAssetModel.CreateGraph(
-                    action.GraphType,
+                graphAssetModel.CreateGraph(
                     action.Name,
                     action.StencilType,
                     action.WriteOnDisk);
 
-                InitTemplate(action.GraphTemplate, graphModel as VSGraphModel);
+                InitTemplate(action.GraphTemplate, graphAssetModel.GraphModel);
 
                 previousState.AssetModel = graphAssetModel;
 
@@ -71,16 +70,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             return previousState;
         }
 
-        static void InitTemplate(IGraphTemplate template, VSGraphModel graphModel)
+        static void InitTemplate(IGraphTemplate template, IGTFGraphModel graphModel)
         {
             if (template != null)
             {
                 template.InitBasicGraph(graphModel);
-                graphModel.LastChanges.ModelsToAutoAlign.AddRange(graphModel.Stencil.GetEntryPoints(graphModel));
+                graphModel.LastChanges.ElementsToAutoAlign.AddRange(graphModel.Stencil.GetEntryPoints(graphModel));
             }
         }
 
-        static void SaveAssetAndMarkForUpdate(GraphElements.State previousState, bool writeOnDisk, string path)
+        static void SaveAssetAndMarkForUpdate(State previousState, bool writeOnDisk, string path)
         {
             if (writeOnDisk)
                 AssetDatabase.SaveAssets();
@@ -97,7 +96,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
             var invalidNodeCount = graphModel.NodeModels.Count(n => n == null);
             var invalidEdgeCount = graphModel.EdgeModels.Count(n => n == null);
-            var invalidStickyCount = ((VSGraphModel)state.CurrentGraphModel).StickyNoteModels.Count(n => n == null);
+            var invalidStickyCount = state.CurrentGraphModel.StickyNoteModels.Count(n => n == null);
 
             var countMessage = new StringBuilder();
             countMessage.Append(invalidNodeCount == 0 ? string.Empty : $"{invalidNodeCount} invalid node(s) found.\n");
@@ -129,7 +128,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                 }
             }
             previousState.AssetModel?.Dispose();
-            previousState.EditorDataModel.PluginRepository?.UnregisterPlugins();
+            previousState.EditorDataModel?.PluginRepository?.UnregisterPlugins();
 
             var asset = AssetDatabase.LoadAssetAtPath<GraphAssetModel>(action.AssetPath);
             if (!asset)
@@ -142,25 +141,28 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             switch (action.LoadType)
             {
                 case LoadGraphAssetAction.Type.Replace:
-                    previousState.EditorDataModel.PreviousGraphModels.Clear();
+                    previousState.EditorDataModel?.PreviousGraphModels.Clear();
                     break;
                 case LoadGraphAssetAction.Type.PushOnStack:
-                    previousState.EditorDataModel.PreviousGraphModels.Add(new OpenedGraph((GraphAssetModel)previousState.CurrentGraphModel?.AssetModel, previousState.EditorDataModel?.BoundObject));
+                    previousState.EditorDataModel?.PreviousGraphModels.Add(new OpenedGraph(previousState.CurrentGraphModel?.AssetModel, previousState.EditorDataModel?.BoundObject));
                     break;
                 case LoadGraphAssetAction.Type.KeepHistory:
                     break;
             }
 
             previousState.AssetModel = asset;
-            previousState.EditorDataModel.BoundObject = action.BoundObject;
+
+            if (previousState.EditorDataModel != null)
+                previousState.EditorDataModel.BoundObject = action.BoundObject;
+
             previousState.MarkForUpdate(UpdateFlags.All);
 
             var graphModel = previousState.CurrentGraphModel;
             if (graphModel?.Stencil != null)
             {
-                graphModel.Stencil.PreProcessGraph((VSGraphModel)previousState.CurrentGraphModel);
+                graphModel.Stencil.PreProcessGraph(previousState.CurrentGraphModel);
                 if (action.AlignAfterLoad)
-                    graphModel.LastChanges.ModelsToAutoAlign.AddRange(graphModel.Stencil.GetEntryPoints((VSGraphModel)graphModel));
+                    graphModel.LastChanges.ElementsToAutoAlign.AddRange(graphModel.Stencil.GetEntryPoints(graphModel));
             }
 
             CheckGraphIntegrity(previousState);

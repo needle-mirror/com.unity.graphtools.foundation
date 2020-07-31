@@ -1,13 +1,14 @@
-using System.Linq;
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-using UnityEngine.TestTools;
 using UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utilities;
 using UnityEditor.GraphToolsFoundation.Overdrive.Tests.Stylesheets;
 using UnityEngine;
+using UnityEngine.TestTools;
 using UnityEngine.UIElements;
 
 // ReSharper disable IdentifierTypo
@@ -185,7 +186,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
         IEnumerator PlacematTestCollapseEdges(Vector2 node1Pos, Vector2 node2Pos, Orientation orientation)
         {
-            var pmModel = CreatePlacemat(k_DefaultPlacematRect, "");
+            var pmModel = CreatePlacemat(k_DefaultPlacematRect);
 
             var node1Model = AddNode(node1Pos, Direction.Output, orientation);
             var node2Model = AddNode(node2Pos, Direction.Input, orientation);
@@ -331,10 +332,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [Test]
         public void PlacematsZOrderSetInAdditionOrder()
         {
-            var pm1Model = CreatePlacemat(k_DefaultPlacematRect, "");
-            var pm2Model = CreatePlacemat(k_DefaultPlacematRect, "");
-            var pm3Model = CreatePlacemat(k_DefaultPlacematRect, "");
-            var pm4Model = CreatePlacemat(k_DefaultPlacematRect, "");
+            var pm1Model = CreatePlacemat(k_DefaultPlacematRect);
+            var pm2Model = CreatePlacemat(k_DefaultPlacematRect);
+            var pm3Model = CreatePlacemat(k_DefaultPlacematRect);
+            var pm4Model = CreatePlacemat(k_DefaultPlacematRect);
 
             graphView.RebuildUI(GraphModel, Store);
             var pm1 = pm1Model.GetUI<Placemat>(graphView);
@@ -353,10 +354,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         {
             var pmContainer = graphView.placematContainer;
 
-            var pm1Model = CreatePlacemat(k_DefaultPlacematRect, "");
-            var pm2Model = CreatePlacemat(k_DefaultPlacematRect, "");
-            var pm3Model = CreatePlacemat(k_DefaultPlacematRect, "");
-            var pm4Model = CreatePlacemat(k_DefaultPlacematRect, "");
+            var pm1Model = CreatePlacemat(k_DefaultPlacematRect);
+            var pm2Model = CreatePlacemat(k_DefaultPlacematRect);
+            var pm3Model = CreatePlacemat(k_DefaultPlacematRect);
+            var pm4Model = CreatePlacemat(k_DefaultPlacematRect);
 
             graphView.RebuildUI(GraphModel, Store);
             var pm1 = pm1Model.GetUI<Placemat>(graphView);
@@ -410,10 +411,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         {
             var pmContainer = graphView.placematContainer;
 
-            var pm1Model = CreatePlacemat(k_DefaultPlacematRect, "");
-            var pm2Model = CreatePlacemat(k_DefaultPlacematRect, "");
-            var pm3Model = CreatePlacemat(k_DefaultPlacematRect, "");
-            var pm4Model = CreatePlacemat(k_DefaultPlacematRect, "");
+            var pm1Model = CreatePlacemat(k_DefaultPlacematRect);
+            var pm2Model = CreatePlacemat(k_DefaultPlacematRect);
+            var pm3Model = CreatePlacemat(k_DefaultPlacematRect);
+            var pm4Model = CreatePlacemat(k_DefaultPlacematRect);
 
             graphView.RebuildUI(GraphModel, Store);
             var pm1 = pm1Model.GetUI<Placemat>(graphView);
@@ -445,7 +446,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator PlacematsCanGrowToFitNodesOnTop()
         {
-            var pmModel = CreatePlacemat(k_DefaultPlacematRect, "");
+            var pmModel = CreatePlacemat(k_DefaultPlacematRect);
             var node1Model = CreateNode("", pmModel.PositionAndSize.position - Vector2.one * 10);
             var node2Model = CreateNode("", pmModel.PositionAndSize.position + pmModel.PositionAndSize.size - Vector2.one * 10);
 
@@ -475,7 +476,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator PlacematsCanGrowToFitAnyNodes()
         {
-            var pmModel = CreatePlacemat(k_DefaultPlacematRect, "");
+            var pmModel = CreatePlacemat(k_DefaultPlacematRect);
             var node1Model = CreateNode("", pmModel.PositionAndSize.position + pmModel.PositionAndSize.size + Vector2.one * 10);
             var node2Model = CreateNode("", pmModel.PositionAndSize.position + pmModel.PositionAndSize.size + Vector2.one * 60);
 
@@ -507,7 +508,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         public IEnumerator PlacematsCanShrinkToSnugNodesOnTop()
         {
             var largeRectSize = new Rect(k_DefaultPlacematPos, k_DefaultPlacematSize * 5);
-            var pmModel = CreatePlacemat(largeRectSize, "");
+            var pmModel = CreatePlacemat(largeRectSize);
 
             var baseNodePos = k_DefaultPlacematPos + largeRectSize.size / 2;
             var node1Model = CreateNode("", baseNodePos);
@@ -603,7 +604,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator PlacematMoveUnderExternalNodeWithoutEffect()
         {
-            var pmModel = CreatePlacemat(k_DefaultPlacematRect, "");
+            var pmModel = CreatePlacemat(k_DefaultPlacematRect);
 
             Vector2 startNodePos = k_DefaultPlacematPos + new Vector2(k_DefaultPlacematSize.x + k_DefaultNodeSize.x, k_DefaultNodeSize.y / 2);
             var nodeModel = AddNode(startNodePos);
@@ -799,8 +800,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             var nodePos = pm2Pos + Vector2.one * 50;
 
             var pmContainer = graphView.placematContainer;
-            var pmModel = CreatePlacemat(k_DefaultPlacematRect, "");
-            var pm2Model = CreatePlacemat(new Rect(pm2Pos, k_SecondPlacematSize), "");
+            var pmModel = CreatePlacemat(k_DefaultPlacematRect);
+            var pm2Model = CreatePlacemat(new Rect(pm2Pos, k_SecondPlacematSize));
             pm2Model.Color = Color.red;
             var nodeModel = AddNode(nodePos);
 
@@ -944,7 +945,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator TwoConnectedNodesOverCollapsedPlacematHideBothNodesAndEdge()
         {
-            var pmModel = CreatePlacemat(k_DefaultPlacematRect, "");
+            var pmModel = CreatePlacemat(k_DefaultPlacematRect);
             var node1Pos = k_DefaultPlacematRect.position + Vector2.one * 50;
             var node2Pos = k_DefaultPlacematRect.position + k_DefaultPlacematRect.size - Vector2.one * 100;
 
@@ -1011,7 +1012,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator PlacematDoesNotMoveElementHiddenByOtherPlacemat()
         {
-            var pmModel = CreatePlacemat(k_DefaultPlacematRect, "");
+            var pmModel = CreatePlacemat(k_DefaultPlacematRect);
             pmModel.Color = Color.red;
 
             float xOffset = k_DefaultPlacematSize.x - k_DefaultNodeSize.x / 2;
@@ -1019,7 +1020,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             var nodeModel = AddNode(nodePos);
 
             Vector2 pm2Pos = k_DefaultPlacematPos + Vector2.right * (k_DefaultPlacematSize.x + 10f);
-            var pm2Model = CreatePlacemat(new Rect(pm2Pos, k_DefaultPlacematSize),  "");
+            var pm2Model = CreatePlacemat(new Rect(pm2Pos, k_DefaultPlacematSize));
             pm2Model.Color = Color.green;
 
             graphView.RebuildUI(GraphModel, Store);
@@ -1169,8 +1170,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             var pm2Pos = k_DefaultPlacematPos + Vector2.one * 50;
             var nodePos = pm2Pos + Vector2.one * 50;
 
-            CreatePlacemat(k_DefaultPlacematRect, "");
-            var pm2Model = CreatePlacemat(new Rect(pm2Pos, k_SecondPlacematSize), "");
+            CreatePlacemat(k_DefaultPlacematRect);
+            var pm2Model = CreatePlacemat(new Rect(pm2Pos, k_SecondPlacematSize));
             pm2Model.Color = Color.red;
 
             var nodeModel = AddNode(nodePos);
@@ -1228,8 +1229,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             var node1Pos = pm2Pos + Vector2.one * 50;
             var node2Pos = node1Pos + Vector2.right * 250;
 
-            CreatePlacemat(k_DefaultPlacematRect, "");
-            var pm2Model = CreatePlacemat(new Rect(pm2Pos, k_SecondPlacematSize), "");
+            CreatePlacemat(k_DefaultPlacematRect);
+            var pm2Model = CreatePlacemat(new Rect(pm2Pos, k_SecondPlacematSize));
             pm2Model.Color = Color.red;
 
             var node1Model = AddNode(node1Pos, Direction.Output);
@@ -1293,7 +1294,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator PlacematSetPositionDoesNotChangeSizeWhenCollapsed()
         {
-            var pmModel = CreatePlacemat(k_DefaultPlacematRect, "");
+            var pmModel = CreatePlacemat(k_DefaultPlacematRect);
             pmModel.PositionAndSize = k_DefaultPlacematRect;
 
             graphView.RebuildUI(GraphModel, Store);
@@ -1323,7 +1324,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator SettingCollapsedElementsWorks()
         {
-            var pmModel = CreatePlacemat(k_DefaultPlacematRect, "");
+            var pmModel = CreatePlacemat(k_DefaultPlacematRect);
             pmModel.Collapsed = true;
 
             // ReSharper disable once Unity.InefficientMultiplicationOrder

@@ -9,6 +9,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
     public class EdgeModel : IGTFEdgeModel
     {
         public IGTFGraphModel GraphModel { get; set; }
+
+        GUID m_GUID = GUID.Generate();
+        public GUID Guid => m_GUID;
+        public IGTFGraphAssetModel AssetModel => GraphModel.AssetModel;
+
+        public void AssignNewGuid()
+        {
+            m_GUID = GUID.Generate();
+        }
+
         public bool IsDeletable => true;
         public IGTFPortModel FromPort { get; }
         public IGTFPortModel ToPort { get; }

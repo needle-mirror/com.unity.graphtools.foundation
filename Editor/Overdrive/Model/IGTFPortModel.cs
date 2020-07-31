@@ -15,9 +15,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Model
     {
         IGTFNodeModel NodeModel { get; }
         Direction Direction { get; }
+        PortType PortType { get; }
         Orientation Orientation { get; }
         PortCapacity Capacity { get; }
+        PortCapacity GetDefaultCapacity();
         Type PortDataType { get; }
+        TypeHandle DataTypeHandle { get; }
         bool IsConnected { get; }
         bool IsConnectedTo(IGTFPortModel port);
         IEnumerable<IGTFEdgeModel> ConnectedEdges { get; }
@@ -26,7 +29,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Model
         void MoveEdgeUp(IGTFEdgeModel edge);
         void MoveEdgeDown(IGTFEdgeModel edge);
         void MoveEdgeLast(IGTFEdgeModel edge);
-
+        IEnumerable<IGTFPortModel> ConnectionPortModels { get; }
         string ToolTip { get; }
+        IConstant EmbeddedValue { get; }
+        bool DisableEmbeddedValueEditor { get; }
+
+        // PF: Let's try to get rid of this.
+        string UniqueName { get; }
     }
 }

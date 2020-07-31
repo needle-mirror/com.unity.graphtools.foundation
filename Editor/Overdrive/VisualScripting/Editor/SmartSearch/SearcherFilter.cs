@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 
@@ -20,64 +21,29 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch
             m_Filters = new List<Func<ISearcherItemData, bool>>();
         }
 
-        public SearcherFilter WithEnums(Stencil stencil)
+        public SearcherFilter WithTypesInheriting<T>()
         {
-            this.Register((Func<TypeSearcherItemData, bool>)(data => data.Type.GetMetadata(stencil).IsEnum));
-            return this;
+            return WithTypesInheriting(typeof(T));
         }
 
-        public SearcherFilter WithTypesInheriting<T>(Stencil stencil)
+        public SearcherFilter WithTypesInheriting<T, TA>() where TA : Attribute
         {
-            return WithTypesInheriting(stencil, typeof(T));
+            return WithTypesInheriting(typeof(T), typeof(TA));
         }
 
-        public SearcherFilter WithTypesInheriting<T, TA>(Stencil stencil) where TA : Attribute
-        {
-            return WithTypesInheriting(stencil, typeof(T), typeof(TA));
-        }
-
-        public SearcherFilter WithTypesInheriting(Stencil stencil, Type type, Type attributeType = null)
+        public SearcherFilter WithTypesInheriting(Type type, Type attributeType = null)
         {
             this.Register((Func<TypeSearcherItemData, bool>)(data =>
             {
-                var dataType = data.Type.Resolve(stencil);
+                var dataType = data.Type.Resolve();
                 return type.IsAssignableFrom(dataType) && (attributeType == null || dataType.GetCustomAttribute(attributeType) != null);
             }));
-            return this;
-        }
-
-        public SearcherFilter WithMacros()
-        {
-            this.Register((Func<GraphAssetSearcherItemData, bool>)(data => data.GraphAssetModel != null));
-            return this;
-        }
-
-        public SearcherFilter WithGraphAsset(IGraphAssetModel assetModel)
-        {
-            this.Register((Func<GraphAssetSearcherItemData, bool>)(data => data.GraphAssetModel == assetModel));
-            return this;
-        }
-
-        public SearcherFilter WithVariables(Stencil stencil, IPortModel portModel)
-        {
-            Func<TypeSearcherItemData, bool> func = data =>
-            {
-                return portModel.DataTypeHandle == TypeHandle.Unknown
-                    || portModel.DataTypeHandle.IsAssignableFrom(data.Type, stencil);
-            };
-            this.Register(func);
             return this;
         }
 
         public SearcherFilter WithVisualScriptingNodes()
         {
             this.Register((Func<NodeSearcherItemData, bool>)(data => data.Type != null));
-            return this;
-        }
-
-        public SearcherFilter WithVisualScriptingNodes(Type type)
-        {
-            this.Register((Func<NodeSearcherItemData, bool>)(data => type.IsAssignableFrom(data.Type)));
             return this;
         }
 
@@ -102,25 +68,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch
         public SearcherFilter WithStickyNote()
         {
             return WithTag(CommonSearcherTags.StickyNote);
-        }
-
-        public SearcherFilter WithConstants(Stencil stencil, IPortModel portModel)
-        {
-            Func<TypeSearcherItemData, bool> func = data =>
-            {
-                if (!data.IsConstant)
-                    return false;
-                return portModel.DataTypeHandle == TypeHandle.Unknown
-                    || portModel.DataTypeHandle.IsAssignableFrom(data.Type, stencil);
-            };
-            Register(func);
-            return this;
-        }
-
-        public SearcherFilter WithConstants()
-        {
-            Register((Func<TypeSearcherItemData, bool>)(data => data.IsConstant));
-            return this;
         }
 
         public void Register(Func<ISearcherItemData, bool> filter)

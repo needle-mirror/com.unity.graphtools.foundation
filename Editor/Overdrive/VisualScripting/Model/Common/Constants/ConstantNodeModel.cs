@@ -4,28 +4,53 @@ using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
-using UnityEngine.Scripting.APIUpdating;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 {
     [Serializable]
-    [MovedFrom(false, "UnityEditor.VisualScripting.Model", "Unity.GraphTools.Foundation.Overdrive.Editor")]
-    public abstract class ConstantNodeModel : NodeModel, IVariableModel, IConstantNodeModel
+    public class ConstantNodeModel : NodeModel, IGTFVariableNodeModel, IConstantNodeModel
     {
-        public virtual IPortModel OutputPort { get; protected set;}
-        public abstract IVariableDeclarationModel DeclarationModel { get; }
-        public abstract object ObjectValue { get; set; }
-        public abstract Type Type { get; }
-        public abstract bool IsLocked { get; set; }
+        [SerializeField]
+        bool m_IsLocked;
 
-        public abstract void PredefineSetup(TypeHandle constantTypeHandle);
+        [SerializeReference]
+        IConstant m_Value;
+
+        public virtual IGTFPortModel MainOutputPort { get; protected set;}
+
+        [CanBeNull]
+        public IGTFVariableDeclarationModel VariableDeclarationModel => null;
+
+        public virtual object ObjectValue
+        {
+            get => m_Value.ObjectValue;
+            set => m_Value.ObjectValue = value;
+        }
+
+        // TODO @theor remove virtual once we get rid of ConstantNodeModel<T>
+        public virtual Type Type => m_Value.Type;
+
+        public bool IsLocked
+        {
+            get => m_IsLocked;
+            set => m_IsLocked = value;
+        }
+
+        public virtual void PredefineSetup() =>
+            m_Value.ObjectValue = m_Value.DefaultValue;
 
         public ConstantNodeModel Clone()
         {
+            if (GetType() == typeof(ConstantNodeModel))
+            {
+                return new ConstantNodeModel { Value = Value.CloneConstant() };
+            }
             var clone = Activator.CreateInstance(GetType());
             EditorUtility.CopySerializedManagedFieldsOnly(this, clone);
             return (ConstantNodeModel)clone;
         }
+
+        public override string Title => string.Empty;
 
         public override string ToString()
         {
@@ -34,64 +59,55 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         public void SetValue<T>(T value)
         {
-            if (Type != value.GetType() && !value.GetType().IsSubclassOf(Type))
+            if (!(value is Enum) && Type != value.GetType() && !value.GetType().IsSubclassOf(Type))
                 throw new ArgumentException($"can't set value of type {value.GetType().Name} in {Type.Name}");
             SetFromOther(value);
         }
 
-        protected abstract void SetFromOther(object o);
-        public IGTFPortModel GTFInputPort => OutputPort.Direction == Direction.Input ? OutputPort as IGTFPortModel : null;
-        public IGTFPortModel GTFOutputPort => OutputPort.Direction == Direction.Output ? OutputPort as IGTFPortModel : null;
+        protected virtual void SetFromOther(object o) => m_Value.ObjectValue = o;
+        public IGTFPortModel InputPort => MainOutputPort?.Direction == Direction.Input ? MainOutputPort : null;
+        public IGTFPortModel OutputPort => MainOutputPort?.Direction == Direction.Output ? MainOutputPort : null;
+
+        public IConstant Value
+        {
+            get => m_Value;
+            set => m_Value = value;
+        }
+
+        protected override void OnDefineNode()
+        {
+            MainOutputPort = AddDataOutputPort(null, Value.Type.GenerateTypeHandle());
+        }
     }
 
-    [Serializable]
-    [MovedFrom(false, "UnityEditor.VisualScripting.Model", "Unity.GraphTools.Foundation.Overdrive.Editor")]
-    public abstract class ConstantNodeModel<TSerialized, TGenerated> : ConstantNodeModel
+    [Serializable] // should be marked obsolete, but that crashes the serialization
+    public abstract class ConstantNodeModel<T> : ConstantNodeModel
     {
-        [SerializeField]
-        bool m_IsLocked;
-
-        [CanBeNull]
-        public override IVariableDeclarationModel DeclarationModel => null;
-
         //TODO decide if this is gonna be a problem in the long term or not
-        public TSerialized value;
+        public T value;
 
-        protected virtual TSerialized DefaultValue { get; } = default;
+        protected virtual T DefaultValue { get; } = default;
 
-        //TODO decide if this is gonna be a problem in the long term or not
-        public override Type Type => typeof(TGenerated);
+        public override Type Type => typeof(T);
         public override string VariableString => "Constant";
         public override string DataTypeString => Type.FriendlyName();
-        public override string Title => string.Empty;
 
         public override object ObjectValue
         {
             get => value;
-            set => this.value = (TSerialized)value;
+            set => this.value = (T)Convert.ChangeType(value, typeof(T));
         }
 
-        public override bool IsLocked
-        {
-            get => m_IsLocked;
-            set => m_IsLocked = value;
-        }
-
-        public override void PredefineSetup(TypeHandle constantTypeHandle)
+        public override void PredefineSetup()
         {
             value = DefaultValue;
         }
 
         protected override void OnDefineNode()
         {
-            OutputPort = AddDataOutputPort(null, typeof(TSerialized).GenerateTypeHandle(Stencil));
+            MainOutputPort = AddDataOutputPort(null, typeof(T).GenerateTypeHandle());
         }
-    }
 
-    [Serializable]
-    [MovedFrom(false, "UnityEditor.VisualScripting.Model", "Unity.GraphTools.Foundation.Overdrive.Editor")]
-    public abstract class ConstantNodeModel<T> : ConstantNodeModel<T, T>
-    {
         protected override void SetFromOther(object o)
         {
             ObjectValue = o;

@@ -7,14 +7,12 @@ using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Scripting.APIUpdating;
-using UnityEngine.UIElements;
-using Object = System.Object;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel
 {
     [Serializable]
     [MovedFrom(false, "UnityEditor.VisualScripting.GraphViewModel", "Unity.GraphTools.Foundation.Overdrive.Editor")]
-    public class PortModel : IPortModel, IHasTitle, IGTFPortModel
+    public class PortModel : IGTFPortModel, IHasTitle
     {
         [Flags]
         public enum PortModelOptions
@@ -25,11 +23,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
             Default = None,
         }
 
-        public static bool Equivalent(IPortModel a, IPortModel b)
+        public static bool Equivalent(IGTFPortModel a, IGTFPortModel b)
         {
             if (a == null || b == null)
                 return a == b;
-            return a.Direction == b.Direction && a.NodeModel.Guid == b.NodeModel.Guid && a.UniqueId == b.UniqueId;
+
+            return a.Direction == b.Direction && a.NodeModel.Guid == b.NodeModel.Guid && a.UniqueName == b.UniqueName;
         }
 
         [UsedImplicitly]
@@ -44,59 +43,54 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
             Options = options;
         }
 
-        public ScriptableObject SerializableAsset => (ScriptableObject)NodeModel.VSGraphModel.AssetModel;
-        public IGraphAssetModel AssetModel => VSGraphModel?.AssetModel;
-        public IGraphModel VSGraphModel => NodeModel?.VSGraphModel;
-        public IGTFGraphModel GraphModel => VSGraphModel as IGTFGraphModel;
+        public IGTFGraphAssetModel AssetModel => GraphModel?.AssetModel;
+        public IGTFGraphModel GraphModel => NodeModel?.GraphModel;
 
         string m_Name;
 
         string m_UniqueId;
 
-        public string UniqueId => m_UniqueId ?? m_Name ?? "";
+        public string UniqueName => m_UniqueId ?? m_Name ?? m_Guid.ToString();
 
-        public string Name
+        [SerializeField]
+        SerializableGUID m_Guid;
+
+        public GUID Guid
         {
-            get => m_Name;
-            set
+            get
             {
-                if (value == m_Name)
-                    return;
-                m_Name = value;
-                OnValueChanged?.Invoke();
+                if (m_Guid.GUID.Empty())
+                    AssignNewGuid();
+                return m_Guid;
             }
+        }
+
+        public void AssignNewGuid()
+        {
+            m_Guid = GUID.Generate();
         }
 
         public string Title
         {
-            get => Name;
-            set => Name = value;
+            get => m_Name;
+            set => m_Name = value;
         }
 
-        public string DisplayTitle => Name.Nicify();
+        public string DisplayTitle => m_Name.Nicify();
 
-        INodeModel m_NodeModel;
+        IGTFNodeModel m_NodeModel;
 
-        public INodeModel NodeModel
+        public IGTFNodeModel NodeModel
         {
             get => m_NodeModel;
-            set
-            {
-                if (value == m_NodeModel)
-                    return;
-
-                m_NodeModel = value;
-                OnValueChanged?.Invoke();
-            }
+            set => m_NodeModel = value;
         }
 
-        IGTFNodeModel IGTFPortModel.NodeModel => m_NodeModel as IGTFNodeModel;
-
-        public ConstantNodeModel EmbeddedValue
+        public IConstant EmbeddedValue
         {
             get
             {
-                if (NodeModel is NodeModel node && node.InputConstantsById.TryGetValue(UniqueId, out var inputModel))
+                if (NodeModel is NodeModel node && node.InputConstantsById.TryGetValue(UniqueName, out var inputModel))
                 {
                     return inputModel;
                 }
@@ -105,13 +99,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
             }
         }
 
-        public Action<IChangeEvent, Store, IPortModel> EmbeddedValueEditorValueChangedOverride { get; set; }
+        public bool DisableEmbeddedValueEditor => IsConnected && ConnectionPortModels.Any(p => p.NodeModel.State == ModelState.Enabled);
 
         public virtual bool CreateEmbeddedValueIfNeeded => PortType == PortType.Data;
 
-        public IEnumerable<IPortModel> ConnectionPortModels
+        public IEnumerable<IGTFPortModel> ConnectionPortModels
         {
-            get { Assert.IsNotNull(GraphModel, $"portModel {Name} has a null GraphModel reference"); return VSGraphModel.GetConnections(this); }
+            get
+            {
+                Assert.IsNotNull(GraphModel, $"portModel {Title} has a null GraphModel reference");
+                return GraphModel.GetConnections(this);
+            }
         }
 
         PortType m_PortType;
@@ -119,14 +117,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
         public PortType PortType
         {
             get => m_PortType;
-            set
-            {
-                if (value == m_PortType)
-                    return;
-
-                m_PortType = value;
-                OnValueChanged?.Invoke();
-            }
+            set => m_PortType = value;
         }
 
         Direction m_Direction;
@@ -134,14 +125,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
         public Direction Direction
         {
             get => m_Direction;
-            set
-            {
-                if (value == m_Direction)
-                    return;
-
-                m_Direction = value;
-                OnValueChanged?.Invoke();
-            }
+            set => m_Direction = value;
         }
 
         // PF: Is Orientation ever set?
@@ -153,41 +137,26 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
         public bool IsConnected => ConnectionPortModels.Any();
         public bool IsConnectedTo(IGTFPortModel port)
         {
-            var edgeModels = VSGraphModel.EdgeModels.Where(e =>
-                e.InputPortModel == this && e.OutputPortModel == port ||
-                e.OutputPortModel == this && e.InputPortModel == port);
+            var edgeModels = GraphModel.EdgeModels.Where(e =>
+                e.ToPort == this && e.FromPort == port ||
+                e.FromPort == this && e.ToPort == port);
             return edgeModels.Any();
         }
 
-        IEnumerable<IGTFEdgeModel> IGTFPortModel.ConnectedEdges => ConnectedEdges.Cast<IGTFEdgeModel>();
         public bool HasReorderableEdges => PortType == PortType.Execution && Direction == Direction.Output && IsConnected;
-
-        public IEnumerable<IEdgeModel> ConnectedEdges => VSGraphModel.EdgeModels.Where(e => e.InputPortModel == this || e.OutputPortModel == this);
-
-        public Action OnValueChanged { get; set; }
+        public IEnumerable<IGTFEdgeModel> ConnectedEdges => GraphModel.EdgeModels.Where(e => e.ToPort == this || e.FromPort == this);
 
         public TypeHandle DataTypeHandle
         {
-            get
-            {
-                return m_DataType;
-            }
-            set
-            {
-                if (value == m_DataType)
-                    return;
-
-                m_DataType = value;
-                OnValueChanged?.Invoke();
-            }
+            get => m_DataType;
+            set => m_DataType = value;
         }
 
         public Type PortDataType
         {
             get
             {
-                var stencil = VSGraphModel.Stencil;
-                Type t = DataTypeHandle.Resolve(stencil);
+                Type t = DataTypeHandle.Resolve();
                 t = t == typeof(void) || t.ContainsGenericParameters ? typeof(Unknown) : t;
                 return t;
             }
@@ -195,12 +164,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
 
         public override string ToString()
         {
-            return $"Port {NodeModel}: {PortType} {Name}(id: {UniqueId ?? "\"\""})";
+            return $"Port {NodeModel}: {PortType} {Title}(id: {UniqueName ?? "\"\""})";
         }
 
         public PortCapacity GetDefaultCapacity()
         {
-            return (PortType == PortType.Data || PortType == PortType.Instance) ?
+            return PortType == PortType.Data ?
                 Direction == Direction.Input ?
                 PortCapacity.Single :
                 PortCapacity.Multi :
@@ -211,68 +180,21 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
                 PortCapacity.Multi;
         }
 
-        public string GetId()
-        {
-            return string.Empty;
-        }
-
-        public string IconTypeString
-        {
-            get
-            {
-                Stencil stencil = NodeModel.VSGraphModel.Stencil;
-
-                // TODO: should TypHandle.Resolve do this for us?
-                // @THEOR SAID HE WOULD THINK ABOUT IT (written on CAPS DAY 2018)
-                if (NodeModel is EnumConstantNodeModel enumConst)
-                {
-                    Type t = enumConst.EnumType.Resolve(stencil);
-                    return "type" + t.Name;
-                }
-
-                Type thisPortType = DataTypeHandle.Resolve(stencil);
-
-                if (thisPortType.IsSubclassOf(typeof(Component)))
-                    return "typeComponent";
-                if (thisPortType.IsSubclassOf(typeof(GameObject)))
-                    return "typeGameObject";
-                if (thisPortType.IsSubclassOf(typeof(Rigidbody)) || thisPortType.IsSubclassOf(typeof(Rigidbody2D)))
-                    return "typeRigidBody";
-                if (thisPortType.IsSubclassOf(typeof(Transform)))
-                    return "typeTransform";
-                if (thisPortType.IsSubclassOf(typeof(Texture)) || thisPortType.IsSubclassOf(typeof(Texture2D)))
-                    return "typeTexture2D";
-                if (thisPortType.IsSubclassOf(typeof(KeyCode)))
-                    return "typeKeycode";
-                if (thisPortType.IsSubclassOf(typeof(Material)))
-                    return "typeMaterial";
-                if (thisPortType == typeof(Object))
-                    return "typeObject";
-                return "type" + thisPortType.Name;
-            }
-        }
-
         public virtual string ToolTip
         {
             get
             {
                 string newTooltip = Direction == Direction.Output ? "Output" : "Input";
-                switch (PortType)
+                if (PortType == PortType.Execution)
                 {
-                    case PortType.Execution:
-                        newTooltip += " execution flow";
-                        if (NodeModel.IsCondition)
-                            newTooltip += $" ({Name.ToLower()} condition)";
-                        break;
-                    case PortType.Data:
-                    case PortType.Instance:
-                        var stencil = VSGraphModel.Stencil;
-                        newTooltip += $" of type {(DataTypeHandle == TypeHandle.ThisType ? (NodeModel?.VSGraphModel)?.FriendlyScriptName : DataTypeHandle.GetMetadata(stencil).FriendlyName)}";
-                        break;
-                    case PortType.Event:
-                        newTooltip += " event";
-                        break;
+                    newTooltip += " execution flow";
                 }
+                else if (PortType == PortType.Data)
+                {
+                    var stencil = GraphModel.Stencil;
+                    newTooltip += $" of type {(DataTypeHandle == VSTypeHandle.ThisType ? (NodeModel?.GraphModel)?.FriendlyScriptName : DataTypeHandle.GetMetadata(stencil).FriendlyName)}";
+                }
+
                 return newTooltip;
             }
         }
@@ -282,7 +204,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
             if (!HasReorderableEdges)
                 return;
 
-            VSGraphModel.MoveEdgeBefore((IEdgeModel)edge, ConnectedEdges.First());
+            GraphModel.MoveEdgeBefore(edge, ConnectedEdges.First());
         }
 
         public void MoveEdgeUp(IGTFEdgeModel edge)
@@ -291,9 +213,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
                 return;
 
             var edges = ConnectedEdges.ToList();
-            var idx = edges.IndexOf((IEdgeModel)edge);
+            var idx = edges.IndexOf(edge);
             if (idx >= 1)
-                VSGraphModel.MoveEdgeBefore((IEdgeModel)edge, edges[idx - 1]);
+                GraphModel.MoveEdgeBefore(edge, edges[idx - 1]);
         }
 
         public void MoveEdgeDown(IGTFEdgeModel edge)
@@ -302,9 +224,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
                 return;
 
             var edges = ConnectedEdges.ToList();
-            var idx = edges.IndexOf((IEdgeModel)edge);
+            var idx = edges.IndexOf(edge);
             if (idx < edges.Count - 1)
-                VSGraphModel.MoveEdgeAfter((IEdgeModel)edge, edges[idx + 1]);
+                GraphModel.MoveEdgeAfter(edge, edges[idx + 1]);
         }
 
         public void MoveEdgeLast(IGTFEdgeModel edge)
@@ -312,7 +234,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
             if (!HasReorderableEdges)
                 return;
 
-            VSGraphModel.MoveEdgeAfter((IEdgeModel)edge, ConnectedEdges.Last());
+            GraphModel.MoveEdgeAfter(edge, ConnectedEdges.Last());
         }
     }
 }

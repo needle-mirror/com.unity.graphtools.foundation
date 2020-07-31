@@ -5,13 +5,12 @@
 /* Example of dynamic properties
 Read from the GridBackground decorator */
 GridBackground {
-    --grid-background-color:#202020;
-    --line-color: #202020;
-    --thick-line-color: #202020;
-    --spacing:750.0;
+    --grid-background-color: #202020;
+    --line-color: #363636;
+    --thick-line-color: #666666;
+    --spacing:150.0;
     --thick-lines:0;
 }
-
 
 FreehandElement {
     --segment-size: 5;

@@ -64,7 +64,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
 
         Edge CreateEdge(IGTFPortModel to, IGTFPortModel from)
         {
-            var model = m_GraphModel.CreateEdgeGTF(from, to);
+            var model = m_GraphModel.CreateEdge(from, to);
             var edge = new Edge();
             edge.SetupBuildAndUpdate(model, m_Store, m_GraphView);
             return edge;

@@ -1,14 +1,14 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using JetBrains.Annotations;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
-using UnityEngine.UIElements;
-using UnityEngine.TestTools;
+using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utilities;
 using UnityEngine;
+using UnityEngine.TestTools;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
@@ -23,7 +23,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             base.SetUp();
 
             m_Node1 = CreateNode("Node 1", new Vector2(0, 0), 0, 1);
-            m_Node2 = CreateNode("Node 2", new Vector2(300, 300), 1, 0);
+            m_Node2 = CreateNode("Node 2", new Vector2(300, 300), 1);
 
             // Add the minimap.
             var miniMap = new MiniMap();
@@ -47,7 +47,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 Assert.False(collapseButton.GetDisabledPseudoState());
             }
 
-            var edge = GraphModel.CreateEdgeGTF(m_Node1.OutputPorts.First(), m_Node2.InputPorts.First());
+            var edge = GraphModel.CreateEdge(m_Node1.OutputPorts.First(), m_Node2.InputPorts.First());
             graphView.RebuildUI(GraphModel, Store);
             nodeList = graphView.nodes.ToList();
 
@@ -94,7 +94,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator SelectedEdgeCanBeDeleted()
         {
-            var edge = GraphModel.CreateEdgeGTF(m_Node1.OutputPorts.First(), m_Node2.InputPorts.First());
+            var edge = GraphModel.CreateEdge(m_Node1.OutputPorts.First(), m_Node2.InputPorts.First());
             graphView.RebuildUI(GraphModel, Store);
             yield return null;
 
@@ -114,7 +114,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         {
             graphView.AddToClassList("EdgeColorsMatchCustomPortColors");
 
-            var edge = GraphModel.CreateEdgeGTF(m_Node2.InputPorts.First(), m_Node1.OutputPorts.First());
+            var edge = GraphModel.CreateEdge(m_Node2.InputPorts.First(), m_Node1.OutputPorts.First());
             graphView.RebuildUI(GraphModel, Store);
             // Resolve custom styles.
             yield return null;
@@ -132,17 +132,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             Assert.AreEqual(inputPort.PortColor, edgeControl.InputColor);
             Assert.AreEqual(outputPort.PortColor, edgeControl.OutputColor);
-        }
-    }
-
-    // Discovered by reflection by NodeAdapter class
-    [UsedImplicitly]
-    static class GraphNodeTestsAdapters
-    {
-        internal static bool Adapt(this NodeAdapter value, PortSource<float> a, PortSource<float> b)
-        {
-            // run adapt code for float to float connections
-            return true;
         }
     }
 }

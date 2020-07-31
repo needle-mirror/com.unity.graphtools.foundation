@@ -64,11 +64,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             }
             else if (m_Model is IHasSingleInputPort inputPortHolder)
             {
-                m_InputPortContainer?.UpdatePorts(new[] { inputPortHolder.GTFInputPort }, m_OwnerElement.GraphView, m_OwnerElement.Store);
+                m_InputPortContainer?.UpdatePorts(new[] { inputPortHolder.InputPort }, m_OwnerElement.GraphView, m_OwnerElement.Store);
             }
             else if (m_Model is IHasSingleOutputPort outputPortHolder)
             {
-                m_OutputPortContainer?.UpdatePorts(new[] { outputPortHolder.GTFOutputPort }, m_OwnerElement.GraphView, m_OwnerElement.Store);
+                m_OutputPortContainer?.UpdatePorts(new[] { outputPortHolder.OutputPort }, m_OwnerElement.GraphView, m_OwnerElement.Store);
             }
         }
     }

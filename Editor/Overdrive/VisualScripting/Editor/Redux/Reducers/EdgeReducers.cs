@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using JetBrains.Annotations;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
@@ -18,29 +18,29 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         public static void Register(Store store)
         {
-            store.Register<CreateNodeFromInputPortAction>(CreateGraphNodeFromInputPort);
-            store.Register<CreateNodeFromOutputPortAction>(CreateNodeFromOutputPort);
-            store.Register<CreateEdgeAction>(CreateEdge);
-            store.Register<SplitEdgeAndInsertNodeAction>(SplitEdgeAndInsertNode);
-            store.Register<CreateNodeOnEdgeAction>(CreateNodeOnEdge);
-            store.Register<AddControlPointOnEdgeAction>(AddControlPointOnEdgeAction.DefaultReducer);
-            store.Register<MoveEdgeControlPointAction>(MoveEdgeControlPointAction.DefaultReducer);
-            store.Register<RemoveEdgeControlPointAction>(RemoveEdgeControlPointAction.DefaultReducer);
-            store.Register<SetEdgeEditModeAction>(SetEdgeEditModeAction.DefaultReducer);
-            store.Register<ConvertEdgesToPortalsAction>(ConvertEdgesToPortals);
-            store.Register<ReorderEdgeAction>(ReorderEdgeAction.DefaultReducer);
+            store.RegisterReducer<State, CreateNodeFromInputPortAction>(CreateGraphNodeFromInputPort);
+            store.RegisterReducer<State, CreateNodeFromOutputPortAction>(CreateNodeFromOutputPort);
+            store.RegisterReducer<State, CreateEdgeAction>(CreateEdge);
+            store.RegisterReducer<State, SplitEdgeAndInsertNodeAction>(SplitEdgeAndInsertNode);
+            store.RegisterReducer<State, CreateNodeOnEdgeAction>(CreateNodeOnEdge);
+            store.RegisterReducer<State, AddControlPointOnEdgeAction>(AddControlPointOnEdgeAction.DefaultReducer);
+            store.RegisterReducer<State, MoveEdgeControlPointAction>(MoveEdgeControlPointAction.DefaultReducer);
+            store.RegisterReducer<State, RemoveEdgeControlPointAction>(RemoveEdgeControlPointAction.DefaultReducer);
+            store.RegisterReducer<State, SetEdgeEditModeAction>(SetEdgeEditModeAction.DefaultReducer);
+            store.RegisterReducer<State, ConvertEdgesToPortalsAction>(ConvertEdgesToPortals);
+            store.RegisterReducer<State, ReorderEdgeAction>(ReorderEdgeAction.DefaultReducer);
         }
 
         static State CreateGraphNodeFromInputPort(State previousState, CreateNodeFromInputPortAction action)
         {
-            var graphModel = (VSGraphModel)previousState.CurrentGraphModel;
-            graphModel.DeleteEdges(action.EdgesToDelete.OfType<IEdgeModel>());
+            var graphModel = previousState.CurrentGraphModel;
+            graphModel.DeleteEdges(action.EdgesToDelete);
 
             var position = action.Position - Vector2.up * k_NodeOffset;
             var elementModels = action.SelectedItem.CreateElements.Invoke(
                 new GraphNodeCreationData(graphModel, position));
 
-            if (elementModels.Length == 0 || !(elementModels[0] is INodeModel selectedNodeModel))
+            if (elementModels.Length == 0 || !(elementModels[0] is IGTFNodeModel selectedNodeModel))
                 return previousState;
 
             var outputPortModel = selectedNodeModel.GetPortFitToConnectTo(action.PortModel);
@@ -49,7 +49,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             {
                 var newEdge = graphModel.CreateEdge(action.PortModel, outputPortModel);
                 if (newEdge != null && previousState.Preferences.GetBool(BoolPref.AutoAlignDraggedEdges))
-                    graphModel.LastChanges?.ModelsToAutoAlign.Add(newEdge);
+                    graphModel.LastChanges?.ElementsToAutoAlign.Add(newEdge);
             }
 
             graphModel.LastChanges?.ChangedElements.Add(action.PortModel.NodeModel);
@@ -59,14 +59,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         static State CreateNodeFromOutputPort(State previousState, CreateNodeFromOutputPortAction action)
         {
-            var graphModel = (VSGraphModel)previousState.CurrentGraphModel;
-            graphModel.DeleteEdges(action.EdgesToDelete.OfType<IEdgeModel>());
+            var graphModel = previousState.CurrentGraphModel;
+            graphModel.DeleteEdges(action.EdgesToDelete);
 
             var position = action.Position - Vector2.up * k_NodeOffset;
             var elementModels = action.SelectedItem.CreateElements.Invoke(
                 new GraphNodeCreationData(graphModel, position));
 
-            if (!elementModels.Any() || !(elementModels[0] is INodeModel selectedNodeModel))
+            if (!elementModels.Any() || !(elementModels[0] is IGTFNodeModel selectedNodeModel))
                 return previousState;
 
             var inputPortModel = selectedNodeModel.GetPortFitToConnectTo(action.PortModel);
@@ -80,7 +80,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             var newEdge = graphModel.CreateEdge(inputPortModel, outputPortModel);
 
             if (newEdge != null && previousState.Preferences.GetBool(BoolPref.AutoAlignDraggedEdges))
-                graphModel.LastChanges?.ModelsToAutoAlign.Add(newEdge);
+                graphModel.LastChanges?.ElementsToAutoAlign.Add(newEdge);
 
             graphModel.LastChanges?.ChangedElements.Add(action.PortModel.NodeModel);
 
@@ -89,11 +89,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         static State CreateNodeOnEdge(State previousState, CreateNodeOnEdgeAction action)
         {
-            var edgeInput = action.EdgeModel.InputPortModel;
-            var edgeOutput = action.EdgeModel.OutputPortModel;
+            var edgeInput = action.EdgeModel.ToPort;
+            var edgeOutput = action.EdgeModel.FromPort;
 
             // Instantiate node
-            var graphModel = (VSGraphModel)previousState.CurrentGraphModel;
+            var graphModel = previousState.CurrentGraphModel;
 
             var position = action.Position - Vector2.up * k_NodeOffset;
 
@@ -102,14 +102,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             var elementModels = action.SelectedItem.CreateElements.Invoke(
                 new GraphNodeCreationData(graphModel, position, guids: guids));
 
-            if (elementModels.Length == 0 || !(elementModels[0] is INodeModel selectedNodeModel))
+            if (elementModels.Length == 0 || !(elementModels[0] is IGTFNodeModel selectedNodeModel))
                 return previousState;
 
             // Delete old edge
             graphModel.DeleteEdge(action.EdgeModel);
 
             // Connect input port
-            var inputPortModel = selectedNodeModel.InputsByDisplayOrder.FirstOrDefault(p => p.PortType == edgeOutput.PortType);
+            var inputPortModel = selectedNodeModel.InputsByDisplayOrder.FirstOrDefault(p => p?.PortType == edgeOutput?.PortType);
 
             if (inputPortModel != null)
                 graphModel.CreateEdge(inputPortModel, edgeOutput);
@@ -125,22 +125,21 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         static State CreateEdge(State previousState, CreateEdgeAction action)
         {
-            var graphModel = (VSGraphModel)previousState.CurrentGraphModel;
+            var graphModel = previousState.CurrentGraphModel;
 
             if (action.EdgeModelsToDelete != null)
-                graphModel.DeleteEdges(action.EdgeModelsToDelete.OfType<IEdgeModel>());
+                graphModel.DeleteEdges(action.EdgeModelsToDelete);
 
-            // PF remove cast
-            IPortModel outputPortModel = action.OutputPortModel as IPortModel;
-            IPortModel inputPortModel = action.InputPortModel as IPortModel;
+            var outputPortModel = action.OutputPortModel;
+            var inputPortModel = action.InputPortModel;
 
             CreateItemizedNode(previousState, graphModel, ref outputPortModel);
             graphModel.CreateEdge(inputPortModel, outputPortModel);
 
             if (action.PortAlignment.HasFlag(CreateEdgeAction.PortAlignmentType.Input))
-                graphModel.LastChanges.ModelsToAutoAlign.Add(inputPortModel.NodeModel);
+                graphModel.LastChanges.ElementsToAutoAlign.Add(inputPortModel.NodeModel);
             if (action.PortAlignment.HasFlag(CreateEdgeAction.PortAlignmentType.Output))
-                graphModel.LastChanges.ModelsToAutoAlign.Add(outputPortModel.NodeModel);
+                graphModel.LastChanges.ElementsToAutoAlign.Add(outputPortModel.NodeModel);
 
             return previousState;
         }
@@ -150,37 +149,36 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             Assert.IsTrue(action.NodeModel.InputsById.Count > 0);
             Assert.IsTrue(action.NodeModel.OutputsById.Count > 0);
 
-            var graphModel = ((VSGraphModel)previousState.CurrentGraphModel);
-            var edgeInput = action.EdgeModel.InputPortModel;
-            var edgeOutput = action.EdgeModel.OutputPortModel;
+            var graphModel = (previousState.CurrentGraphModel);
+            var edgeInput = action.EdgeModel.ToPort;
+            var edgeOutput = action.EdgeModel.FromPort;
             graphModel.DeleteEdge(action.EdgeModel);
-            graphModel.CreateEdge(edgeInput, action.NodeModel.OutputsByDisplayOrder.First(p => p.PortType == edgeInput.PortType));
-            graphModel.CreateEdge(action.NodeModel.InputsByDisplayOrder.First(p => p.PortType == edgeOutput.PortType), edgeOutput);
+            graphModel.CreateEdge(edgeInput, action.NodeModel.OutputsByDisplayOrder.First(p => p?.PortType == edgeInput?.PortType));
+            graphModel.CreateEdge(action.NodeModel.InputsByDisplayOrder.First(p => p?.PortType == edgeOutput?.PortType), edgeOutput);
 
             return previousState;
         }
 
-        static void CreateItemizedNode(State state, VSGraphModel graphModel, ref IPortModel outputPortModel)
+        static void CreateItemizedNode(State state, IGTFGraphModel graphModel, ref IGTFPortModel outputPortModel)
         {
-            ItemizeOptions currentItemizeOptions = state.Preferences.CurrentItemizeOptions;
+            var vsPrefs = state.Preferences as VSPreferences;
+            ItemizeOptions currentItemizeOptions = vsPrefs?.CurrentItemizeOptions ?? ItemizeOptions.Nothing;
 
             // automatically itemize, i.e. duplicate variables as they get connected
             if (!outputPortModel.IsConnected || currentItemizeOptions == ItemizeOptions.Nothing)
                 return;
 
-            INodeModel nodeToConnect = outputPortModel.NodeModel;
+            IGTFNodeModel nodeToConnect = outputPortModel.NodeModel;
 
             bool itemizeContant = currentItemizeOptions.HasFlag(ItemizeOptions.Constants)
                 && nodeToConnect is ConstantNodeModel;
             bool itemizeVariable = currentItemizeOptions.HasFlag(ItemizeOptions.Variables)
                 && (nodeToConnect is VariableNodeModel || nodeToConnect is ThisNodeModel);
-            bool itemizeSystemConstant = currentItemizeOptions.HasFlag(ItemizeOptions.SystemConstants) &&
-                nodeToConnect is SystemConstantNodeModel;
-            if (itemizeContant || itemizeVariable || itemizeSystemConstant)
+            if (itemizeContant || itemizeVariable)
             {
                 Vector2 offset = Vector2.up * k_NodeOffset;
-                nodeToConnect = graphModel.DuplicateNode(outputPortModel.NodeModel, new Dictionary<INodeModel, NodeModel>(), offset);
-                outputPortModel = nodeToConnect.OutputsById[outputPortModel.UniqueId];
+                nodeToConnect = graphModel.DuplicateNode(outputPortModel.NodeModel, new Dictionary<IGTFNodeModel, IGTFNodeModel>(), offset);
+                outputPortModel = nodeToConnect.OutputsById[outputPortModel.UniqueName];
             }
         }
 
@@ -191,7 +189,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         // TODO JOCE: Move to GraphView or something. We should be able to create from edge without a reducer (for tests, for example)
         static State ConvertEdgesToPortals(State previousState, ConvertEdgesToPortalsAction action)
         {
-            var graphModel = (VSGraphModel)previousState.CurrentGraphModel;
+            var graphModel = previousState.CurrentGraphModel;
 
             if (action.EdgeData == null)
                 return previousState;
@@ -203,8 +201,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             Undo.RegisterCompleteObjectUndo((Object)previousState.AssetModel, "Convert edges to portals");
             EditorUtility.SetDirty((Object)previousState.AssetModel);
 
-            var existingPortalEntries = new Dictionary<IPortModel, IEdgePortalEntryModel>();
-            var existingPortalExits = new Dictionary<IPortModel, List<IEdgePortalExitModel>>();
+            var existingPortalEntries = new Dictionary<IGTFPortModel, IGTFEdgePortalEntryModel>();
+            var existingPortalExits = new Dictionary<IGTFPortModel, List<IGTFEdgePortalExitModel>>();
 
             foreach (var edgeModel in edgeData)
                 ConvertEdgeToPortals(edgeModel);
@@ -227,11 +225,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             previousState.MarkForUpdate(UpdateFlags.GraphTopology);
             return previousState;
 
-            void ConvertEdgeToPortals((IEdgeModel edgeModel, Vector2 startPos, Vector2 endPos) data)
+            void ConvertEdgeToPortals((IGTFEdgeModel edgeModel, Vector2 startPos, Vector2 endPos) data)
             {
                 // Only a single portal per output port. Don't recreate if we already created one.
-                var outputPortModel = data.edgeModel.OutputPortModel;
-                if (!existingPortalEntries.TryGetValue(outputPortModel, out var portalEntry))
+                var outputPortModel = data.edgeModel.FromPort;
+                IGTFEdgePortalEntryModel portalEntry = null;
+                if (outputPortModel != null && !existingPortalEntries.TryGetValue(data.edgeModel.FromPort, out portalEntry))
                 {
                     if (outputPortModel.PortType == PortType.Execution)
                         portalEntry = graphModel.CreateNode<ExecutionEdgePortalEntryModel>();
@@ -251,9 +250,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                         portalName = constantNodeModel.Type.FriendlyName();
                     else
                     {
-                        portalName = nodeModel.Title;
-                        if (!string.IsNullOrEmpty(outputPortModel.Name))
-                            portalName += " - " + outputPortModel.Name;
+                        portalName = (nodeModel as IHasTitle)?.Title ?? "";
+                        var portName = (outputPortModel as IHasTitle)?.Title ?? "";
+                        if (!string.IsNullOrEmpty(portName))
+                            portalName += " - " + portName;
                     }
 
                     ((EdgePortalModel)portalEntry).DeclarationModel = graphModel.CreateGraphPortalDeclaration(portalName);
@@ -262,15 +262,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                 }
 
                 // We can have multiple portals on input ports however
-                var inputPortModel = data.edgeModel.InputPortModel;
-                if (!existingPortalExits.TryGetValue(inputPortModel, out var portalExits))
+                if (!existingPortalExits.TryGetValue(data.edgeModel.ToPort, out var portalExits))
                 {
-                    portalExits = new List<IEdgePortalExitModel>();
-                    existingPortalExits[inputPortModel] = portalExits;
+                    portalExits = new List<IGTFEdgePortalExitModel>();
+                    existingPortalExits[data.edgeModel.ToPort] = portalExits;
                 }
 
-                IEdgePortalExitModel portalExit;
-                if (inputPortModel.PortType == PortType.Execution)
+                IGTFEdgePortalExitModel portalExit;
+                var inputPortModel = data.edgeModel.ToPort;
+                if (inputPortModel?.PortType == PortType.Execution)
                     portalExit = graphModel.CreateNode<ExecutionEdgePortalExitModel>();
                 else
                     portalExit = graphModel.CreateNode<DataEdgePortalExitModel>();
@@ -279,13 +279,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
                 portalExit.Position = data.endPos + k_ExitPortalBaseOffset;
                 {
-                    var nodeModel = inputPortModel.NodeModel;
+                    var nodeModel = data.edgeModel.ToPort.NodeModel;
                     // y offset based on port order. hurgh.
                     var idx = nodeModel.InputsByDisplayOrder.IndexOf(inputPortModel);
                     portalExit.Position += Vector2.down * (k_PortalHeight * idx + 16); // Fudgy.
                 }
 
-                ((EdgePortalModel)portalExit).DeclarationModel = portalEntry.DeclarationModel;
+                ((EdgePortalModel)portalExit).DeclarationModel = portalEntry?.DeclarationModel;
 
                 graphModel.CreateEdge(inputPortModel, portalExit.OutputPort);
             }

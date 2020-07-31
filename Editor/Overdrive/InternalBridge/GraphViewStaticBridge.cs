@@ -185,6 +185,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
             return ve.isLayoutManual;
         }
 
+        // Do not use this function in new code. It is here to support old code.
+        // Set element dimensions using styles, with position: absolute.
         public static void SetLayout(this VisualElement ve, Rect layout)
         {
             ve.layout = layout;
@@ -332,6 +334,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
 
             return guiView.screenPosition.position;
         }
+
+        public static T MandatoryQ<T>(this VisualElement e, string name = null, string className = null) where T : VisualElement
+        {
+            return UQueryExtensions.MandatoryQ<T>(e, name, className);
+        }
+
+        public static VisualElement MandatoryQ(this VisualElement e, string name = null, string className = null)
+        {
+            return UQueryExtensions.MandatoryQ(e, name, className);
+        }
     }
 
     public abstract class VisualElementBridge : VisualElement
@@ -396,21 +408,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
             public const string FrameSelected = UnityEngine.EventCommandNames.FrameSelected;
         }
 
-        protected void UpdateDrawChainRegistration(bool register)
-        {
-            var p = panel as BaseVisualElementPanel;
-            if (p != null)
-            {
-                UIRRepaintUpdater updater = p.GetUpdater(VisualTreeUpdatePhase.Repaint) as UIRRepaintUpdater;
-                if (updater != null)
-                {
-                    if (register)
-                        updater.BeforeDrawChain += OnBeforeDrawChain;
-                    else updater.BeforeDrawChain -= OnBeforeDrawChain;
-                }
-            }
-        }
-
         static readonly int s_EditorPixelsPerPointId = Shader.PropertyToID("_EditorPixelsPerPoint");
         static readonly int s_GraphViewScaleId = Shader.PropertyToID("_GraphViewScale");
 
@@ -442,8 +439,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
 
         protected void OnEnterPanel()
         {
-            var p = panel as BaseVisualElementPanel;
-            if (p != null)
+            if (panel is BaseVisualElementPanel p)
             {
                 if (graphViewShader == null)
 #if UNITY_2020_1_OR_NEWER
@@ -457,11 +453,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
                 if (ownerView != null && ownerView.actualView != null)
                     ownerView.actualView.antiAliasing = 4;
 
+#if UNITY_2020_1_OR_NEWER
+                p.updateMaterial += OnUpdateMaterial;
+                p.beforeUpdate += OnBeforeUpdate;
+#else
                 // Changing the updaters is assumed not to be a normal use case, except maybe for Unity debugging
                 // purposes. For that reason, we don't track updater changes.
                 Panel.BeforeUpdaterChange += OnBeforeUpdaterChange;
                 Panel.AfterUpdaterChange += OnAfterUpdaterChange;
                 UpdateDrawChainRegistration(true);
+#endif
             }
 
             // Force DefaultCommonDark.uss since GraphView only has a dark style at the moment
@@ -470,14 +471,36 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
 
         protected void OnLeavePanel()
         {
+#if UNITY_2020_1_OR_NEWER
+            if (panel is BaseVisualElementPanel p)
+            {
+                p.beforeUpdate -= OnBeforeUpdate;
+                p.updateMaterial -= OnUpdateMaterial;
+            }
+#else
             // ReSharper disable once DelegateSubtraction
             Panel.BeforeUpdaterChange -= OnBeforeUpdaterChange;
 
             // ReSharper disable once DelegateSubtraction
             Panel.AfterUpdaterChange -= OnAfterUpdaterChange;
             UpdateDrawChainRegistration(false);
+#endif
         }
 
+#if UNITY_2020_1_OR_NEWER
+        void OnBeforeUpdate(IPanel panel)
+        {
+            redrawn?.Invoke();
+        }
+
+        void OnUpdateMaterial(Material mat)
+        {
+            // Set global graph view shader properties (used by UIR)
+            mat.SetFloat(s_EditorPixelsPerPointId, EditorGUIUtility.pixelsPerPoint);
+            mat.SetFloat(s_GraphViewScaleId, scale);
+        }
+
+#else
         void OnBeforeUpdaterChange()
         {
             UpdateDrawChainRegistration(false);
@@ -487,6 +510,20 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
         {
             UpdateDrawChainRegistration(true);
         }
+
+        void UpdateDrawChainRegistration(bool register)
+        {
+            var p = panel as BaseVisualElementPanel;
+            UIRRepaintUpdater updater = p?.GetUpdater(VisualTreeUpdatePhase.Repaint) as UIRRepaintUpdater;
+            if (updater != null)
+            {
+                if (register)
+                    updater.BeforeDrawChain += OnBeforeDrawChain;
+                else updater.BeforeDrawChain -= OnBeforeDrawChain;
+            }
+        }
+
+#endif
     }
 
     public abstract class GraphViewToolWindowBridge : EditorWindow

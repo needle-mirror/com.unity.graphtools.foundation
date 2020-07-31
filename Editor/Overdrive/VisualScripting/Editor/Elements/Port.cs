@@ -10,16 +10,12 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 {
-    public class Port : GraphElements.Port, IDropTarget, IBadgeContainer
+    public class Port : GraphElements.Port, IDropTarget
     {
         const string k_DropHighlightClass = "drop-highlighted";
 
         VseGraphView VseGraphView => GraphView as VseGraphView;
-        public new Store Store => base.Store as Store;
-        public new PortModel PortModel => base.PortModel as PortModel;
-
-        public IconBadge ErrorBadge { get; set; }
-        public ValueBadge ValueBadge { get; set; }
+        new PortModel PortModel => base.PortModel as PortModel;
 
         /// <summary>
         /// Used to highlight the port when it is triggered during tracing
@@ -29,7 +25,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             set => EnableInClassList("execution-active", value);
         }
 
-        static void OnDropOutsideCallback(IStore store, Vector2 pos, GraphElements.Edge edge)
+        static void OnDropOutsideCallback(Overdrive.Store store, Vector2 pos, Edge edge)
         {
             VseGraphView graphView = edge.GetFirstAncestorOfType<VseGraphView>();
             Vector2 localPos = graphView.contentViewContainer.WorldToLocal(pos);
@@ -37,10 +33,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             List<IGTFEdgeModel> edgesToDelete = EdgeConnectorListener.GetDropEdgeModelsToDelete(edge.EdgeModel);
 
             // when grabbing an existing edge's end, the edgeModel should be deleted
-            if (edge.EdgeModel != null)
+            if (edge.EdgeModel != null && !(edge.EdgeModel is GhostEdgeModel))
                 edgesToDelete.Add(edge.EdgeModel);
 
-            IPortModel existingPortModel;
+            IGTFPortModel existingPortModel;
             // warning: when dragging the end of an existing edge, both ports are non null.
             if (edge.Input != null && edge.Output != null)
             {
@@ -48,14 +44,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                 float distanceToInput = Vector2.Distance(edge.To, pos);
                 // note: if the user was able to stack perfectly both ports, we'd be in trouble
                 if (distanceToOutput < distanceToInput)
-                    existingPortModel = edge.Input as IPortModel;
+                    existingPortModel = edge.Input;
                 else
-                    existingPortModel = edge.Output as IPortModel;
+                    existingPortModel = edge.Output;
             }
             else
             {
-                var existingPort = (edge.Input ?? edge.Output);
-                existingPortModel = existingPort as IPortModel;
+                existingPortModel = edge.Input ?? edge.Output;
             }
 
             ((Store)store)?.GetState().CurrentGraphModel?.Stencil.CreateNodesFromPort((Store)store, existingPortModel, localPos, pos, edgesToDelete);
@@ -132,9 +127,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         bool IsTokenToDrop(ISelectableGraphElement selectable)
         {
             return selectable is Token token
-                && token.GraphElementModel is IVariableModel varModel
+                && token.Model is IGTFVariableNodeModel varModel
                 && !varModel.OutputPort.ConnectionPortModels.Any(p => p == PortModel)
-                && !ReferenceEquals(PortModel.NodeModel, token.GraphElementModel);
+                && !ReferenceEquals(PortModel.NodeModel, token.Model);
         }
 
         public bool DragUpdated(DragUpdatedEvent evt, IEnumerable<ISelectableGraphElement> selection, IDropTarget dropTarget, ISelection dragSource)
@@ -159,21 +154,21 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             {
                 Token token = ((Token)selectionList[0]);
                 token.SetMovable(true);
-                Store.Dispatch(new CreateEdgeAction(PortModel, ((IVariableModel)token.GraphElementModel).OutputPort as IGTFPortModel, edgesToDelete.Cast<IGTFEdgeModel>(), CreateEdgeAction.PortAlignmentType.Input));
+                Store.Dispatch(new CreateEdgeAction(PortModel, ((IGTFVariableNodeModel)token.Model).OutputPort, edgesToDelete, CreateEdgeAction.PortAlignmentType.Input));
                 return true;
             }
 
-            List<Tuple<IVariableDeclarationModel, Vector2>> variablesToCreate = DragAndDropHelper.ExtractVariablesFromDroppedElements(dropElements, VseGraphView, evt.mousePosition);
+            var variablesToCreate = DragAndDropHelper.ExtractVariablesFromDroppedElements(dropElements, VseGraphView, evt.mousePosition);
 
             PortType type = PortModel.PortType;
-            if (type != PortType.Data && type != PortType.Instance) // do not connect loop/exec ports to variables
+            if (type != PortType.Data) // do not connect loop/exec ports to variables
             {
                 return VseGraphView.DragPerform(evt, selectionList, dropTarget, dragSource);
             }
 
-            IVariableDeclarationModel varModelToCreate = variablesToCreate.Single().Item1;
+            IGTFVariableDeclarationModel varModelToCreate = variablesToCreate.Single().Item1;
 
-            Store.Dispatch(new CreateVariableNodesAction(varModelToCreate, evt.mousePosition, edgesToDelete.Cast<IGTFEdgeModel>(), PortModel, autoAlign: true));
+            Store.Dispatch(new CreateVariableNodesAction(varModelToCreate, evt.mousePosition, edgesToDelete, PortModel, autoAlign: true));
 
             VseGraphView.ClearPlaceholdersAfterDrag();
 

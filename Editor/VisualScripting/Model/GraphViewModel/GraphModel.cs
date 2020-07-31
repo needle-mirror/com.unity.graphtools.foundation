@@ -242,6 +242,9 @@ namespace UnityEditor.VisualScripting.GraphViewModel
 
         public virtual IEdgeModel CreateEdge(IPortModel inputPort, IPortModel outputPort)
         {
+            Undo.RegisterCompleteObjectUndo(m_AssetModel, "Create Edge");
+            EditorUtility.SetDirty(m_AssetModel);
+
             var existing = EdgesConnectedToPorts(inputPort, outputPort);
             if (existing != null)
                 return existing;
@@ -288,6 +291,8 @@ namespace UnityEditor.VisualScripting.GraphViewModel
         public void DeleteEdge(IEdgeModel edgeModel)
         {
             Undo.RegisterCompleteObjectUndo(m_AssetModel, "Delete Edge");
+            EditorUtility.SetDirty(m_AssetModel);
+
             var model = (EdgeModel)edgeModel;
 
             edgeModel.InputPortModel?.NodeModel.OnDisconnection(edgeModel.InputPortModel, edgeModel.OutputPortModel);
@@ -334,6 +339,8 @@ namespace UnityEditor.VisualScripting.GraphViewModel
             var stickyNodeModel = (StickyNoteModel)model;
 
             Undo.RegisterCompleteObjectUndo(m_AssetModel, "Add Sticky Note");
+            EditorUtility.SetDirty(m_AssetModel);
+
             LastChanges?.ChangedElements.Add(stickyNodeModel);
             stickyNodeModel.GraphModel = this;
             m_StickyNoteModels.Add(stickyNodeModel);
@@ -342,6 +349,8 @@ namespace UnityEditor.VisualScripting.GraphViewModel
         void DeleteStickyNote(IStickyNoteModel stickyNoteModel)
         {
             Undo.RegisterCompleteObjectUndo(m_AssetModel, "Delete Sticky Note");
+            EditorUtility.SetDirty(m_AssetModel);
+
             var model = (StickyNoteModel)stickyNoteModel;
 
             m_StickyNoteModels.Remove(model);

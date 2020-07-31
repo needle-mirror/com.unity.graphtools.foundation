@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.Searcher;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
@@ -53,52 +54,52 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch
             GraphView = new SearcherGraphView(new Store(new State(new VSEditorDataModel(null))));
         }
 
-        public static void ShowInputToGraphNodes(State state, IPortModel portModel, Vector2 position,
+        public static void ShowInputToGraphNodes(Overdrive.State state, IGTFPortModel portModel, Vector2 position,
             Action<GraphNodeModelSearcherItem> callback)
         {
             var stencil = state.CurrentGraphModel.Stencil;
             var filter = stencil.GetSearcherFilterProvider()?.GetInputToGraphSearcherFilter(portModel);
-            var adapter = stencil.GetSearcherAdapter(state.CurrentGraphModel, "Add an input node", portModel);
+            var adapter = stencil.GetSearcherAdapter(state.CurrentGraphModel as IGraphModel, "Add an input node", portModel);
             var dbProvider = stencil.GetSearcherDatabaseProvider();
-            var dbs = dbProvider.GetGraphElementsSearcherDatabases()
-                .Concat(dbProvider.GetGraphVariablesSearcherDatabases(state.CurrentGraphModel))
+            var dbs = dbProvider.GetGraphElementsSearcherDatabases(state.CurrentGraphModel as IGraphModel)
+                .Concat(dbProvider.GetGraphVariablesSearcherDatabases(state.CurrentGraphModel as IGraphModel))
                 .Concat(dbProvider.GetDynamicSearcherDatabases(portModel))
                 .ToList();
 
             PromptSearcher(dbs, filter, adapter, position, callback);
         }
 
-        public static void ShowOutputToGraphNodes(State state, IPortModel portModel, Vector2 position,
+        public static void ShowOutputToGraphNodes(Overdrive.State state, IGTFPortModel portModel, Vector2 position,
             Action<GraphNodeModelSearcherItem> callback)
         {
             var stencil = state.CurrentGraphModel.Stencil;
             var filter = stencil.GetSearcherFilterProvider()?.GetOutputToGraphSearcherFilter(portModel);
-            var adapter = stencil.GetSearcherAdapter(state.CurrentGraphModel, $"Choose an action for {portModel.DataTypeHandle.GetMetadata(stencil).FriendlyName}", portModel);
+            var adapter = stencil.GetSearcherAdapter(state.CurrentGraphModel as IGraphModel, $"Choose an action for {portModel.DataTypeHandle.GetMetadata(stencil).FriendlyName}", portModel);
             var dbProvider = stencil.GetSearcherDatabaseProvider();
-            var dbs = dbProvider.GetGraphElementsSearcherDatabases().ToList();
+            var dbs = dbProvider.GetGraphElementsSearcherDatabases(state.CurrentGraphModel as IGraphModel).ToList();
 
             PromptSearcher(dbs, filter, adapter, position, callback);
         }
 
-        public static void ShowEdgeNodes(State state, IEdgeModel edgeModel, Vector2 position,
+        public static void ShowEdgeNodes(Overdrive.State state, IGTFEdgeModel edgeModel, Vector2 position,
             Action<GraphNodeModelSearcherItem> callback)
         {
             var stencil = state.CurrentGraphModel.Stencil;
             var filter = stencil.GetSearcherFilterProvider()?.GetEdgeSearcherFilter(edgeModel);
-            var adapter = stencil.GetSearcherAdapter(state.CurrentGraphModel, "Insert Node");
+            var adapter = stencil.GetSearcherAdapter(state.CurrentGraphModel as IGraphModel, "Insert Node");
             var dbProvider = stencil.GetSearcherDatabaseProvider();
-            var dbs = dbProvider.GetGraphElementsSearcherDatabases().ToList();
+            var dbs = dbProvider.GetGraphElementsSearcherDatabases(state.CurrentGraphModel as IGraphModel).ToList();
 
             PromptSearcher(dbs, filter, adapter, position, callback);
         }
 
-        public static void ShowGraphNodes(State state, Vector2 position, Action<GraphNodeModelSearcherItem> callback)
+        public static void ShowGraphNodes(Overdrive.State state, Vector2 position, Action<GraphNodeModelSearcherItem> callback)
         {
             var stencil = state.CurrentGraphModel.Stencil;
             var filter = stencil.GetSearcherFilterProvider()?.GetGraphSearcherFilter();
-            var adapter = stencil.GetSearcherAdapter(state.CurrentGraphModel, "Add a graph node");
+            var adapter = stencil.GetSearcherAdapter(state.CurrentGraphModel as IGraphModel, "Add a graph node");
             var dbProvider = stencil.GetSearcherDatabaseProvider();
-            var dbs = dbProvider.GetGraphElementsSearcherDatabases()
+            var dbs = dbProvider.GetGraphElementsSearcherDatabases(state.CurrentGraphModel as IGraphModel)
                 .Concat(dbProvider.GetDynamicSearcherDatabases(null))
                 .ToList();
 
@@ -140,7 +141,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch
             return parent;
         }
 
-        static void ApplyDatabasesFilter<T>(IEnumerable<SearcherDatabase> databases, SearcherFilter filter)
+        public static void ApplyDatabasesFilter<T>(IEnumerable<SearcherDatabase> databases, SearcherFilter filter)
             where T : ISearcherItemDataProvider
         {
             foreach (var database in databases)
@@ -176,14 +177,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch
 
         internal static void FindInGraph(
             EditorWindow host,
-            VSGraphModel graph,
+            IGTFGraphModel graph,
             Action<FindInGraphAdapter.FindSearcherItem> highlightDelegate,
             Action<FindInGraphAdapter.FindSearcherItem> selectionDelegate
         )
         {
-            var items = graph.GetAllNodes()
-                .Where(x => !string.IsNullOrEmpty(x.Title))
-                .Select(MakeFindItems)
+            var items = graph.NodeModels
+                .Where(x => x is IHasTitle titled && !string.IsNullOrEmpty(titled.Title))
+                .Select(x => MakeFindItems(x, (x as IHasTitle)?.Title))
                 .ToList();
             var database = SearcherDatabase.Create(items, "", false);
             var searcher = new Searcher.Searcher(database, new FindInGraphAdapter(highlightDelegate));
@@ -268,23 +269,20 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch
             }, position, null);
         }
 
-        static SearcherItem MakeFindItems(INodeModel node)
+        static SearcherItem MakeFindItems(IGTFNodeModel node, string title)
         {
-            List<SearcherItem> children = null;
-            string title = node.Title;
-
             switch (node)
             {
                 // TODO virtual property in NodeModel formatting what's displayed in the find window
-                case IConstantNodeModel _:
+                case ConstantNodeModel cnm:
                 {
-                    var nodeTitle = node is StringConstantModel ? $"\"{node.Title}\"" : node.Title;
-                    title = $"Const {((ConstantNodeModel)node).Type.Name} {nodeTitle}";
+                    var nodeTitle = cnm.Value is StringConstant ? $"\"{title}\"" : title;
+                    title = $"Const {cnm.Type.Name} {nodeTitle}";
                     break;
                 }
             }
 
-            return new FindInGraphAdapter.FindSearcherItem(node, title, children: children);
+            return new FindInGraphAdapter.FindSearcherItem(node, title);
         }
     }
 }

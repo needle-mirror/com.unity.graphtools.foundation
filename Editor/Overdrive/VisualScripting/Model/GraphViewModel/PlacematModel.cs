@@ -9,7 +9,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
 {
     [Serializable]
     [MovedFrom(false, "UnityEditor.VisualScripting.GraphViewModel", "Unity.GraphTools.Foundation.Overdrive.Editor")]
-    public class PlacematModel : IPlacematModel, IGTFPlacematModel
+    public class PlacematModel : IGTFPlacematModel, IGTFGraphElementModel, ISerializationCallbackReceiver, IGuidUpdate
     {
         public static readonly Color k_DefaultColor = new Color(0.15f, 0.19f, 0.19f);
 
@@ -36,11 +36,70 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
         }
 
         [SerializeField]
-        string m_Id = Guid.NewGuid().ToString();
+        SerializableGUID m_Guid;
+
+        public GUID Guid
+        {
+            get
+            {
+                if (m_Guid.GUID.Empty())
+                    AssignNewGuid();
+                return m_Guid;
+            }
+        }
 
         public void AssignNewGuid()
         {
-            m_Id = Guid.NewGuid().ToString();
+            m_Guid = GUID.Generate();
+        }
+
+        void IGuidUpdate.AssignGuid(string guidString)
+        {
+            m_Guid = new GUID(guidString);
+            if (m_Guid.GUID.Empty())
+                AssignNewGuid();
+        }
+
+        [SerializeField, Obsolete]
+        string m_Id = "";
+
+        public void OnBeforeSerialize()
+        {
+        }
+
+        public void OnAfterDeserialize()
+        {
+            if (m_Guid.GUID.Empty())
+            {
+#pragma warning disable 612
+                if (!String.IsNullOrEmpty(m_Id))
+                {
+                    (GraphModel as GraphModel)?.AddGuidToUpdate(this, m_Id);
+                }
+#pragma warning restore 612
+            }
+        }
+
+        internal void UpdateHiddenGuids(Dictionary<string, IGuidUpdate> mapping)
+        {
+            List<string> updatedHiddenElementGuids = new List<string>();
+            bool updated = false;
+
+            foreach (var hiddenGuid in HiddenElementsGuid)
+            {
+                if (mapping.TryGetValue(hiddenGuid, out var element) && element is IGTFGraphElementModel graphElementModel)
+                {
+                    updated = true;
+                    updatedHiddenElementGuids.Add(graphElementModel.Guid.ToString());
+                }
+                else
+                {
+                    updatedHiddenElementGuids.Add(hiddenGuid);
+                }
+            }
+
+            if (updated)
+                HiddenElementsGuid = updatedHiddenElementGuids;
         }
 
         [SerializeField]
@@ -95,34 +154,34 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
                         m_CachedHiddenElementModels = new List<IGTFGraphElementModel>();
                         foreach (var elementModelGuid in HiddenElementsGuid)
                         {
-                            foreach (var node in VSGraphModel.NodeModels)
+                            foreach (var node in GraphModel.NodeModels)
                             {
-                                if (node.GetId() == elementModelGuid)
+                                if (node.Guid.ToString() == elementModelGuid)
                                 {
-                                    m_CachedHiddenElementModels.Add(node as IGTFGraphElementModel);
+                                    m_CachedHiddenElementModels.Add(node);
                                 }
                             }
 
-                            foreach (var sticky in VSGraphModel.StickyNoteModels)
+                            foreach (var sticky in GraphModel.StickyNoteModels)
                             {
-                                if (sticky.GetId() == elementModelGuid)
+                                if (sticky.Guid.ToString() == elementModelGuid)
                                 {
-                                    m_CachedHiddenElementModels.Add(sticky as IGTFGraphElementModel);
+                                    m_CachedHiddenElementModels.Add(sticky);
                                 }
                             }
 
-                            foreach (var placemat in VSGraphModel.PlacematModels)
+                            foreach (var placemat in GraphModel.PlacematModels)
                             {
-                                if (placemat.GetId() == elementModelGuid)
+                                if (placemat.Guid.ToString() == elementModelGuid)
                                 {
-                                    m_CachedHiddenElementModels.Add(placemat as IGTFGraphElementModel);
+                                    m_CachedHiddenElementModels.Add(placemat);
                                 }
                             }
                         }
                     }
                 }
 
-                return m_CachedHiddenElementModels;
+                return m_CachedHiddenElementModels ?? Enumerable.Empty<IGTFGraphElementModel>();
             }
             set
             {
@@ -132,7 +191,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
                 }
                 else
                 {
-                    m_HiddenElements = new List<string>(value.OfType<IGraphElementModelWithGuid>().Select(e => e.GetId()));
+                    m_HiddenElements = new List<string>(value.Select(e => e.Guid.ToString()));
                 }
 
                 m_CachedHiddenElementModels = null;
@@ -153,24 +212,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
 
         [SerializeField]
         GraphAssetModel m_AssetModel;
-        public ScriptableObject SerializableAsset => (ScriptableObject)AssetModel;
-        public IGraphAssetModel AssetModel => m_AssetModel;
-        public IGraphModel VSGraphModel
+        public IGTFGraphAssetModel AssetModel => m_AssetModel;
+        public IGTFGraphModel GraphModel
         {
             get => m_AssetModel.GraphModel;
             set => m_AssetModel = value?.AssetModel as GraphAssetModel;
-        }
-
-        public IGTFGraphModel GraphModel => VSGraphModel as IGTFGraphModel;
-
-        public string GetId()
-        {
-            return m_Id;
-        }
-
-        public void UndoRedoPerformed()  // TODO needed?
-        {
-            throw new NotImplementedException();
         }
 
         public void Move(Vector2 delta)

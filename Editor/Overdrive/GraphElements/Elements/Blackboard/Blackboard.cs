@@ -1,40 +1,36 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 {
-    public class Blackboard : GraphElement, ISelection, IMovableGraphElement
+    public class Blackboard : GraphElement, ISelection
     {
-        private VisualElement m_MainContainer;
-        private VisualElement m_Root;
-        private Label m_TitleLabel;
-        private Label m_SubTitleLabel;
-        private ScrollView m_ScrollView;
-        private VisualElement m_ContentContainer;
-        private VisualElement m_HeaderItem;
-        private Button m_AddButton;
-        private bool m_Scrollable = true;
+        protected const string k_ClassLibraryTitle = "Blackboard";
 
-        private Dragger m_Dragger;
-        private GraphView m_GraphView;
-        public GraphView graphView
+        public delegate void RebuildCallback(RebuildMode rebuildMode);
+
+        public enum RebuildMode
         {
-            get
-            {
-                if (!windowed && m_GraphView == null)
-                    m_GraphView = GetFirstAncestorOfType<GraphView>();
-                return m_GraphView;
-            }
-
-            set
-            {
-                if (!windowed)
-                    return;
-                m_GraphView = value;
-            }
+            BlackboardOnly,
+            BlackboardAndGraphView
         }
+
+        VisualElement m_MainContainer;
+        VisualElement m_Root;
+        Label m_TitleLabel;
+        Label m_SubTitleLabel;
+        ScrollView m_ScrollView;
+        VisualElement m_ContentContainer;
+        VisualElement m_HeaderItem;
+        Button m_AddButton;
+        bool m_Scrollable = true;
+
+        Dragger m_Dragger;
 
         internal static readonly string StyleSheetPath = "Blackboard.uss";
 
@@ -47,7 +43,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         {
             get
             {
-                return graphView?.selection;
+                return GraphView?.selection;
             }
         }
 
@@ -64,7 +60,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         bool m_Windowed;
         public bool windowed
         {
-            get { return m_Windowed; }
             set
             {
                 if (m_Windowed == value) return;
@@ -139,9 +134,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             }
         }
 
-        public Blackboard(GraphView associatedGraphView = null)
+        public Blackboard(Store store, GraphView associatedGraphView)
         {
-            var tpl = GraphElementsHelper.LoadUXML("Blackboard.uxml");
+            Store = store;
+            GraphView = associatedGraphView;
+
+            var tpl = GraphElementHelper.LoadUXML("Blackboard.uxml");
             this.AddStylesheet(StyleSheetPath);
 
             m_MainContainer = tpl.Instantiate();
@@ -153,11 +151,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             m_HeaderItem.AddToClassList("blackboardHeader");
 
             m_AddButton = m_MainContainer.Q(name: "addButton") as Button;
-            m_AddButton.clickable.clicked += () => {
-                if (addItemRequested != null)
-                {
-                    addItemRequested(this);
-                }
+            m_AddButton.clickable.clicked += () =>
+            {
+                addItemRequested?.Invoke(this);
             };
 
             m_TitleLabel = m_MainContainer.Q<Label>(name: "titleLabel");
@@ -203,39 +199,176 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             RegisterCallback<ValidateCommandEvent>(OnValidateCommand);
             RegisterCallback<ExecuteCommandEvent>(OnExecuteCommand);
 
-            m_GraphView = associatedGraphView;
+            RegisterCallback<AttachToPanelEvent>(OnAttachToPanel);
+            RegisterCallback<DetachFromPanelEvent>(OnDetachFromPanel);
+
             focusable = true;
         }
 
         public virtual void AddToSelection(ISelectableGraphElement selectable)
         {
-            graphView?.AddToSelection(selectable);
+            GraphView?.AddToSelection(selectable);
         }
 
         public virtual void RemoveFromSelection(ISelectableGraphElement selectable)
         {
-            graphView?.RemoveFromSelection(selectable);
+            GraphView?.RemoveFromSelection(selectable);
         }
 
         public virtual void ClearSelection()
         {
-            graphView?.ClearSelection();
+            GraphView?.ClearSelection();
         }
 
-        private void OnValidateCommand(ValidateCommandEvent evt)
+        public void RestoreSelectionForElement(GraphElement element)
         {
-            graphView?.OnValidateCommand(evt);
+            var editorDataModel = Store.GetState().EditorDataModel;
+
+            // Select upon creation...
+            if (element is IGraphElement hasElementGraphModel &&
+                (editorDataModel?.ShouldSelectElementUponCreation(hasElementGraphModel) ?? false))
+                element.Select(GraphView, true);
+
+            // ...or regular selection
+            // TODO: This bypasses the problems with selection in GraphView when selection contains
+            // non layered elements (like Blackboard fields for example)
+            {
+                if (!GraphView.PersistentSelectionContainsElement(element) ||
+                    GraphView.selection.Contains(element) && element.selected)
+                    return;
+
+                element.selected = true;
+                if (!GraphView.selection.Contains(element))
+                    selection.Add(element);
+                element.OnSelected();
+
+                // To ensure that the selected GraphElement gets unselected if it is removed from the GraphView.
+                element.RegisterCallback<DetachFromPanelEvent>(OnSelectedElementDetachedFromPanel);
+
+                element.MarkDirtyRepaint();
+            }
         }
 
-        private void OnExecuteCommand(ExecuteCommandEvent evt)
+        void OnSelectedElementDetachedFromPanel(DetachFromPanelEvent evt)
         {
-            graphView?.OnExecuteCommand(evt);
+            var selectable = evt.target as ISelectableGraphElement;
+            if (!(selectable is GraphElement graphElement))
+                return;
+
+            graphElement.selected = false;
+            selection.Remove(selectable);
+            graphElement.OnUnselected();
+            graphElement.UnregisterCallback<DetachFromPanelEvent>(OnSelectedElementDetachedFromPanel);
+            graphElement.MarkDirtyRepaint();
         }
 
-        public virtual void UpdatePinning()
+        void OnValidateCommand(ValidateCommandEvent evt)
         {
+            GraphView?.OnValidateCommand(evt);
         }
 
-        public virtual bool IsMovable => false;
+        void OnExecuteCommand(ExecuteCommandEvent evt)
+        {
+            GraphView?.OnExecuteCommand(evt);
+        }
+
+        public List<BlackboardSection> Sections { get; private set; }
+        public List<IHighlightable> GraphVariables { get; } = new List<IHighlightable>();
+
+        public void ClearContents()
+        {
+            if (Sections != null)
+            {
+                foreach (var section in Sections)
+                {
+                    section.Clear();
+                }
+            }
+
+            GraphVariables.Clear();
+
+            IGTFGraphModel currentGraphModel = null;
+            if (!(Store.GetState().AssetModel as ScriptableObject))
+            {
+                title = k_ClassLibraryTitle;
+                subTitle = "";
+            }
+            else
+            {
+                currentGraphModel = Store.GetState().CurrentGraphModel;
+                title = currentGraphModel.FriendlyScriptName;
+                subTitle = currentGraphModel.Stencil?.GetBlackboardProvider().GetSubTitle();
+            }
+
+            var blackboardProvider = currentGraphModel?.Stencil?.GetBlackboardProvider();
+            if (m_AddButton != null)
+                if (blackboardProvider == null || blackboardProvider.CanAddItems == false)
+                    m_AddButton.style.visibility = Visibility.Hidden;
+        }
+
+        IBlackboardProvider m_LastProvider;
+
+        public void Rebuild(RebuildMode rebuildMode)
+        {
+            IBlackboardProvider blackboardProvider = Store.GetState().CurrentGraphModel.Stencil?.GetBlackboardProvider();
+            if (Sections == null || m_LastProvider != blackboardProvider)
+            {
+                m_LastProvider = blackboardProvider;
+                ClearContents();
+                Clear();
+                Sections = blackboardProvider?.CreateSections().ToList();
+                Sections?.ForEach(Add);
+            }
+
+            if (rebuildMode == RebuildMode.BlackboardAndGraphView)
+                Store.Dispatch(new RefreshUIAction(UpdateFlags.GraphTopology));
+            else
+                RebuildBlackboard();
+        }
+
+        protected virtual void RebuildBlackboard()
+        {
+            var currentGraphModel = Store.GetState().CurrentGraphModel;
+            title = currentGraphModel.FriendlyScriptName;
+
+            subTitle = currentGraphModel.Stencil?.GetBlackboardProvider()?.GetSubTitle();
+
+            var blackboardProvider = currentGraphModel.Stencil?.GetBlackboardProvider();
+            if (m_AddButton != null)
+                if (blackboardProvider == null || !blackboardProvider.CanAddItems)
+                    m_AddButton.style.visibility = Visibility.Hidden;
+                else
+                    m_AddButton.style.visibility = StyleKeyword.Null;
+
+            RebuildSections();
+
+            GraphView.HighlightGraphElements();
+        }
+
+        protected void RebuildSections()
+        {
+            if (Sections != null)
+            {
+                var currentGraphModel = Store.GetState().CurrentGraphModel;
+                var blackboardProvider = currentGraphModel.Stencil.GetBlackboardProvider();
+                blackboardProvider.RebuildSections(this);
+            }
+        }
+
+        void OnAttachToPanel(AttachToPanelEvent evt)
+        {
+            RegisterCallback<KeyDownEvent>(DisplayAppropriateSearcher);
+        }
+
+        void OnDetachFromPanel(DetachFromPanelEvent evt)
+        {
+            UnregisterCallback<KeyDownEvent>(DisplayAppropriateSearcher);
+        }
+
+        void DisplayAppropriateSearcher(KeyDownEvent e)
+        {
+            if (e.keyCode == KeyCode.Space)
+                m_LastProvider.DisplayAppropriateSearcher(e.originalMousePosition, this);
+        }
     }
 }

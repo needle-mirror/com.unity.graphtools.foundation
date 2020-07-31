@@ -155,7 +155,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                     if (canStartDrag && m_DragAndDropDelay.CanStartDrag(e.localMousePosition))
                     {
                         DragAndDrop.PrepareStartDrag();
-                        DragAndDrop.objectReferences = new UnityEngine.Object[] {};   // this IS required for dragging to work
+                        DragAndDrop.objectReferences = new Object[] {};   // this IS required for dragging to work
                         DragAndDrop.SetGenericData("DragSelection", selection);
                         m_Dragging = true;
 

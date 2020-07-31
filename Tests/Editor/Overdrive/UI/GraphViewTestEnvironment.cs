@@ -2,9 +2,9 @@ using System;
 using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Compilation;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
+using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Compilation;
+using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
 using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -57,22 +57,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             }
         }
 
-        class TestStencil : Stencil
-        {
-            public override ISearcherDatabaseProvider GetSearcherDatabaseProvider()
-            {
-                return new ClassSearcherDatabaseProvider(this);
-            }
-
-            public override IBuilder Builder => null;
-        }
-
         static void DataWatchServiceDisableThrottling(bool value)
         {
             try
             {
-                var stencil = new TestStencil();
-                var dataWatchServiceType = stencil.GetAssemblies()
+                var dataWatchServiceType = AssemblyCache.CachedAssemblies
                     .SelectMany(a => a.GetTypesSafe(), (domainAssembly, assemblyType) => assemblyType)
                     .First(x => x.Name == "DataWatchService");
                 var sharedInstance = dataWatchServiceType.GetProperty("sharedInstance", BindingFlags.NonPublic | BindingFlags.Static)?.GetValue(null);

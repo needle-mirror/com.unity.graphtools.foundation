@@ -10,6 +10,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
     {
         public LineView()
         {
+            this.AddStylesheet("LineView.uss");
             this.StretchToParentSize();
             generateVisualContent += OnGenerateVisualContent;
         }

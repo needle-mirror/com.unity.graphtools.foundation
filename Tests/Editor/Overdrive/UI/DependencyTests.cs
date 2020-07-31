@@ -5,12 +5,14 @@ using System.Linq;
 using JetBrains.Annotations;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Compilation;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
 using UnityEngine;
 using UnityEngine.TestTools;
+using Node = UnityEditor.GraphToolsFoundation.Overdrive.GraphElements.Node;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
 {
@@ -65,16 +67,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
 
             public override IBuilder Builder => null;
 
-            public override IEnumerable<INodeModel> GetEntryPoints(VSGraphModel vsGraphModel)
+            public override IEnumerable<IGTFNodeModel> GetEntryPoints(IGTFGraphModel graphModel)
             {
-                return vsGraphModel.NodeModels.OfType<EntryPointNodeModel>();
+                return graphModel.NodeModels.OfType<EntryPointNodeModel>();
             }
 
             // Lifted almost verbatim from DotsStencil
-            public override bool CreateDependencyFromEdge(IEdgeModel model, out LinkedNodesDependency linkedNodesDependency, out INodeModel parent)
+            public override bool CreateDependencyFromEdge(IGTFEdgeModel model, out LinkedNodesDependency linkedNodesDependency, out IGTFNodeModel parent)
             {
-                var outputNode = model.OutputPortModel.NodeModel;
-                var inputNode = model.InputPortModel.NodeModel;
+                var outputNode = model.FromPort.NodeModel;
+                var inputNode = model.ToPort.NodeModel;
                 bool outputIsData = IsDataNode(outputNode);
                 bool inputIsData = IsDataNode(inputNode);
                 if (outputIsData)
@@ -83,8 +85,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                     linkedNodesDependency = new LinkedNodesDependency
                     {
                         count = 1,
-                        DependentPort = model.OutputPortModel,
-                        ParentPort = model.InputPortModel,
+                        DependentPort = model.FromPort,
+                        ParentPort = model.ToPort,
                     };
                     return true;
                 }
@@ -94,8 +96,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                     linkedNodesDependency = new LinkedNodesDependency
                     {
                         count = 1,
-                        DependentPort = model.InputPortModel,
-                        ParentPort = model.OutputPortModel,
+                        DependentPort = model.ToPort,
+                        ParentPort = model.FromPort,
                     };
                     return true;
                 }
@@ -106,23 +108,21 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             }
 
             // Lifted verbatim from DotsStencil
-            public override IEnumerable<IEdgePortalModel> GetPortalDependencies(IEdgePortalModel model)
+            public override IEnumerable<IGTFEdgePortalModel> GetPortalDependencies(IGTFEdgePortalModel model)
             {
                 switch (model)
                 {
-                    case ExecutionEdgePortalEntryModel _:
-                        return ((VariableDeclarationModel)model.DeclarationModel).FindReferencesInGraph()
-                            .OfType<IEdgePortalExitModel>();
-                    case DataEdgePortalExitModel _:
-                        return ((VariableDeclarationModel)model.DeclarationModel).FindReferencesInGraph()
-                            .OfType<IEdgePortalEntryModel>();
+                    case ExecutionEdgePortalEntryModel edgePortalModel:
+                        return model.GraphModel.FindReferencesInGraph<IGTFEdgePortalExitModel>(edgePortalModel.DeclarationModel);
+                    case DataEdgePortalExitModel edgePortalModel:
+                        return model.GraphModel.FindReferencesInGraph<IGTFEdgePortalEntryModel>(edgePortalModel.DeclarationModel);
                     default:
-                        return Enumerable.Empty<IEdgePortalModel>();
+                        return Enumerable.Empty<IGTFEdgePortalModel>();
                 }
             }
 
             // Lifted almost verbatim from DotsModelExtensions
-            static bool IsDataNode(INodeModel nodeModel)
+            static bool IsDataNode(IGTFNodeModel nodeModel)
             {
                 switch (nodeModel)
                 {
@@ -146,7 +146,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         protected override bool CreateGraphOnStartup => true;
         protected override Type CreatedGraphType => typeof(TestStencil);
 
-        void TestEntryDependencies(IEdgePortalEntryModel entryModel, ExecutionEdgePortalExitModel[] exitModels)
+        void TestEntryDependencies(IGTFEdgePortalEntryModel entryModel, ExecutionEdgePortalExitModel[] exitModels)
         {
             Assert.AreEqual(exitModels.Length, GraphView.PositionDependenciesManagers.GetPortalDependencies(entryModel).Count);
             var dependencyModels = GraphView.PositionDependenciesManagers.GetPortalDependencies(entryModel)
@@ -207,28 +207,28 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             TestEntryDependencies(portalEntry2, new[] {portalExit, portalExit2});
 
             // Delete the second entry portal. Attempting to get its dependencies should return null
-            GraphModel.DeleteNode(portalEntry2, VisualScripting.GraphViewModel.GraphModel.DeleteConnections.True);
+            GraphModel.DeleteNode(portalEntry2, DeleteConnections.True);
             Store.Dispatch(new RefreshUIAction(UpdateFlags.All));
             yield return null;
             TestEntryDependencies(portalEntry, new[] {portalExit, portalExit2});
             Assert.IsNull(GraphView.PositionDependenciesManagers.GetPortalDependencies(portalEntry2));
 
             // Delete the second exit.
-            GraphModel.DeleteNode(portalExit2, VisualScripting.GraphViewModel.GraphModel.DeleteConnections.True);
+            GraphModel.DeleteNode(portalExit2, DeleteConnections.True);
             Store.Dispatch(new RefreshUIAction(UpdateFlags.All));
             yield return null;
             TestEntryDependencies(portalEntry, new[] {portalExit});
             Assert.IsNull(GraphView.PositionDependenciesManagers.GetPortalDependencies(portalEntry2));
 
             // Delete the first exit. There should be no dependencies to the remaining entry
-            GraphModel.DeleteNode(portalExit, VisualScripting.GraphViewModel.GraphModel.DeleteConnections.True);
+            GraphModel.DeleteNode(portalExit, DeleteConnections.True);
             Store.Dispatch(new RefreshUIAction(UpdateFlags.All));
             yield return null;
             TestEntryDependencies(portalEntry, new ExecutionEdgePortalExitModel[0]);
             Assert.IsNull(GraphView.PositionDependenciesManagers.GetPortalDependencies(portalEntry2));
 
             // Delete the first entry. There should be no more dependencies registered in the manager.
-            GraphModel.DeleteNode(portalEntry, VisualScripting.GraphViewModel.GraphModel.DeleteConnections.True);
+            GraphModel.DeleteNode(portalEntry, DeleteConnections.True);
             Store.Dispatch(new RefreshUIAction(UpdateFlags.All));
             yield return null;
             Assert.IsNull(GraphView.PositionDependenciesManagers.GetPortalDependencies(portalEntry));
@@ -276,19 +276,21 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
 
             yield return null;
 
-            var modelToNodes = GraphView.UIController.ModelsToNodeMapping;
+            GraphView.PositionDependenciesManagers.UpdateNodeState();
 
-            GraphView.PositionDependenciesManagers.UpdateNodeState(modelToNodes);
+            bool IsUIEnabled(IGTFGraphElementModel model)
+            {
+                GraphElement ui = model.GetUI(GraphView);
+                return ui != null && !(ui.ClassListContains(Node.k_DisabledModifierUssClassName) || ui.ClassListContains(Node.k_UnusedModifierUssClassName));
+            }
 
-            NodeUIState UIState(IGraphElementModel model) => ((INodeState)modelToNodes[model]).UIState;
-
-            Assert.AreEqual(NodeUIState.Enabled, UIState(entryNode), "Graph entry point node should be marked as enabled.");
-            Assert.AreEqual(NodeUIState.Enabled, UIState(exePortalEntry), "Trigger entry portal should be marked as enabled.");
-            Assert.AreEqual(NodeUIState.Enabled, UIState(exePortalExit), "Trigger exit portal should be marked as enabled.");
-            Assert.AreEqual(NodeUIState.Enabled, UIState(node0), "Exec node should be marked as enabled.");
-            Assert.AreEqual(NodeUIState.Enabled, UIState(dataPortalEntry), "Data entry portal should be marked as enabled.");
-            Assert.AreEqual(NodeUIState.Enabled, UIState(dataPortalExit), "Data exit portal should be marked as enabled.");
-            Assert.AreEqual(NodeUIState.Enabled, UIState(dataNode), "Data node should be marked as enabled.");
+            Assert.IsTrue(IsUIEnabled(entryNode), "Graph entry point node should be marked as enabled.");
+            Assert.IsTrue(IsUIEnabled(exePortalEntry), "Trigger entry portal should be marked as enabled.");
+            Assert.IsTrue(IsUIEnabled(exePortalExit), "Trigger exit portal should be marked as enabled.");
+            Assert.IsTrue(IsUIEnabled(node0), "Exec node should be marked as enabled.");
+            Assert.IsTrue(IsUIEnabled(dataPortalExit), "Data exit portal should be marked as enabled.");
+            Assert.IsTrue(IsUIEnabled(dataPortalEntry), "Data entry portal should be marked as enabled.");
+            Assert.IsTrue(IsUIEnabled(dataNode), "Data node should be marked as enabled.");
         }
     }
 }

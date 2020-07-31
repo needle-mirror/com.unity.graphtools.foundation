@@ -1,4 +1,5 @@
 using System;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -27,7 +28,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             Add(row);
         }
 
-        protected BlackboardExtendedFieldView(IVariableDeclarationModel model, Blackboard.RebuildCallback rebuildCallback)
+        protected BlackboardExtendedFieldView(IGTFVariableDeclarationModel model, Blackboard.RebuildCallback rebuildCallback)
         {
             userData = model;
             m_RebuildCallback = rebuildCallback;

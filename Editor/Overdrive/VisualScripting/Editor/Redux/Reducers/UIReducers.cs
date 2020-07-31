@@ -1,5 +1,8 @@
 using System;
+using System.Linq;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
+using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
@@ -8,15 +11,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
     {
         public static void Register(Store store)
         {
-            store.Register<RefreshUIAction>(RefreshUI);
-            store.Register<OpenDocumentationAction>(OpenDocumentation);
+            store.RegisterReducer<State, RefreshUIAction>(RefreshUI);
+            store.RegisterReducer<State, OpenDocumentationAction>(OpenDocumentation);
         }
 
         static State RefreshUI(State previousState, RefreshUIAction action)
         {
             previousState.MarkForUpdate(action.UpdateFlags);
             if (action.ChangedModels != null)
-                ((VSGraphModel)previousState.CurrentGraphModel).LastChanges.ChangedElements.AddRange(action.ChangedModels);
+                previousState.CurrentGraphModel.LastChanges.ChangedElements.AddRange(action.ChangedModels);
             return previousState;
         }
 

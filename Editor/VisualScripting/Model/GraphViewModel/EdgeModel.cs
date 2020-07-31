@@ -102,15 +102,28 @@ namespace UnityEditor.VisualScripting.GraphViewModel
         }
 
         // Capabilities
+#if UNITY_2020_1_OR_NEWER
+        public CapabilityFlags Capabilities => CapabilityFlags.Selectable | CapabilityFlags.Deletable | CapabilityFlags.Copiable;
+#else
         public CapabilityFlags Capabilities => CapabilityFlags.Selectable | CapabilityFlags.Deletable;
+#endif
 
-        public void SetFromPortModels(IPortModel newInputPortModel, IPortModel newOutputPortModel)
+        public void SetInputFromPortModel(IPortModel newInputPortModel)
         {
             m_InputPortReference.Assign(newInputPortModel);
             m_InputPortModel = newInputPortModel;
+        }
 
+        public void SetOutputFromPortModel(IPortModel newOutputPortModel)
+        {
             m_OutputPortReference.Assign(newOutputPortModel);
             m_OutputPortModel = newOutputPortModel;
+        }
+
+        public void SetFromPortModels(IPortModel newInputPortModel, IPortModel newOutputPortModel)
+        {
+            SetInputFromPortModel(newInputPortModel);
+            SetOutputFromPortModel(newOutputPortModel);
         }
 
         public IPortModel InputPortModel => m_InputPortReference.GetPortModel(Direction.Input, ref m_InputPortModel);

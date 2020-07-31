@@ -5,8 +5,9 @@ using System.Reflection;
 using System.Text;
 using JetBrains.Annotations;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
+using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 
 // ReSharper disable AccessToStaticMemberViaDerivedType
@@ -23,8 +24,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
         [Test]
         public void CallingDefineTwiceCreatesPortsOnce()
         {
-            VSGraphAssetModel asset = ScriptableObject.CreateInstance<VSGraphAssetModel>();
-            VSGraphModel g = asset.CreateVSGraph<ClassStencil>("asd");
+            var asset = ScriptableObject.CreateInstance<TestGraphAssetModel>();
+            asset.CreateGraph("asd", typeof(ClassStencil));
+            var g = asset.GraphModel as TestGraphModel;
 
             m_Node = g.CreateNode<TestNodeModel>("test", Vector2.zero);
             Assert.That(m_Node.InputsById.Count, Is.EqualTo(1));
@@ -36,8 +38,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
         [Test]
         public void CallingDefineTwiceCreatesOneEmbeddedConstant()
         {
-            VSGraphAssetModel asset = ScriptableObject.CreateInstance<VSGraphAssetModel>();
-            VSGraphModel g = asset.CreateVSGraph<ClassStencil>("asd");
+            var asset = ScriptableObject.CreateInstance<TestGraphAssetModel>();
+            asset.CreateGraph("asd", typeof(ClassStencil));
+            var g = asset.GraphModel as TestGraphModel;
 
             m_Node = g.CreateNode<TestNodeModel>("test", Vector2.zero);
             Assert.That(m_Node.InputConstantsById.Count, Is.EqualTo(1));
@@ -79,9 +82,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
         [Serializable]
         public class TestNodeModelWithCustomPorts : NodeModel
         {
-            public Func<IPortModel> CreatePortFunc { get; set; } = null;
+            public Func<IGTFPortModel> CreatePortFunc { get; set; }
 
-            public Func<IPortModel> CreatePort<T>(T value = default)
+            public Func<IGTFPortModel> CreatePort<T>(T value = default)
             {
                 return () => AddDataInputPort(typeof(T).Name, defaultValue: value);
             }
@@ -101,10 +104,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
         }
 
         [Test, TestCaseSource(nameof(GetPortModelDefaultValueTestCases))]
-        public void PortModelsCanHaveDefaultValues(object expectedValue, Func<TestNodeModelWithCustomPorts, Func<IPortModel>> createPort, Func<ConstantNodeModel, object> getValue)
+        public void PortModelsCanHaveDefaultValues(object expectedValue, Func<TestNodeModelWithCustomPorts, Func<IGTFPortModel>> createPort, Func<IConstant, object> getValue)
         {
-            VSGraphAssetModel asset = ScriptableObject.CreateInstance<VSGraphAssetModel>();
-            VSGraphModel g = asset.CreateVSGraph<ClassStencil>("asd");
+            var asset = ScriptableObject.CreateInstance<TestGraphAssetModel>();
+            asset.CreateGraph("asd", typeof(ClassStencil));
+            var g = asset.GraphModel as TestGraphModel;
 
             m_Node = g.CreateNode<TestNodeModelWithCustomPorts>("test", Vector2.zero, preDefineSetup: ports => ports.CreatePortFunc = createPort(ports));
             Assert.That(getValue(m_Node.InputsByDisplayOrder.Single().EmbeddedValue), Is.EqualTo(expectedValue));
@@ -112,12 +116,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
 
         static object[] PortValueTestCase<T>(T value = default)
         {
-            Func<ConstantNodeModel, object> getCompareValue = c => c.ObjectValue;
+            Func<IConstant, object> getCompareValue = c => c.ObjectValue;
             if (typeof(T).IsSubclassOf(typeof(Enum)))
             {
-                getCompareValue = c => ((EnumConstantNodeModel)c).EnumValue;
+                getCompareValue = c => ((EnumConstant)c).EnumValue;
             }
-            return new object[] { value, new Func<TestNodeModelWithCustomPorts, Func<IPortModel>>(m => m.CreatePort(value)), getCompareValue };
+            return new object[] { value, new Func<TestNodeModelWithCustomPorts, Func<IGTFPortModel>>(m => m.CreatePort(value)), getCompareValue };
         }
     }
 }

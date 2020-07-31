@@ -121,7 +121,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         void OnDisable()
         {
-            s_LastClosedTime = System.DateTime.Now.Ticks / System.TimeSpan.TicksPerMillisecond;
+            s_LastClosedTime = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
             s_FilterWindow = null;
         }
 
@@ -143,13 +143,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             }
 
             // We could not use realtimeSinceStartUp since it is set to 0 when entering/exitting playmode, we assume an increasing time when comparing time.
-            long nowMilliSeconds = System.DateTime.Now.Ticks / System.TimeSpan.TicksPerMillisecond;
+            long nowMilliSeconds = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
             bool justClosed = nowMilliSeconds < s_LastClosedTime + 50;
             if (!justClosed)
             {
                 if (s_FilterWindow == null)
                 {
-                    s_FilterWindow = ScriptableObject.CreateInstance<SearchWindow>();
+                    s_FilterWindow = CreateInstance<SearchWindow>();
                     s_FilterWindow.hideFlags = HideFlags.HideAndDontSave;
                 }
                 s_FilterWindow.Init(context, provider);
@@ -276,8 +276,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             // Animate
             if (isAnimating && Event.current.type == EventType.Repaint)
             {
-                long now = System.DateTime.Now.Ticks;
-                float deltaTime = (now - m_LastTime) / (float)System.TimeSpan.TicksPerSecond;
+                long now = DateTime.Now.Ticks;
+                float deltaTime = (now - m_LastTime) / (float)TimeSpan.TicksPerSecond;
                 m_LastTime = now;
                 m_Anim = Mathf.MoveTowards(m_Anim, m_AnimTarget, deltaTime * 4);
                 if (m_AnimTarget == 0 && m_Anim == 0)
@@ -355,7 +355,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                     m_SelectionStack.Add(m_Tree[0] as SearchTreeGroupEntry);
                 }
                 m_AnimTarget = 1;
-                m_LastTime = System.DateTime.Now.Ticks;
+                m_LastTime = DateTime.Now.Ticks;
                 return;
             }
 
@@ -440,7 +440,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             if (m_SelectionStack.Count > 1)
             {
                 m_AnimTarget = 0;
-                m_LastTime = System.DateTime.Now.Ticks;
+                m_LastTime = DateTime.Now.Ticks;
             }
         }
 
@@ -493,7 +493,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             {
                 if (!hasSearch)
                 {
-                    m_LastTime = System.DateTime.Now.Ticks;
+                    m_LastTime = DateTime.Now.Ticks;
                     if (m_AnimTarget == 0)
                         m_AnimTarget = 1;
                     else if (m_Anim == 1)

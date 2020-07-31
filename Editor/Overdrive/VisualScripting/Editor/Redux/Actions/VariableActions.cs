@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
@@ -8,22 +9,26 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 {
     public class CreateVariableNodesAction : IAction
     {
-        public readonly List<Tuple<IVariableDeclarationModel, Vector2>> VariablesToCreate;
-        public readonly IPortModel ConnectAfterCreation;
-        public readonly IEnumerable<IGTFEdgeModel> EdgeModelsToDelete;
-        public readonly bool AutoAlign;
+        public List<(IGTFVariableDeclarationModel, SerializableGUID, Vector2)> VariablesToCreate;
+        public IGTFPortModel ConnectAfterCreation;
+        public IGTFEdgeModel[] EdgeModelsToDelete;
+        public bool AutoAlign;
 
-        public CreateVariableNodesAction(List<Tuple<IVariableDeclarationModel, Vector2>> variablesToCreate, bool autoAlign = false)
+        public CreateVariableNodesAction()
+        {
+        }
+
+        public CreateVariableNodesAction(List<(IGTFVariableDeclarationModel, SerializableGUID, Vector2)> variablesToCreate, bool autoAlign = false)
         {
             VariablesToCreate = variablesToCreate;
             AutoAlign = autoAlign;
         }
 
-        public CreateVariableNodesAction(IVariableDeclarationModel graphElementModel, Vector2 mousePosition, IEnumerable<IGTFEdgeModel> edgeModelsToDelete = null, IPortModel connectAfterCreation = null, bool autoAlign = false)
+        public CreateVariableNodesAction(IGTFVariableDeclarationModel graphElementModel, Vector2 mousePosition, IEnumerable<IGTFEdgeModel> edgeModelsToDelete = null, IGTFPortModel connectAfterCreation = null, bool autoAlign = false)
         {
-            VariablesToCreate = new List<Tuple<IVariableDeclarationModel, Vector2>>();
-            VariablesToCreate.Add(Tuple.Create(graphElementModel, mousePosition));
-            EdgeModelsToDelete = edgeModelsToDelete;
+            VariablesToCreate = new List<(IGTFVariableDeclarationModel, SerializableGUID, Vector2)>();
+            VariablesToCreate.Add((graphElementModel, GUID.Generate(), mousePosition));
+            EdgeModelsToDelete = edgeModelsToDelete?.ToArray();
             ConnectAfterCreation = connectAfterCreation;
             AutoAlign = autoAlign;
         }
@@ -31,10 +36,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
     public class CreateConstantNodeAction : IAction
     {
-        public readonly string Name;
-        public readonly TypeHandle Type;
-        public readonly Vector2 Position;
-        public readonly GUID? Guid;
+        // [CreateProperty]public string Name { get; private set; }
+        public string Name;
+        public TypeHandle Type;
+        public Vector2 Position;
+        public GUID? Guid;
+
+        public CreateConstantNodeAction()
+        {
+        }
 
         public CreateConstantNodeAction(string name, TypeHandle type, Vector2 position, GUID? guid = null)
         {
@@ -45,47 +55,37 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         }
     }
 
-    public class CreateSystemConstantNodeAction : IAction
-    {
-        public readonly string Name;
-        public readonly TypeHandle ReturnType;
-        public readonly TypeHandle DeclaringType;
-        public readonly string Identifier;
-        public readonly Vector2 Position;
-        public readonly string Guid;
-
-        public CreateSystemConstantNodeAction(string name, TypeHandle returnType, TypeHandle declaringType, string identifier, Vector2 position, string guid = null)
-        {
-            Name = name;
-            ReturnType = returnType;
-            DeclaringType = declaringType;
-            Identifier = identifier;
-            Position = position;
-            Guid = guid;
-        }
-    }
-
     public class CreateGraphVariableDeclarationAction : IAction
     {
-        public readonly string Name;
-        public readonly bool IsExposed;
-        public readonly TypeHandle TypeHandle;
-        public readonly ModifierFlags ModifierFlags;
+        public string Name;
+        public bool IsExposed;
+        public TypeHandle TypeHandle;
+        public GUID Guid;
+        public ModifierFlags ModifierFlags;
 
-        public CreateGraphVariableDeclarationAction(string name, bool isExposed, TypeHandle typeHandle, ModifierFlags modifierFlags = ModifierFlags.None)
+        public CreateGraphVariableDeclarationAction()
+        {
+        }
+
+        public CreateGraphVariableDeclarationAction(string name, bool isExposed, TypeHandle typeHandle, ModifierFlags modifierFlags = ModifierFlags.None, GUID? guid = null)
         {
             Name = name;
             IsExposed = isExposed;
             TypeHandle = typeHandle;
+            Guid = guid ?? GUID.Generate();
             ModifierFlags = modifierFlags;
         }
     }
 
     public class DuplicateGraphVariableDeclarationsAction : IAction
     {
-        public readonly List<IVariableDeclarationModel> VariableDeclarationModels;
+        public List<IGTFVariableDeclarationModel> VariableDeclarationModels;
 
-        public DuplicateGraphVariableDeclarationsAction(List<IVariableDeclarationModel> variableDeclarationModels)
+        public DuplicateGraphVariableDeclarationsAction()
+        {
+        }
+
+        public DuplicateGraphVariableDeclarationsAction(List<IGTFVariableDeclarationModel> variableDeclarationModels)
         {
             VariableDeclarationModels = variableDeclarationModels;
         }
@@ -93,10 +93,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
     public class ReorderGraphVariableDeclarationAction : IAction
     {
-        public readonly IVariableDeclarationModel VariableDeclarationModel;
+        public readonly IGTFVariableDeclarationModel VariableDeclarationModel;
         public readonly int Index;
 
-        public ReorderGraphVariableDeclarationAction(IVariableDeclarationModel variableDeclarationModel, int index)
+        public ReorderGraphVariableDeclarationAction(IGTFVariableDeclarationModel variableDeclarationModel, int index)
         {
             VariableDeclarationModel = variableDeclarationModel;
             Index = index;
@@ -105,9 +105,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
     public class ConvertVariableNodesToConstantNodesAction : IAction
     {
-        public readonly IVariableModel[] VariableModels;
+        public readonly IGTFVariableNodeModel[] VariableModels;
 
-        public ConvertVariableNodesToConstantNodesAction(params IVariableModel[] variableModels)
+        public ConvertVariableNodesToConstantNodesAction(params IGTFVariableNodeModel[] variableModels)
         {
             VariableModels = variableModels;
         }
@@ -120,18 +120,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         public ConvertConstantNodesToVariableNodesAction(params IConstantNodeModel[] constantModels)
         {
             ConstantModels = constantModels;
-        }
-    }
-
-    public class MoveVariableDeclarationAction : IAction
-    {
-        public readonly IVariableDeclarationModel VariableDeclarationModel;
-        public readonly IHasVariableDeclaration Destination;
-
-        public MoveVariableDeclarationAction(IVariableDeclarationModel variableDeclarationModel, IHasVariableDeclaration destination)
-        {
-            VariableDeclarationModel = variableDeclarationModel;
-            Destination = destination;
         }
     }
 
@@ -150,9 +138,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
     // Create a separate instance of the variable node for each connections on the original variable node.
     public class ItemizeVariableNodeAction : IAction
     {
-        public readonly IVariableModel[] VariableModels;
+        public readonly IGTFVariableNodeModel[] VariableModels;
 
-        public ItemizeVariableNodeAction(params IVariableModel[] variableModels)
+        public ItemizeVariableNodeAction(params IGTFVariableNodeModel[] variableModels)
         {
             VariableModels = variableModels;
         }
@@ -161,20 +149,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
     // Create a separate instance of the constant node for each connections on the original constant node.
     public class ItemizeConstantNodeAction : IAction
     {
-        public readonly IConstantNodeModel[] ConstantModels;
+        public readonly IGTFConstantNodeModel[] ConstantModels;
 
-        public ItemizeConstantNodeAction(params IConstantNodeModel[] constantModels)
-        {
-            ConstantModels = constantModels;
-        }
-    }
-
-    // Create a separate instance of the constant node for each connections on the original constant node.
-    public class ItemizeSystemConstantNodeAction : IAction
-    {
-        public readonly ISystemConstantNodeModel[] ConstantModels;
-
-        public ItemizeSystemConstantNodeAction(params ISystemConstantNodeModel[] constantModels)
+        public ItemizeConstantNodeAction(params IGTFConstantNodeModel[] constantModels)
         {
             ConstantModels = constantModels;
         }
@@ -182,9 +159,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
     public class ToggleLockConstantNodeAction : IAction
     {
-        public readonly IConstantNodeModel[] ConstantNodeModels;
+        public readonly IGTFConstantNodeModel[] ConstantNodeModels;
 
-        public ToggleLockConstantNodeAction(params IConstantNodeModel[] constantNodeModels)
+        public ToggleLockConstantNodeAction(params IGTFConstantNodeModel[] constantNodeModels)
         {
             ConstantNodeModels = constantNodeModels;
         }
@@ -192,10 +169,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
     public class UpdateTypeAction : IAction
     {
-        public readonly VariableDeclarationModel VariableDeclarationModel;
-        public readonly TypeHandle Handle;
+        public IGTFVariableDeclarationModel VariableDeclarationModel;
+        public TypeHandle Handle;
 
-        public UpdateTypeAction(VariableDeclarationModel variableDeclarationModel, TypeHandle handle)
+        public UpdateTypeAction()
+        {
+        }
+
+        public UpdateTypeAction(IGTFVariableDeclarationModel variableDeclarationModel, TypeHandle handle)
         {
             VariableDeclarationModel = variableDeclarationModel;
             Handle = handle;
@@ -204,10 +185,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
     public class UpdateExposedAction : IAction
     {
-        public readonly VariableDeclarationModel VariableDeclarationModel;
-        public readonly bool Exposed;
+        public IGTFVariableDeclarationModel VariableDeclarationModel;
+        public bool Exposed;
 
-        public UpdateExposedAction(VariableDeclarationModel variableDeclarationModel, bool exposed)
+        public UpdateExposedAction()
+        {
+        }
+
+        public UpdateExposedAction(IGTFVariableDeclarationModel variableDeclarationModel, bool exposed)
         {
             VariableDeclarationModel = variableDeclarationModel;
             Exposed = exposed;
@@ -216,10 +201,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
     public class UpdateTooltipAction : IAction
     {
-        public readonly VariableDeclarationModel VariableDeclarationModel;
-        public readonly string Tooltip;
+        public IGTFVariableDeclarationModel VariableDeclarationModel;
+        public string Tooltip;
 
-        public UpdateTooltipAction(VariableDeclarationModel variableDeclarationModel, string tooltip)
+        public UpdateTooltipAction()
+        {
+        }
+
+        public UpdateTooltipAction(IGTFVariableDeclarationModel variableDeclarationModel, string tooltip)
         {
             VariableDeclarationModel = variableDeclarationModel;
             Tooltip = tooltip;

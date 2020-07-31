@@ -1,21 +1,25 @@
 using System;
 using System.IO;
-using JetBrains.Annotations;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 using UnityEngine.Assertions;
-using Object = UnityEngine.Object;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel
 {
-    public abstract class GraphAssetModel : ScriptableObject, IGraphAssetModel
+    public abstract class GraphAssetModel : ScriptableObject, IGTFGraphAssetModel
     {
         [SerializeReference]
         GraphModel m_GraphModel;
 
-        public string Name => name;
+        public string Name
+        {
+            get => name;
+            set => name = value;
+        }
+
         IGTFGraphModel IGTFGraphAssetModel.GraphModel => m_GraphModel;
         public IGraphModel GraphModel => m_GraphModel;
+        protected abstract Type GraphModelType { get; }
 
         public static GraphAssetModel Create(string assetName, string assetPath, Type assetTypeToCreate, bool writeOnDisk = true)
         {
@@ -31,28 +35,27 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
             return asset;
         }
 
-        [PublicAPI]
-        public TGraphType CreateGraph<TGraphType>(string actionName, Type stencilType, bool writeOnDisk = true)
-            where TGraphType : GraphModel
+        public void CreateGraph(string graphName, Type stencilType, bool writeOnDisk = true)
         {
-            return (TGraphType)CreateGraph(typeof(TGraphType), actionName, stencilType, writeOnDisk);
-        }
+            Debug.Assert(typeof(IGTFGraphModel).IsAssignableFrom(GraphModelType));
 
-        [PublicAPI]
-        public GraphModel CreateGraph(Type graphTypeToCreate, string graphName, Type stencilType, bool writeOnDisk = true)
-        {
-            var graphModel = (GraphModel)Activator.CreateInstance(graphTypeToCreate);
-            graphModel.name = graphName;
+            var graphModel = (IGTFGraphModel)Activator.CreateInstance(GraphModelType);
+            graphModel.Name = graphName;
             graphModel.AssetModel = this;
-            m_GraphModel = graphModel;
+            m_GraphModel = graphModel as GraphModel;
+
+            if (m_GraphModel == null)
+                return;
+
             if (writeOnDisk)
-                this.SetAssetDirty();
+            {
+                EditorUtility.SetDirty(this);
+            }
             var stencil = (Stencil)Activator.CreateInstance(stencilType);
             Assert.IsNotNull(stencil);
-            graphModel.Stencil = stencil;
+            m_GraphModel.Stencil = stencil;
             if (writeOnDisk)
                 EditorUtility.SetDirty(this);
-            return graphModel;
         }
 
         void OnEnable()
@@ -60,25 +63,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
             m_GraphModel?.OnEnable();
         }
 
-        public bool IsSameAsset(IGraphAssetModel otherGraphAssetModel)
-        {
-            return GetHashCode() == otherGraphAssetModel?.GetHashCode();
-        }
-
-        public void ShowInInspector()
-        {
-            Selection.activeObject = this;
-        }
-
         public void Dispose() {}
-    }
-
-    public static class GraphAssetModelExtensions
-    {
-        public static void SetAssetDirty(this IGraphAssetModel graphAssetModel)
-        {
-            if (graphAssetModel as Object)
-                EditorUtility.SetDirty((Object)graphAssetModel);
-        }
     }
 }

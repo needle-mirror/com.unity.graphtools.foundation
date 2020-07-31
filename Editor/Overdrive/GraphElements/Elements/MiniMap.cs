@@ -104,7 +104,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             this.AddManipulator(new ContextualMenuManipulator(BuildContextualMenu));
             this.AddStylesheet("Minimap.uss");
 
-            this.generateVisualContent += OnGenerateVisualContent;
+            generateVisualContent += OnGenerateVisualContent;
         }
 
         private GraphView m_GraphView;

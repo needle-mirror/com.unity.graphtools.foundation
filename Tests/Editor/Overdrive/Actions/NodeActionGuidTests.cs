@@ -1,7 +1,6 @@
 using System;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
 using UnityEngine;
 
@@ -13,39 +12,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
         protected override bool CreateGraphOnStartup => true;
         protected override Type CreatedGraphType => typeof(ClassStencil);
 
-        struct NodeDesc
+        class NodeDesc
         {
             public Type Type;
-            public Type ModelType;
             public GUID Guid;
 
             public string Name => Type.ToString();
-        };
-
-        [Test]
-        public void Test_CreateNodeWithGuid([Values] TestingMode mode)
-        {
-            var nodes = new[]
-            {
-                new NodeDesc { Type = typeof(bool), ModelType = typeof(BooleanConstantNodeModel), Guid = GUID.Generate() },
-                new NodeDesc { Type = typeof(float), ModelType = typeof(FloatConstantModel), Guid = GUID.Generate() },
-                new NodeDesc { Type = typeof(Quaternion), ModelType = typeof(QuaternionConstantModel), Guid = GUID.Generate() },
-            };
-
-            foreach (var n in nodes)
-            {
-                TestPrereqActionPostreq(mode,
-                    () =>
-                    {
-                        Assert.IsFalse(GraphModel.NodesByGuid.ContainsKey(n.Guid));
-                        return new CreateConstantNodeAction(n.Name, n.Type.GenerateTypeHandle(Stencil), Vector2.zero, n.Guid);
-                    },
-                    () =>
-                    {
-                        Assert.IsTrue(GraphModel.NodesByGuid.TryGetValue(n.Guid, out var model));
-                        Assert.That(model, NUnit.Framework.Is.TypeOf(n.ModelType));
-                    });
-            }
         }
 
         [Test]
@@ -53,19 +25,21 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
         {
             var nodes = new[]
             {
-                new NodeDesc { Type = typeof(bool), ModelType = typeof(BooleanConstantNodeModel), Guid = GUID.Generate() },
-                new NodeDesc { Type = typeof(float), ModelType = typeof(FloatConstantModel), Guid = GUID.Generate() },
-                new NodeDesc { Type = typeof(Quaternion), ModelType = typeof(QuaternionConstantModel), Guid = GUID.Generate() },
+                new NodeDesc { Type = typeof(bool) },
+                new NodeDesc { Type = typeof(float) },
+                new NodeDesc { Type = typeof(Quaternion) },
             };
 
             foreach (var n in nodes)
             {
-                GraphModel.CreateConstantNode(n.Name, n.Type.GenerateTypeHandle(Stencil), Vector2.zero, guid: n.Guid);
+                var node = GraphModel.CreateConstantNode(n.Name, n.Type.GenerateTypeHandle(), Vector2.zero);
+                n.Guid = node.Guid;
+
                 TestPrereqActionPostreq(mode,
                     () =>
                     {
                         Assert.IsTrue(GraphModel.NodesByGuid.TryGetValue(n.Guid, out var model));
-                        return new DeleteElementsAction(model as IGTFNodeModel);
+                        return new DeleteElementsAction(model);
                     },
                     () =>
                     {

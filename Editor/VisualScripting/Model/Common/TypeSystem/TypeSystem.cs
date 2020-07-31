@@ -4,7 +4,6 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using UnityEditor.EditorCommon.Extensions;
 using UnityEditor.VisualScripting.Model.Translators;
 using UnityEngine;
@@ -167,11 +166,6 @@ namespace UnityEditor.VisualScripting.Model
             }
 
             return hash;
-        }
-
-        public static TypeSyntax BuildTypeSyntax(Type type)
-        {
-            return type.ToTypeSyntax();
         }
 
         public static IEnumerable<BinaryOperatorKind> GetOverloadedBinaryOperators(Type type)

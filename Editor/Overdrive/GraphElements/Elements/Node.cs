@@ -5,7 +5,7 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 {
-    public class Node : GraphElement, IMovableGraphElement
+    public class Node : GraphElement, IMovableGraphElement, IHighlightable, IBadgeContainer
     {
         public IGTFNodeModel NodeModel => Model as IGTFNodeModel;
 
@@ -14,9 +14,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         public new static readonly string k_UssClassName = "ge-node";
         public static readonly string k_NotConnectedModifierUssClassName = k_UssClassName.WithUssModifier("not-connected");
         public static readonly string k_EmptyModifierUssClassName = k_UssClassName.WithUssModifier("empty");
+        public static readonly string k_DisabledModifierUssClassName = k_UssClassName.WithUssModifier("disabled");
+        public static readonly string k_UnusedModifierUssClassName = k_UssClassName.WithUssModifier("unused");
+        public static readonly string k_HighlightedModifierUssClassName = k_UssClassName.WithUssModifier("highlighted");
 
+        public static readonly string k_SelectionBorderElementName = "selection-border";
+        public static readonly string k_DisabledOverlayElementName = "disabled-overlay";
         public static readonly string k_TitleContainerPartName = "title-container";
         public static readonly string k_PortContainerPartName = "port-top-container";
+
+        VisualElement m_ContentContainer;
+        public override VisualElement contentContainer => m_ContentContainer ?? this;
 
         public Node()
         {
@@ -30,6 +38,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         {
             PartList.AppendPart(EditableTitlePart.Create(k_TitleContainerPartName, Model, this, k_UssClassName));
             PartList.AppendPart(PortContainerPart.Create(k_PortContainerPartName, Model, this, k_UssClassName));
+        }
+
+        protected override void BuildElementUI()
+        {
+            var selectionBorder = new SelectionBorder { name = k_SelectionBorderElementName };
+            selectionBorder.AddToClassList(k_UssClassName.WithUssElement(k_SelectionBorderElementName));
+            Add(selectionBorder);
+            m_ContentContainer = selectionBorder.ContentContainer;
+
+            base.BuildElementUI();
+
+            var disabledOverlay = new VisualElement { name = k_DisabledOverlayElementName, pickingMode = PickingMode.Ignore };
+            hierarchy.Add(disabledOverlay);
         }
 
         protected override void PostBuildUI()
@@ -50,6 +71,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             style.top = newPos.y;
 
             EnableInClassList(k_EmptyModifierUssClassName, childCount == 0);
+            EnableInClassList(k_DisabledModifierUssClassName, NodeModel.State == ModelState.Disabled);
 
             if (NodeModel is IHasPorts portHolder && portHolder.Ports != null)
             {
@@ -122,11 +144,21 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             return DropdownMenuAction.Status.Disabled;
         }
 
-        public virtual void UpdatePinning()
+        public virtual bool IsMovable => true;
+
+        public bool Highlighted
         {
+            get => ClassListContains(k_HighlightedModifierUssClassName);
+            set => EnableInClassList(k_HighlightedModifierUssClassName, value);
         }
 
-        public virtual bool IsMovable => true;
+        public bool ShouldHighlightItemUsage(IGTFGraphElementModel graphElementModel)
+        {
+            return false;
+        }
+
+        public IconBadge ErrorBadge { get; set; }
+        public ValueBadge ValueBadge { get; set; }
 
         // TODO JOCE: This is required until we have a dirtying mechanism (see ShowConnectedExecutionEdgesOrder in NodeModel.cs)
         internal void UpdateOutgoingExecutionEdges()
@@ -151,6 +183,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                 return;
             hasPorts.RevealReorderableEdgesOrder(false);
             UpdateOutgoingExecutionEdges();
+        }
+
+        public override bool IsSelected(VisualElement selectionContainer)
+        {
+            return GraphView.selection.Contains(this);
         }
     }
 }

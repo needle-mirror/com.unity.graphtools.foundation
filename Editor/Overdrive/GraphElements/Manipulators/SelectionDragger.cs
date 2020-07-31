@@ -10,12 +10,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
     public class SelectionDragger : Dragger
     {
         IDropTarget m_PrevDropTarget;
-
-        bool m_ShiftClicked;
         bool m_Dragging;
         readonly Snapper m_Snapper = new Snapper();
-        bool SnapToPortEnabled { get; set; }
-        bool SnapToBordersEnabled { get; set; }
 
         // selectedElement is used to store a unique selection candidate for cases where user clicks on an item not to
         // drag it but just to reset the selection -- we only know this after the manipulation has ended
@@ -66,9 +62,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         public SelectionDragger(GraphView graphView)
         {
-            SnapToPortEnabled = GraphViewSettings.UserSettings.EnableSnapToPort;
-            SnapToBordersEnabled = GraphViewSettings.UserSettings.EnableSnapToBorders;
-
             activators.Add(new ManipulatorActivationFilter { button = MouseButton.LeftMouse });
             activators.Add(new ManipulatorActivationFilter { button = MouseButton.LeftMouse, modifiers = EventModifiers.Shift });
             if (Application.platform == RuntimePlatform.OSXEditor || Application.platform == RuntimePlatform.OSXPlayer)
@@ -183,15 +176,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
                 if (m_GraphView.selection.Any())
                 {
-                    if (SnapToBordersEnabled && m_Snapper.snapToBordersIsActive)
-                    {
-                        m_Snapper.EndSnapToBorders();
-                    }
-
-                    if (SnapToPortEnabled && m_Snapper.snapToPortIsActive)
-                    {
-                        m_Snapper.EndSnapToPort();
-                    }
+                    m_Snapper.EndSnap();
                 }
             }
         }
@@ -276,17 +261,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                     m_PanSchedule.Pause();
                 }
 
-                SnapToBordersEnabled = GraphViewSettings.UserSettings.EnableSnapToBorders;
-                if (SnapToBordersEnabled)
-                {
-                    m_Snapper.BeginSnapToBorders(m_GraphView, selectedElement);
-                }
-
-                SnapToPortEnabled = GraphViewSettings.UserSettings.EnableSnapToPort;
-                if (SnapToPortEnabled && selectedElement is Node)
-                {
-                    m_Snapper.BeginSnapToPort(m_GraphView, selectedElement as Node);
-                }
+                m_Snapper.BeginSnap(selectedElement);
 
                 m_Active = true;
                 target.CaptureMouse(); // We want to receive events even when mouse is not over ourself.
@@ -294,9 +269,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             }
         }
 
-#if USE_DRAG_RESET_WHEN_OUT_OF_GRAPH_VIEW
-        private bool m_GoneOut;
-#endif
         public const int k_PanAreaWidth = 100;
         public const int k_PanSpeed = 4;
         public const int k_PanInterval = 10;
@@ -330,29 +302,23 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             return effectiveSpeed;
         }
 
-        void ComputeSnappedRectToBorders(ref Rect selectedElementProposedGeom, GraphElement selectedElement)
+        void ComputeSnappedRect(ref Rect selectedElementProposedGeom, GraphElement element)
         {
-            // Let the snapper compute a snapped position using the precomputed position relatively to the geometries of all unselected
-            // GraphElements in the GraphView.contentViewContainer's space.
-            Rect geometryInContentViewContainerSpace = selectedElement.parent.ChangeCoordinatesTo(m_GraphView.contentViewContainer, selectedElementProposedGeom);
-            geometryInContentViewContainerSpace = m_Snapper.GetSnappedRectToBorders(geometryInContentViewContainerSpace, selectedElement, m_Scale);
+            // Check if snapping is paused first: if yes, the snapper will return the original dragging position
+            if (Event.current != null)
+            {
+                m_Snapper.PauseSnap(Event.current.shift);
+            }
 
-            // Once the snapped position is computed in the GraphView.contentViewContainer's space then
-            // translate it into the local space of the parent of the selected element.
-            selectedElementProposedGeom = m_GraphView.contentViewContainer.ChangeCoordinatesTo(selectedElement.parent, geometryInContentViewContainerSpace);
-        }
+            // Let the snapper compute a snapped position
+            Rect geometryInContentViewContainerSpace = element.parent.ChangeCoordinatesTo(m_GraphView.contentViewContainer, selectedElementProposedGeom);
 
-        void ComputeSnappedRectToPort(ref Rect selectedElementProposedGeom, Node selectedNode)
-        {
             Vector2 mousePanningDelta = new Vector2((m_MouseDiff.x - m_ItemPanDiff.x) * panSpeed.x / m_Scale, (m_MouseDiff.y - m_ItemPanDiff.y) * panSpeed.y / m_Scale);
-            // Let the snapper compute a snapped position using the precomputed position relatively to the geometries of all unselected
-            // GraphElements in the GraphView.contentViewContainer's space.
-            Rect geometryInContentViewContainerSpace = selectedElement.parent.ChangeCoordinatesTo(m_GraphView.contentViewContainer, selectedElementProposedGeom);
-            geometryInContentViewContainerSpace = m_Snapper.GetSnappedRectToPort(geometryInContentViewContainerSpace, selectedNode, mousePanningDelta, m_Scale);
+            geometryInContentViewContainerSpace = m_Snapper.GetSnappedRect(geometryInContentViewContainerSpace, element, m_Scale, mousePanningDelta);
 
             // Once the snapped position is computed in the GraphView.contentViewContainer's space then
             // translate it into the local space of the parent of the selected element.
-            selectedElementProposedGeom = m_GraphView.contentViewContainer.ChangeCoordinatesTo(selectedElement.parent, geometryInContentViewContainerSpace);
+            selectedElementProposedGeom = m_GraphView.contentViewContainer.ChangeCoordinatesTo(element.parent, geometryInContentViewContainerSpace);
         }
 
         protected new void OnMouseMove(MouseMoveEvent e)
@@ -366,34 +332,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             var ve = (VisualElement)e.target;
             Vector2 gvMousePos = ve.ChangeCoordinatesTo(m_GraphView.contentContainer, e.localMousePosition);
             m_PanDiff = GetEffectivePanSpeed(gvMousePos);
-
-#if USE_DRAG_RESET_WHEN_OUT_OF_GRAPH_VIEW
-            // We currently don't have a real use case for this and it just appears to annoy users.
-            // If and when the use case arise, we can revive this functionality.
-
-            if (gvMousePos.x < 0 || gvMousePos.y < 0 || gvMousePos.x > m_GraphView.layout.width ||
-                gvMousePos.y > m_GraphView.layout.height)
-            {
-                if (!m_GoneOut)
-                {
-                    m_PanSchedule.Pause();
-
-                    foreach (KeyValuePair<GraphElement, Rect> v in m_OriginalPos)
-                    {
-                        v.Key.SetPosition(v.Value);
-                    }
-                    m_GoneOut = true;
-                }
-
-                e.StopPropagation();
-                return;
-            }
-
-            if (m_GoneOut)
-            {
-                m_GoneOut = false;
-            }
-#endif
 
             if (m_PanDiff != Vector3.zero)
             {
@@ -410,26 +348,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
             // Handle the selected element
             Rect selectedElementGeom = GetSelectedElementGeom();
-            m_ShiftClicked = e.shiftKey;
 
-            if (SnapToPortEnabled && selectedElement is Node)
-            {
-                ComputeSnappedRectToPort(ref selectedElementGeom, selectedElement as Node);
-            }
-            else
-            {
-                if (SnapToBordersEnabled)
-                {
-                    if (m_ShiftClicked)
-                    {
-                        m_Snapper.ClearSnapLines();
-                    }
-                    else
-                    {
-                        ComputeSnappedRectToBorders(ref selectedElementGeom, selectedElement);
-                    }
-                }
-            }
+            ComputeSnappedRect(ref selectedElementGeom, selectedElement);
 
             foreach (KeyValuePair<GraphElement, OriginalPos> v in m_OriginalPos)
             {
@@ -443,12 +363,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                 {
                     v.Value.dragStarted = true;
                 }
-                SnapOrMoveElement(v, selectedElementGeom);
+                SnapOrMoveElement(v.Key, v.Value.pos, selectedElementGeom);
             }
 
             foreach (var edge in m_EdgesToUpdate)
             {
-                UpdateEdge(edge);
+                SnapOrMoveEdge(edge, selectedElementGeom);
             }
 
             List<ISelectableGraphElement> selection = m_GraphView.selection;
@@ -493,35 +413,26 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             // Handle the selected element
             Rect selectedElementGeom = GetSelectedElementGeom();
 
-            if (SnapToPortEnabled && selectedElement is Node)
-            {
-                ComputeSnappedRectToPort(ref selectedElementGeom, selectedElement as Node);
-            }
-            else if (SnapToBordersEnabled && !m_ShiftClicked)
-            {
-                ComputeSnappedRectToBorders(ref selectedElementGeom, selectedElement);
-            }
+            ComputeSnappedRect(ref selectedElementGeom, selectedElement);
 
             foreach (KeyValuePair<GraphElement, OriginalPos> v in m_OriginalPos)
             {
-                SnapOrMoveElement(v, selectedElementGeom);
+                SnapOrMoveElement(v.Key, v.Value.pos, selectedElementGeom);
             }
         }
 
-        void SnapOrMoveElement(KeyValuePair<GraphElement, OriginalPos> v, Rect selectedElementGeom)
+        void SnapOrMoveElement(GraphElement element, Rect originalPos, Rect selectedElementGeom)
         {
-            GraphElement ce = v.Key;
-
-            if (SnapToBordersEnabled || SnapToPortEnabled)
+            if (m_Snapper.IsActive)
             {
                 Vector2 geomDiff = selectedElementGeom.position - m_OriginalPos[selectedElement].pos.position;
-                Vector2 position = new Vector2(v.Value.pos.x + geomDiff.x , v.Value.pos.y + geomDiff.y);
+                Vector2 position = new Vector2(originalPos.x + geomDiff.x , originalPos.y + geomDiff.y);
 
-                ce.SetPosition(new Rect(position, ce.layout.size));
+                element.SetPosition(new Rect(position, element.layout.size));
             }
             else
             {
-                MoveElement(ce, v.Value.pos);
+                MoveElement(element, originalPos);
             }
         }
 
@@ -533,7 +444,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
             Rect selectedElementGeom = m_OriginalPos[selectedElement].pos;
 
-            if (SnapToBordersEnabled || SnapToPortEnabled)
+            if (m_Snapper.IsActive)
             {
                 // Compute the new position of the selected element using the mouse delta position and panning info
                 selectedElementGeom.x = selectedElementGeom.x - (m_MouseDiff.x - m_ItemPanDiff.x) * panSpeed.x / m_Scale;
@@ -555,8 +466,23 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             newPos.y = originalPos.y - (m_MouseDiff.y - m_ItemPanDiff.y) * panSpeed.y / scale.y * element.transform.scale.y;
 
             newPos = m_GraphView.contentViewContainer.ChangeCoordinatesTo(element.hierarchy.parent, newPos);
-            element.style.left = newPos.x;
-            element.style.top = newPos.y;
+
+            element.SetPosition(newPos);
+        }
+
+        void SnapOrMoveEdge(Edge edge, Rect selectedElementGeom)
+        {
+            if (m_Snapper.IsActive)
+            {
+                Vector2 geomDiff = selectedElementGeom.position - m_OriginalPos[selectedElement].pos.position;
+                var offset = new Vector2(geomDiff.x, geomDiff.y);
+
+                edge.EdgeControl.ControlPointOffset = offset;
+            }
+            else
+            {
+                UpdateEdge(edge);
+            }
         }
 
         void UpdateEdge(Edge edge)
@@ -659,15 +585,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
                     if (selection.Any())
                     {
-                        if (SnapToBordersEnabled && m_Snapper.snapToBordersIsActive)
-                        {
-                            m_Snapper.EndSnapToBorders();
-                        }
-
-                        if (SnapToPortEnabled && m_Snapper.snapToPortIsActive)
-                        {
-                            m_Snapper.EndSnapToPort();
-                        }
+                        m_Snapper.EndSnap();
                     }
 
                     target.ReleaseMouse();

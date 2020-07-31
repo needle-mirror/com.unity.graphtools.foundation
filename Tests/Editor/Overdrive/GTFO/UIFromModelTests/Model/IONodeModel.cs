@@ -10,6 +10,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
     class IONodeModel : IGTFNodeModel, IHasIOPorts, IHasTitle, ICollapsible
     {
         public IGTFGraphModel GraphModel { get; set; }
+
+        GUID m_GUID = GUID.Generate();
+        public GUID Guid => m_GUID;
+        public IGTFGraphAssetModel AssetModel => GraphModel.AssetModel;
+
+        public void AssignNewGuid()
+        {
+            m_GUID = GUID.Generate();
+        }
+
         public Vector2 Position { get; set; }
 
         public void Move(Vector2 delta)
@@ -54,5 +64,43 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         public IEnumerable<IGTFPortModel> OutputPorts => m_OutputPorts;
         public IEnumerable<IGTFPortModel> Ports => InputPorts.Concat(OutputPorts);
         public bool Collapsed { get; set; }
+        public Color Color => Color.black;
+        public bool HasUserColor => false;
+        public bool HasProgress => false;
+        public string IconTypeString => null;
+        public ModelState State => ModelState.Enabled;
+        public IReadOnlyDictionary<string, IGTFPortModel> InputsById => InputPorts.ToDictionary(e => e.Guid.ToString());
+        public IReadOnlyDictionary<string, IGTFPortModel> OutputsById => OutputPorts.ToDictionary(e => e.Guid.ToString());
+        public IReadOnlyList<IGTFPortModel> InputsByDisplayOrder => m_InputPorts;
+        public IReadOnlyList<IGTFPortModel> OutputsByDisplayOrder => m_OutputPorts;
+        public void DefineNode()
+        {
+        }
+
+        public void OnConnection(IGTFPortModel selfConnectedPortModel, IGTFPortModel otherConnectedPortModel)
+        {
+        }
+
+        public void OnDisconnection(IGTFPortModel selfConnectedPortModel, IGTFPortModel otherConnectedPortModel)
+        {
+        }
+
+        public PortCapacity GetPortCapacity(IGTFPortModel portModel)
+        {
+            return portModel.GetDefaultCapacity();
+        }
+
+        public bool Destroyed { get; private set; }
+        public void Destroy() => Destroyed = true;
+
+        public IGTFPortModel GetPortFitToConnectTo(IGTFPortModel portModel)
+        {
+            var portsToChooseFrom = portModel.Direction == Direction.Input ? OutputsByDisplayOrder : InputsByDisplayOrder;
+            return portsToChooseFrom.First(p => p.DataTypeHandle == portModel.DataTypeHandle);
+        }
+
+        public void UndoRedoPerformed()
+        {
+        }
     }
 }

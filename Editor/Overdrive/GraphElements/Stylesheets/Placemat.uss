@@ -2,6 +2,7 @@
     position: absolute;
 
     --border-radius: 4px;
+    --selection-border-radius: 6px;
     border-radius: var(--border-radius);
     background-image: none;
 
@@ -9,10 +10,18 @@
 
     min-width: 200px;
     min-height: 100px;
+
+    overflow: visible;
 }
 
 .ge-placemat.collapsed {
     min-height: 42px;
+}
+
+.ge-placemat .ge-selection-border__content-container {
+    border-color: rgba(25,25,25,1.0);
+    border-radius: var(--border-radius);
+    border-width: 1px;
 }
 
 .ge-placemat .ge-editable-title-part {

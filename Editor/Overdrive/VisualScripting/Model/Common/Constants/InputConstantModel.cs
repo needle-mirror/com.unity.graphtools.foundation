@@ -1,48 +1,13 @@
 using System;
-using System.Collections.Generic;
-using UnityEngine;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine.Scripting.APIUpdating;
-using Object = UnityEngine.Object;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 {
+    // TODO theor remake a CNM for migration
     [Serializable]
     [MovedFrom(false, "UnityEditor.VisualScripting.Model", "Unity.GraphTools.Foundation.Overdrive.Editor")]
-    public class InputConstantModel : ConstantNodeModel<InputName>, IStringWrapperConstantModel
-    {
-        public List<string> GetAllInputNames(IEditorDataModel editorDataModel)
-        {
-            List<string> list = new List<string>();
-            Object inputManager = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/InputManager.asset")[0];
-
-            SerializedObject obj = new SerializedObject(inputManager);
-
-            SerializedProperty axisArray = obj.FindProperty("m_Axes");
-
-            if (axisArray.arraySize == 0)
-                Debug.Log("No Axes");
-
-            for (int i = 0; i < axisArray.arraySize; ++i)
-            {
-                SerializedProperty axis = axisArray.GetArrayElementAtIndex(i);
-
-                string newName = axis.FindPropertyRelative("m_Name").stringValue;
-
-                if (!list.Contains(newName))
-                    list.Add(newName);
-            }
-
-            return list;
-        }
-
-        public string StringValue
-        {
-            get => value.name;
-            set => this.value.name = value;
-        }
-
-        public string Label => "Input";
-    }
+    public class InputConstantModel : ConstantNodeModel<InputName> {}
 
     [Serializable]
     [MovedFrom(false, "UnityEditor.VisualScripting.Model", "Unity.GraphTools.Foundation.Overdrive.Editor")]

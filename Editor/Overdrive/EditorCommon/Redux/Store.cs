@@ -4,23 +4,48 @@ using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public class Store<TState> : IStore<TState>, IDisposable
-        where TState : IDisposable
+    public delegate TState Reducer<TState, in TAction>(TState previousState, TAction action)
+        where TState : State
+        where TAction : class, IAction;
+
+    public class Store : IDisposable
     {
+        abstract class ReducerFunctorBase
+        {
+            public abstract State Invoke(State state, IAction action);
+        }
+
+        class ReducerFunctor<TState, TAction> : ReducerFunctorBase where TState : State where TAction : class, IAction
+        {
+            Reducer<TState, TAction> m_Callback;
+
+            public ReducerFunctor(Reducer<TState, TAction> callback)
+            {
+                m_Callback = callback;
+            }
+
+            public override State Invoke(State state, IAction action)
+            {
+                return m_Callback(state as TState, action as TAction);
+            }
+        }
+
         readonly object m_SyncRoot = new object();
-        protected readonly Dictionary<Type, object> m_Reducers = new Dictionary<Type, object>();
+        readonly Dictionary<Type, ReducerFunctorBase> m_Reducers = new Dictionary<Type, ReducerFunctorBase>();
         readonly List<Action<IAction>> m_Observers = new List<Action<IAction>>();
 
-        TState m_LastState;
+        State m_LastState;
         Action m_StateChanged;
         bool m_StateDirty;
 
-        protected Store(TState initialState = default)
+        protected Store(State initialState = default)
         {
             m_LastState = initialState;
         }
 
-        void DoRegister<TAction>(object reducer) where TAction : IAction
+        public void RegisterReducer<TState, TAction>(Reducer<TState, TAction> reducer)
+            where TState : State
+            where TAction : class, IAction
         {
             lock (m_SyncRoot)
             {
@@ -29,16 +54,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 // PF: Accept reducer overrides for now. Need a better solution.
                 //if (m_Reducers.ContainsKey(actionType))
                 //    throw new InvalidOperationException("Redux: Cannot register two reducers for action " + actionType.Name);
-                m_Reducers[actionType] = reducer;
+                m_Reducers[actionType] = new ReducerFunctor<TState, TAction>(reducer);
             }
         }
 
-        public void Register<TAction>(Reducer<TState, TAction> reducer) where TAction : IAction
-        {
-            DoRegister<TAction>(reducer);
-        }
-
-        public void Unregister<TAction>() where TAction : IAction
+        public void UnregisterReducer<TAction>() where TAction : IAction
         {
             lock (m_SyncRoot)
             {
@@ -46,7 +66,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        public void Register(Action<IAction> observer)
+        protected void ClearReducers()
+        {
+            m_Reducers.Clear();
+        }
+
+        public void RegisterObserver(Action<IAction> observer)
         {
             lock (m_SyncRoot)
             {
@@ -56,7 +81,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        public void Unregister(Action<IAction> observer)
+        public void UnregisterObserver(Action<IAction> observer)
         {
             lock (m_SyncRoot)
             {
@@ -72,25 +97,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             add => m_StateChanged += value;
             // ReSharper disable once DelegateSubtraction
             remove => m_StateChanged -= value;
-        }
-
-        [Obsolete]
-        public void DispatchDynamicSlow(IAction action)
-        {
-            lock (m_SyncRoot)
-            {
-                foreach (var observer in m_Observers)
-                {
-                    observer(action);
-                }
-
-                PreDispatchAction(action);
-
-                Delegate reducer = (Delegate)m_Reducers[action.GetType()];
-                m_LastState = (TState)reducer.DynamicInvoke(m_LastState, action);
-            }
-
-            m_StateDirty = true;
         }
 
         public virtual void Dispatch<TAction>(TAction action) where TAction : IAction
@@ -111,10 +117,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     return;
                 }
 
-                if (o is Reducer<TState, TAction> reducer)
-                {
-                    m_LastState = reducer(m_LastState, action);
-                }
+                m_LastState = o.Invoke(m_LastState, action);
             }
 
             m_StateDirty = true;
@@ -155,9 +158,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
         }
 
-        public TState GetState()
+        public State GetState()
         {
             return m_LastState;
+        }
+
+        public TState GetState<TState>() where TState : State
+        {
+            return m_LastState as TState;
         }
     }
 }

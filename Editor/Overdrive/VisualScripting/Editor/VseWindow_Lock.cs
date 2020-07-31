@@ -10,7 +10,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         bool Locked
         {
-            get => m_Store?.GetState().AssetModel != null && m_LockTracker.IsLocked;
+            get => Store?.GetState().AssetModel != null && m_LockTracker.IsLocked;
             set => m_LockTracker.IsLocked = value;
         }
 

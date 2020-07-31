@@ -1,20 +1,13 @@
 using System;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 {
-    public class Store : GraphElements.Store<State>
+    public class Store : GraphElements.Store
     {
-        public enum Options
-        {
-            None,
-            TrackUndoRedo,
-        }
-
-        readonly Options m_Options;
-
         UndoRedoTraversal m_UndoRedoTraversal;
 
         IAction m_CurrentAction;
@@ -23,16 +16,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         int m_LastActionFrame = -1;
 
-        public Store(State initialState = null, Options options = Options.None)
+        public Store(State initialState)
             : base(initialState)
         {
-            m_Options = options;
-
-            if (m_Options == Options.TrackUndoRedo)
-            {
-                Undo.undoRedoPerformed += UndoRedoPerformed;
-            }
-
+            Undo.undoRedoPerformed += UndoRedoPerformed;
             RegisterReducers();
         }
 
@@ -40,7 +27,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         {
             // Register reducers.
             UIReducers.Register(this);
-            EditorReducers.Register(this);
             GraphAssetReducers.Register(this);
             GraphReducers.Register(this);
             NodeReducers.Register(this);
@@ -53,13 +39,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         public override void Dispatch<TAction>(TAction action)
         {
-            VSPreferences vsPreferences = GetState().Preferences;
+            Preferences preferences = GetState().Preferences;
 
-            if (vsPreferences != null && vsPreferences.GetBool(VSPreferences.BoolPref.LogAllDispatchedActions))
+            if (preferences != null && preferences.GetBool(BoolPref.LogAllDispatchedActions))
                 Debug.Log(action);
             int currentFrame = GetState()?.EditorDataModel == null ? -1 : GetState().EditorDataModel.UpdateCounter;
-            if (vsPreferences != null && currentFrame == m_LastActionFrame &&
-                vsPreferences.GetBool(VSPreferences.BoolPref.ErrorOnMultipleDispatchesPerFrame))
+            if (preferences != null && currentFrame == m_LastActionFrame &&
+                preferences.GetBool(BoolPref.ErrorOnMultipleDispatchesPerFrame))
             {
                 // TODO: Specific case for a non-model specific action, possibly triggered by a callback that is unaware of the store's current state;
                 //       About RefreshUIAction: maybe this is not a good idea to update the UI via an action, as it has nothing
@@ -73,8 +59,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             m_LastActionFrame = currentFrame;
             m_LastActionThisFrame = action;
 
-            if (vsPreferences != null && m_CurrentAction != null &&
-                vsPreferences.GetBool(VSPreferences.BoolPref.ErrorOnRecursiveDispatch))
+            if (preferences != null && m_CurrentAction != null &&
+                preferences.GetBool(BoolPref.ErrorOnRecursiveDispatch))
             {
                 // TODO: Same check here, see comments above
                 if (!(action is RefreshUIAction))
@@ -94,9 +80,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         public override void Dispose()
         {
-            if (m_Options == Options.TrackUndoRedo)
-                // ReSharper disable once DelegateSubtraction
-                Undo.undoRedoPerformed -= UndoRedoPerformed;
+            // ReSharper disable once DelegateSubtraction
+            Undo.undoRedoPerformed -= UndoRedoPerformed;
             base.Dispose();
         }
 
@@ -108,8 +93,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                 graphModel.UndoRedoPerformed();
                 if (m_UndoRedoTraversal == null)
                     m_UndoRedoTraversal = new UndoRedoTraversal();
-                if (GetState().AssetModel.GraphModel is VSGraphModel vsGraphModel)
-                    m_UndoRedoTraversal.VisitGraph(vsGraphModel);
+                m_UndoRedoTraversal.VisitGraph(GetState().AssetModel.GraphModel);
             }
         }
 
@@ -118,17 +102,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             CheckForTopologyChanges();
         }
 
-        void ClearRegistrations()
-        {
-            m_Reducers.Clear();
-        }
-
         protected override void PostStateChanged()
         {
-            State state = GetState();
+            State state = GetState<State>();
 
             state.EditorDataModel?.SetUpdateFlag(UpdateFlags.None);
-            state.RegisterReducers(this, ClearRegistrations);
+            state.RegisterReducers(this, ClearReducers);
         }
 
         protected override void PreDispatchAction(IAction action)
@@ -138,7 +117,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         void CheckForTopologyChanges()
         {
-            State state = GetState();
+            State state = GetState<State>();
 
             IGraphModel currentGraphModel = state.CurrentGraphModel;
             IEditorDataModel editorDataModel = state.EditorDataModel;
@@ -152,13 +131,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         void SaveDispatchedActionName<TAction>(TAction action) where TAction : IAction
         {
-            State state = GetState();
+            State state = GetState<State>();
 
             state.LastDispatchedActionName = action.GetType().Name;
 
             IGraphModel vsStateCurrentGraphModel = state.CurrentGraphModel;
             vsStateCurrentGraphModel?.ResetChanges();
-            state.lastActionUIRebuildType = State.UIRebuildType.None;
+            state.LastActionUIRebuildType = Overdrive.State.UIRebuildType.None;
         }
     }
 }

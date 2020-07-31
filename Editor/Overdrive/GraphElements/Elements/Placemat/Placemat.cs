@@ -19,9 +19,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         public new static readonly string k_UssClassName = "ge-placemat";
 
+        public static readonly string k_SelectionBorderElementName = "selection-border";
         public static readonly string k_TitleContainerPartName = "title-container";
         public static readonly string k_CollapseButtonPartName = "collapse-button";
         public static readonly string k_ResizerPartName = "resizer";
+
+        VisualElement m_ContentContainer;
+        public override VisualElement contentContainer => m_ContentContainer ?? this;
 
         public Placemat()
         {
@@ -44,6 +48,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         protected override void BuildElementUI()
         {
+            var selectionBorder = new SelectionBorder { name = k_SelectionBorderElementName };
+            selectionBorder.AddToClassList(k_UssClassName.WithUssElement(k_SelectionBorderElementName));
+            Add(selectionBorder);
+            m_ContentContainer = selectionBorder.ContentContainer;
+
             base.BuildElementUI();
 
             usageHints = UsageHints.DynamicTransform;
@@ -474,38 +483,27 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         protected virtual void BuildContextualMenu(ContextualMenuPopulateEvent evt)
         {
-            var placemat = evt.target as Placemat;
+            BuildContextualMenu(evt.target as Placemat, evt.menu);
+        }
 
+        public static void BuildContextualMenu(Placemat placemat, DropdownMenu menu)
+        {
             if (placemat != null)
             {
-                evt.menu.AppendAction("Change Color...", a =>
-                {
-                    GraphViewStaticBridge.ShowColorPicker(c =>
-                    {
-                        if (PlacematModel.Color != c)
-                        {
-                            Store.Dispatch(new ChangePlacematColorAction(c, PlacematModel));
-                        }
-                    }, placemat.PlacematModel.Color, false);
-                });
-
-                // Resizing section
-                evt.menu.AppendSeparator();
-
-                evt.menu.AppendAction(placemat.Collapsed ? "Expand" : "Collapse", a => placemat.SetCollapsed(!placemat.Collapsed));
+                menu.AppendAction(placemat.Collapsed ? "Expand" : "Collapse", a => placemat.SetCollapsed(!placemat.Collapsed));
 
                 // Gather nodes here so that we don't recycle this code in the resize functions.
                 List<GraphElement> hoveringNodes = placemat.GetHoveringNodes();
 
-                evt.menu.AppendAction("Resize/Grow To Fit",
+                menu.AppendAction("Resize/Grow To Fit",
                     a => placemat.GrowToFitElements(hoveringNodes),
                     hoveringNodes.Count > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
 
-                evt.menu.AppendAction("Resize/Shrink To Fit",
+                menu.AppendAction("Resize/Shrink To Fit",
                     a => placemat.ShrinkToFitElements(hoveringNodes),
                     hoveringNodes.Count > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
 
-                evt.menu.AppendAction("Resize/Grow To Fit Selection",
+                menu.AppendAction("Resize/Grow To Fit Selection",
                     a => placemat.ResizeToIncludeSelectedNodes(),
                     s =>
                     {
@@ -521,10 +519,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
                 var status = placemat.Container.Placemats.Any() ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled;
 
-                evt.menu.AppendAction("Order/Bring To Front", a => Container.BringToFront(placemat), status);
-                evt.menu.AppendAction("Order/Bring Forward", a => Container.CyclePlacemat(placemat, PlacematContainer.CycleDirection.Up), status);
-                evt.menu.AppendAction("Order/Send Backward", a => Container.CyclePlacemat(placemat, PlacematContainer.CycleDirection.Down), status);
-                evt.menu.AppendAction("Order/Send To Back", a => Container.SendToBack(placemat), status);
+                menu.AppendAction("Order/Bring To Front", a => placemat.Container.BringToFront(placemat), status);
+                menu.AppendAction("Order/Bring Forward", a => placemat.Container.CyclePlacemat(placemat, PlacematContainer.CycleDirection.Up), status);
+                menu.AppendAction("Order/Send Backward", a => placemat.Container.CyclePlacemat(placemat, PlacematContainer.CycleDirection.Down), status);
+                menu.AppendAction("Order/Send To Back", a => placemat.Container.SendToBack(placemat), status);
             }
         }
 
@@ -659,10 +657,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         public bool DragExited()
         {
             return (GraphView as IDropTarget)?.DragExited() ?? false;
-        }
-
-        public virtual void UpdatePinning()
-        {
         }
 
         public virtual bool IsMovable => true;

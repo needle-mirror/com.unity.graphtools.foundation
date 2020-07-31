@@ -1,7 +1,8 @@
 using System;
 using System.Linq;
+using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.UIElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
@@ -26,16 +27,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         void OnOptionsButton()
         {
             GenericMenu menu = new GenericMenu();
-            VSGraphModel vsGraphModel = (VSGraphModel)m_Store.GetState().CurrentGraphModel;
-            VSPreferences pref = m_Store.GetState().Preferences;
+            var graphModel = m_Store.GetState().CurrentGraphModel;
+            var vsPreferences = m_Store.GetState().Preferences as VSPreferences;
 
             void MenuItem(string title, bool value, GenericMenu.MenuFunction onToggle)
                 => menu.AddItem(VseUtility.CreatTextContent(title), value, onToggle);
 
             void MenuToggle(string title, BoolPref k, Action callback = null)
-                => MenuItem(title, pref.GetBool(k), () =>
+                => MenuItem(title, vsPreferences.GetBool(k), () =>
                 {
-                    pref.ToggleBool(k);
+                    vsPreferences.ToggleBool(k);
                     callback?.Invoke();
                 });
 
@@ -47,18 +48,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                     menu.AddItem(VseUtility.CreatTextContent(title), value, onToggle);
             }
 
-            MenuItem("Show Graph in inspector", false, () => Selection.activeObject = vsGraphModel?.AssetModel as Object);
+            MenuItem("Show Graph in inspector", false, () => Selection.activeObject = graphModel?.AssetModel as Object);
             MenuToggle("Show unused nodes", BoolPref.ShowUnusedNodes, () => m_Store.Dispatch(new RefreshUIAction(UpdateFlags.All)));
             MenuItemDisable("Compile", false, () =>
             {
                 m_Store.GetState().EditorDataModel.RequestCompilation(RequestCompilationOptions.SaveGraph);
-            }, () => (vsGraphModel == null || !vsGraphModel.Stencil.CreateTranslator().SupportsCompilation()));
+            }, () => (graphModel == null || !graphModel.Stencil.CreateTranslator().SupportsCompilation()));
 
             menu.AddSeparator("");
             MenuItem("Build All", false, () => m_Store.Dispatch(new BuildAllEditorAction()));
-            MenuItem("Migrate all assets", false, () =>
+            MenuItem("Migrate all graph assets", false, () =>
             {
-                string[] guids = AssetDatabase.FindAssets(string.Format("t:{0}", typeof(VSGraphAssetModel)));
+                string[] guids = AssetDatabase.FindAssets(string.Format("t:{0}", typeof(GraphAssetModel)));
                 string[] paths = new string[guids.Length];
                 for (int i = 0; i < guids.Length; i++)
                 {
@@ -69,12 +70,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                 AssetDatabase.ForceReserializeAssets(paths);
             });
 
-            MenuItem("Auto-itemize/Variables", pref.CurrentItemizeOptions.HasFlag(ItemizeOptions.Variables), () =>
-                pref.ToggleItemizeOption(ItemizeOptions.Variables));
-            MenuItem("Auto-itemize/System Constants", pref.CurrentItemizeOptions.HasFlag(ItemizeOptions.SystemConstants), () =>
-                pref.ToggleItemizeOption(ItemizeOptions.SystemConstants));
-            MenuItem("Auto-itemize/Constants", pref.CurrentItemizeOptions.HasFlag(ItemizeOptions.Constants), () =>
-                pref.ToggleItemizeOption(ItemizeOptions.Constants));
+            if (vsPreferences != null)
+            {
+                MenuItem("Auto-itemize/Variables", vsPreferences.CurrentItemizeOptions.HasFlag(ItemizeOptions.Variables), () =>
+                    vsPreferences.ToggleItemizeOption(ItemizeOptions.Variables));
+                MenuItem("Auto-itemize/System Constants", vsPreferences.CurrentItemizeOptions.HasFlag(ItemizeOptions.SystemConstants), () =>
+                    vsPreferences.ToggleItemizeOption(ItemizeOptions.SystemConstants));
+                MenuItem("Auto-itemize/Constants", vsPreferences.CurrentItemizeOptions.HasFlag(ItemizeOptions.Constants), () =>
+                    vsPreferences.ToggleItemizeOption(ItemizeOptions.Constants));
+            }
+
             if (Unsupported.IsDeveloperMode())
             {
                 MenuItem("Reload Graph", false, () =>
@@ -94,7 +99,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                 });
                 MenuItem("Rebuild Blackboard", false, () =>
                 {
-                    m_GraphView.UIController.Blackboard?.Rebuild(Blackboard.RebuildMode.BlackboardOnly);
+                    m_GraphView.UIController.Blackboard?.Rebuild(GraphElements.Blackboard.RebuildMode.BlackboardOnly);
                 });
 
                 menu.AddSeparator("");
@@ -107,11 +112,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                     provider.ClearGraphElementsSearcherDatabases();
                     provider.ClearGraphVariablesSearcherDatabases();
                 });
-                MenuItem("Integrity Check", false, () => vsGraphModel.CheckIntegrity(GraphModel.Verbosity.Verbose));
+                MenuItem("Integrity Check", false, () => graphModel.CheckIntegrity(Verbosity.Verbose));
                 MenuItem("Graph cleanup", false, () =>
                 {
-                    vsGraphModel.QuickCleanup();
-                    vsGraphModel.CheckIntegrity(GraphModel.Verbosity.Verbose);
+                    graphModel.QuickCleanup();
+                    graphModel.CheckIntegrity(Verbosity.Verbose);
                 });
                 MenuItem("Fix and reimport all textures", false, OnFixAndReimportTextures);
 
@@ -119,7 +124,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                 MenuToggle("Auto align new dragged edges", BoolPref.AutoAlignDraggedEdges);
                 if (Unsupported.IsDeveloperMode())
                 {
-                    MenuToggle("Bound object logging", BoolPref.BoundObjectLogging);
                     MenuToggle("Dependencies logging", BoolPref.DependenciesLogging);
                     MenuToggle("UI Performance/Always fully rebuild UI on change", BoolPref.FullUIRebuildOnChange);
                     MenuToggle("UI Performance/Warn when UI gets fully rebuilt", BoolPref.WarnOnUIFullRebuild);

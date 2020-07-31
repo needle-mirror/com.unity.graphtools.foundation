@@ -5,10 +5,11 @@
     flex-direction: column;
     border-radius: 2px;
     border-width: 2px;
-    overflow: hidden;
+    overflow: visible;
     --layer: -100;
     --unity-resizer-min-x: 80;
     --unity-resizer-min-y: 100;
+    --selection-border-radius: 4px;
 }
 
 .ge-sticky-note__title-container {

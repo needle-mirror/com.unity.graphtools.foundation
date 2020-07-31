@@ -9,16 +9,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
     {
         public static void Register(Store store)
         {
-            store.Register<CreateStickyNoteAction>(CreateStickyNote);
-            store.Register<ResizeStickyNoteAction>(ResizeStickyNote);
-            store.Register<UpdateStickyNoteAction>(UpdateStickyNote);
-            store.Register<UpdateStickyNoteThemeAction>(UpdateStickyNoteTheme);
-            store.Register<UpdateStickyNoteTextSizeAction>(UpdateStickyNoteTextSize);
+            store.RegisterReducer<State, CreateStickyNoteAction>(CreateStickyNote);
+            store.RegisterReducer<State, ResizeStickyNoteAction>(ResizeStickyNote);
+            store.RegisterReducer<State, UpdateStickyNoteAction>(UpdateStickyNote);
+            store.RegisterReducer<State, UpdateStickyNoteThemeAction>(UpdateStickyNoteTheme);
+            store.RegisterReducer<State, UpdateStickyNoteTextSizeAction>(UpdateStickyNoteTextSize);
         }
 
         static State CreateStickyNote(State previousState, CreateStickyNoteAction action)
         {
-            ((VSGraphModel)previousState.CurrentGraphModel).CreateStickyNote(action.Position);
+            previousState.CurrentGraphModel.CreateStickyNote(action.Position);
             return previousState;
         }
 

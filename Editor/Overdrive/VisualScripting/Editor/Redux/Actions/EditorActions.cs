@@ -13,18 +13,4 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             Callback = callback;
         }
     }
-
-    public class AddVisualScriptToObjectAction : IAction
-    {
-        public readonly string AssetPath;
-        public readonly UnityEngine.Object Instance;
-        public readonly Type ComponentType;
-
-        public AddVisualScriptToObjectAction(string assetPath, Type componentType, UnityEngine.Object instance = null)
-        {
-            AssetPath = assetPath;
-            Instance = instance;
-            ComponentType = componentType;
-        }
-    }
 }

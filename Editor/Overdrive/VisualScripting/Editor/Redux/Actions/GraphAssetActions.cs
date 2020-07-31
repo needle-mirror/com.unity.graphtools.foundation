@@ -1,4 +1,5 @@
 using System;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 
@@ -7,7 +8,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
     public class CreateGraphAssetAction : IAction
     {
         public readonly Type StencilType;
-        public readonly Type GraphType;
         public readonly Type AssetType;
         public readonly string Name;
         public readonly string AssetPath;
@@ -15,15 +15,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         public readonly bool WriteOnDisk;
         public readonly IGraphTemplate GraphTemplate;
 
-        public CreateGraphAssetAction(Type stencilType, string name = "", string assetPath = "", GameObject instance = null, bool writeOnDisk = true, IGraphTemplate graphTemplate = null)
-            : this(stencilType, typeof(VSGraphModel), typeof(VSGraphAssetModel), name, assetPath, instance, writeOnDisk, graphTemplate)
-        {
-        }
-
-        public CreateGraphAssetAction(Type stencilType, Type graphType, Type assetType, string name = "", string assetPath = "", GameObject instance = null, bool writeOnDisk = true, IGraphTemplate graphTemplate = null)
+        public CreateGraphAssetAction(Type stencilType, Type assetType, string name = "", string assetPath = "", GameObject instance = null, bool writeOnDisk = true, IGraphTemplate graphTemplate = null)
         {
             StencilType = stencilType;
-            GraphType = graphType;
             AssetType = assetType;
             Name = name;
             AssetPath = assetPath;
@@ -35,18 +29,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
     public class CreateGraphAssetFromModelAction : IAction
     {
-        public readonly GraphAssetModel AssetModel;
+        public readonly IGTFGraphAssetModel AssetModel;
         public readonly IGraphTemplate GraphTemplate;
         public readonly string Path;
-        public readonly Type GraphType;
 
-        public CreateGraphAssetFromModelAction(GraphAssetModel assetModel, IGraphTemplate template, string path,
-                                               Type graphType)
+        public CreateGraphAssetFromModelAction(IGTFGraphAssetModel assetModel, IGraphTemplate template, string path)
         {
             AssetModel = assetModel;
             GraphTemplate = template;
             Path = path;
-            GraphType = graphType;
         }
     }
 

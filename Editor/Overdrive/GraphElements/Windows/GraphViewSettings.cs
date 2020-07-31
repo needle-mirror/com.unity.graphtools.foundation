@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEditorInternal;
 using UnityEngine;
 
@@ -12,6 +13,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
             const string k_EnableSnapToPortKey = k_SettingsUniqueKey + "GraphEditorSetting.enableSnapToPort";
             const string k_EnableSnapToBordersKey = k_SettingsUniqueKey + "GraphEditorSetting.enableSnapToBorders";
+            const string k_EnableSnapToGridKey = k_SettingsUniqueKey + "GraphEditorSetting.enableSnapToGrid";
+            const string k_EnableSnapToSpacingKey = k_SettingsUniqueKey + "GraphEditorSetting.enableSnapToSpacing";
 
             const string k_SnappingLineColorRedKey = k_SettingsUniqueKey + "SnappingLineColorRed";
             const string k_SnappingLineColorGreenKey = k_SettingsUniqueKey + "SnappingLineColoGreen";
@@ -20,17 +23,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
             public static readonly Color k_DefaultSnappingLineColor = new Color(68 / 255f, 192 / 255f, 255 / 255f, 68 / 255f);
 
-            public static bool EnableSnapToPort
+            static Dictionary<Type, bool> s_SnappingStrategiesStates = new Dictionary<Type, bool>()
             {
-                get => EditorPrefs.GetBool(k_EnableSnapToPortKey, false);
-                set => EditorPrefs.SetBool(k_EnableSnapToPortKey, value);
-            }
-
-            public static bool EnableSnapToBorders
-            {
-                get => EditorPrefs.GetBool(k_EnableSnapToBordersKey, false);
-                set => EditorPrefs.SetBool(k_EnableSnapToBordersKey, value);
-            }
+                {typeof(SnapToBordersStrategy), EnableSnapToBorders},
+                {typeof(SnapToPortStrategy), EnableSnapToPort},
+                {typeof(SnapToGridStrategy), EnableSnapToGrid},
+                {typeof(SnapToSpacingStrategy), EnableSnapToSpacing}
+            };
 
             public static Color SnappingLineColor
             {
@@ -50,13 +49,56 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                     EditorPrefs.SetFloat(k_SnappingLineColorAlphaKey, value.a);
                 }
             }
+
+            public static bool EnableSnapToPort
+            {
+                get => EditorPrefs.GetBool(k_EnableSnapToPortKey, false);
+                set => EditorPrefs.SetBool(k_EnableSnapToPortKey, value);
+            }
+
+            public static bool EnableSnapToBorders
+            {
+                get => EditorPrefs.GetBool(k_EnableSnapToBordersKey, false);
+                set => EditorPrefs.SetBool(k_EnableSnapToBordersKey, value);
+            }
+
+            public static bool EnableSnapToGrid
+            {
+                get => EditorPrefs.GetBool(k_EnableSnapToGridKey, false);
+                set => EditorPrefs.SetBool(k_EnableSnapToGridKey, value);
+            }
+
+            public static bool EnableSnapToSpacing
+            {
+                get => EditorPrefs.GetBool(k_EnableSnapToSpacingKey, false);
+                set => EditorPrefs.SetBool(k_EnableSnapToSpacingKey, value);
+            }
+
+            public static Dictionary<Type, bool> SnappingStrategiesStates
+            {
+                get
+                {
+                    UpdateSnappingStates();
+                    return s_SnappingStrategiesStates;
+                }
+            }
+
+            static void UpdateSnappingStates()
+            {
+                s_SnappingStrategiesStates[typeof(SnapToBordersStrategy)] = EnableSnapToBorders;
+                s_SnappingStrategiesStates[typeof(SnapToPortStrategy)] = EnableSnapToPort;
+                s_SnappingStrategiesStates[typeof(SnapToGridStrategy)] = EnableSnapToGrid;
+                s_SnappingStrategiesStates[typeof(SnapToSpacingStrategy)] = EnableSnapToSpacing;
+            }
         }
 
         class Styles
         {
-            public static readonly GUIContent kEnableSnapToPortLabel = EditorGUIUtility.TrTextContent("Node Snapping To Port", "If enabled, Nodes align to connected ports.");
+            public static readonly GUIContent kEnableSnapToPortLabel = EditorGUIUtility.TrTextContent("Node Port Snapping", "If enabled, Nodes align to connected ports.");
             public static readonly GUIContent kEnableSnapToBordersLabel = EditorGUIUtility.TrTextContent("Graph Snapping", "If enabled, GraphElements in Graph Views align with one another when you move them. If disabled, GraphElements move freely.");
-            public static readonly GUIContent kSnappingLineColorLabel = new GUIContent("Snapping Line Color", "The color for the graph snapping guidelines");
+            public static readonly GUIContent kEnableSnapToGridLabel = EditorGUIUtility.TrTextContent("Grid Snapping", "If enabled, GraphElements in Graph Views align with the grid.");
+            public static readonly GUIContent kEnableSnapToSpacingLabel = EditorGUIUtility.TrTextContent("Spacing Snapping", "If enabled, GraphElements align to keep equal spacing with their neighbors.");
+            public static readonly GUIContent kSnappingLineColorLabel = new GUIContent("Snapping Line Color", "The color for the snapping guidelines");
         }
 
         [SettingsProvider]
@@ -75,7 +117,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             if (EditorGUI.EndChangeCheck())
             {
                 UserSettings.EnableSnapToBorders = snappingToBorders;
-                UserSettings.EnableSnapToPort = !snappingToBorders;
             }
 
             EditorGUI.BeginChangeCheck();
@@ -83,14 +124,20 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             if (EditorGUI.EndChangeCheck())
             {
                 UserSettings.EnableSnapToPort = snappingToPort;
-                UserSettings.EnableSnapToBorders = !snappingToPort;
             }
 
             EditorGUI.BeginChangeCheck();
-            if (GUILayout.Button("No Snapping"))
+            var snappingToGrid = EditorGUILayout.Toggle(Styles.kEnableSnapToGridLabel, UserSettings.EnableSnapToGrid);
+            if (EditorGUI.EndChangeCheck())
             {
-                UserSettings.EnableSnapToPort = false;
-                UserSettings.EnableSnapToBorders = false;
+                UserSettings.EnableSnapToGrid = snappingToGrid;
+            }
+
+            EditorGUI.BeginChangeCheck();
+            var snappingToSpacing = EditorGUILayout.Toggle(Styles.kEnableSnapToSpacingLabel, UserSettings.EnableSnapToSpacing);
+            if (EditorGUI.EndChangeCheck())
+            {
+                UserSettings.EnableSnapToSpacing = snappingToSpacing;
             }
 
             EditorGUILayout.BeginHorizontal();

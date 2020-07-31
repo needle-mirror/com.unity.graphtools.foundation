@@ -3,9 +3,9 @@ using System.Linq;
 using System.Reflection;
 using JetBrains.Annotations;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Compilation;
+using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
 using UnityEngine;
 using UnityEngine.TestTools;
 
@@ -31,8 +31,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
             // If this test fails, failing assemblies must be added to the Stencil.BlackListedAssemblies
             Assert.DoesNotThrow(() =>
             {
-                var stencil = new TestStencil();
-                var types = stencil.GetAssemblies()
+                var types = AssemblyCache.CachedAssemblies
                     .SelectMany(a => a.GetTypesSafe(), (domainAssembly, assemblyType) => assemblyType)
                     .Where(t => !t.IsAbstract && !t.IsInterface);
                 Assert.IsNotNull(types);
@@ -49,10 +48,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
 
             var stencil = new ClassStencil();
             var result = stencil.GetAssembliesTypesMetadata();
-            var expectedResult = stencil.GetAssemblies()
+            var expectedResult = AssemblyCache.CachedAssemblies
                 .SelectMany(a => a.GetTypesSafe())
                 .Where(x => Convert.ToBoolean(methodInfo.Invoke(null, new object[] { x })))
-                .Select(t => stencil.GenerateTypeHandle(t).GetMetadata(stencil))
+                .Select(t => TypeSerializer.GenerateTypeHandle(t).GetMetadata(stencil))
                 .ToList();
             expectedResult.Sort((x, y) => string.CompareOrdinal(x.TypeHandle.Identification, y.TypeHandle.Identification));
 

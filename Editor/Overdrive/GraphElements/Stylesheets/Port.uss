@@ -78,6 +78,11 @@
     -unity-text-align:middle-right;
 }
 
+.ge-port__constant-editor .unity-property-field {
+    font-size: 11px;
+    flex: 1 0 auto;
+}
+
 /*******************************/
 /* Ports colors by types */
 /*******************************/

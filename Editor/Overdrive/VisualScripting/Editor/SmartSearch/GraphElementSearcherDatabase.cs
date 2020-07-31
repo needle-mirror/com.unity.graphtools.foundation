@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using JetBrains.Annotations;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.Searcher;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch
@@ -75,9 +75,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch
                 new TagSearcherItemData(CommonSearcherTags.StickyNote),
                 data =>
                 {
-                    var rect = new Rect(data.Position, StickyNote.defaultSize);
-                    var vsGraphModel = (VSGraphModel)data.GraphModel;
-                    return vsGraphModel.CreateStickyNote(rect, data.SpawnFlags);
+                    var rect = new Rect(data.Position, GraphElements.StickyNote.defaultSize);
+                    var graphModel = data.GraphModel;
+                    return graphModel.CreateStickyNote(rect, data.SpawnFlags);
                 },
                 k_Sticky
             );
@@ -98,7 +98,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch
 
         public GraphElementSearcherDatabase AddConstants(Type type)
         {
-            TypeHandle handle = type.GenerateTypeHandle(Stencil);
+            TypeHandle handle = type.GenerateTypeHandle();
 
             SearcherItem parent = SearcherItemUtility.GetItemFromPath(Items, k_Constant);
             parent.AddChild(new GraphNodeModelSearcherItem(
@@ -110,12 +110,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch
             return this;
         }
 
-        public GraphElementSearcherDatabase AddGraphVariables(IGraphModel graphModel)
+        public GraphElementSearcherDatabase AddGraphVariables(IGTFGraphModel graphModel)
         {
             SearcherItem parent = null;
-            var vsGraphModel = (VSGraphModel)graphModel;
 
-            foreach (IVariableDeclarationModel declarationModel in vsGraphModel.GraphVariableModels)
+            foreach (var declarationModel in graphModel.VariableDeclarations)
             {
                 if (parent == null)
                 {
@@ -125,7 +124,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch
                 parent.AddChild(new GraphNodeModelSearcherItem(
                     new TypeSearcherItemData(declarationModel.DataType),
                     data => data.CreateVariableNode(declarationModel),
-                    declarationModel.Name.Nicify()
+                    declarationModel.DisplayTitle
                 ));
             }
 

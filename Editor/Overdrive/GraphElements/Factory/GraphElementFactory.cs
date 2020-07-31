@@ -25,12 +25,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         }
 
         [CanBeNull]
-        public static T CreateUI<T>(this IGTFGraphElementModel model, GraphView graphView, IStore store) where T : class, IGraphElement
+        public static T CreateUI<T>(this IGTFGraphElementModel model, GraphView graphView, Overdrive.Store store) where T : class, IGraphElement
         {
             return CreateUI<T>(graphView, store, model);
         }
 
-        public static T CreateUI<T>(GraphView graphView, IStore store, IGTFGraphElementModel model) where T : class, IGraphElement
+        public static T CreateUI<T>(GraphView graphView, Overdrive.Store store, IGTFGraphElementModel model) where T : class, IGraphElement
         {
             if (model == null)
             {
@@ -73,7 +73,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                 return false;
 
             var parameters = x.GetParameters();
-            return parameters.Length == 3 && parameters[1].ParameterType == typeof(IStore);
+            return parameters.Length == 3 && parameters[1].ParameterType == typeof(Overdrive.Store);
         }
 
         public static void RemoveAll(GraphView graphView)

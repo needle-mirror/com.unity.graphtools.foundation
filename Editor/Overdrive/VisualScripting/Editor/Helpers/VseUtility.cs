@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEngine;
-using UnityEngine.GraphToolsFoundation.Overdrive.VisualScripting;
 using Object = UnityEngine.Object;
 
 #if !ENABLE_VSTU
@@ -46,17 +46,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         public static void RemoveLogEntries()
         {
             ConsoleWindowBridge.RemoveLogEntries();
-        }
-
-        public static void SetupLogStickyCallback()
-        {
-            ConsoleWindowBridge.SetEntryDoubleClickedDelegate((file, entryInstanceId) =>
-            {
-                string[] pathAndGuid = file.Split('@');
-                VseWindow window = VseWindow.OpenVseAssetInWindow(pathAndGuid[0]);
-                if (GUID.TryParse(pathAndGuid[1], out GUID guid))
-                    window.Store?.Dispatch(new PanToNodeAction(guid));
-            });
         }
     }
 }

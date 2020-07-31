@@ -1,33 +1,14 @@
 using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel
 {
-    public interface IEdgeModel : IGraphElementModel
+    public interface IEdgeModel : IGTFEdgeModel
     {
-        string OutputId { get; }
-        string InputId { get; }
-        GUID InputNodeGuid { get; }
-        GUID OutputNodeGuid { get; }
-        IPortModel InputPortModel { get; }
-        IPortModel OutputPortModel { get; }
-        string EdgeLabel { get; }
-    }
-
-    [SuppressMessage("ReSharper", "InconsistentNaming")]
-    public static class IEdgeModelExtensions
-    {
-        public static IEnumerable<IPortModel> GetPortModels(this IEdgeModel edge)
-        {
-            yield return edge.InputPortModel;
-            yield return edge.OutputPortModel;
-        }
-
-        public static bool IsValid(this IEdgeModel edge)
-        {
-            return edge.InputPortModel != null && edge.OutputPortModel != null;
-        }
+        string FromPortId { get; }
+        string ToPortId { get; }
+        GUID ToNodeGuid { get; }
+        GUID FromNodeGuid { get; }
     }
 }

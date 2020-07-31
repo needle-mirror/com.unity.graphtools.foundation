@@ -1,12 +1,12 @@
 using System;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 {
-    internal interface INodeModelProxy
+    interface INodeModelProxy
     {
         ScriptableObject ScriptableObject();
-        void SetModel(IGraphElementModel model);
+        void SetModel(IGTFGraphElementModel model);
     }
 }

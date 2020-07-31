@@ -36,11 +36,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
             var timeDelta = EditorApplication.timeSinceStartup - VseGraphView.clickTimeSinceStartupSecs;
             if (!forceRename && (graphElement != VseGraphView.clickTarget ||
-                                 !(graphElement is IDoubleClickable) && mouseDownEvent != null && mouseDownEvent.clickCount != 2 ||
-                                 graphElement is IDoubleClickable && (timeDelta < VseGraphView.SlowDoubleClickSecs || timeDelta > VseGraphView.SlowDoubleClickMaxTimeElapsed)))
+                                 mouseDownEvent != null && mouseDownEvent.clickCount != 2))
             {
-                if (graphElement is IDoubleClickable && timeDelta > VseGraphView.SlowDoubleClickMaxTimeElapsed)
-                    VseGraphView.clickTimeSinceStartupSecs = EditorApplication.timeSinceStartup;
                 return;
             }
 
@@ -94,7 +91,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             if (!renamable.EditTitleCancelled)
             {
                 if (renamable.TitleEditor is TextField textField && renamable.TitleValue != textField.text)
-                    renamable.Store.Dispatch(new RenameElementAction((UnityEditor.GraphToolsFoundation.Overdrive.Model.IRenamable)renamable.GraphElementModel, textField.text));
+                    renamable.Store.Dispatch(new RenameElementAction((UnityEditor.GraphToolsFoundation.Overdrive.Model.IRenamable)renamable.Model, textField.text));
             }
             else
             {

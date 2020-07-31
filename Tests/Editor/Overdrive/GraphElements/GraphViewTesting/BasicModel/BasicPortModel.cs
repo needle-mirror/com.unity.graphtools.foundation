@@ -9,10 +9,26 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
     public class BasicPortModel : IGTFPortModel
     {
         public IGTFGraphModel GraphModel { get; }
+
+        GUID m_GUID = GUID.Generate();
+        public GUID Guid => m_GUID;
+        public IGTFGraphAssetModel AssetModel => GraphModel.AssetModel;
+
+        public void AssignNewGuid()
+        {
+            m_GUID = GUID.Generate();
+        }
+
         public IGTFNodeModel NodeModel { get; }
         public Direction Direction { get; }
+        public PortType PortType => PortType.Data;
         public Orientation Orientation { get; }
         public PortCapacity Capacity { get; }
+        public PortCapacity GetDefaultCapacity()
+        {
+            return Direction == Direction.Input ? PortCapacity.Single : PortCapacity.Multi;
+        }
+
         public Type PortDataType { get; }
         public bool IsConnected => ConnectedEdges.Any();
         public bool IsConnectedTo(IGTFPortModel port)
@@ -51,6 +67,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
         }
 
         public string ToolTip => "";
+        public IConstant EmbeddedValue => null;
+        public bool DisableEmbeddedValueEditor => false;
+        public string UniqueName => m_GUID.ToString();
+        public IEnumerable<IGTFPortModel> ConnectionPortModels => Enumerable.Empty<IGTFPortModel>();
+        public TypeHandle DataTypeHandle { get; } = TypeHandle.Int;
 
         public BasicPortModel(IGTFNodeModel nodeModel, Direction direction, Orientation orientation, PortCapacity capacity, Type type = null)
         {

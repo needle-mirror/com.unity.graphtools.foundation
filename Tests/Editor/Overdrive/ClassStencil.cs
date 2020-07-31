@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Compilation;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
 using UnityEngine;
-using UnityEngine.GraphToolsFoundation.Overdrive.VisualScripting;
 using UnityEngine.Scripting.APIUpdating;
+using PortInitializationTraversal = UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.PortInitializationTraversal;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
 {
@@ -33,10 +34,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
             "visualscripting"
         };
 
-        public override StencilCapabilityFlags Capabilities => StencilCapabilityFlags.SupportsMacros;
         public override IBuilder Builder => null;
 
-        public override void PreProcessGraph(VSGraphModel graphModel)
+        public override void PreProcessGraph(IGTFGraphModel graphModel)
         {
             new PortInitializationTraversal().VisitGraph(graphModel);
         }
@@ -56,11 +56,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
             if (m_AssembliesTypes != null)
                 return m_AssembliesTypes;
 
-            var types = GetAssemblies().SelectMany(a => a.GetTypesSafe()).ToList();
+            var types = AssemblyCache.CachedAssemblies.SelectMany(a => a.GetTypesSafe()).ToList();
             m_AssembliesTypes = TaskUtility.RunTasks<Type, ITypeMetadata>(types, (type, cb) =>
             {
                 if (IsValidType(type))
-                    cb.Add(GenerateTypeHandle(type).GetMetadata(this));
+                    cb.Add(TypeSerializer.GenerateTypeHandle(type).GetMetadata(this));
             }).ToList();
             m_AssembliesTypes.Sort((x, y) => string.CompareOrdinal(
                 x.TypeHandle.Identification,

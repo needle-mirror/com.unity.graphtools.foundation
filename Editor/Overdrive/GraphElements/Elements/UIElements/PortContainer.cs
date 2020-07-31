@@ -19,7 +19,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         static readonly string sPortCountClassNamePrefix = "ge-port-container--port-count-";
 
-        public void UpdatePorts(IEnumerable<IGTFPortModel> ports, GraphView graphView, IStore store)
+        public void UpdatePorts(IEnumerable<IGTFPortModel> ports, GraphView graphView, Overdrive.Store store)
         {
             var uiPorts = this.Query<Port>().ToList();
             var portViewModels = ports?.ToList() ?? new List<IGTFPortModel>();

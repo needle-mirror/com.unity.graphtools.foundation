@@ -43,6 +43,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         public IGTFGraphModel GraphModel { get; }
 
+        GUID m_Guid = GUID.Generate();
+
+        public GUID Guid => m_Guid;
+
+        public IGTFGraphAssetModel AssetModel => GraphModel.AssetModel;
+
+        public void AssignNewGuid()
+        {
+            m_Guid = GUID.Generate();
+        }
+
         public bool IsDeletable => false;
 
         public Vector2 Position

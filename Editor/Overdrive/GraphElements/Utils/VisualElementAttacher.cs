@@ -70,9 +70,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         public Attacher(VisualElement anchored, VisualElement target, SpriteAlignment alignment)
         {
-            this.distance = 6.0f;
+            distance = 6.0f;
             this.target = target;
-            this.element = anchored;
+            element = anchored;
             this.alignment = alignment;
 
             Reattach();

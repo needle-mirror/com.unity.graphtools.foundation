@@ -24,13 +24,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         public ResizableElement(string uiFile)
         {
-            var tpl = GraphElementsHelper.LoadUXML(uiFile);
+            var tpl = GraphElementHelper.LoadUXML(uiFile);
 
             this.AddStylesheet("Resizable.uss");
 
             tpl.CloneTree(this);
 
-            foreach (ResizerDirection value in System.Enum.GetValues(typeof(ResizerDirection)))
+            foreach (ResizerDirection value in Enum.GetValues(typeof(ResizerDirection)))
             {
                 VisualElement resizer = this.Q(value.ToString().ToLower() + "-resize");
                 if (resizer != null)

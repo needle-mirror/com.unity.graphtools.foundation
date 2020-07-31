@@ -31,11 +31,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             if (semanticGraph != null)
             {
                 SetCurrentSelection(AssetDatabase.GetAssetPath(selectedObject), OpenMode.Open);
-                return;
             }
         }
 
-        protected void SetCurrentSelection(string graphAssetFilePath, OpenMode mode, GameObject boundObject = null)
+        public void SetCurrentSelection(string graphAssetFilePath, OpenMode mode, GameObject boundObject = null)
         {
             var vseWindows = (VseWindow[])Resources.FindObjectsOfTypeAll(typeof(VseWindow));
 
@@ -43,15 +42,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             if (s_LastFocusedEditor != GetInstanceID() && vseWindows.Length > 1)
                 return;
 
-            var editorDataModel = m_Store.GetState().EditorDataModel;
+            var editorDataModel = Store.GetState().EditorDataModel;
             if (editorDataModel == null)
                 return;
-            var curBoundObject = editorDataModel.BoundObject;
+            var curBoundObject = (editorDataModel as IEditorDataModel)?.BoundObject;
 
             if (AssetDatabase.LoadAssetAtPath<GraphAssetModel>(graphAssetFilePath))
             {
                 // don't load if same graph and same bound object
-                if (m_Store.GetState() != null && m_Store.GetState().AssetModel != null &&
+                if (Store.GetState() != null && Store.GetState().AssetModel != null &&
                     graphAssetFilePath == LastGraphFilePath &&
                     curBoundObject == boundObject)
                     return;
@@ -64,7 +63,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             }
 
             // Load this graph asset.
-            m_Store.Dispatch(new LoadGraphAssetAction(graphAssetFilePath, boundObject));
+            Store.Dispatch(new LoadGraphAssetAction(graphAssetFilePath, boundObject));
             m_GraphView.FrameAll();
 
             if (mode != OpenMode.OpenAndFocus)

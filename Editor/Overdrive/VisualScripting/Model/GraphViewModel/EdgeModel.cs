@@ -11,7 +11,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
 {
     [Serializable]
     [MovedFrom(false, "UnityEditor.VisualScripting.GraphViewModel", "Unity.GraphTools.Foundation.Overdrive.Editor")]
-    public class EdgeModel : IEdgeModel, IUndoRedoAware, IGTFEdgeModel
+    public class EdgeModel : IEdgeModel
     {
         [Serializable]
         [MovedFrom(false, "UnityEditor.VisualScripting.GraphViewModel", "Unity.GraphTools.Foundation.Overdrive.Editor")]
@@ -22,27 +22,27 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
             [SerializeField]
             GraphAssetModel GraphAssetModel;
 
-            internal INodeModel NodeModel
+            internal IGTFNodeModel NodeModel
             {
                 get => GraphAssetModel != null && GraphAssetModel.GraphModel.NodesByGuid.TryGetValue(NodeModelGuid, out var node) ? node : null;
                 set
                 {
-                    GraphAssetModel = (GraphAssetModel)value?.AssetModel;
-                    NodeModelGuid = value?.Guid ?? default;
+                    GraphAssetModel = (GraphAssetModel)value.AssetModel;
+                    NodeModelGuid = value.Guid;
                 }
             }
 
             [SerializeField]
             public string UniqueId;
 
-            public void Assign(IPortModel portModel)
+            public void Assign(IGTFPortModel portModel)
             {
                 Assert.IsNotNull(portModel);
                 NodeModel = portModel.NodeModel;
-                UniqueId = portModel.UniqueId;
+                UniqueId = portModel.UniqueName;
             }
 
-            public IPortModel GetPortModel(Direction direction, ref IPortModel previousValue)
+            public IGTFPortModel GetPortModel(Direction direction, ref IGTFPortModel previousValue)
             {
                 var nodeModel = NodeModel;
                 if (nodeModel == null)
@@ -64,14 +64,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
 
 //                Debug.Log($"OBS {NodeModel} {direction} {UniqueId}");
 
-                var nodemodel2 = (nodeModel.VSGraphModel)?.NodesByGuid[nodeModel.Guid];
+                var nodemodel2 = nodeModel.GraphModel?.NodesByGuid[nodeModel.Guid];
                 if (nodemodel2 != nodeModel)
                 {
                     NodeModel = nodemodel2;
                 }
                 var portModelsByGuid = direction == Direction.Input ? nodeModel.InputsById : nodeModel.OutputsById;
                 if (UniqueId != null)
-                    portModelsByGuid.TryGetValue(UniqueId, out previousValue);
+                {
+                    if (portModelsByGuid.TryGetValue(UniqueId, out var v))
+                        previousValue = v;
+                }
                 return previousValue;
             }
 
@@ -84,7 +87,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
                 return String.Empty;
             }
 
-            public static bool TryMigratePorts(ref PortReference portReference, Direction direction, ref IPortModel portModel)
+            public static bool TryMigratePorts(ref PortReference portReference, Direction direction, ref IGTFPortModel portModel)
             {
                 if (portReference.NodeModel == null)
                     return false;
@@ -115,8 +118,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
         [SerializeField]
         PortReference m_OutputPortReference;
 
-        IPortModel m_InputPortModel;
-        IPortModel m_OutputPortModel;
+        IGTFPortModel m_InputPortModel;
+        IGTFPortModel m_OutputPortModel;
 
         [SerializeField]
         List<EdgeControlPointModel> m_EdgeControlPoints = new List<EdgeControlPointModel>();
@@ -157,16 +160,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
             set => m_EditMode = value;
         }
 
-        public EdgeModel(IGraphModel graphModel, IPortModel inputPort, IPortModel outputPort)
+        public EdgeModel(IGraphModel graphModel, IGTFPortModel inputPort, IGTFPortModel outputPort)
         {
-            VSGraphModel = graphModel;
+            GraphModel = graphModel;
             SetFromPortModels(inputPort, outputPort);
         }
 
-        public ScriptableObject SerializableAsset => m_GraphAssetModel;
-        public IGraphAssetModel AssetModel => m_GraphAssetModel;
+        public IGTFGraphAssetModel AssetModel => m_GraphAssetModel;
 
-        public IGraphModel VSGraphModel
+        public IGTFGraphModel GraphModel
         {
             get
             {
@@ -177,9 +179,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
             set => m_GraphAssetModel = value?.AssetModel as GraphAssetModel;
         }
 
-        public IGTFGraphModel GraphModel => VSGraphModel as IGTFGraphModel;
-
-        public void SetFromPortModels(IPortModel newInputPortModel, IPortModel newOutputPortModel)
+        public void SetFromPortModels(IGTFPortModel newInputPortModel, IGTFPortModel newOutputPortModel)
         {
             m_InputPortReference.Assign(newInputPortModel);
             m_InputPortModel = newInputPortModel;
@@ -188,17 +188,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
             m_OutputPortModel = newOutputPortModel;
         }
 
-        public IPortModel InputPortModel => m_InputPortReference.GetPortModel(Direction.Input, ref m_InputPortModel);
-        public IPortModel OutputPortModel => m_OutputPortReference.GetPortModel(Direction.Output, ref m_OutputPortModel);
-
-        public IGTFPortModel ToPort => InputPortModel as IGTFPortModel;
-        public IGTFPortModel FromPort => OutputPortModel as IGTFPortModel;
+        public IGTFPortModel ToPort => m_InputPortReference.GetPortModel(Direction.Input, ref m_InputPortModel);
+        public IGTFPortModel FromPort => m_OutputPortReference.GetPortModel(Direction.Output, ref m_OutputPortModel);
 
         [SerializeField]
         string m_EdgeLabel;
         public string EdgeLabel
         {
-            get => m_EdgeLabel ?? OutputPortModel?.Name;
+            get => m_EdgeLabel ?? (FromPort as IHasTitle)?.Title ?? "";
             set => m_EdgeLabel = value;
         }
 
@@ -207,19 +204,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
             return $"{m_InputPortReference}/{m_OutputPortReference}";
         }
 
-        public string OutputId => m_OutputPortReference.UniqueId;
+        public string FromPortId => m_OutputPortReference.UniqueId;
 
-        public string InputId => m_InputPortReference.UniqueId;
-        public GUID InputNodeGuid => m_InputPortReference.NodeModelGuid;
+        public string ToPortId => m_InputPortReference.UniqueId;
+        public GUID ToNodeGuid => m_InputPortReference.NodeModelGuid;
 
-        public GUID OutputNodeGuid => m_OutputPortReference.NodeModelGuid;
+        public GUID FromNodeGuid => m_OutputPortReference.NodeModelGuid;
 
         public override string ToString()
         {
             return $"{m_InputPortReference} -> {m_OutputPortReference}";
         }
 
-        public void UndoRedoPerformed()
+        public void ResetPorts()
         {
             m_InputPortModel = default;
             m_OutputPortModel = default;
@@ -246,30 +243,48 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
 
         public bool TryMigratePorts()
         {
-            if (InputPortModel == null && !PortReference.TryMigratePorts(ref m_InputPortReference, Direction.Input, ref m_InputPortModel))
+            if (ToPort == null && !PortReference.TryMigratePorts(ref m_InputPortReference, Direction.Input, ref m_InputPortModel))
                 return false;
-            if (OutputPortModel == null && !PortReference.TryMigratePorts(ref m_OutputPortReference, Direction.Output, ref m_OutputPortModel))
+            if (FromPort == null && !PortReference.TryMigratePorts(ref m_OutputPortReference, Direction.Output, ref m_OutputPortModel))
                 return false;
             return true;
         }
 
-        public bool AddPlaceHolderPorts(out INodeModel inputNode, out INodeModel outputNode)
+        public bool AddPlaceHolderPorts(out IGTFNodeModel inputNode, out IGTFNodeModel outputNode)
         {
             bool result = true;
             inputNode = outputNode = null;
-            if (InputPortModel == null)
+            if (ToPort == null)
             {
                 result &= m_InputPortReference.AddPlaceHolderPort(Direction.Input);
                 inputNode = m_InputPortReference.NodeModel;
             }
 
-            if (OutputPortModel == null)
+            if (FromPort == null)
             {
                 result &= m_OutputPortReference.AddPlaceHolderPort(Direction.Output);
                 outputNode = m_OutputPortReference.NodeModel;
             }
 
             return result;
+        }
+
+        [SerializeField]
+        SerializableGUID m_Guid;
+
+        public GUID Guid
+        {
+            get
+            {
+                if (m_Guid.GUID.Empty())
+                    AssignNewGuid();
+                return m_Guid;
+            }
+        }
+
+        public void AssignNewGuid()
+        {
+            m_Guid = GUID.Generate();
         }
     }
 }

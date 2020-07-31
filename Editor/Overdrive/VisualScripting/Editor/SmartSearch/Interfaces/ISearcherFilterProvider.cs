@@ -1,4 +1,5 @@
 using System;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch
@@ -6,9 +7,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch
     public interface ISearcherFilterProvider
     {
         SearcherFilter GetGraphSearcherFilter();
-        SearcherFilter GetOutputToGraphSearcherFilter(IPortModel portModel);
-        SearcherFilter GetInputToGraphSearcherFilter(IPortModel portModel);
+        SearcherFilter GetOutputToGraphSearcherFilter(IGTFPortModel portModel);
+        SearcherFilter GetInputToGraphSearcherFilter(IGTFPortModel portModel);
         SearcherFilter GetTypeSearcherFilter();
-        SearcherFilter GetEdgeSearcherFilter(IEdgeModel edgeModel);
+        SearcherFilter GetEdgeSearcherFilter(IGTFEdgeModel edgeModel);
     }
 }

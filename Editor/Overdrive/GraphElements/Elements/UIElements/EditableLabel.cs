@@ -30,7 +30,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             SetIsCompositeRoot();
             focusable = true;
 
-            GraphElementsHelper.LoadTemplateAndStylesheet(this, "EditableLabel", "ge-editable-label");
+            GraphElementHelper.LoadTemplateAndStylesheet(this, "EditableLabel", "ge-editable-label");
 
             m_Label = this.Q<Label>(name: k_LabelName);
             m_TextField = this.Q<TextField>(name: k_TextFieldName);

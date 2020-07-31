@@ -1,4 +1,5 @@
 using System;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch
@@ -64,9 +65,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch
 
     public readonly struct GraphAssetSearcherItemData : ISearcherItemData
     {
-        public IGraphAssetModel GraphAssetModel { get; }
+        public IGTFGraphAssetModel GraphAssetModel { get; }
 
-        public GraphAssetSearcherItemData(IGraphAssetModel graphAssetModel)
+        public GraphAssetSearcherItemData(IGTFGraphAssetModel graphAssetModel)
         {
             GraphAssetModel = graphAssetModel;
         }

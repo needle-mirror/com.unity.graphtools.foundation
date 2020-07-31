@@ -34,6 +34,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         public IEnumerator DraggingFromPortCreateGhostEdge()
         {
             var nodeModel = new IONodeModel();
+            m_GraphModel.AddNode(nodeModel);
             nodeModel.CreatePorts(0, 1);
             var node = new CollapsibleInOutNode();
             node.SetupBuildAndUpdate(nodeModel, m_Store, m_GraphView);
@@ -62,12 +63,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         public IEnumerator ReleasingInPortCallsDelegate()
         {
             var nodeModel1 = new IONodeModel { Position = Vector2.zero };
+            m_GraphModel.AddNode(nodeModel1);
             nodeModel1.CreatePorts(0, 1);
             var node1 = new CollapsibleInOutNode();
             node1.SetupBuildAndUpdate(nodeModel1, m_Store, m_GraphView);
             m_GraphView.AddElement(node1);
 
             var nodeModel2 = new IONodeModel { Position = new Vector2(0, 200) };
+            m_GraphModel.AddNode(nodeModel2);
             nodeModel2.CreatePorts(1, 0);
             var node2 = new CollapsibleInOutNode();
             node2.SetupBuildAndUpdate(nodeModel2, m_Store, m_GraphView);
@@ -110,12 +113,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         public IEnumerator ReleasingOutsidePortCallsDelegate()
         {
             var nodeModel1 = new IONodeModel { Position = Vector2.zero };
+            m_GraphModel.AddNode(nodeModel1);
             nodeModel1.CreatePorts(0, 1);
             var node1 = new CollapsibleInOutNode();
             node1.SetupBuildAndUpdate(nodeModel1, m_Store, m_GraphView);
             m_GraphView.AddElement(node1);
 
             var nodeModel2 = new IONodeModel { Position = new Vector2(0, 200) };
+            m_GraphModel.AddNode(nodeModel2);
             nodeModel2.CreatePorts(1, 0);
             var node2 = new CollapsibleInOutNode();
             node2.SetupBuildAndUpdate(nodeModel2, m_Store, m_GraphView);

@@ -1,20 +1,16 @@
 using System;
+using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Highlighting;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 {
-    public class Token : TokenNode, IHighlightable, IBadgeContainer, INodeState
+    public class Token : TokenNode, IHighlightable
     {
-        public new INodeModel NodeModel => base.NodeModel as INodeModel;
-        public new Store Store => base.Store as Store;
-
         SerializedObject m_SerializedObject;
-
-        public IGraphElementModel GraphElementModel => NodeModel;
 
         public override bool IsRenamable()
         {
@@ -24,18 +20,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             if (NodeModel is Overdrive.Model.IRenamable)
                 return true;
 
-            IVariableDeclarationModel declarationModel = (NodeModel as IVariableModel)?.DeclarationModel;
+            var declarationModel = (NodeModel as IGTFVariableNodeModel)?.VariableDeclarationModel;
             return declarationModel is Overdrive.Model.IRenamable;
         }
 
-        VisualElement m_ContentContainer;
-        public override VisualElement contentContainer => m_ContentContainer ?? this;
-
         public static readonly string k_TitleIconContainerPartName = "title-icon-container";
         public static readonly string k_ConstantEditorPartName = "constant-editor";
-
-        public static readonly string k_SelectionBorderElementName = "selection-border";
-        public static readonly string k_ContentContainerElementName = "content-container";
 
         public static readonly string k_ConstantModifierUssClassName = k_UssClassName.WithUssModifier("constant-token");
         public static readonly string k_VariableModifierUssClassName = k_UssClassName.WithUssModifier("variable-token");
@@ -55,7 +45,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         protected override void BuildElementUI()
         {
-            m_ContentContainer = this.AddBorder(k_UssClassName);
             base.BuildElementUI();
 
             if (Model is ConstantNodeModel)
@@ -66,10 +55,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             {
                 AddToClassList(k_VariableModifierUssClassName);
             }
-
-            viewDataKey = NodeModel.GetId();
-
-            this.AddOverlay();
         }
 
         protected override void PostBuildUI()
@@ -84,9 +69,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         {
             base.UpdateElementFromModel();
 
-            if (Model is IVariableModel variableModel && variableModel.DeclarationModel != null)
+            if (Model is IGTFVariableNodeModel variableModel && variableModel.VariableDeclarationModel != null)
             {
-                switch (variableModel.DeclarationModel.Modifiers)
+                switch (variableModel.VariableDeclarationModel.Modifiers)
                 {
                     case ModifierFlags.ReadOnly:
                         AddToClassList(k_ReadOnlyModifierUssClassName);
@@ -96,12 +81,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                         break;
                 }
             }
-            else if (Model is IEdgePortalEntryModel)
+            else if (Model is IGTFEdgePortalEntryModel)
             {
                 AddToClassList(k_PortalModifierUssClassName);
                 AddToClassList(k_PortalEntryModifierUssClassName);
             }
-            else if (Model is IEdgePortalExitModel)
+            else if (Model is IGTFEdgePortalExitModel)
             {
                 AddToClassList(k_PortalModifierUssClassName);
                 AddToClassList(k_PortalExitModifierUssClassName);
@@ -112,26 +97,23 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                 tooltip = $"{nodeModel.VariableString}";
                 if (!string.IsNullOrEmpty(nodeModel.DataTypeString))
                     tooltip += $" of type {nodeModel.DataTypeString}";
-                if (Model is IVariableModel currentVariableModel &&
-                    !string.IsNullOrEmpty(currentVariableModel.DeclarationModel?.Tooltip))
-                    tooltip += "\n" + currentVariableModel.DeclarationModel.Tooltip;
+                if (Model is IGTFVariableNodeModel currentVariableModel &&
+                    !string.IsNullOrEmpty(currentVariableModel.VariableDeclarationModel?.Tooltip))
+                    tooltip += "\n" + currentVariableModel.VariableDeclarationModel.Tooltip;
 
                 if (nodeModel.HasUserColor)
                 {
-                    var border = this.MandatoryQ(k_ContentContainerElementName);
+                    var border = this.MandatoryQ(SelectionBorder.k_ContentContainerElementName);
                     border.style.backgroundColor = nodeModel.Color;
                     border.style.backgroundImage = null;
                 }
                 else
                 {
-                    var border = this.MandatoryQ(k_ContentContainerElementName);
+                    var border = this.MandatoryQ(SelectionBorder.k_ContentContainerElementName);
                     border.style.backgroundColor = StyleKeyword.Null;
                     border.style.backgroundImage = StyleKeyword.Null;
                 }
             }
-
-            UIState = NodeModel.State == ModelState.Disabled ? NodeUIState.Disabled : NodeUIState.Enabled;
-            this.ApplyNodeState();
         }
 
         bool m_IsMovable = true;
@@ -148,36 +130,26 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             ((VseGraphView)GraphView).ClearGraphElementsHighlight(ShouldHighlightItemUsage);
         }
 
-        public bool Highlighted
+        public new bool ShouldHighlightItemUsage(IGTFGraphElementModel elementModel)
         {
-            get => ClassListContains("highlighted");
-            set => EnableInClassList("highlighted", value);
-        }
-
-        public bool ShouldHighlightItemUsage(IGraphElementModel elementModel)
-        {
-            var currentVariableModel = NodeModel as IVariableModel;
-            var currentEdgePortalModel = Model as IEdgePortalModel;
+            var currentVariableModel = NodeModel as IGTFVariableNodeModel;
+            var currentEdgePortalModel = Model as IGTFEdgePortalModel;
             // 'this' tokens have a null declaration model
-            if (currentVariableModel?.DeclarationModel == null && currentEdgePortalModel == null)
+            if (currentVariableModel?.VariableDeclarationModel == null && currentEdgePortalModel == null)
                 return NodeModel is ThisNodeModel && elementModel is ThisNodeModel;
 
             switch (elementModel)
             {
-                case IVariableModel variableModel
-                    when ReferenceEquals(variableModel.DeclarationModel, currentVariableModel?.DeclarationModel):
+                case IGTFVariableNodeModel variableModel
+                    when ReferenceEquals(variableModel.VariableDeclarationModel, currentVariableModel?.VariableDeclarationModel):
                 case IVariableDeclarationModel variableDeclarationModel
-                    when ReferenceEquals(variableDeclarationModel, currentVariableModel?.DeclarationModel):
-                case IEdgePortalModel edgePortalModel
+                    when ReferenceEquals(variableDeclarationModel, currentVariableModel?.VariableDeclarationModel):
+                case IGTFEdgePortalModel edgePortalModel
                     when ReferenceEquals(edgePortalModel.DeclarationModel, currentEdgePortalModel?.DeclarationModel):
                     return true;
             }
 
             return false;
         }
-
-        public IconBadge ErrorBadge { get; set; }
-        public ValueBadge ValueBadge { get; set; }
-        public NodeUIState UIState { get; set; }
     }
 }

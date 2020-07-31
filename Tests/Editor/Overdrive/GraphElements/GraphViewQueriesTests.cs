@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
@@ -25,8 +26,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             m_Node2 = CreateNode("Node 2", new Vector2(200, 200), 2, 2);
             m_Node3 = CreateNode("Node 3", new Vector2(400, 400));
             m_Node4 = CreateNode("Node 4", new Vector2(500, 500));
-            m_Edge1 = GraphModel.CreateEdgeGTF(m_Node1.InputPorts.First(), m_Node2.OutputPorts.First()) as BasicEdgeModel;
-            m_Edge2 = GraphModel.CreateEdgeGTF(m_Node1.InputPorts.First(), m_Node2.OutputPorts.ElementAt(1)) as BasicEdgeModel;
+            m_Edge1 = GraphModel.CreateEdge(m_Node1.InputPorts.First(), m_Node2.OutputPorts.First()) as BasicEdgeModel;
+            m_Edge2 = GraphModel.CreateEdge(m_Node1.InputPorts.First(), m_Node2.OutputPorts.ElementAt(1)) as BasicEdgeModel;
         }
 
         IEnumerable<GraphElement> GetElements<T>() where T : GraphElement

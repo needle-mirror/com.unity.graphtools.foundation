@@ -1,4 +1,4 @@
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
@@ -16,11 +16,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
     ///  internal class MyNodeBaseCustomEditor : UnityEditor.Editor { ... }
     /// </code>
     /// </example>
-    public class NodeModelProxy<T> : ScriptableObject, INodeModelProxy where T : IGraphElementModel
+    public class NodeModelProxy<T> : ScriptableObject, INodeModelProxy where T : IGTFGraphElementModel
     {
         public ScriptableObject ScriptableObject() { return this;}
 
-        public void SetModel(IGraphElementModel model) { Model = (T)model; }
+        public void SetModel(IGTFGraphElementModel model) { Model = (T)model; }
 
         [SerializeReference]
         public T Model;

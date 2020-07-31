@@ -4,9 +4,9 @@ using System.Linq;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
+using UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
-using UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
@@ -237,8 +237,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
 
                 Assert.IsTrue(m_Changed, "ViewTransform didn't change");
                 Assert.That(GraphView.selection.
-                    OfType<IHasGraphElementModel>().
-                    Where(x => x.GraphElementModel is INodeModel n && n.Guid == nodeModel.Guid).Any,
+                    OfType<IGraphElement>().
+                    Where(x => x.Model is IGTFNodeModel n && n.Guid == nodeModel.Guid).Any,
                     () =>
                     {
                         var graphViewSelection = String.Join(",", GraphView.selection);
@@ -268,12 +268,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                 Store.Dispatch(new RefreshUIAction(UpdateFlags.All));
                 yield return null;
                 Assert.That(GraphView.selection.
-                    OfType<IHasGraphElementModel>().
-                    Where(x => x.GraphElementModel is INodeModel n && n.Guid == nodeModel.Guid).Any,
+                    OfType<IGraphElement>().
+                    Where(x => x.Model is IGTFNodeModel n && n.Guid == nodeModel.Guid).Any,
                     () =>
                     {
                         var graphViewSelection = String.Join(",", GraphView.selection.Select(x =>
-                            x is IHasGraphElementModel hasModel ? hasModel.GraphElementModel.ToString() : x.ToString()));
+                            x is IGraphElement hasModel ? hasModel.Model.ToString() : x.ToString()));
                         return $"Selection doesn't contain {nodeModel} {nodeModel.Title} but {graphViewSelection}";
                     });
             }
@@ -282,7 +282,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
         [UnityTest]
         public IEnumerator DuplicateNodeAndEdgeCreatesEdgeToOriginalNode()
         {
-            var declaration0 = GraphModel.CreateGraphVariableDeclaration("decl0", typeof(int).GenerateTypeHandle(GraphModel.Stencil), true);
+            var declaration0 = GraphModel.CreateGraphVariableDeclaration("decl0", typeof(int).GenerateTypeHandle(), ModifierFlags.None, true);
 
             var nodeA = GraphModel.CreateVariableNode(declaration0, new Vector2(100, -100));
             var nodeB = GraphModel.CreateNode<Type0FakeNodeModel>("A", new Vector2(100, 100));
@@ -309,7 +309,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
             Assert.AreEqual(2, GraphModel.EdgeModels.Count);
             foreach (var edgeModel in GraphModel.EdgeModels)
             {
-                Assert.AreEqual(nodeA.OutputPort, edgeModel.OutputPortModel);
+                Assert.AreEqual(nodeA.OutputPort, edgeModel.FromPort);
             }
         }
     }

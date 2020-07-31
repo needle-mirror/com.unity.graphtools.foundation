@@ -699,6 +699,7 @@ namespace UnityEditor.VisualScripting.Editor
 #endif
 
             Undo.RegisterCompleteObjectUndo((Object)graph.AssetModel, $"{targetInfo.OperationName} selection");
+            EditorUtility.SetDirty((Object)graph.AssetModel);
         }
 
         void UnserializeAndPaste(string operationName, string data)
@@ -757,6 +758,21 @@ namespace UnityEditor.VisualScripting.Editor
 
             if (pastedNodeParentStack == null)
             {
+                if (pastedNodeModel is VariableNodeModel variableModel)
+                {
+                    var declarationModel = (VariableDeclarationModel)variableModel.DeclarationModel;
+                    if (!graph.VariableDeclarations.Contains(declarationModel))
+                    {
+                        var clone = declarationModel.Clone();
+                        variableModel.DeclarationModel = clone;
+                        clone.GraphModel = graph;
+                        graph.VariableDeclarations.Add(clone);
+                        graph.LastChanges.ChangedElements.Add(clone);
+
+                        editorDataModel?.SelectElementsUponCreation(new[] { clone }, true);
+                    }
+                }
+
                 graph.AddNode(pastedNodeModel);
                 pastedNodeModel.Position += delta;
 

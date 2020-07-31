@@ -3,8 +3,13 @@
     border-radius: 0;
 }
 
-.ge-node--token .ge-node__content-container {
+.ge-node--token .ge-selection-border__content-container
+{
+    flex-direction: row;
     align-items: center;
+    background-color: #505050;
+    border-radius: var(--border-radius);
+    overflow: hidden;
 }
 
 .ge-node--token .ge-port-container {
@@ -28,14 +33,14 @@
     padding-left: 12px;
 }
 
-.ge-node--token.ge-node--portal-entry .ge-node__content-container,
+.ge-node--token.ge-node--portal-entry .ge-selection-border__content-container,
 .ge-node--token.ge-node--portal-entry .ge-node__selection-border,
-.ge-node--token.ge-node--portal-entry #disabledOverlay {
+.ge-node--token.ge-node--portal-entry #disabled-overlay {
     border-top-right-radius: 20px;
 }
 
-.ge-node--token.ge-node--portal-exit .ge-node__content-container,
+.ge-node--token.ge-node--portal-exit .ge-selection-border__content-container,
 .ge-node--token.ge-node--portal-exit .ge-node__selection-border,
-.ge-node--token.ge-node--portal-exit #disabledOverlay {
+.ge-node--token.ge-node--portal-exit #disabled-overlay {
     border-bottom-left-radius: 22px;
 }

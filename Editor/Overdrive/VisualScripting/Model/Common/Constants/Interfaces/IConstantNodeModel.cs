@@ -5,14 +5,11 @@ using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 {
-    public interface IConstantNodeModel : IHasMainOutputPort, IHasSingleOutputPort
+    public interface IConstantNodeModel : IGTFConstantNodeModel, IHasMainOutputPort
     {
-        object ObjectValue { get; }
-        bool IsLocked { get; }
-        Type Type { get; }
     }
 
-    public interface IStringWrapperConstantModel : IConstantNodeModel
+    public interface IStringWrapperConstantModel : IConstant
     {
         List<string> GetAllInputNames(IEditorDataModel editorDataModel);
         string StringValue { get; set; }

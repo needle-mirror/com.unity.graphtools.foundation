@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
@@ -8,6 +9,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
     public class BasicEdgeModel : IGTFEdgeModel
     {
         public IGTFGraphModel GraphModel { get; set; }
+
+        GUID m_GUID = GUID.Generate();
+        public GUID Guid => m_GUID;
+
+        public IGTFGraphAssetModel AssetModel => GraphModel.AssetModel;
+
+        public void AssignNewGuid()
+        {
+            m_GUID = GUID.Generate();
+        }
+
         public bool IsDeletable => true;
         public IGTFPortModel FromPort { get; }
         public IGTFPortModel ToPort { get; }
@@ -38,7 +50,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
         public Vector2 Position
         {
             get => Vector2.zero;
-            set => throw new System.NotImplementedException();
+            set => throw new NotImplementedException();
         }
 
         public void Move(Vector2 delta)

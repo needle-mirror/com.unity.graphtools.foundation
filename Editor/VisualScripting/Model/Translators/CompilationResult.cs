@@ -43,19 +43,19 @@ namespace  UnityEditor.VisualScripting.Model
         public CompilationStatus status => errors.Any(e => e.isWarning == false) ?
         CompilationStatus.Failed : CompilationStatus.Succeeded;
 
-        public void AddError(string description, INodeModel node = null)
+        public void AddError(string description, INodeModel node = null, CompilerQuickFix quickFix = null)
         {
-            AddError(description, node,  false);
+            AddError(description, node,  false, quickFix);
         }
 
-        public void AddWarning(string description, INodeModel node = null)
+        public void AddWarning(string description, INodeModel node = null, CompilerQuickFix quickFix = null)
         {
-            AddError(description, node, true);
+            AddError(description, node, true, quickFix);
         }
 
-        void AddError(string desc, INodeModel node, bool isWarning)
+        void AddError(string desc, INodeModel node, bool isWarning, CompilerQuickFix quickFix)
         {
-            errors.Add(new CompilerError { description = desc, sourceNode = node, isWarning = isWarning});
+            errors.Add(new CompilerError { description = desc, sourceNode = node, isWarning = isWarning, quickFix = quickFix });
         }
     }
 

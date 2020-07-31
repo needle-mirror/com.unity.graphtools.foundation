@@ -16,12 +16,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Model
 
     public interface IHasSingleInputPort : IHasPorts
     {
-        IGTFPortModel GTFInputPort { get; }
+        IGTFPortModel InputPort { get; }
     }
 
     public interface IHasSingleOutputPort : IHasPorts
     {
-        IGTFPortModel GTFOutputPort { get; }
+        IGTFPortModel OutputPort { get; }
     }
 
     public interface IHasIOPorts : IHasPorts
@@ -75,11 +75,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Model
     {
         bool IsRenamable { get; }
         void Rename(string newName);
-    }
-
-    public interface IModifiable
-    {
-        bool IsModifiable { get; }
     }
 
     public interface IGhostEdge

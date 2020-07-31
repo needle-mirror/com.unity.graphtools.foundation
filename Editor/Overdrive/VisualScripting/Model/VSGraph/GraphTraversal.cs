@@ -1,22 +1,22 @@
 using System;
 using System.Collections.Generic;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 {
     public abstract class GraphTraversal
     {
-        public void VisitGraph(VSGraphModel vsGraphModel)
+        public void VisitGraph(IGTFGraphModel graphModel)
         {
-            HashSet<INodeModel> visitedNodes = new HashSet<INodeModel>();
-            foreach (var entryPoint in vsGraphModel.Stencil.GetEntryPoints(vsGraphModel))
+            HashSet<IGTFNodeModel> visitedNodes = new HashSet<IGTFNodeModel>();
+            foreach (var entryPoint in graphModel.Stencil.GetEntryPoints(graphModel))
             {
                 VisitNode(entryPoint, visitedNodes);
             }
 
             // floating nodes
-            foreach (var node in vsGraphModel.NodeModels)
+            foreach (var node in graphModel.NodeModels)
             {
                 if (node == null || visitedNodes.Contains(node))
                     continue;
@@ -24,35 +24,27 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                 VisitNode(node, visitedNodes);
             }
 
-            foreach (var variableDeclaration in vsGraphModel.GraphVariableModels)
+            foreach (var variableDeclaration in graphModel.VariableDeclarations)
             {
                 VisitVariableDeclaration(variableDeclaration);
             }
 
-            foreach (var edgeModel in vsGraphModel.EdgeModels)
+            foreach (var edgeModel in graphModel.EdgeModels)
             {
                 VisitEdge(edgeModel);
             }
         }
 
-        protected virtual void VisitEdge(IEdgeModel edgeModel)
+        protected virtual void VisitEdge(IGTFEdgeModel edgeModel)
         {
         }
 
-        protected virtual void VisitNode(INodeModel nodeModel, HashSet<INodeModel> visitedNodes)
+        protected virtual void VisitNode(IGTFNodeModel nodeModel, HashSet<IGTFNodeModel> visitedNodes)
         {
             if (nodeModel == null)
                 return;
 
             visitedNodes.Add(nodeModel);
-
-            if (nodeModel is IHasVariableDeclaration hasVariableDeclaration)
-            {
-                foreach (var variableDeclaration in hasVariableDeclaration.VariableDeclarations)
-                {
-                    VisitVariableDeclaration(variableDeclaration);
-                }
-            }
 
             foreach (var inputPortModel in nodeModel.InputsByDisplayOrder)
             {
@@ -65,6 +57,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             }
         }
 
-        protected virtual void VisitVariableDeclaration(IVariableDeclarationModel variableDeclarationModel) {}
+        protected virtual void VisitVariableDeclaration(IGTFVariableDeclarationModel variableDeclarationModel) {}
     }
 }

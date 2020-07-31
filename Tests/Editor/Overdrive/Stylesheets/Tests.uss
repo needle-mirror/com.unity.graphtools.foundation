@@ -14,3 +14,11 @@
 .EdgeColorsMatchCustomPortColors .ge-port--direction-output {
     --port-color: #0000ff;
 }
+
+GridBackground {
+    --grid-background-color:#202020;
+    --line-color: #575757;
+    --thick-line-color: #9e9e9e;
+    --spacing:200.0;
+    --thick-lines:0;
+}

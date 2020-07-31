@@ -72,7 +72,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
             node.MakePortsFromNames(new List<string> { "A", "B", "C" });
             node.DefineNode();
 
-            var decl = GraphModel.CreateGraphVariableDeclaration("myInt", TypeHandle.Int, true);
+            var decl = GraphModel.CreateGraphVariableDeclaration("myInt", TypeHandle.Int, ModifierFlags.None, true);
             var nodeA = GraphModel.CreateVariableNode(decl, Vector2.up);
             var nodeB = GraphModel.CreateVariableNode(decl, Vector2.zero);
             var nodeC = GraphModel.CreateVariableNode(decl, Vector2.down);
@@ -102,10 +102,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
             const string nodeName = "Node0";
 
             {
-                var iDecl = GraphModel.CreateGraphVariableDeclaration("myInt", TypeHandle.Int, true);
-                var myInt = GraphModel.CreateVariableNode(iDecl, Vector2.up);
+                var iDecl = GraphModel.CreateGraphVariableDeclaration("myInt", TypeHandle.Int, ModifierFlags.None, true);
+                GraphModel.CreateVariableNode(iDecl, Vector2.up);
 
-                var vDecl = GraphModel.CreateGraphVariableDeclaration("myVec", typeof(Vector3).GenerateTypeHandle(Stencil), true);
+                var vDecl = GraphModel.CreateGraphVariableDeclaration("myVec", typeof(Vector3).GenerateTypeHandle(), ModifierFlags.None, true);
                 var myVec = GraphModel.CreateVariableNode(vDecl, Vector2.left);
                 var getProperty = GraphModel.CreateNode<Type0FakeNodeModel>(nodeName, Vector2.zero);
                 GraphModel.CreateEdge(getProperty.Input0, myVec.OutputPort);
@@ -123,24 +123,24 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
                     var log1 = GraphModel.NodeModels[3] as Type0FakeNodeModel;
                     var log2 = GraphModel.NodeModels[4] as Type0FakeNodeModel;
                     var myInt = GetAllNodes().OfType<VariableNodeModel>().Single(n => n.DataType == TypeHandle.Int);
-                    var getProperty = GetAllNodes().OfType<Type0FakeNodeModel>().Where(n => n.Title == nodeName).First();
+                    var getProperty = GetAllNodes().OfType<Type0FakeNodeModel>().First(n => n.Title == nodeName);
 
                     Assert.That(myInt.OutputPort.IsConnected, Is.False);
-                    Assert.That(log1.Input0, Is.ConnectedTo(getProperty.Output0));
-                    Assert.That(log2.Input0, Is.ConnectedTo(getProperty.Output1));
-                    return new CreateEdgeAction(log1.Input0, myInt.OutputPort as IGTFPortModel, new List<IGTFEdgeModel> {GraphModel.GetEdgesConnections(log1.Input0).Single() as IGTFEdgeModel});
+                    Assert.That(log1?.Input0, Is.ConnectedTo(getProperty.Output0));
+                    Assert.That(log2?.Input0, Is.ConnectedTo(getProperty.Output1));
+                    return new CreateEdgeAction(log1?.Input0, myInt.OutputPort, new List<IGTFEdgeModel> { GraphModel.GetEdgesConnections(log1?.Input0).Single() });
                 },
                 () =>
                 {
                     var log1 = GraphModel.NodeModels[3] as Type0FakeNodeModel;
                     var log2 = GraphModel.NodeModels[4] as Type0FakeNodeModel;
                     var myInt = GetAllNodes().OfType<VariableNodeModel>().Single(n => n.DataType == TypeHandle.Int);
-                    var getProperty = GetAllNodes().OfType<Type0FakeNodeModel>().Where(n => n.Title == nodeName).First();
+                    var getProperty = GetAllNodes().OfType<Type0FakeNodeModel>().First(n => n.Title == nodeName);
 
                     Assert.That(myInt.OutputPort.IsConnected, Is.True);
                     Assert.That(getProperty.Output0.IsConnected, Is.False);
-                    Assert.That(log1.Input0, Is.ConnectedTo(myInt.OutputPort));
-                    Assert.That(log2.Input0, Is.ConnectedTo(getProperty.Output1));
+                    Assert.That(log1?.Input0, Is.ConnectedTo(myInt.OutputPort));
+                    Assert.That(log2?.Input0, Is.ConnectedTo(getProperty.Output1));
                 });
         }
     }

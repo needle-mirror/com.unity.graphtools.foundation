@@ -14,7 +14,6 @@
     "allowUnsafeCode": false,
     "overrideReferences": true,
     "precompiledReferences": [
-        "System.Collections.Immutable.dll",
         "System.Composition.AttributedModel.dll",
         "System.Composition.Convention.dll",
         "System.Composition.Hosting.dll",

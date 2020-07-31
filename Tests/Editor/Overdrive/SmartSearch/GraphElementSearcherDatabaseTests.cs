@@ -3,11 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using NUnit.Framework;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
-using UnityEngine.GraphToolsFoundation.Overdrive.VisualScripting;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.SmartSearch
 {
@@ -54,7 +53,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.SmartSearch
 #pragma warning restore CS0414
 
         void CreateNodesAndValidateGraphModel(GraphNodeModelSearcherItem item, SpawnFlags mode,
-            Action<List<INodeModel>> assertNodesCreation)
+            Action<List<IGTFNodeModel>> assertNodesCreation)
         {
             var initialNodes = GraphModel.NodeModels.ToList();
             var initialEdges = GraphModel.EdgeModels.ToList();
@@ -78,7 +77,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.SmartSearch
         {
             const string name = "int";
             var var1 = GraphModel.CreateGraphVariableDeclaration(name,
-                typeof(int).GenerateTypeHandle(Stencil), false);
+                typeof(int).GenerateTypeHandle(), ModifierFlags.None, false);
 
             var db = new GraphElementSearcherDatabase(Stencil)
                 .AddGraphVariables(GraphModel)
@@ -96,8 +95,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.SmartSearch
                 var node = GraphModel.NodeModels.OfType<VariableNodeModel>().FirstOrDefault();
                 Assert.IsNotNull(node);
                 Assert.AreEqual(initialNodes.Count + 1, GraphModel.NodeModels.Count);
-                Assert.AreEqual(name.Nicify(), node.Title);
-                Assert.AreEqual(typeof(int), node.DataType.Resolve(Stencil));
+                Assert.AreEqual(name.Nicify(), node.DisplayTitle);
+                Assert.AreEqual(typeof(int), node.DataType.Resolve());
             });
         }
 
@@ -134,7 +133,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.SmartSearch
             Assert.IsNotNull(item);
 
             var data = (TypeSearcherItemData)item.Data;
-            Assert.AreEqual(typeof(string).GenerateTypeHandle(Stencil), data.Type);
+            Assert.AreEqual(typeof(string).GenerateTypeHandle(), data.Type);
         }
     }
 }

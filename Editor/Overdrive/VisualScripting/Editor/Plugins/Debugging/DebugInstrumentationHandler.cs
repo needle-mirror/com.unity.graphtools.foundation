@@ -5,7 +5,6 @@ using System.Linq;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.Searcher;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Debug = UnityEngine.Debug;
@@ -20,9 +19,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
         const int k_UpdateIntervalMs = 10;
 
         VisualElement m_IconsParent;
-        Store m_Store;
+        Overdrive.Store m_Store;
         GraphView m_GraphView;
-        List<TracingStep> GraphDebuggingData => m_Store.GetState()?.DebuggingData;
+        List<TracingStep> GraphDebuggingData => m_Store.GetState()?.TracingDataModel.DebuggingData;
         PauseState m_PauseState = PauseState.Unpaused;
         PlayModeStateChange m_PlayState = PlayModeStateChange.EnteredEditMode;
         int? m_CurrentFrame;
@@ -31,12 +30,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
         Stopwatch m_Stopwatch;
         bool m_ForceUpdate;
 
-        private TracingToolbar m_TimelineToolbar;
+        TracingToolbar m_TimelineToolbar;
 
-        public void Register(Store store, VseWindow window)
+        public void Register(Overdrive.Store store, GraphViewEditorWindow window)
         {
             m_Store = store;
-            m_GraphView = window.GraphView;
+            m_GraphView = window.GraphViews.First();
             EditorApplication.update += OnUpdate;
             EditorApplication.pauseStateChanged += OnEditorPauseStateChanged;
             EditorApplication.playModeStateChanged += OnEditorPlayModeStateChanged;
@@ -49,7 +48,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
                 m_TimelineToolbar = root.Q<TracingToolbar>();
                 if (m_TimelineToolbar == null)
                 {
-                    m_TimelineToolbar = new TracingToolbar(m_GraphView, store);
+                    m_TimelineToolbar = new TracingToolbar(m_GraphView, m_Store);
                 }
             }
 
@@ -74,7 +73,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
             menu.AddItem(new GUIContent("Dump Frame Trace"), false, DumpFrameTrace);
         }
 
-        private void DumpFrameTrace()
+        void DumpFrameTrace()
         {
             var state = m_Store.GetState();
             var currentGraphModel = state?.CurrentGraphModel;
@@ -82,7 +81,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
             if (state == null || debugger == null)
                 return;
 
-            if (debugger.GetTracingSteps(currentGraphModel, state.CurrentTracingFrame, state.CurrentTracingTarget,
+            if (debugger.GetTracingSteps(currentGraphModel, state.TracingDataModel.CurrentTracingFrame, state.TracingDataModel.CurrentTracingTarget,
                 out var stepList))
             {
                 try
@@ -91,13 +90,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
                     SearcherWindow.Show(EditorWindow.focusedWindow, searcherItems, "Steps", item =>
                     {
                         if (item != null)
-                            state.CurrentTracingStep = ((StepSearcherItem)item).Index;
+                            state.TracingDataModel.CurrentTracingStep = ((StepSearcherItem)item).Index;
                         return true;
                     }, Vector2.zero);
                 }
                 catch (Exception e)
                 {
-                    UnityEngine.Debug.LogException(e);
+                    Debug.LogException(e);
                 }
             }
             else
@@ -120,7 +119,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
                 Index = i;
             }
 
-            private static string GetName(TracingStep step)
+            static string GetName(TracingStep step)
             {
                 return $"{step.Type} {step.NodeModel} {step.PortModel}";
             }
@@ -139,7 +138,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
                 return;
             if (EditorApplication.isPlaying && !EditorApplication.isPaused)
             {
-                m_Store.GetState().CurrentTracingFrame = Time.frameCount;
+                m_Store.GetState().TracingDataModel.CurrentTracingFrame = Time.frameCount;
             }
 
             m_TimelineToolbar.UpdateTracingMenu();
@@ -190,11 +189,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
             if (state == null || debugger == null)
                 return;
 
-            if (needUpdate && debugger.GetTracingSteps(currentGraphModel, state.CurrentTracingFrame, state.CurrentTracingTarget,
+            if (needUpdate && debugger.GetTracingSteps(currentGraphModel, state.TracingDataModel.CurrentTracingFrame, state.TracingDataModel.CurrentTracingTarget,
                 out var stepList))
             {
-                state.MaxTracingStep = stepList == null ? 0 : stepList.Count;
-                state.DebuggingData = stepList;
+                state.TracingDataModel.MaxTracingStep = stepList == null ? 0 : stepList.Count;
+                state.TracingDataModel.DebuggingData = stepList;
                 HighlightTrace();
             }
         }
@@ -202,38 +201,33 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
         void ClearHighlights()
         {
             VseGraphView gv = (VseGraphView)m_GraphView;
-            if (gv?.UIController.ModelsToNodeMapping != null)
+            foreach (GraphElements.Node x in m_GraphView.nodes.ToList())
             {
-                foreach (GraphElement x in gv.UIController.ModelsToNodeMapping.Values)
-                {
-                    x.RemoveFromClassList(k_TraceHighlight);
-                    x.RemoveFromClassList(k_TraceSecondaryHighlight);
-                    x.RemoveFromClassList(k_ExceptionHighlight);
+                x.RemoveFromClassList(k_TraceHighlight);
+                x.RemoveFromClassList(k_TraceSecondaryHighlight);
+                x.RemoveFromClassList(k_ExceptionHighlight);
 
-                    VseUIController.ClearErrorBadge(x);
-                    if (x is Node n)
-                        VseUIController.ClearPorts(n);
+                VseUIController.ClearErrorBadge(x);
+                if (x is Node n)
+                    VseUIController.ClearPorts(n);
 
-                    // TODO ugly
-                    gv.UIController.DisplayCompilationErrors(gv.store.GetState());
-                }
+                // TODO ugly
+                gv.UIController.DisplayCompilationErrors(gv.store.GetState());
             }
         }
 
         void HighlightTrace()
         {
-            Dictionary<IGraphElementModel, GraphElement> modelsToNodeUiMapping =
-                ((VseGraphView)m_GraphView).UIController.ModelsToNodeMapping;
             if (GraphDebuggingData != null)
             {
-                var currentTracingStep = m_Store.GetState().CurrentTracingStep;
+                var currentTracingStep = m_Store.GetState().TracingDataModel.CurrentTracingStep;
                 if (currentTracingStep < 0 || currentTracingStep >= GraphDebuggingData.Count)
                 {
-                    m_Store.GetState().CurrentTracingStep = -1;
+                    m_Store.GetState().TracingDataModel.CurrentTracingStep = -1;
                     foreach (TracingStep step in GraphDebuggingData)
                     {
-                        AddStyleClassToModel(step, modelsToNodeUiMapping, k_TraceHighlight);
-                        DisplayStepValues(step, modelsToNodeUiMapping);
+                        AddStyleClassToModel(step, k_TraceHighlight);
+                        DisplayStepValues(step);
                     }
                 }
                 else
@@ -241,8 +235,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
                     for (var i = 0; i < currentTracingStep; i++)
                     {
                         var step = GraphDebuggingData[i];
-                        AddStyleClassToModel(step, modelsToNodeUiMapping, k_TraceHighlight);
-                        DisplayStepValues(step, modelsToNodeUiMapping);
+                        AddStyleClassToModel(step, k_TraceHighlight);
+                        DisplayStepValues(step);
                     }
                 }
             }
@@ -250,7 +244,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
                 m_GraphView.edges.ForEach(e => e.MarkDirtyRepaint())).StartingIn(1);
         }
 
-        void DisplayStepValues(TracingStep step, Dictionary<IGraphElementModel, GraphElement> modelsToNodeUiMapping)
+        void DisplayStepValues(TracingStep step)
         {
             switch (step.Type)
             {
@@ -258,46 +252,51 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
                     // Do Nothing, already handled in HighlightTrace()
                     break;
                 case TracingStepType.TriggeredPort:
-                    var p = (step.PortModel as IGTFPortModel).GetUI<Port>(m_GraphView);
-                    p.ExecutionPortActive = true;
+                    var p = step.PortModel.GetUI<Port>(m_GraphView);
+                    if (p != null)
+                        p.ExecutionPortActive = true;
                     break;
                 case TracingStepType.WrittenValue:
-                    AddValueToPort(modelsToNodeUiMapping, step.PortModel, step.ValueString);
+                    AddValueToPort(step.PortModel, step.ValueString);
                     break;
                 case TracingStepType.ReadValue:
-                    AddValueToPort(modelsToNodeUiMapping, step.PortModel, step.ValueString);
+                    AddValueToPort(step.PortModel, step.ValueString);
                     break;
                 case TracingStepType.Error:
-                    if (modelsToNodeUiMapping.TryGetValue(step.NodeModel, out var element) && element is IBadgeContainer badgeContainer)
+                    var element = step.NodeModel.GetUI<GraphElements.Node>(m_GraphView);
+                    if (element is IBadgeContainer)
                         ((VseGraphView)m_GraphView).UIController.AttachErrorBadge(element, step.ErrorMessage, SpriteAlignment.RightCenter);
                     break;
             }
 
-            if (step.NodeModel.HasProgress && modelsToNodeUiMapping.TryGetValue(step.NodeModel, out var node) && node is Node vsNode)
+            var node = step.NodeModel.GetUI<GraphElements.Node>(m_GraphView);
+            if ((step.NodeModel?.HasProgress ?? false) && node != null && node is Node vsNode)
             {
                 vsNode.Progress = step.Progress;
             }
         }
 
-        void AddValueToPort(IReadOnlyDictionary<IGraphElementModel, GraphElement> modelsToNodeUiMapping, IPortModel port, string valueReadableValue)
+        void AddValueToPort(IGTFPortModel port, string valueReadableValue)
         {
-            if (port != null && modelsToNodeUiMapping.TryGetValue(port.NodeModel, out GraphElement nodeUi))
+            var node = port?.NodeModel.GetUI<GraphElements.Node>(m_GraphView);
+            if (port != null && node != null)
             {
                 if (m_PauseState == PauseState.Paused || m_PlayState == PlayModeStateChange.EnteredEditMode)
                 {
-                    var p = (port as IGTFPortModel).GetUI<Port>(m_GraphView);
-                    if (p == null)
+                    var p = port.GetUI<GraphElements.Port>(m_GraphView);
+                    if (!(p is IBadgeContainer badgeContainer))
                         return;
                     VisualElement cap = p.Q(className: "ge-port__cap") ?? p;
                     var color = p.PortColor;
-                    ((VseGraphView)m_GraphView).UIController.AttachValue(p, cap, valueReadableValue, color, port.Direction == Direction.Output ? SpriteAlignment.BottomRight : SpriteAlignment.BottomLeft);
+                    ((VseGraphView)m_GraphView).UIController.AttachValue(badgeContainer, cap, valueReadableValue, color, port.Direction == Direction.Output ? SpriteAlignment.BottomRight : SpriteAlignment.BottomLeft);
                 }
             }
         }
 
-        void AddStyleClassToModel(TracingStep step, IReadOnlyDictionary<IGraphElementModel, GraphElement> modelsToNodeUiMapping, string highlightStyle)
+        void AddStyleClassToModel(TracingStep step, string highlightStyle)
         {
-            if (step.NodeModel != null && modelsToNodeUiMapping.TryGetValue(step.NodeModel, out GraphElement ui))
+            var node = step.NodeModel.GetUI<Node>(m_GraphView);
+            if (step.NodeModel != null && node != null)
             {
                 // TODO TRACING errors
                 // if (step.type == DebuggerTracer.EntityFrameTrace.StepType.Exception)
@@ -311,21 +310,21 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
                 // }
                 // else
                 {
-                    ui.AddToClassList(highlightStyle);
+                    node.AddToClassList(highlightStyle);
                 }
             }
         }
 
         bool IsDirty()
         {
-            bool dirty = m_CurrentFrame != m_Store.GetState().CurrentTracingFrame
-                || m_CurrentStep != m_Store.GetState().CurrentTracingStep
-                || m_CurrentTarget != m_Store.GetState().CurrentTracingTarget
+            bool dirty = m_CurrentFrame != m_Store.GetState().TracingDataModel.CurrentTracingFrame
+                || m_CurrentStep != m_Store.GetState().TracingDataModel.CurrentTracingStep
+                || m_CurrentTarget != m_Store.GetState().TracingDataModel.CurrentTracingTarget
                 || m_ForceUpdate;
 
-            m_CurrentFrame = m_Store.GetState().CurrentTracingFrame;
-            m_CurrentStep = m_Store.GetState().CurrentTracingStep;
-            m_CurrentTarget = m_Store.GetState().CurrentTracingTarget;
+            m_CurrentFrame = m_Store.GetState().TracingDataModel.CurrentTracingFrame;
+            m_CurrentStep = m_Store.GetState().TracingDataModel.CurrentTracingStep;
+            m_CurrentTarget = m_Store.GetState().TracingDataModel.CurrentTracingTarget;
 
             return dirty;
         }

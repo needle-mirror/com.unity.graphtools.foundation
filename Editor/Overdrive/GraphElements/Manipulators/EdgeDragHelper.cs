@@ -14,12 +14,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         internal const float k_MaxSpeedFactor = 2.5f;
         internal const float k_MaxPanSpeed = k_MaxSpeedFactor * k_PanSpeed;
 
-        List<Port> m_CompatiblePorts;
+        List<IGTFPortModel> m_CompatiblePorts;
         GhostEdgeModel m_GhostEdgeModel;
         Edge m_GhostEdge;
         public GraphView GraphView { get; }
-        static NodeAdapter s_nodeAdapter = new NodeAdapter();
-        readonly IStore m_Store;
+        readonly Overdrive.Store m_Store;
         readonly EdgeConnectorListener m_Listener;
         readonly Func<IGTFGraphModel, GhostEdgeModel> m_GhostEdgeViewModelCreator;
 
@@ -29,7 +28,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         bool resetPositionOnPan { get; set; }
 
-        public EdgeDragHelper(IStore store, GraphView graphView, EdgeConnectorListener listener, Func<IGTFGraphModel, GhostEdgeModel> ghostEdgeViewModelCreator)
+        public EdgeDragHelper(Overdrive.Store store, GraphView graphView, EdgeConnectorListener listener, Func<IGTFGraphModel, GhostEdgeModel> ghostEdgeViewModelCreator)
         {
             m_Store = store;
             GraphView = graphView;
@@ -159,7 +158,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             if (portUI != null)
                 portUI.WillConnect = true;
 
-            m_CompatiblePorts = GraphView.GetCompatiblePorts(draggedPort, s_nodeAdapter);
+            m_CompatiblePorts = m_Store.GetState().CurrentGraphModel.GetCompatiblePorts(draggedPort);
 
             // Only light compatible anchors when dragging an edge.
             GraphView.ports.ForEach((p) =>
@@ -168,10 +167,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                 p.Highlighted = false;
             });
 
-            foreach (Port compatiblePort in m_CompatiblePorts)
+            foreach (var compatiblePort in m_CompatiblePorts)
             {
-                compatiblePort.SetEnabled(true);
-                compatiblePort.Highlighted = true;
+                var compatiblePortUI = compatiblePort.GetUI<Port>(GraphView);
+                if (compatiblePortUI != null)
+                {
+                    compatiblePortUI.SetEnabled(true);
+                    compatiblePortUI.Highlighted = true;
+                }
             }
 
             m_EdgeCandidate.UpdateFromModel();
@@ -394,25 +397,26 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         {
             Port endPort = null;
 
-            foreach (Port compatiblePort in m_CompatiblePorts)
+            foreach (var compatiblePort in m_CompatiblePorts)
             {
-                if (compatiblePort.resolvedStyle.visibility != Visibility.Visible)
+                var compatiblePortUI = compatiblePort.GetUI<Port>(GraphView);
+                if (compatiblePortUI == null || compatiblePortUI.resolvedStyle.visibility != Visibility.Visible)
                     continue;
 
-                Rect bounds = compatiblePort.worldBound;
+                Rect bounds = compatiblePortUI.worldBound;
                 float hitboxExtraPadding = bounds.height;
 
-                if (compatiblePort.PortModel.Orientation == Orientation.Horizontal)
+                if (compatiblePort.Orientation == Orientation.Horizontal)
                 {
                     // Add extra padding for mouse check to the left of input port or right of output port.
-                    if (compatiblePort.PortModel.Direction == Direction.Input)
+                    if (compatiblePort.Direction == Direction.Input)
                     {
                         // Move bounds to the left by hitboxExtraPadding and increase width
                         // by hitboxExtraPadding.
                         bounds.x -= hitboxExtraPadding;
                         bounds.width += hitboxExtraPadding;
                     }
-                    else if (compatiblePort.PortModel.Direction == Direction.Output)
+                    else if (compatiblePort.Direction == Direction.Output)
                     {
                         // Just add hitboxExtraPadding to the width.
                         bounds.width += hitboxExtraPadding;
@@ -422,7 +426,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                 // Check if mouse is over port.
                 if (bounds.Contains(mousePosition))
                 {
-                    endPort = compatiblePort;
+                    endPort = compatiblePortUI;
                     break;
                 }
             }

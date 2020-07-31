@@ -46,15 +46,9 @@ namespace UnityEditor.VisualScripting.Editor
         public Type WindowCreator { get; }
     }
 
-
     [PublicAPI]
     public partial class VseWindow : GraphViewEditorWindow, IHasCustomMenu
     {
-        static void ShowNewVsEditorWindow()
-        {
-            ShowVsEditorWindow();
-        }
-
         public void OnToggleTracing(ChangeEvent<bool> e)
         {
             DataModel.TracingEnabled = e.newValue;
@@ -144,6 +138,8 @@ namespace UnityEditor.VisualScripting.Editor
         }
 
         bool m_Focused;
+
+        bool m_AssetDirty;
 
         public VseGraphView GraphView => m_GraphView;
 
@@ -448,6 +444,24 @@ namespace UnityEditor.VisualScripting.Editor
                 vsDataModel.PluginRepository = m_PluginRepository;
                 vsDataModel.OnCompilationRequest = OnCompilationRequest;
             }
+
+            UpdateDirtyState();
+        }
+
+        void UpdateDirtyState()
+        {
+            if (m_Store == null || m_Store.GetState().CurrentGraphModel == null)
+                return;
+
+            IGraphModel currentGraphModel = m_Store.GetState().CurrentGraphModel;
+            m_AssetDirty = EditorUtility.IsDirty((UnityEngine.Object)currentGraphModel.AssetModel);
+
+            var isMarkedDirty = titleContent.text?.EndsWith("*") ?? false;
+
+            if (m_AssetDirty && !isMarkedDirty)
+                titleContent.text = titleContent.text + "*";
+            else if (!m_AssetDirty && isMarkedDirty)
+                titleContent.text = titleContent.text.Substring(0, titleContent.text.Length - 1);
         }
 
         protected virtual void SetupWindow()
@@ -881,7 +895,7 @@ namespace UnityEditor.VisualScripting.Editor
             m_Focused = false;
         }
 
-        void Update()
+        protected virtual void Update()
         {
             if (m_Store == null)
                 return;
@@ -921,6 +935,8 @@ namespace UnityEditor.VisualScripting.Editor
                 m_TracingTimeline.Dirty = false;
                 m_Menu.UpdateUI();
             }
+
+            UpdateDirtyState();
         }
 
         public static void CreateGraphAsset<TStencilType>(string graphAssetName = k_DefaultGraphAssetName, IGraphTemplate template = null)

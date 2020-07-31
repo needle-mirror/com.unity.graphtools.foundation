@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.Searcher;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch
@@ -13,13 +13,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch
 
         internal class FindSearcherItem : SearcherItem
         {
-            public FindSearcherItem(INodeModel node, string title, string help = "", List<SearcherItem> children = null)
+            public FindSearcherItem(IGTFNodeModel node, string title, string help = "", List<SearcherItem> children = null)
                 : base(title, help, children)
             {
                 Node = node;
             }
 
-            public INodeModel Node { get; }
+            public IGTFNodeModel Node { get; }
         }
 
         public FindInGraphAdapter(Action<FindSearcherItem> onHighlightDelegate) : base("Find in graph")

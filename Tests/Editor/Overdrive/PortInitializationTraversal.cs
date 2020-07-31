@@ -1,13 +1,14 @@
 using System;
 using System.Collections.Generic;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
+using System.Linq;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 {
     public class PortInitializationTraversal : GraphTraversal
     {
-        public List<Action<INodeModel>> Callbacks = new List<Action<INodeModel>>();
-        protected override void VisitNode(INodeModel nodeModel, HashSet<INodeModel> visitedNodes)
+        public List<Action<IGTFNodeModel>> Callbacks = new List<Action<IGTFNodeModel>>();
+        protected override void VisitNode(IGTFNodeModel nodeModel, HashSet<IGTFNodeModel> visitedNodes)
         {
             // recurse first
             base.VisitNode(nodeModel, visitedNodes);
@@ -23,7 +24,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             {
                 bool any = false;
 
-                foreach (var connection in inputPortModel.ConnectionPortModels)
+                var connectionPortModels = inputPortModel?.ConnectionPortModels ?? Enumerable.Empty<IGTFPortModel>();
+                foreach (var connection in connectionPortModels)
                 {
                     any = true;
                     nodeModel.OnConnection(inputPortModel, connection);
@@ -37,7 +39,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             {
                 bool any = false;
 
-                foreach (var connection in outputPortModel.ConnectionPortModels)
+                var connectionPortModels = outputPortModel?.ConnectionPortModels ?? Enumerable.Empty<IGTFPortModel>();
+                foreach (var connection in connectionPortModels)
                 {
                     any = true;
                     nodeModel.OnConnection(outputPortModel, connection);

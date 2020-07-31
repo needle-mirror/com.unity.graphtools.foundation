@@ -1,10 +1,8 @@
 using System;
 using System.Linq;
 using NUnit.Framework;
-using NUnit.Framework.Internal;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEngine;
-using UnityEngine.TestTools;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
@@ -23,7 +21,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             public VisualElement Root => null;
             public void BuildUI(VisualElement parent)
             {
-                throw new System.NotImplementedException();
+                throw new NotImplementedException();
             }
 
             public void PostBuildUI()
@@ -33,7 +31,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
 
             public void UpdateFromModel()
             {
-                throw new System.NotImplementedException();
+                throw new NotImplementedException();
             }
         }
 

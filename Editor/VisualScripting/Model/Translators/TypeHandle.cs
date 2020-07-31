@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using JetBrains.Annotations;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using UnityEditor.VisualScripting.GraphViewModel;
 using UnityEditor.VisualScripting.Model.Translators;
 using UnityEngine;
@@ -155,11 +154,6 @@ namespace UnityEditor.VisualScripting.Model.Stencils
             ITypeMetadataResolver resolver)
         {
             return t.GenerateTypeHandle(serializer).GetMetadata(resolver);
-        }
-
-        public static TypeSyntax ToTypeSyntax(this TypeHandle handle, Stencil stencil)
-        {
-            return handle.Resolve(stencil).ToTypeSyntax();
         }
 
         public static bool IsAssignableFrom(this TypeHandle self, TypeHandle other, Stencil stencil)

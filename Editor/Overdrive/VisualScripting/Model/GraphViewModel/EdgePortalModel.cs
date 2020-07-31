@@ -7,22 +7,19 @@ using UnityEngine.Scripting.APIUpdating;
 namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel
 {
     [Serializable]
-    [MovedFrom(false, "UnityEditor.VisualScripting.GraphViewModel", "Unity.GraphTools.Foundation.Overdrive.Editor")]
-    public abstract class EdgePortalModel : NodeModel, IEdgePortalModel, UnityEditor.GraphToolsFoundation.Overdrive.Model.IRenamable, ICloneable, IExposeTitleProperty, IHasVariableDeclarationModel
+    public abstract class EdgePortalModel : NodeModel, IGTFEdgePortalModel, UnityEditor.GraphToolsFoundation.Overdrive.Model.IRenamable, ICloneable
     {
         [SerializeField]
         int m_EvaluationOrder;
 
         [SerializeReference]
-        VariableDeclarationModel m_DeclarationModel;
+        IDeclarationModel m_DeclarationModel;
 
-        public IVariableDeclarationModel DeclarationModel
+        public IDeclarationModel DeclarationModel
         {
             get => m_DeclarationModel;
-            set => m_DeclarationModel = (VariableDeclarationModel)value;
+            set => m_DeclarationModel = value;
         }
-
-        public string TitlePropertyName => "m_Name";
 
         public override string Title => m_DeclarationModel == null ? "" : m_DeclarationModel.Title;
 
@@ -36,10 +33,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
 
         public void Rename(string newName)
         {
-            ((VariableDeclarationModel)DeclarationModel)?.SetNameFromUserName(newName);
+            (DeclarationModel as Overdrive.Model.IRenamable)?.Rename(newName);
         }
 
-        public IGraphElementModel Clone()
+        public IGTFGraphElementModel Clone()
         {
             var decl = m_DeclarationModel;
             try
@@ -63,41 +60,38 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
 
     [Serializable]
     [MovedFrom(false, "UnityEditor.VisualScripting.GraphViewModel", "Unity.GraphTools.Foundation.Overdrive.Editor")]
-    public class ExecutionEdgePortalEntryModel : EdgePortalModel, IEdgePortalEntryModel, IExecutionEdgePortalModel, IHasMainExecutionInputPort
+    public class ExecutionEdgePortalEntryModel : EdgePortalModel, IGTFEdgePortalEntryModel, IHasMainExecutionInputPort
     {
-        public IPortModel InputPort => ExecutionInputPort;
-        public IPortModel ExecutionInputPort { get; private set; }
+        public IGTFPortModel InputPort => ExecutionInputPort;
+        public IGTFPortModel ExecutionInputPort { get; private set; }
 
         protected override void OnDefineNode()
         {
             base.OnDefineNode();
             ExecutionInputPort = AddExecutionInputPort("");
         }
-
-        public IGTFPortModel GTFInputPort => InputPort as IGTFPortModel;
     }
 
     [Serializable]
     [MovedFrom(false, "UnityEditor.VisualScripting.GraphViewModel", "Unity.GraphTools.Foundation.Overdrive.Editor")]
-    public class ExecutionEdgePortalExitModel : EdgePortalModel, IEdgePortalExitModel, IExecutionEdgePortalModel, IHasMainExecutionOutputPort
+    public class ExecutionEdgePortalExitModel : EdgePortalModel, IGTFEdgePortalExitModel, IHasMainExecutionOutputPort
     {
-        public IPortModel OutputPort => ExecutionOutputPort;
-        public IPortModel ExecutionOutputPort { get; private set; }
+        public IGTFPortModel OutputPort => ExecutionOutputPort;
+        public IGTFPortModel ExecutionOutputPort { get; private set; }
 
         protected override void OnDefineNode()
         {
             base.OnDefineNode();
             ExecutionOutputPort = AddExecutionOutputPort("");
         }
-
-        public IGTFPortModel GTFOutputPort => OutputPort as IGTFPortModel;
     }
 
     [Serializable]
     [MovedFrom(false, "UnityEditor.VisualScripting.GraphViewModel", "Unity.GraphTools.Foundation.Overdrive.Editor")]
-    public class DataEdgePortalEntryModel : EdgePortalModel, IEdgePortalEntryModel, IDataEdgePortalModel, IHasMainInputPort
+    public class DataEdgePortalEntryModel : EdgePortalModel, IGTFEdgePortalEntryModel, IHasMainInputPort
     {
-        public IPortModel InputPort { get; private set; }
+        public IGTFPortModel MainInputPort { get; private set; }
+        public IGTFPortModel InputPort => MainInputPort;
 
         // Can't copy Data Entry portals as it makes no sense.
         public override bool IsCopiable => false;
@@ -105,29 +99,26 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
         protected override void OnDefineNode()
         {
             base.OnDefineNode();
-            InputPort = AddDataInputPort("", TypeHandle.Unknown);
+            MainInputPort = AddDataInputPort("", TypeHandle.Unknown);
         }
-
-        public IGTFPortModel GTFInputPort => InputPort as IGTFPortModel;
     }
 
     [Serializable]
     [MovedFrom(false, "UnityEditor.VisualScripting.GraphViewModel", "Unity.GraphTools.Foundation.Overdrive.Editor")]
-    public class DataEdgePortalExitModel : EdgePortalModel, IEdgePortalExitModel, IDataEdgePortalModel, IHasMainOutputPort
+    public class DataEdgePortalExitModel : EdgePortalModel, IGTFEdgePortalExitModel, IHasMainOutputPort
     {
-        public IPortModel OutputPort { get; private set; }
+        public IGTFPortModel MainOutputPort { get; private set; }
+        public IGTFPortModel OutputPort => MainOutputPort;
 
         protected override void OnDefineNode()
         {
             base.OnDefineNode();
-            OutputPort = AddDataOutputPort("", TypeHandle.Unknown);
+            MainOutputPort = AddDataOutputPort("", TypeHandle.Unknown);
         }
 
         public override bool CanCreateOppositePortal()
         {
-            return !((VariableDeclarationModel)DeclarationModel).FindReferencesInGraph().OfType<IEdgePortalEntryModel>().Any();
+            return !GraphModel.FindReferencesInGraph<IGTFEdgePortalEntryModel>(DeclarationModel).Any();
         }
-
-        public IGTFPortModel GTFOutputPort => OutputPort as IGTFPortModel;
     }
 }

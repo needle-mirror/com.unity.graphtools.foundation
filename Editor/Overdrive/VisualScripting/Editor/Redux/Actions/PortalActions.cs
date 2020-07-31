@@ -1,17 +1,22 @@
 using System;
 using System.Collections.Generic;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
+using System.Linq;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 {
     public class CreatePortalsOppositeAction : IAction
     {
-        public readonly IEnumerable<IEdgePortalModel> PortalsToOpen;
+        public IGTFEdgePortalModel[] PortalsToOpen;
 
-        public CreatePortalsOppositeAction(IEnumerable<IEdgePortalModel> portalModels)
+        public CreatePortalsOppositeAction()
         {
-            PortalsToOpen = portalModels;
+        }
+
+        public CreatePortalsOppositeAction(IEnumerable<IGTFEdgePortalModel> portalModels)
+        {
+            PortalsToOpen = portalModels?.ToArray();
         }
     }
 }

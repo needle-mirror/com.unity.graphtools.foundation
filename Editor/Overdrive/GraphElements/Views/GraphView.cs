@@ -6,31 +6,32 @@ using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEngine;
 using UnityEngine.Scripting.APIUpdating;
 using UnityEngine.UIElements;
+using Object = UnityEngine.Object;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 {
-    internal interface IGraphViewSelection
+    interface IGraphViewSelection
     {
         int version { get; set; }
 
         HashSet<string> selectedElements { get; }
     }
 
-    internal class GraphViewUndoRedoSelection : ScriptableObject, IGraphViewSelection, ISerializationCallbackReceiver
+    class GraphViewUndoRedoSelection : ScriptableObject, IGraphViewSelection, ISerializationCallbackReceiver
     {
         [SerializeField]
-        private int m_Version;
+        int m_Version;
 
         [SerializeField]
         string[] m_SelectedElementsArray;
 
         [NonSerialized]
-        private HashSet<string> m_SelectedElements = new HashSet<string>();
+        HashSet<string> m_SelectedElements = new HashSet<string>();
 
         public int version
         {
-            get { return m_Version; }
-            set { m_Version = value; }
+            get => m_Version;
+            set => m_Version = value;
         }
 
         public HashSet<string> selectedElements => m_SelectedElements;
@@ -63,38 +64,25 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
     {
         // Operations Pending
         public List<GraphElement> elementsToRemove;
-        public List<Edge> edgesToCreate;
 
         // Operations Completed
         public IEnumerable<GraphElement> movedElements;
         public Vector2 moveDelta;
     }
 
-    public struct NodeCreationContext
-    {
-        public Vector2 screenMousePosition;
-        public VisualElement target;
-        public int index;
-    }
-
     public abstract class GraphView : GraphViewBridge, ISelection
     {
-        IStore m_Store;
-        public IStore Store => m_Store;
+        Store m_Store;
+        public Store Store => m_Store;
 
         // Layer class. Used for queries below.
         public class Layer : VisualElement {}
 
-        // Delegates and Callbacks
-        public Action<NodeCreationContext> nodeCreationRequest { get; set; }
-        internal IInsertLocation currentInsertLocation {get; set; }
-
-
         public delegate GraphViewChange GraphViewChanged(GraphViewChange graphViewChange);
         public GraphViewChanged graphViewChanged { get; set; }
 
-        private GraphViewChange m_GraphViewChange;
-        private List<GraphElement> m_ElementsToRemove;
+        GraphViewChange m_GraphViewChange;
+        List<GraphElement> m_ElementsToRemove;
 
         public delegate void ElementResized(VisualElement visualElement);
         public ElementResized elementResized { get; set; }
@@ -102,28 +90,25 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         public delegate void ViewTransformChanged(GraphView graphView);
         public ViewTransformChanged viewTransformChanged { get; set; }
 
-        public virtual bool supportsWindowedBlackboard
-        {
-            get { return false; }
-        }
+        public virtual bool supportsWindowedBlackboard => false;
 
         [Serializable]
         [MovedFrom(false, "Unity.GraphElements", "Unity.GraphTools.Foundation.Overdrive.Editor")]
         class PersistedSelection : IGraphViewSelection, ISerializationCallbackReceiver
         {
             [SerializeField]
-            private int m_Version;
+            int m_Version;
 
             [SerializeField]
             string[] m_SelectedElementsArray;
 
             [NonSerialized]
-            private HashSet<string> m_SelectedElements = new HashSet<string>();
+            HashSet<string> m_SelectedElements = new HashSet<string>();
 
             public int version
             {
-                get { return m_Version; }
-                set { m_Version = value; }
+                get => m_Version;
+                set => m_Version = value;
             }
 
             public HashSet<string> selectedElements => m_SelectedElements;
@@ -151,10 +136,30 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                 }
             }
         }
-        private const string k_SelectionUndoRedoLabel = "Change GraphView Selection";
-        private int m_SavedSelectionVersion;
-        private PersistedSelection m_PersistedSelection;
-        private GraphViewUndoRedoSelection m_GraphViewUndoRedoSelection;
+        const string k_SelectionUndoRedoLabel = "Change GraphView Selection";
+        int m_SavedSelectionVersion;
+        PersistedSelection m_PersistedSelection;
+        GraphViewUndoRedoSelection m_GraphViewUndoRedoSelection;
+
+        public bool PersistedSelectionRestoreEnabled { get; private set; }
+
+        public bool PersistentSelectionContainsElement(GraphElement element)
+        {
+            if (string.IsNullOrEmpty(element.viewDataKey))
+                return false;
+
+            return m_PersistedSelection?.selectedElements?.Contains(element.viewDataKey) ?? false;
+        }
+
+        public void EnablePersistedSelectionRestore()
+        {
+            PersistedSelectionRestoreEnabled = true;
+        }
+
+        public void DisablePersistedSelectionRestore()
+        {
+            PersistedSelectionRestoreEnabled = false;
+        }
 
         class ContentViewContainer : VisualElement
         {
@@ -180,15 +185,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
             UpdatePersistedViewTransform();
 
-            if (viewTransformChanged != null)
-                viewTransformChanged(this);
+            viewTransformChanged?.Invoke(this);
         }
 
         bool m_FrameAnimate = false;
 
-        public bool isReframable { get; set; }
+        bool IsReframable { get; }
 
-        public enum FrameType
+        enum FrameType
         {
             All = 0,
             Selection = 1,
@@ -199,10 +203,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         readonly Dictionary<int, Layer> m_ContainerLayers = new Dictionary<int, Layer>();
 
-        public override VisualElement contentContainer // Contains full content, potentially partially visible
-        {
-            get { return graphViewContainer; }
-        }
+        public override VisualElement contentContainer => graphViewContainer; // Contains full content, potentially partially visible
 
         PlacematContainer m_PlacematContainer;
 
@@ -229,9 +230,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             return false;
         }
 
-        protected GraphView(IStore store)
+        protected GraphView(Store store)
         {
             m_Store = store;
+
+            PersistedSelectionRestoreEnabled = true;
 
             AddToClassList("graphView");
 
@@ -269,7 +272,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             m_ElementsToRemove = new List<GraphElement>();
             m_GraphViewChange.elementsToRemove = m_ElementsToRemove;
 
-            isReframable = true;
+            IsReframable = true;
             focusable = true;
 
             RegisterCallback<ValidateCommandEvent>(OnValidateCommand);
@@ -279,7 +282,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             RegisterCallback<ContextualMenuPopulateEvent>(OnContextualMenu);
         }
 
-        private void ClearSavedSelection()
+        void ClearSavedSelection()
         {
             if (m_PersistedSelection == null)
                 return;
@@ -288,14 +291,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             SaveViewData();
         }
 
-        private bool ShouldRecordUndo()
+        bool ShouldRecordUndo()
         {
             return m_GraphViewUndoRedoSelection != null &&
                 m_PersistedSelection != null &&
                 m_SavedSelectionVersion == m_GraphViewUndoRedoSelection.version;
         }
 
-        private void RestoreSavedSelection(IGraphViewSelection graphViewSelection)
+        void RestoreSavedSelection(IGraphViewSelection graphViewSelection)
         {
             if (m_PersistedSelection == null)
                 return;
@@ -347,12 +350,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             }
         }
 
-        private void UndoRedoPerformed()
+        void UndoRedoPerformed()
         {
             RestoreSavedSelection(m_GraphViewUndoRedoSelection);
         }
 
-        private void RecordSelectionUndoPre()
+        void RecordSelectionUndoPre()
         {
             if (m_GraphViewUndoRedoSelection == null)
                 return;
@@ -360,9 +363,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             Undo.RegisterCompleteObjectUndo(m_GraphViewUndoRedoSelection, k_SelectionUndoRedoLabel);
         }
 
-        private IVisualElementScheduledItem m_OnTimerTicker;
+        IVisualElementScheduledItem m_OnTimerTicker;
 
-        private void RecordSelectionUndoPost()
+        void RecordSelectionUndoPost()
         {
             m_GraphViewUndoRedoSelection.version++;
             m_SavedSelectionVersion = m_GraphViewUndoRedoSelection.version;
@@ -377,7 +380,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             m_OnTimerTicker.ExecuteLater(1);
         }
 
-        private void DelayPersistentDataSave()
+        void DelayPersistentDataSave()
         {
             m_OnTimerTicker = null;
             SaveViewData();
@@ -423,13 +426,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                 element.RegisterCallback<DetachFromPanelEvent>(OnSelectedElementDetachedFromPanel);
         }
 
-        public UQueryState<GraphElement> graphElements { get; private set; }
-        private UQueryState<GraphElement> allGraphElements { get; }
-        public UQueryState<Node> nodes { get; private set; }
+        public UQueryState<GraphElement> graphElements { get; }
+        UQueryState<GraphElement> allGraphElements { get; }
+        public UQueryState<Node> nodes { get; }
         public UQueryState<Port> ports;
-        public UQueryState<Edge> edges { get; private set; }
+        public UQueryState<Edge> edges { get; }
 
-        public UQueryState<StickyNote> stickies { get; private set; }
+        public UQueryState<StickyNote> stickies { get; }
 
         [Serializable]
         [MovedFrom(false, "Unity.GraphElements", "Unity.GraphTools.Foundation.Overdrive.Editor")]
@@ -441,62 +444,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         PersistedViewTransform m_PersistedViewTransform;
 
         ContentZoomer m_Zoomer;
-        int m_ZoomerMaxElementCountWithPixelCacheRegen = 100;
         float m_MinScale = ContentZoomer.DefaultMinScale;
         float m_MaxScale = ContentZoomer.DefaultMaxScale;
         float m_ScaleStep = ContentZoomer.DefaultScaleStep;
         float m_ReferenceScale = ContentZoomer.DefaultReferenceScale;
 
-        public float minScale
-        {
-            get { return m_MinScale; }
-        }
+        float MinScale => m_MinScale;
 
-        public float maxScale
-        {
-            get { return m_MaxScale; }
-        }
+        float MaxScale => m_MaxScale;
 
-        public float scaleStep
-        {
-            get { return m_ScaleStep; }
-        }
-
-        public float referenceScale
-        {
-            get { return m_ReferenceScale; }
-        }
-
-        public int zoomerMaxElementCountWithPixelCacheRegen
-        {
-            get { return m_ZoomerMaxElementCountWithPixelCacheRegen; }
-            set
-            {
-                if (m_ZoomerMaxElementCountWithPixelCacheRegen == value)
-                    return;
-
-                m_ZoomerMaxElementCountWithPixelCacheRegen = value;
-            }
-        }
-
-        public GraphElement GetElementByGuid(string guid)
+        GraphElement GetElementByGuid(string guid)
         {
             return allGraphElements.ToList().FirstOrDefault(e => e.viewDataKey == guid);
-        }
-
-        public Node GetNodeByGuid(string guid)
-        {
-            return nodes.ToList().FirstOrDefault(e => e.viewDataKey == guid);
-        }
-
-        public Port GetPortByGuid(string guid)
-        {
-            return ports.ToList().FirstOrDefault(e => e.viewDataKey == guid);
-        }
-
-        public Edge GetEdgeByGuid(string guid)
-        {
-            return graphElements.ToList().OfType<Edge>().FirstOrDefault(e => e.viewDataKey == guid);
         }
 
         public void SetupZoom(float minScaleSetup, float maxScaleSetup)
@@ -513,7 +472,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             UpdateContentZoomer();
         }
 
-        private void UpdatePersistedViewTransform()
+        void UpdatePersistedViewTransform()
         {
             if (m_PersistedViewTransform == null)
                 return;
@@ -568,14 +527,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                 return;
             Vector3 transformScale = viewTransform.scale;
 
-            transformScale.x = Mathf.Clamp(transformScale.x, minScale, maxScale);
-            transformScale.y = Mathf.Clamp(transformScale.y, minScale, maxScale);
+            transformScale.x = Mathf.Clamp(transformScale.x, MinScale, MaxScale);
+            transformScale.y = Mathf.Clamp(transformScale.y, MinScale, MaxScale);
 
             viewTransform.scale = transformScale;
         }
 
         // ISelection implementation
-        public List<ISelectableGraphElement> selection { get; protected set; }
+        public List<ISelectableGraphElement> selection { get; }
 
         // functions to ISelection extensions
         public virtual void AddToSelection(ISelectableGraphElement selectable)
@@ -598,7 +557,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             }
         }
 
-        private void AddToSelectionNoUndoRecord(GraphElement graphElement)
+        void AddToSelectionNoUndoRecord(GraphElement graphElement)
         {
             graphElement.selected = true;
             selection.Add(graphElement);
@@ -610,7 +569,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             graphElement.MarkDirtyRepaint();
         }
 
-        private void RemoveFromSelectionNoUndoRecord(ISelectableGraphElement selectable)
+        void RemoveFromSelectionNoUndoRecord(ISelectableGraphElement selectable)
         {
             var graphElement = selectable as GraphElement;
             if (graphElement == null)
@@ -643,7 +602,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             }
         }
 
-        private bool ClearSelectionNoUndoRecord()
+        bool ClearSelectionNoUndoRecord()
         {
             foreach (var graphElement in selection.OfType<GraphElement>())
             {
@@ -662,29 +621,33 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         public virtual void ClearSelection()
         {
-            bool selectionWasNotEmpty = ClearSelectionNoUndoRecord();
-
-            if (ShouldRecordUndo() && selectionWasNotEmpty)
+            if (PersistedSelectionRestoreEnabled)
             {
-                RecordSelectionUndoPre();
-                m_GraphViewUndoRedoSelection.selectedElements.Clear();
-                m_PersistedSelection.selectedElements.Clear();
-                RecordSelectionUndoPost();
+                bool selectionWasNotEmpty = ClearSelectionNoUndoRecord();
+
+                if (ShouldRecordUndo() && selectionWasNotEmpty)
+                {
+                    RecordSelectionUndoPre();
+                    m_GraphViewUndoRedoSelection.selectedElements.Clear();
+                    m_PersistedSelection.selectedElements.Clear();
+                    RecordSelectionUndoPost();
+                }
             }
+            else
+            {
+                selection.Clear();
+            }
+
+            Selection.activeObject = null;
         }
 
-        private void OnSelectedElementDetachedFromPanel(DetachFromPanelEvent evt)
+        void OnSelectedElementDetachedFromPanel(DetachFromPanelEvent evt)
         {
             RemoveFromSelectionNoUndoRecord(evt.target as ISelectableGraphElement);
         }
 
         public virtual void BuildContextualMenu(ContextualMenuPopulateEvent evt)
         {
-            if (evt.target is GraphView && nodeCreationRequest != null)
-            {
-                evt.menu.AppendAction("Create Node", OnContextMenuNodeCreate, DropdownMenuAction.AlwaysEnabled);
-                evt.menu.AppendSeparator();
-            }
             if (evt.target is GraphView || evt.target is Node)
             {
                 evt.menu.AppendAction("Cut", (a) => { CutSelectionCallback(); },
@@ -715,21 +678,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             }
         }
 
-        void OnContextMenuNodeCreate(DropdownMenuAction a)
-        {
-            RequestNodeCreation(null, -1, a.eventInfo.mousePosition);
-        }
-
-        private void RequestNodeCreation(VisualElement target, int index, Vector2 position)
-        {
-            if (nodeCreationRequest == null)
-                return;
-
-            Vector2 screenPoint = this.GetWindowScreenPoint() + position;
-
-            nodeCreationRequest(new NodeCreationContext() { screenMousePosition = screenPoint, target = target, index = index});
-        }
-
         protected override void ExecuteDefaultActionAtTarget(EventBase evt)
         {
             base.ExecuteDefaultActionAtTarget(evt);
@@ -747,8 +695,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                 if (dtpe.destinationPanel == null)
                 {
                     Undo.ClearUndo(m_GraphViewUndoRedoSelection);
+                    // ReSharper disable once DelegateSubtraction
                     Undo.undoRedoPerformed -= UndoRedoPerformed;
-                    ScriptableObject.DestroyImmediate(m_GraphViewUndoRedoSelection);
+                    Object.DestroyImmediate(m_GraphViewUndoRedoSelection);
                     m_GraphViewUndoRedoSelection = null;
 
                     if (!EditorApplication.isPlayingOrWillChangePlaymode && !EditorApplication.isPlaying)
@@ -778,13 +727,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         {
             base.OnEnterPanel();
 
-            if (isReframable && panel != null)
-                panel.visualTree.RegisterCallback<KeyDownEvent>(OnKeyDownShortcut);
+            if (IsReframable)
+                panel?.visualTree.RegisterCallback<KeyDownEvent>(OnKeyDownShortcut);
         }
 
         void OnLeavePanel(DetachFromPanelEvent e)
         {
-            if (isReframable)
+            if (IsReframable)
                 panel.visualTree.UnregisterCallback<KeyDownEvent>(OnKeyDownShortcut);
 
             base.OnLeavePanel();
@@ -792,63 +741,34 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         protected void OnKeyDownShortcut(KeyDownEvent evt)
         {
-            if (!isReframable)
+            if (!IsReframable)
                 return;
 
             if (panel.GetCapturingElement(PointerId.mousePointerId) != null)
                 return;
 
-            EventPropagation result = EventPropagation.Continue;
             switch (evt.character)
             {
                 case 'a':
-                    result = FrameAll();
+                    FrameAll();
+                    evt.StopPropagation();
                     break;
 
                 case 'o':
-                    result = FrameOrigin();
+                    FrameOrigin();
+                    evt.StopPropagation();
                     break;
 
                 case '[':
-                    result = FramePrev();
+                    if (FramePrev())
+                        evt.StopPropagation();
                     break;
 
                 case ']':
-                    result = FrameNext();
-                    break;
-                case ' ':
-                    result = OnInsertNodeKeyDown(evt);
+                    if (FrameNext())
+                        evt.StopPropagation();
                     break;
             }
-
-            if (result == EventPropagation.Stop)
-            {
-                evt.StopPropagation();
-                if (evt.imguiEvent != null)
-                {
-                    evt.imguiEvent.Use();
-                }
-            }
-        }
-
-        EventPropagation OnInsertNodeKeyDown(KeyDownEvent evt)
-        {
-            InsertInfo insertInfo = InsertInfo.nil;
-            Vector2 worldPosition = evt.originalMousePosition;
-
-            if (currentInsertLocation != null)
-            {
-                currentInsertLocation.GetInsertInfo(evt.originalMousePosition, out insertInfo);
-
-                if (insertInfo.target != null)
-                {
-                    worldPosition = insertInfo.target.LocalToWorld(insertInfo.localPosition);
-                }
-            }
-
-            RequestNodeCreation(insertInfo.target, insertInfo.index, worldPosition);
-
-            return EventPropagation.Stop;
         }
 
         internal void OnValidateCommand(ValidateCommandEvent evt)
@@ -863,18 +783,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                 || ((evt.commandName == EventCommandNames.Delete || evt.commandName == EventCommandNames.SoftDelete) && canDeleteSelection))
             {
                 evt.StopPropagation();
-                if (evt.imguiEvent != null)
-                {
-                    evt.imguiEvent.Use();
-                }
+                evt.imguiEvent?.Use();
             }
             else if (evt.commandName == EventCommandNames.FrameSelected)
             {
                 evt.StopPropagation();
-                if (evt.imguiEvent != null)
-                {
-                    evt.imguiEvent.Use();
-                }
+                evt.imguiEvent?.Use();
             }
         }
 
@@ -919,23 +833,23 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                 evt.StopPropagation();
             }
 
-            if (evt.isPropagationStopped && evt.imguiEvent != null)
+            if (evt.isPropagationStopped)
             {
-                evt.imguiEvent.Use();
+                evt.imguiEvent?.Use();
             }
         }
 
         // The system clipboard is unreliable, at least on Windows.
         // For testing clipboard operations on GraphView,
         // set m_UseInternalClipboard to true.
-        internal bool m_UseInternalClipboard = false;
+        internal bool useInternalClipboard = false;
         string m_Clipboard = string.Empty;
 
         internal string clipboard
         {
             get
             {
-                if (m_UseInternalClipboard)
+                if (useInternalClipboard)
                 {
                     return m_Clipboard;
                 }
@@ -947,7 +861,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
             set
             {
-                if (m_UseInternalClipboard)
+                if (useInternalClipboard)
                 {
                     m_Clipboard = value;
                 }
@@ -1031,7 +945,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             UnserializeAndPasteOperation("Duplicate", serializedData);
         }
 
-        protected internal virtual bool canDeleteSelection
+        protected virtual bool canDeleteSelection
         {
             get
             {
@@ -1047,7 +961,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         public CanPasteSerializedDataDelegate canPasteSerializedData { get; set; }
         public UnserializeAndPasteDelegate unserializeAndPaste { get; set; }
 
-        const string m_SerializedDataMimeType = "application/vnd.unity.graphview.elements";
+        const string k_SerializedDataMimeType = "application/vnd.unity.graphview.elements";
 
         protected string SerializeGraphElements(IEnumerable<GraphElement> elements)
         {
@@ -1056,7 +970,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                 string data = serializeGraphElements(elements);
                 if (!string.IsNullOrEmpty(data))
                 {
-                    data = m_SerializedDataMimeType + " " + data;
+                    data = k_SerializedDataMimeType + " " + data;
                 }
                 return data;
             }
@@ -1070,16 +984,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         {
             if (canPasteSerializedData != null)
             {
-                if (data.StartsWith(m_SerializedDataMimeType))
+                if (data.StartsWith(k_SerializedDataMimeType))
                 {
-                    return canPasteSerializedData(data.Substring(m_SerializedDataMimeType.Length + 1));
+                    return canPasteSerializedData(data.Substring(k_SerializedDataMimeType.Length + 1));
                 }
                 else
                 {
                     return canPasteSerializedData(data);
                 }
             }
-            if (data.StartsWith(m_SerializedDataMimeType))
+            if (data.StartsWith(k_SerializedDataMimeType))
             {
                 return true;
             }
@@ -1090,24 +1004,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         {
             if (unserializeAndPaste != null)
             {
-                if (data.StartsWith(m_SerializedDataMimeType))
+                if (data.StartsWith(k_SerializedDataMimeType))
                 {
-                    unserializeAndPaste(operationName, data.Substring(m_SerializedDataMimeType.Length + 1));
+                    unserializeAndPaste(operationName, data.Substring(k_SerializedDataMimeType.Length + 1));
                 }
                 else
                 {
                     unserializeAndPaste(operationName, data);
                 }
             }
-        }
-
-        public virtual List<Port> GetCompatiblePorts(IGTFPortModel startPort, NodeAdapter nodeAdapter)
-        {
-            return ports.ToList().Where(nap =>
-                nap.PortModel.Direction != startPort.Direction &&
-                nap.PortModel.NodeModel != startPort.NodeModel &&
-                nodeAdapter.GetAdapter(nap.PortModel, startPort) != null)
-                .ToList();
         }
 
         public void AddElement(GraphElement graphElement)
@@ -1155,57 +1060,57 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             }
         }
 
-        public EventPropagation FrameAll()
+        public void FrameAll()
         {
-            return Frame(FrameType.All);
+            Frame(FrameType.All);
         }
 
-        public EventPropagation FrameSelection()
+        public void FrameSelection()
         {
-            return Frame(FrameType.Selection);
+            Frame(FrameType.Selection);
         }
 
-        public EventPropagation FrameOrigin()
+        public void FrameOrigin()
         {
-            return Frame(FrameType.Origin);
+            Frame(FrameType.Origin);
         }
 
-        public EventPropagation FramePrev()
+        public bool FramePrev()
         {
             if (contentViewContainer.childCount == 0)
-                return EventPropagation.Continue;
+                return false;
 
             List<GraphElement> childrenList = graphElements.ToList().Where(e => e.IsSelectable() && !(e is Edge)).OrderByDescending(e => e.controlid).ToList();
-            return FramePrevNext(childrenList);
+            FramePrevNext(childrenList);
+            return true;
         }
 
-        public EventPropagation FrameNext()
+        public bool FrameNext()
         {
             if (contentViewContainer.childCount == 0)
-                return EventPropagation.Continue;
+                return false;
 
             List<GraphElement> childrenList = graphElements.ToList().Where(e => e.IsSelectable() && !(e is Edge)).OrderBy(e => e.controlid).ToList();
-            return FramePrevNext(childrenList);
+            FramePrevNext(childrenList);
+            return true;
         }
 
-        public EventPropagation FramePrev(Func<GraphElement, bool> predicate)
+        public void FramePrev(Func<GraphElement, bool> predicate)
         {
-            if (this.contentViewContainer.childCount == 0)
-                return EventPropagation.Continue;
+            if (contentViewContainer.childCount == 0) return;
             List<GraphElement> list = graphElements.ToList().Where(predicate).ToList();
             list.Reverse();
-            return this.FramePrevNext(list);
+            FramePrevNext(list);
         }
 
-        public EventPropagation FrameNext(Func<GraphElement, bool> predicate)
+        public void FrameNext(Func<GraphElement, bool> predicate)
         {
-            if (this.contentViewContainer.childCount == 0)
-                return EventPropagation.Continue;
-            return this.FramePrevNext(graphElements.ToList().Where(predicate).ToList());
+            if (contentViewContainer.childCount == 0) return;
+            FramePrevNext(graphElements.ToList().Where(predicate).ToList());
         }
 
         // TODO: Do we limit to GraphElements or can we tab through ISelectable's?
-        EventPropagation FramePrevNext(List<GraphElement> childrenList)
+        void FramePrevNext(List<GraphElement> childrenList)
         {
             GraphElement graphElement = null;
 
@@ -1225,10 +1130,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             AddToSelection(graphElement);
 
             // ...and frame this new selection
-            return Frame(FrameType.Selection);
+            Frame(FrameType.Selection);
         }
 
-        EventPropagation Frame(FrameType frameType)
+        void Frame(FrameType frameType)
         {
             Rect rectToFit = contentViewContainer.layout;
             Vector3 frameTranslation = Vector3.zero;
@@ -1284,8 +1189,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             contentViewContainer.MarkDirtyRepaint();
 
             UpdatePersistedViewTransform();
-
-            return EventPropagation.Stop;
         }
 
         public virtual Rect CalculateRectToFitAll(VisualElement container)
@@ -1357,6 +1260,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
             GUI.matrix = m;
         }
+
+        public virtual IEnumerable<IHighlightable> Highlightables => graphElements.ToList().OfType<IHighlightable>();
 
         public virtual Blackboard GetBlackboard()
         {

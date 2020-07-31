@@ -1,12 +1,3 @@
-.ge-port__constant-editor .unity-property-field {
-    font-size: 11px;
-    flex: 1 0 auto;
-}
-
-.ge-port__constant-editor .unity-base-text-field {
-    min-width: 40px;
-}
-
 /**************/
 /* Port icons */
 /**************/

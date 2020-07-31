@@ -1,8 +1,5 @@
 using System;
 using System.Collections.Generic;
-using JetBrains.Annotations;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using UnityEditor.VisualScripting.GraphViewModel;
 using UnityEditor.VisualScripting.Model;
 using UnityEditor.VisualScripting.Model.Translators;
@@ -31,13 +28,4 @@ namespace UnityEditor.VisualScriptingTests
     }
 
     interface IFakeNode : INodeModel {}
-
-    [GraphtoolsExtensionMethods]
-    static class Type0FakeNodeModelExt
-    {
-        public static IEnumerable<SyntaxNode> BuildGetComponent(this RoslynTranslator translator, IFakeNode model, IPortModel portModel)
-        {
-            yield return SyntaxFactory.EmptyStatement().WithTrailingTrivia(SyntaxFactory.Comment($"/* {((NodeModel)model).Title} */"));
-        }
-    }
 }

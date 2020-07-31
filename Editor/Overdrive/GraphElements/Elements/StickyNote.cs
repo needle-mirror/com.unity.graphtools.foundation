@@ -39,9 +39,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         static readonly string k_ThemeClassNamePrefix = k_UssClassName.WithUssModifier("theme-");
         static readonly string k_SizeClassNamePrefix = k_UssClassName.WithUssModifier("size-");
 
+        public static readonly string k_SelectionBorderElementName = "selection-border";
+        public static readonly string k_DisabledOverlayElementName = "disabled-overlay";
         public static readonly string k_TitleContainerPartName = "title-container";
         public static readonly string k_ContentContainerPartName = "text-container";
         public static readonly string k_ResizerPartName = "resizer";
+
+        VisualElement m_ContentContainer;
+        public override VisualElement contentContainer => m_ContentContainer ?? this;
 
         public StickyNote()
         {
@@ -54,6 +59,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             PartList.AppendPart(EditableTitlePart.Create(k_TitleContainerPartName, Model, this, k_UssClassName, true));
             PartList.AppendPart(StickyNoteContentPart.Create(k_ContentContainerPartName, Model, this, k_UssClassName));
             PartList.AppendPart(FourWayResizerPart.Create(k_ResizerPartName, Model, this, k_UssClassName));
+        }
+
+        protected override void BuildElementUI()
+        {
+            var selectionBorder = new SelectionBorder { name = k_SelectionBorderElementName };
+            selectionBorder.AddToClassList(k_UssClassName.WithUssElement(k_SelectionBorderElementName));
+            Add(selectionBorder);
+            m_ContentContainer = selectionBorder.ContentContainer;
+
+            base.BuildElementUI();
+
+            var disabledOverlay = new VisualElement { name = k_DisabledOverlayElementName, pickingMode = PickingMode.Ignore };
+            hierarchy.Add(disabledOverlay);
         }
 
         protected override void PostBuildUI()
@@ -181,10 +199,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                 element.resolvedStyle.marginLeft + element.resolvedStyle.marginRight + element.resolvedStyle.paddingLeft + element.resolvedStyle.paddingRight + element.resolvedStyle.borderRightWidth + element.resolvedStyle.borderLeftWidth,
                 element.resolvedStyle.marginTop + element.resolvedStyle.marginBottom + element.resolvedStyle.paddingTop + element.resolvedStyle.paddingBottom + element.resolvedStyle.borderBottomWidth + element.resolvedStyle.borderTopWidth
             );
-        }
-
-        public void UpdatePinning()
-        {
         }
 
         public bool IsMovable => true;

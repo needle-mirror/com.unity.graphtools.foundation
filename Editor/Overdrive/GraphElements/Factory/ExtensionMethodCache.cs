@@ -4,7 +4,6 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
@@ -23,13 +22,31 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         // ReSharper disable once StaticMemberInGenericType
         static Dictionary<Type, MethodInfo> s_FactoryMethods;
 
+        static Queue<Type> s_CandidateTypes = new Queue<Type>();
+
         public static MethodInfo GetExtensionMethod(Type targetType, Func<MethodInfo, bool> filterMethods, Func<MethodInfo, Type> keySelector)
         {
-            return GetExtensionMethodOf(targetType, filterMethods, keySelector);
+            s_CandidateTypes.Clear();
+            s_CandidateTypes.Enqueue(targetType);
+            var extension = GetExtensionMethodOf(s_CandidateTypes, filterMethods, keySelector);
+            while (extension == null && s_CandidateTypes.Any())
+            {
+                extension = GetExtensionMethodOf(s_CandidateTypes, filterMethods, keySelector);
+            }
+
+            if (!s_FactoryMethods.ContainsKey(targetType))
+                s_FactoryMethods[targetType] = extension;
+
+            return extension;
         }
 
-        static MethodInfo GetExtensionMethodOf(Type targetType, Func<MethodInfo, bool> filterMethods, Func<MethodInfo, Type> keySelector)
+        static MethodInfo GetExtensionMethodOf(Queue<Type> candidateTypes, Func<MethodInfo, bool> filterMethods, Func<MethodInfo, Type> keySelector)
         {
+            if (candidateTypes == null || !candidateTypes.Any())
+                return null;
+
+            var targetType = candidateTypes.Dequeue();
+
             if (targetType == typeof(ScriptableObject))
                 return null;
 
@@ -41,25 +58,20 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             if (s_FactoryMethods.ContainsKey(targetType))
                 return s_FactoryMethods[targetType];
 
-            MethodInfo extension = null;
-
-            foreach (var type in GetInterfaces(targetType, false))
+            if (!targetType.IsInterface)
             {
-                extension = GetExtensionMethodOf(type, filterMethods, keySelector);
-                if (extension != null)
-                    break;
+                foreach (var type in GetInterfaces(targetType))
+                {
+                    candidateTypes.Enqueue(type);
+                }
+
+                if (targetType.BaseType != null)
+                {
+                    candidateTypes.Enqueue(targetType.BaseType);
+                }
             }
 
-            if (extension == null && targetType.BaseType != null)
-                extension = GetExtensionMethodOf(targetType.BaseType, filterMethods, keySelector);
-
-            //Did we find a builder for one of our base class?
-            //If so, add it to the dictionary, this will optimize the next call
-            //for this type
-            if (extension != null)
-                s_FactoryMethods[targetType] = extension;
-
-            return extension;
+            return null;
         }
 
         internal static Dictionary<Type, MethodInfo> FindMatchingExtensionMethods(Func<MethodInfo, bool> filterMethods, Func<MethodInfo, Type> keySelector, ExtensionMethodCacheVisitMode mode = ExtensionMethodCacheVisitMode.OnlyClassesWithAttribute)
@@ -73,8 +85,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         {
             var factoryMethods = new Dictionary<Type, MethodInfo>();
 
-            var assemblies = Stencil.CachedAssemblies;
-            var extensionMethods = TypeSystem.GetExtensionMethods<TAttribute>(assemblies);
+            var assemblies = AssemblyCache.CachedAssemblies;
+            var extensionMethods = AssemblyCache.GetExtensionMethods<TAttribute>(assemblies);
             Type extendedType = typeof(TExtendedType);
             if (extensionMethods.TryGetValue(extendedType, out var allMethodInfos))
             {
@@ -93,9 +105,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             return factoryMethods;
         }
 
-        static IEnumerable<Type> GetInterfaces(Type type, bool includeInherited)
+        static IEnumerable<Type> GetInterfaces(Type type)
         {
-            if (includeInherited || type.BaseType == null)
+            if (type.BaseType == null)
                 return type.GetInterfaces();
 
             return type.GetInterfaces().Except(type.BaseType.GetInterfaces());

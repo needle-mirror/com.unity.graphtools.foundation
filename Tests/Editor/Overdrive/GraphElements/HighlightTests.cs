@@ -16,11 +16,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
     {
         protected override bool CreateGraphOnStartup => true;
 
-        IEnumerator RunTestFor<M, E>(TypeHandle typeHandle, Func<VariableDeclarationModel, Vector2, M> creator)
+        IEnumerator RunTestFor<M, E>(TypeHandle typeHandle, Func<IGTFVariableDeclarationModel, Vector2, M> creator)
             where M : IGTFGraphElementModel
             where E : GraphElement
         {
-            var declarationModel = GraphModel.CreateGraphVariableDeclaration("Foo", typeHandle, true);
+            var declarationModel = GraphModel.CreateGraphVariableDeclaration("Foo", typeHandle, ModifierFlags.None, true);
             var model1 = creator(declarationModel, Vector2.zero);
             var model2 = creator(declarationModel, Vector2.one * 50);
 

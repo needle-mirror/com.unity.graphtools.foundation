@@ -2,8 +2,6 @@ using System;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Highlighting;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.UIElements;
@@ -11,14 +9,14 @@ using IDroppable = UnityEditor.GraphToolsFoundation.Overdrive.GraphElements.IDro
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 {
-    public class TokenDeclaration : GraphElement, IDroppable, IHighlightable, IRenamable, IMovableGraphElement
+    public class TokenDeclaration : GraphElement, IDroppable, IHighlightable, IRenamable
     {
         readonly Pill m_Pill;
         TextField m_TitleTextfield;
 
         public new Store Store => base.Store as Store;
 
-        public string TitleValue => Declaration.Title.Nicify();
+        public string TitleValue => Declaration.DisplayTitle;
 
         public VisualElement TitleEditor => m_TitleTextfield ?? (m_TitleTextfield = new TextField { name = "titleEditor", isDelayed = true });
 
@@ -47,13 +45,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
             styleSheets.Add(AssetDatabase.LoadAssetAtPath<StyleSheet>(UICreationHelper.templatePath + "Token.uss"));
 
-            SetupBuildAndUpdate(model as IGTFGraphElementModel, store, graphView);
+            SetupBuildAndUpdate(model, store, graphView);
 
             m_Pill.icon = Declaration.IsExposed
                 ? GraphViewStaticBridge.LoadIconRequired("GraphView/Nodes/BlackboardFieldExposed.png")
                 : null;
 
-            m_Pill.text = Declaration.Title;
+            m_Pill.text = Declaration.DisplayTitle;
 
             var variableModel = model as VariableDeclarationModel;
             Stencil stencil = store.GetState().CurrentGraphModel?.Stencil;
@@ -71,7 +69,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             this.EnableRename();
 
             if (model != null)
-                viewDataKey = model.GetId();
+                viewDataKey = model.Guid.ToString();
         }
 
         public override void OnUnselected()
@@ -80,12 +78,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             (GraphView as VseGraphView).ClearGraphElementsHighlight(ShouldHighlightItemUsage);
         }
 
-        public bool ShouldHighlightItemUsage(IGraphElementModel model)
+        public bool ShouldHighlightItemUsage(IGTFGraphElementModel model)
         {
             switch (model)
             {
-                case IVariableModel variableModel
-                    when ReferenceEquals(variableModel.DeclarationModel, Declaration):
+                case IGTFVariableNodeModel variableModel
+                    when ReferenceEquals(variableModel.VariableDeclarationModel, Declaration):
                 case IVariableDeclarationModel variableDeclarationModel
                     when ReferenceEquals(variableDeclarationModel, Declaration):
                     return true;
@@ -99,12 +97,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             var gView = selectionContainer?.GetFirstOfType<GraphView>();
             return gView != null && gView.selection.Contains(this);
         }
-
-        public void UpdatePinning()
-        {
-        }
-
-        public bool IsMovable => false;
 
         public int FindIndexInParent()
         {
@@ -125,8 +117,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             };
             return clone;
         }
-
-        public IGraphElementModel GraphElementModel => Declaration;
 
         public bool Highlighted
         {

@@ -1,27 +1,24 @@
 using System;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 {
     [CustomEditor(typeof(GraphAssetModel), true)]
-    class GraphModelInspector : UnityEditor.Editor
+    class GraphModelInspector : Editor
     {
         public override void OnInspectorGUI()
         {
-            VSGraphModel graph = (VSGraphModel)((GraphAssetModel)target)?.GraphModel;
-            if (graph == null)
-                return;
+            var graph = ((IGTFGraphAssetModel)target)?.GraphModel;
+            if (graph != null)
+            {
+                EditorGUILayout.LabelField("Stencil Properties");
 
-            EditorGUILayout.LabelField("Stencil Properties");
-
-            EditorGUI.indentLevel++;
-
-            var graphStencil = graph.Stencil;
-            if (graphStencil != null)
-                graphStencil.OnInspectorGUI();
-
-            EditorGUI.indentLevel--;
+                EditorGUI.indentLevel++;
+                graph.Stencil?.OnInspectorGUI();
+                EditorGUI.indentLevel--;
+            }
 
             base.OnInspectorGUI();
         }

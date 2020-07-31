@@ -9,10 +9,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
     {
         public static void Register(Store store)
         {
-            store.Register<CreatePlacematAction>(CreatePlacemat);
-            store.Register<ChangePlacematPositionAction>(ChangePlacematPosition);
-            store.Register<ChangePlacematZOrdersAction>(ChangePlacematZOrders);
-            store.Register<ExpandOrCollapsePlacematAction>(ExpandOrCollapsePlacemat);
+            store.RegisterReducer<State, CreatePlacematAction>(CreatePlacemat);
+            store.RegisterReducer<State, ChangePlacematPositionAction>(ChangePlacematPosition);
+            store.RegisterReducer<State, ChangePlacematZOrdersAction>(ChangePlacematZOrders);
+            store.RegisterReducer<State, ExpandOrCollapsePlacematAction>(ExpandOrCollapsePlacemat);
         }
 
         static State CreatePlacemat(State previousState, CreatePlacematAction action)
@@ -20,7 +20,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             Undo.RegisterCompleteObjectUndo((Object)previousState.AssetModel, "Create Placemat");
             EditorUtility.SetDirty((Object)previousState.AssetModel);
 
-            ((VSGraphModel)previousState.CurrentGraphModel).CreatePlacemat(action.Title, action.Position);
+            previousState.CurrentGraphModel.CreatePlacemat(action.Title, action.Position);
 
             previousState.MarkForUpdate(UpdateFlags.GraphTopology);
             return previousState;

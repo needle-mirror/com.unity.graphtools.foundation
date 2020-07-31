@@ -1,6 +1,5 @@
 using System;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
 
 // ReSharper disable AccessToStaticMemberViaDerivedType
 
@@ -16,8 +15,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Types
         public void Should_CreateNewMetadata_OnEveryDifferentTypeHandle()
         {
             //Arrange
-            var graphContext = new GraphContext();
-            var resolver = new TypeMetadataResolver(graphContext);
+            var resolver = new TypeMetadataResolver();
 
             //Act
             var intMetadata = resolver.Resolve(k_IntHandle);

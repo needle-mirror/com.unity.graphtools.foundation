@@ -7,20 +7,17 @@ using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 using UnityEngine.Assertions;
-using UnityEngine.Profiling;
-using UnityEngine.Scripting.APIUpdating;
 using Object = UnityEngine.Object;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel
 {
     [Serializable]
-    [MovedFrom(false, "UnityEditor.VisualScripting.GraphViewModel", "Unity.GraphTools.Foundation.Overdrive.Editor")]
-    public abstract class NodeModel : INodeModel, ISerializationCallbackReceiver, IHasProgress, IHasTitle, ICollapsible, IHasIOPorts, IGTFNodeModel
+    public abstract class NodeModel : IGTFNodeModel, ISerializationCallbackReceiver, IHasProgress, ICollapsible, IHasIOPorts, IGuidUpdate, IHasTitle
     {
         [SerializeField, HideInInspector, Obsolete("Replaced by a SerializableGUID. Remove after drop 10")]
-        string m_GuidAsString;
+        string m_GuidAsString = "";
 
-        [SerializeField]
+        [SerializeField, HideInInspector]
         SerializableGUID m_Guid;
 
         [SerializeField, HideInInspector]
@@ -43,43 +40,35 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
         List<string> m_InputConstantKeys;
 
         // Serialize m_InputConstantsById dictionary Values
-        [SerializeReference]
+        [SerializeReference, Obsolete]
         protected List<ConstantNodeModel> m_InputConstantsValues;
+        [SerializeReference]
+        protected List<IConstant> m_InputConstants;
 
         [SerializeField]
         ModelState m_State;
 
         public GUID Guid
         {
-            get => m_Guid;
-            internal set => m_Guid = value;
+            get
+            {
+                if (m_Guid.GUID.Empty())
+                    AssignNewGuid();
+                return m_Guid;
+            }
+            // Setter for tests only.
+            set => m_Guid = value;
         }
 
         protected Stencil Stencil => m_GraphAssetModel != null ? m_GraphAssetModel.GraphModel.Stencil : null;
 
-        public virtual string IconTypeString => "typeNode";
+        public virtual string IconTypeString => "node";
 
-        public virtual string DataTypeString
-        {
-            get
-            {
-                IVariableDeclarationModel declarationModel = (this as IVariableModel)?.DeclarationModel;
-                return declarationModel?.DataType.GetMetadata(Stencil).FriendlyName ?? string.Empty;
-            }
-        }
+        public virtual string DataTypeString => "";
 
-        public virtual string VariableString
-        {
-            get
-            {
-                IVariableDeclarationModel declarationModel = (this as IVariableModel)?.DeclarationModel;
-                return declarationModel == null ? string.Empty : declarationModel.IsExposed ? "Exposed variable" : "Variable";
-            }
-        }
+        public virtual string VariableString => "";
 
-        public ScriptableObject SerializableAsset => (ScriptableObject)VSGraphModel.AssetModel;
-
-        public IGraphAssetModel AssetModel
+        public IGTFGraphAssetModel AssetModel
         {
             get => m_GraphAssetModel;
             set
@@ -90,7 +79,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
         }
 
         public IGTFGraphModel GraphModel => AssetModel?.GraphModel;
-        public IGraphModel VSGraphModel => GraphModel as IGraphModel;
 
         public ModelState State
         {
@@ -112,8 +100,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
             set => m_Position = value;
         }
 
-        public virtual bool IsCondition => false;
-
         public Color Color
         {
             get => m_HasUserColor ? m_Color : Color.clear;
@@ -121,35 +107,35 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
         }
 
         // Allows maintaining a ports both by order and by their ids
-        // IReadOnlyList<IPortModel> gives access to ports by display order
-        // IReadOnlyDictionary<string, IPortModel> gives access to ports by Ids
+        // IReadOnlyList<IGTFPortModel> gives access to ports by display order
+        // IReadOnlyDictionary<string, IGTFPortModel> gives access to ports by Ids
         [PublicAPI]
-        protected class OrderedPorts : IReadOnlyDictionary<string, IPortModel>, IReadOnlyList<IPortModel>
+        protected class OrderedPorts : IReadOnlyDictionary<string, IGTFPortModel>, IReadOnlyList<IGTFPortModel>
         {
-            Dictionary<string, IPortModel> m_Dictionary;
+            Dictionary<string, IGTFPortModel> m_Dictionary;
             List<int> m_Order;
-            List<IPortModel> m_PortModels;
+            List<IGTFPortModel> m_PortModels;
 
             public OrderedPorts(int capacity = 0)
             {
-                m_Dictionary = new Dictionary<string, IPortModel>(capacity);
+                m_Dictionary = new Dictionary<string, IGTFPortModel>(capacity);
                 m_Order = new List<int>(capacity);
-                m_PortModels = new List<IPortModel>(capacity);
+                m_PortModels = new List<IGTFPortModel>(capacity);
             }
 
-            public void Add(IPortModel portModel)
+            public void Add(IGTFPortModel portModel)
             {
-                m_Dictionary.Add(portModel.UniqueId, portModel);
+                m_Dictionary.Add(portModel.UniqueName, portModel);
                 m_PortModels.Add(portModel);
                 m_Order.Add(m_Order.Count);
             }
 
-            public bool Remove(IPortModel portModel)
+            public bool Remove(IGTFPortModel portModel)
             {
                 bool found = false;
-                if (m_Dictionary.ContainsKey(portModel.UniqueId))
+                if (m_Dictionary.ContainsKey(portModel.UniqueName))
                 {
-                    m_Dictionary.Remove(portModel.UniqueId);
+                    m_Dictionary.Remove(portModel.UniqueName);
                     found = true;
                     int index = m_PortModels.FindIndex(x => x == portModel);
                     m_PortModels.Remove(portModel);
@@ -163,7 +149,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
                 return found;
             }
 
-            public void SwapPortsOrder(IPortModel a, IPortModel b)
+            public void SwapPortsOrder(IGTFPortModel a, IGTFPortModel b)
             {
                 int indexA = m_PortModels.IndexOf(a);
                 int indexB = m_PortModels.IndexOf(b);
@@ -173,7 +159,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
             }
 
             #region IReadOnlyDictionary implementation
-            public IEnumerator<KeyValuePair<string, IPortModel>> GetEnumerator() => m_Dictionary.GetEnumerator();
+            public IEnumerator<KeyValuePair<string, IGTFPortModel>> GetEnumerator() => m_Dictionary.GetEnumerator();
 
             IEnumerator IEnumerable.GetEnumerator()
             {
@@ -183,26 +169,26 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
             public int Count => m_Dictionary.Count;
             public bool ContainsKey(string key) => m_Dictionary.ContainsKey(key);
 
-            public bool TryGetValue(string key, out IPortModel value)
+            public bool TryGetValue(string key, out IGTFPortModel value)
             {
                 return m_Dictionary.TryGetValue(key, out value);
             }
 
-            public IPortModel this[string key] => m_Dictionary[key];
+            public IGTFPortModel this[string key] => m_Dictionary[key];
 
             public IEnumerable<string> Keys => m_Dictionary.Keys;
-            public IEnumerable<IPortModel> Values => m_Dictionary.Values;
+            public IEnumerable<IGTFPortModel> Values => m_Dictionary.Values;
             #endregion IReadOnlyDictionary implementation
 
-            #region IReadOnlyList<IPortModel> implementation
-            IEnumerator<IPortModel> IEnumerable<IPortModel>.GetEnumerator()
+            #region IReadOnlyList<IGTFPortModel> implementation
+            IEnumerator<IGTFPortModel> IEnumerable<IGTFPortModel>.GetEnumerator()
             {
                 Assert.AreEqual(m_Order.Count, m_PortModels.Count, "these lists are supposed to always be of the same size");
                 return m_Order.Select(i => m_PortModels[i]).GetEnumerator();
             }
 
-            public IPortModel this[int index] => m_PortModels[m_Order[index]];
-            #endregion IReadOnlyList<IPortModel> implementation
+            public IGTFPortModel this[int index] => m_PortModels[m_Order[index]];
+            #endregion IReadOnlyList<IGTFPortModel> implementation
         }
 
         OrderedPorts m_InputsById;
@@ -210,7 +196,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
         protected OrderedPorts m_PreviousInputs;
         protected OrderedPorts m_PreviousOutputs;
 
-        Dictionary<string, ConstantNodeModel> m_InputConstantsById;
+        Dictionary<string, IConstant> m_InputConstantsById;
         public NodeModel()
         {
             m_OutputsById = new OrderedPorts();
@@ -218,23 +204,23 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
             m_Color = new Color(0.776f, 0.443f, 0, 0.5f);
         }
 
-        public IReadOnlyDictionary<string, IPortModel> InputsById => m_InputsById;
-        public IReadOnlyDictionary<string, IPortModel> OutputsById => m_OutputsById;
+        public IReadOnlyDictionary<string, IGTFPortModel> InputsById => m_InputsById;
+        public IReadOnlyDictionary<string, IGTFPortModel> OutputsById => m_OutputsById;
 
-        public IReadOnlyDictionary<string, ConstantNodeModel> InputConstantsById => m_InputConstantsById;
+        public IReadOnlyDictionary<string, IConstant> InputConstantsById => m_InputConstantsById;
 
-        public virtual IReadOnlyList<IPortModel> InputsByDisplayOrder => m_InputsById;
+        public virtual IReadOnlyList<IGTFPortModel> InputsByDisplayOrder => m_InputsById;
 
-        public virtual IReadOnlyList<IPortModel> OutputsByDisplayOrder => m_OutputsById;
+        public virtual IReadOnlyList<IGTFPortModel> OutputsByDisplayOrder => m_OutputsById;
 
         [Obsolete("Direct indexing dropped, use InputsById or InputsByDisplayOrder instead")]
-        public virtual IReadOnlyList<IPortModel> InputPortModels => new List<IPortModel>();
+        public virtual IReadOnlyList<IGTFPortModel> InputPortModels => new List<IGTFPortModel>();
         [Obsolete("Direct indexing dropped, use OutputsById or OutputsByDisplayOrder instead")]
-        public virtual IReadOnlyList<IPortModel> OutputPortModels => new List<IPortModel>();
+        public virtual IReadOnlyList<IGTFPortModel> OutputPortModels => new List<IGTFPortModel>();
 
         public virtual bool Collapsed { get; set; }
-        public IEnumerable<IGTFPortModel> InputPorts => m_InputsById.Values.Cast<IGTFPortModel>();
-        public IEnumerable<IGTFPortModel> OutputPorts => m_OutputsById.Values.Cast<IGTFPortModel>();
+        public IEnumerable<IGTFPortModel> InputPorts => m_InputsById.Values;
+        public IEnumerable<IGTFPortModel> OutputPorts => m_OutputsById.Values;
         public IEnumerable<IGTFPortModel> Ports => InputPorts.Concat(OutputPorts);
 
         public bool HasUserColor
@@ -245,18 +231,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
 
         public virtual bool HasProgress => false;
 
-        public virtual void OnConnection(IPortModel selfConnectedPortModel, IPortModel otherConnectedPortModel)
+        public virtual void OnConnection(IGTFPortModel selfConnectedPortModel, IGTFPortModel otherConnectedPortModel)
         {
         }
 
-        public virtual void OnDisconnection(IPortModel selfConnectedPortModel, IPortModel otherConnectedPortModel)
+        public virtual void OnDisconnection(IGTFPortModel selfConnectedPortModel, IGTFPortModel otherConnectedPortModel)
         {
-        }
-
-        public void PostGraphLoad()
-        {
-            if (m_Guid == default)
-                m_Guid = GUID.Generate();
         }
 
         protected virtual void OnPreDefineNode()
@@ -280,21 +260,21 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
         void RemoveUnusedPorts()
         {
             foreach (var kv in m_PreviousInputs
-                     .Where<KeyValuePair<string, IPortModel>>(kv => !m_InputsById.ContainsKey(kv.Key)))
+                     .Where<KeyValuePair<string, IGTFPortModel>>(kv => !m_InputsById.ContainsKey(kv.Key)))
             {
                 DeletePort(kv.Value);
             }
 
             foreach (var kv in m_PreviousOutputs
-                     .Where<KeyValuePair<string, IPortModel>>(kv => !m_OutputsById.ContainsKey(kv.Key)))
+                     .Where<KeyValuePair<string, IGTFPortModel>>(kv => !m_OutputsById.ContainsKey(kv.Key)))
             {
                 DeletePort(kv.Value);
             }
 
             if (m_InputConstantsById == null)
             {
-                m_InputConstantsById = new Dictionary<string, ConstantNodeModel>();
-                m_InputConstantsById.DeserializeDictionaryFromLists(m_InputConstantKeys, m_InputConstantsValues);
+                m_InputConstantsById = new Dictionary<string, IConstant>();
+                m_InputConstantsById.DeserializeDictionaryFromLists(m_InputConstantKeys, m_InputConstants);
             }
 
             // remove input constants that aren't used
@@ -303,20 +283,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
                 .Where(id => !m_InputsById.ContainsKey(id)).ToList();
             foreach (var id in idsToDeletes)
             {
-                m_InputConstantsById[id].Destroy();
                 m_InputConstantsById.Remove(id);
             }
         }
 
-        static PortModel ReuseOrCreatePortModel(PortModel model, IReadOnlyDictionary<string, IPortModel> previousPorts, OrderedPorts newPorts)
+        static PortModel ReuseOrCreatePortModel(PortModel model, IReadOnlyDictionary<string, IGTFPortModel> previousPorts, OrderedPorts newPorts)
         {
             // reuse existing ports when ids match, otherwise add port
-            string id = model.UniqueId;
+            string id = model.UniqueName;
             PortModel modelToAdd = model;
             if (previousPorts.TryGetValue(id, out var existingModel))
             {
                 modelToAdd = (PortModel)existingModel;
-                modelToAdd.Name = model.Name;
+                modelToAdd.Title = model.Title;
                 modelToAdd.DataTypeHandle = model.DataTypeHandle;
                 modelToAdd.PortType = model.PortType;
             }
@@ -328,26 +307,21 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
         {
         }
 
-        public virtual void UndoRedoPerformed()
-        {
-            Profiler.BeginSample("NodeModel_UndoRedo");
-            DefineNode();
-            Profiler.EndSample();
-        }
-
-        public virtual PortCapacity GetPortCapacity(PortModel portModel)
+        public virtual PortCapacity GetPortCapacity(IGTFPortModel portModel)
         {
             return Stencil.GetPortCapacity(portModel, out var cap) ? cap : portModel?.GetDefaultCapacity() ?? PortCapacity.Multi;
         }
 
-        public string GetId()
-        {
-            return Guid.ToString();
-        }
-
         public void AssignNewGuid()
         {
-            Guid = GUID.Generate();
+            m_Guid = GUID.Generate();
+        }
+
+        void IGuidUpdate.AssignGuid(string guidString)
+        {
+            m_Guid = new GUID(guidString);
+            if (m_Guid.GUID.Empty())
+                AssignNewGuid();
         }
 
         public void Move(Vector2 position)
@@ -361,7 +335,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
             m_Color = color;
         }
 
-        protected virtual PortModel MakePortForNode(Direction direction, string portName, PortType portType, TypeHandle dataType, string portId, PortModel.PortModelOptions options, object portCreationdata)
+        protected virtual PortModel MakePortForNode(Direction direction, string portName, PortType portType, TypeHandle dataType, string portId, PortModel.PortModelOptions options)
         {
             return new PortModel(portName ?? "", portId, options)
             {
@@ -374,22 +348,22 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
 
         protected PortModel AddDataInputPort<TDataType>(string portName, string portId = null, PortModel.PortModelOptions options = PortModel.PortModelOptions.Default, TDataType defaultValue = default)
         {
-            Action<ConstantNodeModel> preDefine = null;
+            Action<IConstant> preDefine = null;
 
-            if (!EqualityComparer<TDataType>.Default.Equals(defaultValue, default))
-                preDefine = constantModel => constantModel.SetValue(defaultValue);
+            if (defaultValue is Enum || !EqualityComparer<TDataType>.Default.Equals(defaultValue, default))
+                preDefine = constantModel => constantModel.ObjectValue = defaultValue;
 
-            return AddDataInputPort(portName, typeof(TDataType).GenerateTypeHandle(Stencil), portId, options, preDefine);
+            return AddDataInputPort(portName, typeof(TDataType).GenerateTypeHandle(), portId, options, preDefine);
         }
 
-        protected PortModel AddDataInputPort(string portName, TypeHandle typeHandle, string portId = null, PortModel.PortModelOptions options = PortModel.PortModelOptions.Default, Action<ConstantNodeModel> preDefine = null)
+        protected PortModel AddDataInputPort(string portName, TypeHandle typeHandle, string portId = null, PortModel.PortModelOptions options = PortModel.PortModelOptions.Default, Action<IConstant> preDefine = null)
         {
             return AddInputPort(portName, PortType.Data, typeHandle, portId, options, preDefine);
         }
 
         protected PortModel AddDataOutputPort<TDataType>(string portName, string portId = null)
         {
-            return AddDataOutputPort(portName, typeof(TDataType).GenerateTypeHandle(Stencil), portId);
+            return AddDataOutputPort(portName, typeof(TDataType).GenerateTypeHandle(), portId);
         }
 
         protected PortModel AddDataOutputPort(string portName, TypeHandle typeHandle, string portId = null, PortModel.PortModelOptions options = PortModel.PortModelOptions.Default)
@@ -397,59 +371,67 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
             return AddOutputPort(portName, PortType.Data, typeHandle, portId, options);
         }
 
-        protected PortModel AddInstanceInput<TDataType>(string portName = null, string portId = null)
-        {
-            return AddInstanceInput(typeof(TDataType).GenerateTypeHandle(Stencil), portName, portId);
-        }
-
-        protected PortModel AddInstanceInput(TypeHandle dataType, string portName = null, string portId = null)
-        {
-            return AddInputPort(portName, PortType.Instance, dataType, portId);
-        }
-
         protected PortModel AddExecutionInputPort(string portName, string portId = null)
         {
-            return AddInputPort(portName, PortType.Execution, TypeHandle.ExecutionFlow, portId);
+            return AddInputPort(portName, PortType.Execution, VSTypeHandle.ExecutionFlow, portId);
         }
 
         protected PortModel AddExecutionOutputPort(string portName, string portId = null)
         {
-            return AddOutputPort(portName, PortType.Execution, TypeHandle.ExecutionFlow, portId);
+            return AddOutputPort(portName, PortType.Execution, VSTypeHandle.ExecutionFlow, portId);
         }
 
-        protected virtual PortModel AddInputPort(string portName, PortType portType, TypeHandle dataType, string portId = null, PortModel.PortModelOptions options = PortModel.PortModelOptions.Default, Action<ConstantNodeModel> preDefine = null, object portCreationData = null)
+        protected virtual PortModel AddInputPort(string portName, PortType portType, TypeHandle dataType, string portId = null, PortModel.PortModelOptions options = PortModel.PortModelOptions.Default, Action<IConstant> preDefine = null)
         {
-            var portModel = MakePortForNode(Direction.Input, portName, portType, dataType, portId, options, portCreationData);
+            var portModel = MakePortForNode(Direction.Input, portName, portType, dataType, portId, options);
             portModel = ReuseOrCreatePortModel(portModel, m_PreviousInputs, m_InputsById);
             UpdateConstantForInput(portModel, preDefine);
             return portModel;
         }
 
-        protected virtual PortModel AddOutputPort(string portName, PortType portType, TypeHandle dataType, string portId = null, PortModel.PortModelOptions options = PortModel.PortModelOptions.Default, object portCreationData = null)
+        protected virtual PortModel AddOutputPort(string portName, PortType portType, TypeHandle dataType, string portId = null, PortModel.PortModelOptions options = PortModel.PortModelOptions.Default)
         {
-            var portModel = MakePortForNode(Direction.Output, portName, portType, dataType, portId, options, portCreationData);
+            var portModel = MakePortForNode(Direction.Output, portName, portType, dataType, portId, options);
             return ReuseOrCreatePortModel(portModel, m_PreviousOutputs, m_OutputsById);
         }
 
-        protected void UpdateConstantForInput(PortModel inputPort, Action<ConstantNodeModel> preDefine = null)
+        protected void UpdateConstantForInput(PortModel inputPort, Action<IConstant> preDefine = null)
         {
-            var id = inputPort.UniqueId;
+            var id = inputPort.UniqueName;
             if ((inputPort.Options & PortModel.PortModelOptions.NoEmbeddedConstant) != 0)
             {
                 m_InputConstantsById?.Remove(id);
                 return;
             }
+
+#pragma warning disable 612
+            if (m_InputConstantsValues != null && m_InputConstantsValues.Count != 0 && m_InputConstants?.Count == 0)
+            {
+                Debug.Log("Migrate embedded constants");
+                if (m_InputConstants == null)
+                    m_InputConstants = new List<IConstant>();
+                for (var i = 0; i < m_InputConstantsValues.Count; i++)
+                {
+                    var inputConstantsValue = m_InputConstantsValues[i];
+                    var newConstant = ((GraphModel)GraphModel).CreateConstantValue(inputConstantsValue.Type.GenerateTypeHandle());
+                    newConstant.ObjectValue = inputConstantsValue.ObjectValue;
+                    Assert.AreEqual(newConstant.ObjectValue, inputConstantsValue.ObjectValue);
+                    m_InputConstants.Add(newConstant);
+                }
+                m_InputConstantsValues.Clear();
+                m_InputConstantsValues = null;
+            }
+#pragma warning restore 612
             if (m_InputConstantsById == null)
             {
-                m_InputConstantsById = new Dictionary<string, ConstantNodeModel>();
-                m_InputConstantsById.DeserializeDictionaryFromLists(m_InputConstantKeys, m_InputConstantsValues);
+                m_InputConstantsById = new Dictionary<string, IConstant>();
+                m_InputConstantsById.DeserializeDictionaryFromLists(m_InputConstantKeys, m_InputConstants);
             }
 
             if (m_InputConstantsById.TryGetValue(id, out var constant))
             {
                 // Destroy existing constant if not compatible
-                Type type = inputPort.DataTypeHandle.Resolve(Stencil);
-                constant.AssetModel = m_GraphAssetModel;
+                Type type = inputPort.DataTypeHandle.Resolve();
                 if (!constant.Type.IsAssignableFrom(type))
                 {
                     m_InputConstantsById.Remove(id);
@@ -460,27 +442,22 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
             if (!m_InputConstantsById.ContainsKey(id)
                 && inputPort.CreateEmbeddedValueIfNeeded
                 && inputPort.DataTypeHandle != TypeHandle.Unknown
-                && Stencil.GetConstantNodeModelType(inputPort.DataTypeHandle) != null)
+                && Stencil.GetConstantNodeValueType(inputPort.DataTypeHandle) != null)
             {
-                var embeddedConstant = (ConstantNodeModel)((VSGraphModel)GraphModel).CreateConstantNode(
-                    inputPort.Name,
-                    inputPort.DataTypeHandle,
-                    Vector2.zero,
-                    SpawnFlags.Default | SpawnFlags.Orphan,
-                    preDefine: preDefine);
-                Utility.SaveAssetIntoObject(embeddedConstant, (Object)AssetModel);
+                var embeddedConstant = ((GraphModel)GraphModel).CreateConstantValue(inputPort.DataTypeHandle, preDefine);
+                EditorUtility.SetDirty((Object)AssetModel);
                 m_InputConstantsById[id] = embeddedConstant;
             }
         }
 
-        internal void ReinstantiateInputConstants()
+        public void ReinstantiateInputConstants()
         {
             foreach (var id in m_InputConstantsById.Keys.ToList())
             {
-                ConstantNodeModel inputConstant = m_InputConstantsById[id];
-                ConstantNodeModel newConstant = inputConstant.Clone();
+                IConstant inputConstant = m_InputConstantsById[id];
+                IConstant newConstant = inputConstant.CloneConstant();
                 m_InputConstantsById[id] = newConstant;
-                Utility.SaveAssetIntoObject(newConstant, (Object)AssetModel);
+                EditorUtility.SetDirty((Object)AssetModel);
             }
         }
 
@@ -494,9 +471,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
             DeletePort(portModel);
         }
 
-        protected void DeletePort(IPortModel portModel, bool removeFromOrderedPorts = false)
+        protected void DeletePort(IGTFPortModel portModel, bool removeFromOrderedPorts = false)
         {
-            var edgeModels = VSGraphModel.GetEdgesConnections(portModel);
+            var edgeModels = GraphModel.GetEdgesConnections(portModel);
             ((GraphModel)GraphModel).DeleteEdges(edgeModels);
             if (removeFromOrderedPorts)
             {
@@ -515,12 +492,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
 
         public void Destroy() => Destroyed = true;
 
-        public virtual string ToolTip => string.Empty;
-
         public virtual void OnBeforeSerialize()
         {
-            m_InputConstantsById.SerializeDictionaryToLists(ref m_InputConstantKeys, ref m_InputConstantsValues);
-            m_GuidAsString = null;
+            m_InputConstantsById.SerializeDictionaryToLists(ref m_InputConstantKeys, ref m_InputConstants);
         }
 
         public virtual void OnAfterDeserialize()
@@ -528,8 +502,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
             m_OutputsById = new OrderedPorts();
             m_InputsById = new OrderedPorts();
 
-            if (m_Guid == default && !String.IsNullOrEmpty(m_GuidAsString) && GUID.TryParse(m_GuidAsString, out var guid))
-                m_Guid = guid;
+            if (m_Guid.GUID.Empty())
+            {
+#pragma warning disable 618
+                if (!String.IsNullOrEmpty(m_GuidAsString))
+                {
+                    (GraphModel as GraphModel)?.AddGuidToUpdate(this, m_GuidAsString);
+                }
+#pragma warning restore 618
+            }
         }
 
         public static implicit operator bool(NodeModel n)
@@ -549,6 +530,45 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewMo
             else
                 AddOutputPort(uniqueId, PortType.MissingPort, TypeHandle.MissingPort, uniqueId,
                     PortModel.PortModelOptions.NoEmbeddedConstant);
+        }
+
+        public IGTFPortModel GetPortFitToConnectTo(IGTFPortModel portModel)
+        {
+            // PF: FIXME: This should be the same as GraphView.GetCompatiblePorts (which will move to GraphModel soon).
+            // It should also be coherent with the nodes presented in the searcher.
+
+            var portsToChooseFrom = portModel.Direction == Direction.Input ? OutputsByDisplayOrder : InputsByDisplayOrder;
+            return GetFirstPortModelOfType(portModel.PortType, portModel.DataTypeHandle, portsToChooseFrom);
+        }
+
+        IGTFPortModel GetFirstPortModelOfType(PortType portType, TypeHandle typeHandle, IReadOnlyList<IGTFPortModel> portModels)
+        {
+            if (typeHandle != TypeHandle.Unknown && portModels.Any())
+            {
+                Stencil stencil = portModels.First().GraphModel.Stencil;
+                IGTFPortModel unknownPortModel = null;
+
+                // Return the first matching Input portModel
+                // If no match was found, return the first Unknown typed portModel
+                // Else return null.
+                foreach (var portModel in portModels.Where(p => p.PortType == portType))
+                {
+                    if (portModel.DataTypeHandle == TypeHandle.Unknown && unknownPortModel == null)
+                    {
+                        unknownPortModel = portModel;
+                    }
+
+                    if (typeHandle.IsAssignableFrom(portModel.DataTypeHandle, stencil))
+                    {
+                        return portModel;
+                    }
+                }
+
+                if (unknownPortModel != null)
+                    return unknownPortModel;
+            }
+
+            return null;
         }
     }
 }

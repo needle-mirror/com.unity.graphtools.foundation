@@ -8,12 +8,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 {
     public class BlackboardSection : GraphElement
     {
-        private VisualElement m_DragIndicator;
-        private VisualElement m_MainContainer;
-        private VisualElement m_Header;
-        private Label m_TitleLabel;
-        private VisualElement m_RowsContainer;
-        private int m_InsertIndex;
+        VisualElement m_DragIndicator;
+        VisualElement m_MainContainer;
+        VisualElement m_Header;
+        Label m_TitleLabel;
+        VisualElement m_RowsContainer;
+        int m_InsertIndex;
 
         Blackboard m_Blackboard;
         Blackboard blackboard
@@ -71,7 +71,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         public BlackboardSection()
         {
-            var tpl = GraphElementsHelper.LoadUXML("BlackboardSection.uxml");
+            var tpl = GraphElementHelper.LoadUXML("BlackboardSection.uxml");
             this.AddStylesheet(Blackboard.StyleSheetPath);
             m_MainContainer = tpl.Instantiate();
             m_MainContainer.AddToClassList("mainContainer");

@@ -1,15 +1,3 @@
-.ge-node {
-    --selection-border-radius: 8px;
-}
-
-.ge-node__content-container {
-    background-color: rgba(63,63,63,0.8);
-    border-color: rgba(25,25,25,1.0);
-    border-radius: var(--border-radius);
-    border-width: 1px;
-    overflow: hidden;
-}
-
 .ge-node--setvar-node .ge-node__title-container {
     padding-top: 6px;
     padding-bottom: 6px;
@@ -18,20 +6,6 @@
 .ge-node--expression-node .ge-node__title-container {
     padding-top: 8px;
     padding-bottom: 8px;
-}
-
-.ge-node.highlighted .ge-node__selection-border {
-    border-color: #FF8000;
-}
-
-.vs-wip-node-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    right: 0;
-    border-radius: var(--border-radius);
-    background-color: rgba(138, 43, 226, 0.1);
 }
 
 .ge-node__title-icon-container {
@@ -63,32 +37,10 @@
     margin-left: 16px;
 }
 
-.ge-node__icon.typeNode {
+.ge-node__icon--node {
     background-image: url("Icons/Function@x3.png");
 }
 
-.ge-node__icon.typeIfCondition {
-    background-image: url("Icons/IfCondition@x3.png");
-}
-
-.ge-node__icon.typeObject,
-.ge-node__icon.typeGraphScript,
-.ge-node__icon.typeUnknown {
-    background-image: url("Icons/GraphicScript@x3.png");
-}
-
-.ge-node__icon.typeThisType {
-    background-image: url("Icons/GraphScript@x3.png");
-}
-
-.ge-node__icon.typeSetVariable {
-    background-image: url("Icons/SetVariable@x3.png");
-}
-
-.ge-node__icon.typeMacro {
+.ge-node__icon--macro {
     background-image: url("Icons/Macro@x3.png");
-}
-
-.ge-node__icon.typeCondition {
-    background-image: url("Icons/Condition@x3.png");
 }

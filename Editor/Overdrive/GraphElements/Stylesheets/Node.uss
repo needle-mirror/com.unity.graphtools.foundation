@@ -5,6 +5,15 @@
     margin: 0;
     color: #c1c1c1;
     --border-radius: 6px;
+    --selection-border-radius: 8px;
+}
+
+.ge-node .ge-selection-border__content-container {
+    background-color: rgba(63,63,63,0.8);
+    border-color: rgba(25,25,25,1.0);
+    border-radius: var(--border-radius);
+    border-width: 1px;
+    overflow: hidden;
 }
 
 .ge-node__title-container {
@@ -15,6 +24,21 @@
 
 .ge-node--collapsed.ge-node--not-connected .ge-node__title-container {
     border-radius: var(--border-radius);
+}
+
+.ge-node--disabled #disabled-overlay {
+    display: flex;
+    background-color: rgba(18, 18, 18, 0.52);
+}
+
+.ge-node--unused #disabled-overlay {
+    display: flex;
+    border-color: rgb(120, 104, 31);
+    border-width: 1px;
+}
+
+.ge-node--highlighted .ge-node__selection-border {
+    border-color: #FF8000;
 }
 
 .ge-node__title {

@@ -52,7 +52,17 @@ namespace UnityEditor.VisualScripting.Model
             // needed now that nodemodels are not in separate node assets that got OnEnable() before the graph itself would
             foreach (var nodeModel in GetAllNodes())
             {
-                (nodeModel as NodeModel)?.DefineNode();
+                (nodeModel as NodeModel)?.OnEnable();
+            }
+
+            foreach (var nodeModel in GetAllNodes())
+            {
+                (nodeModel as NodeModel)?.MigratePorts();
+            }
+
+            foreach (var nodeModel in GetAllNodes())
+            {
+                (nodeModel as NodeModel)?.RemoveUnusedPorts();
             }
         }
 

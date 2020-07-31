@@ -7,14 +7,14 @@ using Object = UnityEngine.Object;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 {
-    public class Port : VisualElementBridge, IGraphElement
+    public class Port : VisualElementBridge, IGraphElement, IBadgeContainer
     {
         public GraphElementPartList PartList { get; private set; }
 
         public GraphView GraphView { get; private set; }
         public IGTFPortModel PortModel { get; private set; }
         public IGTFGraphElementModel Model => PortModel;
-        public IStore Store { get; private set; }
+        public Overdrive.Store Store { get; private set; }
 
         protected ContextualMenuManipulator m_ContextualMenuManipulator;
 
@@ -39,14 +39,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             RegisterCallback<CustomStyleResolvedEvent>(OnCustomStyleResolved);
         }
 
-        public void SetupBuildAndUpdate(IGTFGraphElementModel model, IStore store, GraphView graphView)
+        public void SetupBuildAndUpdate(IGTFGraphElementModel model, Overdrive.Store store, GraphView graphView)
         {
             Setup(model, store, graphView);
             BuildUI();
             UpdateFromModel();
         }
 
-        public void Setup(IGTFGraphElementModel portModel, IStore store, GraphView graphView)
+        public void Setup(IGTFGraphElementModel portModel, Overdrive.Store store, GraphView graphView)
         {
             PortModel = portModel as IGTFPortModel;
             Store = store;
@@ -121,10 +121,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         CustomStyleProperty<Color> m_PortColorProperty = new CustomStyleProperty<Color>("--port-color");
         void OnCustomStyleResolved(CustomStyleResolvedEvent e)
         {
-            Color portColorValue = Color.clear;
-
-            ICustomStyle customStyle = e.customStyle;
-            if (customStyle.TryGetValue(m_PortColorProperty, out portColorValue))
+            if (e.customStyle.TryGetValue(m_PortColorProperty, out var portColorValue))
                 PortColor = portColorValue;
         }
 
@@ -198,5 +195,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         }
 
         public Color PortColor { get; private set; }
+        public IconBadge ErrorBadge { get; set; }
+        public ValueBadge ValueBadge { get; set; }
     }
 }

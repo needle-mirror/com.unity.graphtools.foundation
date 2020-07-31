@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Linq;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Highlighting;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
@@ -20,7 +19,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         readonly VseGraphView m_GraphView;
         readonly Store m_Store;
 
-        public Dictionary<IGraphElementModel, GraphElement> ModelsToNodeMapping { get; private set; }
+        // PF: Remove and use GetUI
+        public Dictionary<IGTFGraphElementModel, GraphElement> ModelsToNodeMapping { get; private set; }
 
         public Blackboard Blackboard { get; }
 
@@ -87,8 +87,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             Stopwatch topologyStopwatch = new Stopwatch();
             topologyStopwatch.Start();
 
-            State state = m_Store.GetState();
-            IGraphModel currentGraphModel = state.CurrentGraphModel;
+            var state = m_Store.GetState();
+            var currentGraphModel = state.CurrentGraphModel as IGraphModel;
             if (currentGraphModel == null)
             {
                 return;
@@ -99,7 +99,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
             m_GraphView.DisablePersistedSelectionRestore();
 
-            bool fullUIRebuildOnChange = state.Preferences.GetBool(VSPreferences.BoolPref.FullUIRebuildOnChange);
+            bool fullUIRebuildOnChange = state.Preferences.GetBool(BoolPref.FullUIRebuildOnChange);
             bool forceRebuildUI = fullUIRebuildOnChange || currentGraphModel != m_LastGraphModel || graphChangeList == null || !graphChangeList.HasAnyTopologyChange() || ModelsToNodeMapping == null;
 
             if (forceRebuildUI) // no specific graph changes passed, assume rebuild everything
@@ -115,8 +115,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
             MapModelsToNodes();
 
-            if (state.Preferences.GetBool(VSPreferences.BoolPref.ShowUnusedNodes))
-                m_GraphView.PositionDependenciesManagers.UpdateNodeState(ModelsToNodeMapping);
+            if (state.Preferences.GetBool(BoolPref.ShowUnusedNodes))
+                m_GraphView.PositionDependenciesManagers.UpdateNodeState();
 
             m_GraphView.HighlightGraphElements();
 
@@ -124,13 +124,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
             m_GraphView.EnablePersistedSelectionRestore();
 
-            if (ElementToRename != null)
+            if (ElementToRename != null && state.EditorDataModel is IEditorDataModel model)
             {
                 m_GraphView.ClearSelection();
                 m_GraphView.AddToSelection((GraphElement)ElementToRename);
                 ElementToRename.Rename(forceRename: true);
                 ElementToRename = null;
-                state.EditorDataModel.ElementModelToRename = null;
+                model.ElementModelToRename = null;
             }
 
             // We need to do this after all graph elements are created.
@@ -144,33 +144,28 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             topologyStopwatch.Stop();
             Profiler.EndSample();
 
-            if (state.Preferences.GetBool(VSPreferences.BoolPref.WarnOnUIFullRebuild) && state.lastActionUIRebuildType == State.UIRebuildType.Full)
+            if (state.Preferences.GetBool(BoolPref.WarnOnUIFullRebuild) && state.LastActionUIRebuildType == Overdrive.State.UIRebuildType.Full)
             {
                 Debug.LogWarning($"Rebuilding the whole UI ({dispatchedActionName})");
             }
-            if (state.Preferences.GetBool(VSPreferences.BoolPref.LogUIBuildTime))
+            if (state.Preferences.GetBool(BoolPref.LogUIBuildTime))
             {
                 Debug.Log($"UI Update ({dispatchedActionName}) took {topologyStopwatch.ElapsedMilliseconds} ms");
             }
         }
 
-        GraphElement CreateElement(IGraphElementModel model)
+        GraphElement CreateElement(IGTFGraphElementModel model)
         {
-            if (model is IGTFGraphElementModel graphElementModel)
-            {
-                GraphElement element = graphElementModel.CreateUI<GraphElement>(m_GraphView, m_Store);
-                if (element != null)
-                    AddToGraphView(element);
+            GraphElement element = model.CreateUI<GraphElement>(m_GraphView, m_Store);
+            if (element != null)
+                AddToGraphView(element);
 
-                return element;
-            }
-
-            return null;
+            return element;
         }
 
-        void PartialRebuild(State state)
+        void PartialRebuild(Overdrive.State state)
         {
-            state.lastActionUIRebuildType = State.UIRebuildType.Partial;
+            state.LastActionUIRebuildType = Overdrive.State.UIRebuildType.Partial;
 
             using (var partialRebuilder = new UIPartialRebuilder(state, CreateElement, RemoveFromGraphView))
             {
@@ -188,18 +183,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                 partialRebuilder.RebuildNodes(ModelsToNodeMapping);
 
                 // rebuild needed edges
-                // TODO keep a port mapping next to the node mapping
-                Dictionary<PortModel, GraphElements.Port> allPorts = m_GraphView.ports.ToList().ToDictionary(p => p.PortModel as PortModel);
-                m_GraphView.PositionDependenciesManagers.portModelToPort = allPorts;
-
-                partialRebuilder.RebuildEdges(e => RestoreEdge(state, e));
+                partialRebuilder.RebuildEdges(e => RestoreEdge(e));
 
                 if (partialRebuilder.BlackboardChanged)
                 {
                     Blackboard?.Rebuild(Blackboard.RebuildMode.BlackboardOnly);
                 }
 
-                if (state.Preferences.GetBool(VSPreferences.BoolPref.LogUIBuildTime))
+                if (state.Preferences.GetBool(BoolPref.LogUIBuildTime))
                 {
                     Debug.Log(partialRebuilder.DebugOutput);
                 }
@@ -211,9 +202,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             switch (graphElement)
             {
                 case Edge e:
-                    m_GraphView.RemovePositionDependency(e.VSEdgeModel);
+                    m_GraphView.RemovePositionDependency(e.EdgeModel);
                     break;
-                case Node n when n.NodeModel is IEdgePortalModel portalModel:
+                case Node n when n.NodeModel is IGTFEdgePortalModel portalModel:
                     m_GraphView.RemovePortalDependency(portalModel);
                     break;
             }
@@ -223,9 +214,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             graphElement.UnregisterCallback<MouseOverEvent>(m_GraphView.OnMouseOver);
         }
 
-        void RebuildAll(State state)
+        void RebuildAll(Overdrive.State state)
         {
-            state.lastActionUIRebuildType = State.UIRebuildType.Full;
+            state.LastActionUIRebuildType = Overdrive.State.UIRebuildType.Full;
             Clear();
 
             var graphModel = state.CurrentGraphModel;
@@ -233,36 +224,33 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                 return;
 
             m_GraphView.placematContainer.RemoveAllPlacemats();
-            foreach (var placematModel in ((VSGraphModel)state.CurrentGraphModel).PlacematModels.OrderBy(e => e.ZOrder))
+            foreach (var placematModel in state.CurrentGraphModel.PlacematModels.OrderBy(e => e.ZOrder))
             {
-                var placemat = GraphElementFactory.CreateUI<GraphElement>(m_GraphView, m_Store, placematModel as IGTFPlacematModel);
+                var placemat = GraphElementFactory.CreateUI<GraphElement>(m_GraphView, m_Store, placematModel);
                 if (placemat != null)
                     AddToGraphView(placemat);
             }
 
             foreach (var nodeModel in graphModel.NodeModels)
             {
-                var node = GraphElementFactory.CreateUI<GraphElement>(m_GraphView, m_Store, nodeModel as IGTFNodeModel);
+                var node = GraphElementFactory.CreateUI<GraphElement>(m_GraphView, m_Store, nodeModel);
                 if (node != null)
                     AddToGraphView(node);
             }
 
-            foreach (var stickyNoteModel in ((VSGraphModel)state.CurrentGraphModel).StickyNoteModels)
+            foreach (var stickyNoteModel in state.CurrentGraphModel.StickyNoteModels)
             {
-                var stickyNote = GraphElementFactory.CreateUI<GraphElement>(m_GraphView, m_Store, stickyNoteModel as IGTFStickyNoteModel);
+                var stickyNote = GraphElementFactory.CreateUI<GraphElement>(m_GraphView, m_Store, stickyNoteModel);
                 if (stickyNote != null)
                     AddToGraphView(stickyNote);
             }
 
             MapModelsToNodes();
 
-            var ports = m_GraphView.ports.ToList();
-            var allPorts = ports.ToDictionary(p => p.PortModel as PortModel);
-            m_GraphView.PositionDependenciesManagers.portModelToPort = allPorts;
             int index = 0;
-            foreach (IEdgeModel edge in ((VSGraphModel)state.CurrentGraphModel).EdgeModels)
+            foreach (var edge in state.CurrentGraphModel.EdgeModels)
             {
-                if (!RestoreEdge(state, edge))
+                if (!RestoreEdge(edge))
                 {
                     Debug.LogWarning($"Edge {index} cannot be restored: {edge}");
                 }
@@ -278,25 +266,21 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         void MapModelsToNodes()
         {
             var hasGraphElementModels = m_GraphView.Query<GraphElement>()
-                .Where(x =>
-                {
-                    var hasGraphElementModel = x as IHasGraphElementModel;
-                    return !(hasGraphElementModel is BlackboardVariableField) && hasGraphElementModel?.GraphElementModel != null;
-                })
+                .Where(x => !(x is BlackboardVariableField) && x.Model != null)
                 .ToList();
 
             ModelsToNodeMapping = hasGraphElementModels
-                .GroupBy(x => ((IHasGraphElementModel)x).GraphElementModel, x => x)
+                .GroupBy(x => x.Model, x => x)
                 .ToDictionary(g => g.Key, g => g.First());
         }
 
-        bool RestoreEdge(State state, IEdgeModel edge)
+        bool RestoreEdge(IGTFEdgeModel edge)
         {
-            var inputPortModel = (PortModel)edge.InputPortModel;
-            var outputPortModel = (PortModel)edge.OutputPortModel;
+            var inputPortModel = edge.ToPort;
+            var outputPortModel = edge.FromPort;
             if (inputPortModel != null && outputPortModel != null)
             {
-                Connect(edge, outputPortModel, inputPortModel);
+                Connect(edge);
                 return true;
             }
 
@@ -304,7 +288,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             {
                 if (e.TryMigratePorts())
                 {
-                    Connect(edge, outputPortModel, inputPortModel);
+                    Connect(edge);
                     return true;
                 }
 
@@ -315,7 +299,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                         inputNodeUi.UpdateFromModel();
                     if (outputNode != null && ModelsToNodeMapping[outputNode] is GraphElement outputNodeUi)
                         outputNodeUi.UpdateFromModel();
-                    Connect(edge, outputPortModel, inputPortModel);
+                    Connect(edge);
                     return true;
                 }
             }
@@ -323,7 +307,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             return false;
         }
 
-        public void DisplayCompilationErrors(State state)
+        public void DisplayCompilationErrors(Overdrive.State state)
         {
             VseUtility.RemoveLogEntries();
             if (ModelsToNodeMapping == null)
@@ -340,7 +324,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                 {
                     var alignment = SpriteAlignment.RightCenter;
 
-                    ModelsToNodeMapping.TryGetValue(error.sourceNode, out var graphElement);
+                    var graphElement = error.sourceNode.GetUI(m_GraphView);
                     if (graphElement != null)
                         AttachErrorBadge(graphElement, error.description, alignment, m_Store, error.quickFix);
                 }
@@ -355,12 +339,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             }
         }
 
-        void Connect(IEdgeModel edgeModel, IGTFPortModel output, IGTFPortModel input)
+        void Connect(IGTFEdgeModel edgeModel)
         {
-            var edge = GraphElementFactory.CreateUI<Edge>(m_GraphView, m_Store, edgeModel as IGTFEdgeModel);
+            var edge = GraphElementFactory.CreateUI<Edge>(m_GraphView, m_Store, edgeModel);
             AddToGraphView(edge);
 
-            m_GraphView.AddPositionDependency(edge.VSEdgeModel);
+            m_GraphView.AddPositionDependency(edge.EdgeModel);
         }
 
         internal void Clear()
@@ -444,8 +428,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                 Debug.LogError(e);
             }
 
-            if (graphElement is IHasGraphElementModel hasGraphElementModel &&
-                m_Store.GetState().EditorDataModel.ShouldSelectElementUponCreation(hasGraphElementModel))
+            if (graphElement != null &&
+                m_Store.GetState().EditorDataModel.ShouldSelectElementUponCreation(graphElement))
                 graphElement.Select(m_GraphView, true);
 
             // Execute any extra stuff when element is added
@@ -454,7 +438,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             if (graphElement is Node || graphElement is Token || graphElement is Edge)
                 graphElement.RegisterCallback<MouseOverEvent>(m_GraphView.OnMouseOver);
 
-            if (graphElement.Model is IEdgePortalModel portalModel)
+            if (graphElement.Model is IGTFEdgePortalModel portalModel)
             {
                 m_GraphView.AddPortalDependency(portalModel);
             }

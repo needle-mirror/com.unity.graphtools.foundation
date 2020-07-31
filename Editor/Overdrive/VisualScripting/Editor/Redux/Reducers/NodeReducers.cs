@@ -13,20 +13,21 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
     {
         public static void Register(Store store)
         {
-            store.Register<DisconnectNodeAction>(DisconnectNode);
-            store.Register<CreateNodeFromSearcherAction>(CreateNodeFromSearcher);
-            store.Register<SetNodeEnabledStateAction>(SetNodeEnabledState);
-            store.Register<SetNodePositionAction>(SetPosition);
-            store.Register<SetNodeCollapsedAction>(SetCollapsed);
+            store.RegisterReducer<State, DisconnectNodeAction>(DisconnectNode);
+            store.RegisterReducer<State, CreateNodeFromSearcherAction>(CreateNodeFromSearcher);
+            store.RegisterReducer<State, SetNodeEnabledStateAction>(SetNodeEnabledState);
+            store.RegisterReducer<State, SetNodePositionAction>(SetPosition);
+            store.RegisterReducer<State, SetNodeCollapsedAction>(SetCollapsed);
+            store.RegisterReducer<State, UpdateConstantNodeActionValue>(UpdateConstantNodeValue);
         }
 
         static State CreateNodeFromSearcher(State previousState, CreateNodeFromSearcherAction action)
         {
             var nodes = action.SelectedItem.CreateElements.Invoke(
-                new GraphNodeCreationData(action.GraphModel, action.Position, guids: action.Guids));
+                new GraphNodeCreationData(previousState.CurrentGraphModel, action.Position, guids: action.Guids));
 
             if (nodes.Any(n => n is EdgeModel))
-                previousState.CurrentGraphModel.LastChanges.ModelsToAutoAlign.AddRange(nodes);
+                previousState.CurrentGraphModel.LastChanges.ElementsToAutoAlign.AddRange(nodes);
 
             previousState.MarkForUpdate(UpdateFlags.GraphTopology);
             return previousState;
@@ -34,9 +35,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         static State DisconnectNode(State previousState, DisconnectNodeAction action)
         {
-            var graphModel = (VSGraphModel)previousState.CurrentGraphModel;
+            var graphModel = (GraphModel)previousState.CurrentGraphModel;
 
-            foreach (INodeModel nodeModel in action.NodeModels)
+            foreach (IGTFNodeModel nodeModel in action.NodeModels)
             {
                 var edgeModels = graphModel.GetEdgesConnections(nodeModel);
 
@@ -50,7 +51,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         {
             Undo.RegisterCompleteObjectUndo((Object)previousState.AssetModel, action.State == ModelState.Enabled ? "Enable Nodes" : "Disable Nodes");
             EditorUtility.SetDirty((Object)previousState.AssetModel);
-            foreach (NodeModel nodeModel in action.NodeToConvert)
+            foreach (var nodeModel in action.NodeToConvert.OfType<NodeModel>())
                 nodeModel.State = action.State;
             previousState.MarkForUpdate(UpdateFlags.GraphTopology);
             return previousState;
@@ -84,6 +85,20 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                 }
                 previousState.MarkForUpdate(UpdateFlags.UpdateView, model);
             }
+
+            return previousState;
+        }
+
+        static State UpdateConstantNodeValue(State previousState, UpdateConstantNodeActionValue actionValue)
+        {
+            Undo.RegisterCompleteObjectUndo((Object)previousState.AssetModel, "Update Node Value");
+
+            if (actionValue.NodeModel == null || actionValue.NodeModel.OutputPort.IsConnected)
+            {
+                previousState.MarkForUpdate(UpdateFlags.RequestCompilation);
+            }
+
+            actionValue.Constant.ObjectValue = actionValue.Value;
 
             return previousState;
         }

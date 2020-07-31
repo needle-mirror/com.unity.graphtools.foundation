@@ -45,7 +45,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         public BlackboardField() : this(null, "", "") {}
         public BlackboardField(Texture icon, string text, string typeText)
         {
-            var tpl = GraphElementsHelper.LoadUXML("BlackboardField.uxml");
+            var tpl = GraphElementHelper.LoadUXML("BlackboardField.uxml");
             VisualElement mainContainer = tpl.Instantiate();
             this.AddStylesheet(Blackboard.StyleSheetPath);
             mainContainer.AddToClassList("mainContainer");
@@ -109,9 +109,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
             if (evt.eventTypeId == AttachToPanelEvent.TypeId())
             {
-                var graphView = blackboard?.graphView;
-                if (graphView != null)
-                    graphView.RestorePersitentSelectionForElement(this);
+                var graphView = blackboard?.GraphView;
+                graphView?.RestorePersitentSelectionForElement(this);
             }
         }
 

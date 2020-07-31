@@ -1,17 +1,14 @@
 using System;
+using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel
 {
-    public interface INodeCreationData
+    public interface IGraphNodeCreationData
     {
         SpawnFlags SpawnFlags { get; }
-        GUID? Guid { get; }
-    }
-
-    public interface IGraphNodeCreationData : INodeCreationData
-    {
-        IGraphModel GraphModel { get; }
+        IGTFGraphModel GraphModel { get; }
         Vector2 Position { get; }
+        GUID Guid { get; }
     }
 }

@@ -26,9 +26,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         public virtual void UpdateUI()
         {
-            VSPreferences prefs = m_Store.GetState().Preferences;
             bool isEnabled = m_Store.GetState().CurrentGraphModel != null;
-            UpdateCommonMenu(prefs, isEnabled);
+            UpdateCommonMenu(isEnabled);
             UpdateBreadcrumbMenu(isEnabled);
         }
     }

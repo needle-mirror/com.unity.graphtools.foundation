@@ -21,7 +21,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         const string k_DefaultSelectorName = "Select a panel";
 
-        UnityEditor.UIElements.Toolbar m_Toolbar;
+        Toolbar m_Toolbar;
         protected VisualElement m_ToolbarContainer;
         ToolbarMenu m_SelectorMenu;
 
@@ -58,7 +58,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
             this.SetAntiAliasing(4);
 
-            m_Toolbar = new UnityEditor.UIElements.Toolbar();
+            m_Toolbar = new Toolbar();
 
             // Register panel choice refresh on the toolbar so the event
             // is received before the ToolbarPopup clickable handle it.
@@ -100,7 +100,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                     var graphViewEditor = m_SelectedWindow as GraphViewEditorWindow;
                     if (graphViewEditor != null && m_SelectedGraphViewIdx >= 0 && m_SelectedGraphView == null)
                     {
-                        m_SelectedGraphView = graphViewEditor.graphViews.ElementAt(m_SelectedGraphViewIdx);
+                        m_SelectedGraphView = graphViewEditor.GraphViews.ElementAt(m_SelectedGraphViewIdx);
                         m_SelectorMenu.text = m_SelectedGraphView.name;
                         OnGraphViewChanged();
                     }
@@ -132,7 +132,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             foreach (var window in GraphViewStaticBridge.GetGraphViewWindows<GraphViewEditorWindow>(null))
             {
                 int idx = 0;
-                foreach (var graphView in window.graphViews.Where(IsGraphViewSupported))
+                foreach (var graphView in window.GraphViews.Where(IsGraphViewSupported))
                 {
                     m_GraphViewChoices.Add(new GraphViewChoice {window = window, idx = idx++, graphView = graphView, canUse = !usedGraphViews.Contains(graphView)});
                 }

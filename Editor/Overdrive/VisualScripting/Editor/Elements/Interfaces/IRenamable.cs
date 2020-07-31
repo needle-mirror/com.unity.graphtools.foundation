@@ -1,13 +1,13 @@
 using System;
+using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 {
     public delegate void RenameDelegate();
 
-    public interface IRenamable : IHasGraphElementModel
+    public interface IRenamable : IGraphElement
     {
-        Store Store { get; }
         string TitleValue { get; }
         VisualElement TitleEditor { get; }
         VisualElement TitleElement { get; }

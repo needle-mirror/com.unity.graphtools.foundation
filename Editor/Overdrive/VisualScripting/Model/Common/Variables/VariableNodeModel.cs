@@ -10,38 +10,42 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 {
     [Serializable]
     [MovedFrom(false, "UnityEditor.VisualScripting.Model", "Unity.GraphTools.Foundation.Overdrive.Editor")]
-    public class VariableNodeModel : NodeModel, IVariableModel, Overdrive.Model.IRenamable, IExposeTitleProperty, ICloneable, IHasVariableDeclarationModel
+    public class VariableNodeModel : NodeModel, IGTFVariableNodeModel, Overdrive.Model.IRenamable, ICloneable, IHasDeclarationModel, IHasMainOutputPort
     {
         [SerializeReference]
         VariableDeclarationModel m_DeclarationModel;
 
-        public VariableType VariableType => DeclarationModel.VariableType;
+        public VariableType VariableType => VariableDeclarationModel.VariableType;
 
-        public TypeHandle DataType => DeclarationModel?.DataType ?? TypeHandle.Unknown;
+        public TypeHandle DataType => VariableDeclarationModel?.DataType ?? TypeHandle.Unknown;
+
+        public override string DataTypeString => VariableDeclarationModel?.DataType.GetMetadata(Stencil).FriendlyName ?? string.Empty;
+
+        public override string VariableString => DeclarationModel == null ? string.Empty : VariableDeclarationModel.IsExposed ? "Exposed variable" : "Variable";
 
         public override string Title => m_DeclarationModel == null ? "" : m_DeclarationModel.Title;
 
-        public IVariableDeclarationModel DeclarationModel
+        public IDeclarationModel DeclarationModel
         {
             get => m_DeclarationModel;
             set => m_DeclarationModel = (VariableDeclarationModel)value;
         }
 
-        public string TitlePropertyName => "m_Name";
+        public IGTFVariableDeclarationModel VariableDeclarationModel => DeclarationModel as IGTFVariableDeclarationModel;
 
         const string k_MainPortName = "MainPortName";
 
         protected PortModel m_MainPortModel;
-        public IPortModel OutputPort => m_MainPortModel;
+        public IGTFPortModel MainOutputPort => m_MainPortModel;
 
         public virtual void UpdateTypeFromDeclaration()
         {
             if (DeclarationModel != null && m_MainPortModel != null)
-                m_MainPortModel.DataTypeHandle = DeclarationModel.DataType;
+                m_MainPortModel.DataTypeHandle = VariableDeclarationModel.DataType;
 
             // update connected nodes' ports colors/types
             if (m_MainPortModel != null)
-                foreach (IPortModel connectedPortModel in m_MainPortModel.ConnectionPortModels)
+                foreach (var connectedPortModel in m_MainPortModel.ConnectionPortModels)
                     connectedPortModel.NodeModel.OnConnection(connectedPortModel, m_MainPortModel);
         }
 
@@ -50,14 +54,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             // used by macro outputs
             if (m_DeclarationModel != null /* this node */ && m_DeclarationModel.Modifiers.HasFlag(ModifierFlags.WriteOnly))
             {
-                if (DataType == TypeHandle.ExecutionFlow)
+                if (DataType == VSTypeHandle.ExecutionFlow)
                     m_MainPortModel = AddExecutionInputPort(null);
                 else
                     m_MainPortModel = AddDataInputPort(null, DataType, k_MainPortName);
             }
             else
             {
-                if (DataType == TypeHandle.ExecutionFlow)
+                if (DataType == VSTypeHandle.ExecutionFlow)
                     m_MainPortModel = AddExecutionOutputPort(null);
                 else
                     m_MainPortModel = AddDataOutputPort(null, DataType, k_MainPortName);
@@ -68,10 +72,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         public void Rename(string newName)
         {
-            ((VariableDeclarationModel)DeclarationModel)?.SetNameFromUserName(newName);
+            (DeclarationModel as Overdrive.Model.IRenamable)?.Rename(newName);
         }
 
-        public IGraphElementModel Clone()
+        public IGTFGraphElementModel Clone()
         {
             var decl = m_DeclarationModel;
             try
@@ -87,7 +91,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             }
         }
 
-        public IGTFPortModel GTFInputPort => m_MainPortModel?.Direction == Direction.Input ? m_MainPortModel as IGTFPortModel : null;
-        public IGTFPortModel GTFOutputPort => m_MainPortModel?.Direction == Direction.Output ? m_MainPortModel as IGTFPortModel : null;
+        public IGTFPortModel InputPort => m_MainPortModel?.Direction == Direction.Input ? m_MainPortModel as IGTFPortModel : null;
+        public IGTFPortModel OutputPort => m_MainPortModel?.Direction == Direction.Output ? m_MainPortModel as IGTFPortModel : null;
     }
 }

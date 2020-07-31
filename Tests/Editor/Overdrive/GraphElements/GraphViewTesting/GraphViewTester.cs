@@ -1,25 +1,27 @@
+using System;
 using System.Collections;
 using NUnit.Framework;
+using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEditor.GraphToolsFoundation.Overdrive.Tests.Stylesheets;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utilities
 {
-    public class State : GraphToolsFoundation.Overdrive.GraphElements.State
+    public class State : Overdrive.State
     {
-        public override IGTFGraphModel GraphModel { get; }
+        BasicGraphModel m_GraphModel;
+        public override IGTFGraphModel CurrentGraphModel => m_GraphModel;
 
-        public State(BasicGraphModel graphModel)
+        public State(BasicGraphModel graphModel) : base(null)
         {
-            GraphModel = graphModel;
+            m_GraphModel = graphModel;
         }
     }
 
-    public class TestStore : Overdrive.GraphElements.Store<State>
+    public class TestStore : Overdrive.GraphElements.Store
     {
         public TestStore(State initialState)
             : base(initialState)
@@ -30,6 +32,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
     public class GraphViewTester
     {
         static readonly Rect k_WindowRect = new Rect(Vector2.zero, new Vector2(SelectionDragger.k_PanAreaWidth * 8, SelectionDragger.k_PanAreaWidth * 6));
+
+        bool m_SnapToPortEnabled;
+        bool m_SnapToBorderEnabled;
+        bool m_SnapToGridEnabled;
 
         protected TestGraphViewWindow window { get; private set; }
         protected TestGraphView graphView { get; private set; }
@@ -48,8 +54,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
         [SetUp]
         public virtual void SetUp()
         {
-            m_SavedUseNewStylesheets = GraphElementsHelper.UseNewStylesheets;
-            GraphElementsHelper.UseNewStylesheets = true;
+            m_SnapToPortEnabled = GraphViewSettings.UserSettings.EnableSnapToPort;
+            m_SnapToBorderEnabled = GraphViewSettings.UserSettings.EnableSnapToBorders;
+            m_SnapToGridEnabled = GraphViewSettings.UserSettings.EnableSnapToGrid;
+
+            GraphViewSettings.UserSettings.EnableSnapToPort = false;
+            GraphViewSettings.UserSettings.EnableSnapToBorders = false;
+            GraphViewSettings.UserSettings.EnableSnapToGrid = false;
+
+            m_SavedUseNewStylesheets = GraphElementHelper.UseNewStylesheets;
+            GraphElementHelper.UseNewStylesheets = true;
 
             window = EditorWindow.GetWindowWithRect<TestGraphViewWindow>(k_WindowRect);
 
@@ -67,13 +81,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
         [TearDown]
         public virtual void TearDown()
         {
-            GraphElementsHelper.UseNewStylesheets = m_SavedUseNewStylesheets;
+            GraphElementHelper.UseNewStylesheets = m_SavedUseNewStylesheets;
             GraphElementFactory.RemoveAll(graphView);
 
             if (m_EnablePersistence)
                 window.ClearPersistentViewData();
 
             Clear();
+
+            GraphViewSettings.UserSettings.EnableSnapToPort = m_SnapToPortEnabled;
+            GraphViewSettings.UserSettings.EnableSnapToBorders = m_SnapToBorderEnabled;
+            GraphViewSettings.UserSettings.EnableSnapToGrid = m_SnapToGridEnabled;
         }
 
         protected void Clear()

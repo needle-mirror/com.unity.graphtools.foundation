@@ -2,9 +2,9 @@ using System;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 {
-    public class Store<TState> : Overdrive.Store<TState> where TState : State
+    public class Store : Overdrive.Store
     {
-        public Store(TState initialState)
+        public Store(State initialState)
             : base(initialState)
         {
             RegisterReducers();
@@ -12,31 +12,33 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         void RegisterReducers()
         {
-            Register<CreateEdgeAction>(CreateEdgeAction.DefaultReducer);
-            Register<AddControlPointOnEdgeAction>(AddControlPointOnEdgeAction.DefaultReducer);
-            Register<MoveEdgeControlPointAction>(MoveEdgeControlPointAction.DefaultReducer);
-            Register<RemoveEdgeControlPointAction>(RemoveEdgeControlPointAction.DefaultReducer);
-            Register<SetEdgeEditModeAction>(SetEdgeEditModeAction.DefaultReducer);
-            Register<ReorderEdgeAction>(ReorderEdgeAction.DefaultReducer);
+            RegisterReducer<State, CreateEdgeAction>(CreateEdgeAction.DefaultReducer);
+            RegisterReducer<State, AddControlPointOnEdgeAction>(AddControlPointOnEdgeAction.DefaultReducer);
+            RegisterReducer<State, MoveEdgeControlPointAction>(MoveEdgeControlPointAction.DefaultReducer);
+            RegisterReducer<State, RemoveEdgeControlPointAction>(RemoveEdgeControlPointAction.DefaultReducer);
+            RegisterReducer<State, SetEdgeEditModeAction>(SetEdgeEditModeAction.DefaultReducer);
+            RegisterReducer<State, ReorderEdgeAction>(ReorderEdgeAction.DefaultReducer);
 
-            Register<SetNodePositionAction>(SetNodePositionAction.DefaultReducer);
-            Register<SetNodeCollapsedAction>(SetNodeCollapsedAction.DefaultReducer);
-            Register<DropEdgeInEmptyRegionAction>(DropEdgeInEmptyRegionAction.DefaultReducer);
-            Register<RenameElementAction>(RenameElementAction.DefaultReducer);
+            RegisterReducer<State, SetNodePositionAction>(SetNodePositionAction.DefaultReducer);
+            RegisterReducer<State, SetNodeCollapsedAction>(SetNodeCollapsedAction.DefaultReducer);
+            RegisterReducer<State, DropEdgeInEmptyRegionAction>(DropEdgeInEmptyRegionAction.DefaultReducer);
+            RegisterReducer<State, RenameElementAction>(RenameElementAction.DefaultReducer);
 
-            Register<MoveElementsAction>(MoveElementsAction.DefaultReducer);
-            Register<DeleteElementsAction>(DeleteElementsAction.DefaultReducer);
+            RegisterReducer<State, MoveElementsAction>(MoveElementsAction.DefaultReducer);
+            RegisterReducer<State, DeleteElementsAction>(DeleteElementsAction.DefaultReducer);
 
-            Register<ChangePlacematColorAction>(ChangePlacematColorAction.DefaultReducer);
-            Register<ChangePlacematZOrdersAction>(ChangePlacematZOrdersAction.DefaultReducer);
-            Register<ChangePlacematPositionAction>(ChangePlacematPositionAction.DefaultReducer);
-            Register<ExpandOrCollapsePlacematAction>(ExpandOrCollapsePlacematAction.DefaultReducer);
+            RegisterReducer<State, AlignElementsAction>(AlignElementsAction.DefaultReducer);
 
-            Register<CreateStickyNoteAction>(CreateStickyNoteAction.DefaultReducer);
-            Register<ResizeStickyNoteAction>(ResizeStickyNoteAction.DefaultReducer);
-            Register<UpdateStickyNoteAction>(UpdateStickyNoteAction.DefaultReducer);
-            Register<UpdateStickyNoteThemeAction>(UpdateStickyNoteThemeAction.DefaultReducer);
-            Register<UpdateStickyNoteTextSizeAction>(UpdateStickyNoteTextSizeAction.DefaultReducer);
+            RegisterReducer<State, ChangePlacematColorAction>(ChangePlacematColorAction.DefaultReducer);
+            RegisterReducer<State, ChangePlacematZOrdersAction>(ChangePlacematZOrdersAction.DefaultReducer);
+            RegisterReducer<State, ChangePlacematPositionAction>(ChangePlacematPositionAction.DefaultReducer);
+            RegisterReducer<State, ExpandOrCollapsePlacematAction>(ExpandOrCollapsePlacematAction.DefaultReducer);
+
+            RegisterReducer<State, CreateStickyNoteAction>(CreateStickyNoteAction.DefaultReducer);
+            RegisterReducer<State, ResizeStickyNoteAction>(ResizeStickyNoteAction.DefaultReducer);
+            RegisterReducer<State, UpdateStickyNoteAction>(UpdateStickyNoteAction.DefaultReducer);
+            RegisterReducer<State, UpdateStickyNoteThemeAction>(UpdateStickyNoteThemeAction.DefaultReducer);
+            RegisterReducer<State, UpdateStickyNoteTextSizeAction>(UpdateStickyNoteTextSizeAction.DefaultReducer);
         }
     }
 }
