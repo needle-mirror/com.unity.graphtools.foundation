@@ -3,9 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
 using UnityEngine;
 
 // ReSharper disable AccessToStaticMemberViaDerivedType
@@ -28,12 +25,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             var ctx = TestContext.Instance;
 
             yield return MakeActionSetup(ctx.Type0FakeNodeModel, 2, MakeDummyFunction,
-                g => new DeleteElementsAction(ctx.Type0FakeNodeModel[0], ctx.Type0FakeNodeModel[1]));
+                g => new DeleteElementsAction(new[] { ctx.Type0FakeNodeModel[0], ctx.Type0FakeNodeModel[1] }));
 
             yield return MakeActionSetup(ctx.VariableDeclModels, 1, MakeDummyVariableDecl,
                 g => new CreateVariableNodesAction(ctx.VariableDeclModels[0], Vector2.zero));
-
-            yield return MakeActionTest(g => new CreateConstantNodeAction("MyConst", typeof(int).GenerateTypeHandle(), Vector2.zero));
 
             yield return MakeEdgeActionSetup(ctx, 1, g => new CreateEdgeAction(ctx.InputPorts[0], ctx.OutputPorts[0]));
 
@@ -42,7 +37,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         }
 
         [Test, TestCaseSource(nameof(GetEveryActionAffectingTopology))]
-        public void TestPartialRebuild(string testName, State.UIRebuildType rebuildType, Func<TestGraphModel, IAction> getAction)
+        public void TestPartialRebuild(string testName, State.UIRebuildType rebuildType, Func<TestGraphModel, BaseAction> getAction)
         {
             var action = getAction(GraphModel as TestGraphModel);
 
@@ -56,7 +51,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             Assert.That(state.LastActionUIRebuildType, Is.EqualTo(rebuildType));
         }
 
-        static object[] MakeActionTest<T>(Func<TestGraphModel, T> getAction, State.UIRebuildType rebuildType = State.UIRebuildType.Partial) where T : IAction
+        static object[] MakeActionTest<T>(Func<TestGraphModel, T> getAction, State.UIRebuildType rebuildType = State.UIRebuildType.Partial) where T : BaseAction
         {
             return new object[] { typeof(T).Name, rebuildType, getAction };
         }
@@ -67,8 +62,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             Func<GraphModel, int, T> makeModel,
             Func<GraphModel, TAction> getAction,
             State.UIRebuildType rebuildType = State.UIRebuildType.Partial)
-            where T : IGTFGraphElementModel
-            where TAction : IAction
+            where T : IGraphElementModel
+            where TAction : BaseAction
         {
             Func<GraphModel, TAction> f = graphModel =>
             {
@@ -86,7 +81,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
 
         static object[] MakeEdgeActionSetup<TAction>(TestContext ctx, int numEdges,
             Func<GraphModel, TAction> getAction, State.UIRebuildType rebuildType = State.UIRebuildType.Partial)
-            where TAction : IAction
+            where TAction : BaseAction
         {
             Func<GraphModel, TAction> f = graphModel =>
             {

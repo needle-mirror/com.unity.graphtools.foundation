@@ -1,5 +1,5 @@
 using System;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
+using Object = UnityEngine.Object;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
@@ -19,19 +19,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         All = Selection | GraphGeometry | GraphTopology | RequestCompilation | RequestRebuild,
     }
 
-    public abstract class State : IDisposable
+    public class State : IDisposable
     {
         bool m_Disposed;
 
-        public IGTFGraphAssetModel AssetModel { get; set; }
-        public virtual IGTFGraphModel CurrentGraphModel => AssetModel?.GraphModel;
-        public IGTFEditorDataModel EditorDataModel { get; }
+        public IGraphAssetModel AssetModel { get; set; }
+        public virtual IGraphModel CurrentGraphModel => AssetModel?.GraphModel;
+        public IEditorDataModel EditorDataModel { get; }
         public Preferences Preferences => EditorDataModel?.Preferences;
 
         public TracingDataModel TracingDataModel { get; }
         public ICompilationResultModel CompilationResultModel { get; private set; }
 
-        protected State(IGTFEditorDataModel editorDataModel)
+        public State(IEditorDataModel editorDataModel)
         {
             EditorDataModel = editorDataModel;
             TracingDataModel = new TracingDataModel(-1);
@@ -84,14 +84,24 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             EditorDataModel?.SetUpdateFlag(UpdateFlags.None);
         }
 
-        public virtual void PreDispatchAction(IAction action)
+        public virtual void PreDispatchAction(BaseAction action)
         {
             LastDispatchedActionName = action.GetType().Name;
             CurrentGraphModel?.ResetChangeList();
             LastActionUIRebuildType = UIRebuildType.None;
         }
 
-        public void MarkForUpdate(UpdateFlags flag, IGTFGraphElementModel model = null)
+        public virtual void PushUndo(BaseAction action)
+        {
+            var obj = AssetModel as Object;
+            if (obj)
+            {
+                Undo.RegisterCompleteObjectUndo(obj, action.UndoString ?? "");
+                EditorUtility.SetDirty(obj);
+            }
+        }
+
+        public void MarkForUpdate(UpdateFlags flag, IGraphElementModel model = null)
         {
             EditorDataModel?.SetUpdateFlag(flag);
             if (model != null)

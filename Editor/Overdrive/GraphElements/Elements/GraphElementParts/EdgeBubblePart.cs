@@ -1,17 +1,16 @@
 using System;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class EdgeBubblePart : BaseGraphElementPart
     {
         public static readonly string k_UssClassName = "ge-edge-bubble-part";
 
-        public static EdgeBubblePart Create(string name, IGTFGraphElementModel model, IGraphElement graphElement, string parentClassName)
+        public static EdgeBubblePart Create(string name, IGraphElementModel model, IGraphElement graphElement, string parentClassName)
         {
-            if (model is IGTFEdgeModel)
+            if (model is IEdgeModel)
             {
                 return new EdgeBubblePart(name, model, graphElement, parentClassName);
             }
@@ -23,7 +22,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         protected EdgeBubble m_EdgeBubble;
 
-        protected EdgeBubblePart(string name, IGTFGraphElementModel model, IGraphElement ownerElement, string parentClassName)
+        protected EdgeBubblePart(string name, IGraphElementModel model, IGraphElement ownerElement, string parentClassName)
             : base(name, model, ownerElement, parentClassName) {}
 
         protected override void BuildPartUI(VisualElement container)
@@ -42,7 +41,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         protected override void UpdatePartFromModel()
         {
-            if (!(m_Model is IGTFEdgeModel edgeModel) || !(m_OwnerElement is VisualElement edge))
+            if (!(m_Model is IEdgeModel edgeModel) || !(m_OwnerElement is VisualElement edge))
                 return;
 
             if (ShouldShow())
@@ -68,7 +67,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         protected virtual bool ShouldShow()
         {
-            var edgeModel = m_Model as IGTFEdgeModel;
+            var edgeModel = m_Model as IEdgeModel;
             var toPortNodeModel = edgeModel?.ToPort?.NodeModel;
             var fromPortNodeModel = edgeModel?.FromPort?.NodeModel;
             var portType = edgeModel?.FromPort?.PortType ?? PortType.Data;

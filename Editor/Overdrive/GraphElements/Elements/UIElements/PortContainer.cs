@@ -1,11 +1,10 @@
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class PortContainer : VisualElementBridge
     {
@@ -19,10 +18,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             this.AddStylesheet("PortContainer.uss");
         }
 
-        public void UpdatePorts(IEnumerable<IGTFPortModel> ports, GraphView graphView, Store store)
+        public void UpdatePorts(IEnumerable<IPortModel> ports, GraphView graphView, Store store)
         {
             var uiPorts = this.Query<Port>().ToList();
-            var portViewModels = ports?.ToList() ?? new List<IGTFPortModel>();
+            var portViewModels = ports?.ToList() ?? new List<IPortModel>();
 
             // Check if we should rebuild ports
             bool rebuildPorts = false;

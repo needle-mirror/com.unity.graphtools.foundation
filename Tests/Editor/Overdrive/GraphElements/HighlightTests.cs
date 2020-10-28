@@ -2,10 +2,7 @@ using System;
 using System.Collections;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
@@ -16,8 +13,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
     {
         protected override bool CreateGraphOnStartup => true;
 
-        IEnumerator RunTestFor<M, E>(TypeHandle typeHandle, Func<IGTFVariableDeclarationModel, Vector2, M> creator)
-            where M : IGTFGraphElementModel
+        IEnumerator RunTestFor<M, E>(TypeHandle typeHandle, Func<IVariableDeclarationModel, Vector2, M> creator)
+            where M : IGraphElementModel
             where E : GraphElement
         {
             var declarationModel = GraphModel.CreateGraphVariableDeclaration("Foo", typeHandle, ModifierFlags.None, true);
@@ -64,7 +61,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator HighlightIsAppliedToVariables()
         {
-            var actions = RunTestFor<VariableNodeModel, Token>(TypeHandle.Int,
+            var actions = RunTestFor<VariableNodeModel, TokenNode>(TypeHandle.Int,
                 (m, p) => (VariableNodeModel)GraphModel.CreateVariableNode(m, p));
 
             while (actions.MoveNext())
@@ -74,7 +71,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator HighlightIsAppliedToPortals()
         {
-            var actions = RunTestFor<ExecutionEdgePortalEntryModel, Token>(TypeHandle.Unknown,
+            var actions = RunTestFor<ExecutionEdgePortalEntryModel, TokenNode>(TypeHandle.Unknown,
                 (m, p) =>
                 {
                     var portal = GraphModel.CreateNode<ExecutionEdgePortalEntryModel>("foo", p);

@@ -3,7 +3,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.Helpers
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO
 {
     public class BaseTestFixture
     {

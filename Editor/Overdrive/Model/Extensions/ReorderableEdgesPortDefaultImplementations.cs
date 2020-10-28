@@ -1,10 +1,10 @@
 using System.Linq;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.Model
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public static class ReorderableEdgesPortDefaultImplementations
     {
-        public static void MoveEdgeFirst(IReorderableEdgesPort self, IGTFEdgeModel edge)
+        public static void MoveEdgeFirst(IReorderableEdgesPort self, IEdgeModel edge)
         {
             if (!self.HasReorderableEdges)
                 return;
@@ -12,7 +12,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Model
             self.GraphModel.MoveEdgeBefore(edge, self.GetConnectedEdges().First());
         }
 
-        public static void MoveEdgeUp(IReorderableEdgesPort self, IGTFEdgeModel edge)
+        public static void MoveEdgeUp(IReorderableEdgesPort self, IEdgeModel edge)
         {
             if (!self.HasReorderableEdges)
                 return;
@@ -23,7 +23,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Model
                 self.GraphModel.MoveEdgeBefore(edge, edges[idx - 1]);
         }
 
-        public static void MoveEdgeDown(IReorderableEdgesPort self, IGTFEdgeModel edge)
+        public static void MoveEdgeDown(IReorderableEdgesPort self, IEdgeModel edge)
         {
             if (!self.HasReorderableEdges)
                 return;
@@ -34,7 +34,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Model
                 self.GraphModel.MoveEdgeAfter(edge, edges[idx + 1]);
         }
 
-        public static void MoveEdgeLast(IReorderableEdgesPort self, IGTFEdgeModel edge)
+        public static void MoveEdgeLast(IReorderableEdgesPort self, IEdgeModel edge)
         {
             if (!self.HasReorderableEdges)
                 return;

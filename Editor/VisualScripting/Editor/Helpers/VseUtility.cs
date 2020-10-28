@@ -13,10 +13,6 @@ using UnityEngine.UIElements;
 using UnityEngine.VisualScripting;
 using Object = UnityEngine.Object;
 
-#if !ENABLE_VSTU
-namespace SyntaxTree {public static class ThisNamespaceOnlyExistsBecauseVisualStudioIntegrationWillHijackItAndForceFullyQualifiedNamesForRoslynsSyntaxTreeType{}}
-#endif
-
 namespace UnityEditor.VisualScripting.Editor
 {
     public static class VseUtility

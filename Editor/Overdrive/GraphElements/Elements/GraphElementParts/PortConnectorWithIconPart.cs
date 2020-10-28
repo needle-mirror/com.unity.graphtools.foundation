@@ -1,17 +1,16 @@
 using System;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class PortConnectorWithIconPart : PortConnectorPart
     {
         public static readonly string k_IconUssName = "icon";
 
-        public new static PortConnectorWithIconPart Create(string name, IGTFGraphElementModel model, IGraphElement graphElement, string parentClassName)
+        public new static PortConnectorWithIconPart Create(string name, IGraphElementModel model, IGraphElement graphElement, string parentClassName)
         {
-            if (model is IGTFPortModel && graphElement is Port)
+            if (model is IPortModel && graphElement is Port)
             {
                 return new PortConnectorWithIconPart(name, model, graphElement, parentClassName);
             }
@@ -21,7 +20,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         Image m_Icon;
 
-        protected PortConnectorWithIconPart(string name, IGTFGraphElementModel model, IGraphElement ownerElement, string parentClassName)
+        protected PortConnectorWithIconPart(string name, IGraphElementModel model, IGraphElement ownerElement, string parentClassName)
             : base(name, model, ownerElement, parentClassName) {}
 
         protected override void BuildPartUI(VisualElement container)

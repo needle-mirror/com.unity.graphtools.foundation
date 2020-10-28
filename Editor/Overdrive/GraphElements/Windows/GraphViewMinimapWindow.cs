@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class GraphViewMinimapWindow : GraphViewToolWindow
     {
@@ -13,7 +13,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         protected override string ToolName => k_ToolName;
 
-        new void OnEnable()
+        protected override void OnEnable()
         {
             base.OnEnable();
             var root = rootVisualElement;
@@ -32,12 +32,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         void OnDestroy()
         {
             if (m_SelectedGraphView != null)
+                // ReSharper disable once DelegateSubtraction
                 m_SelectedGraphView.redrawn -= GraphViewRedrawn;
         }
 
         protected override void OnGraphViewChanging()
         {
             if (m_SelectedGraphView != null)
+                // ReSharper disable once DelegateSubtraction
                 m_SelectedGraphView.redrawn -= GraphViewRedrawn;
         }
 

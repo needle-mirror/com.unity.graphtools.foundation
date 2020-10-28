@@ -1,10 +1,9 @@
 using System;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public abstract class GraphElement : VisualElementBridge, ISelectableGraphElement, IGraphElement
     {
@@ -19,6 +18,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         bool m_LayerIsInline;
 
         bool m_Selected;
+
+        protected ContextualMenuManipulator m_ContextualMenuManipulator;
 
         public int Layer
         {
@@ -58,7 +59,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         protected ClickSelector ClickSelector { get; private set; }
 
-        public IGTFGraphElementModel Model { get; private set; }
+        public IGraphElementModel Model { get; private set; }
 
         // PF make setter private (needed by Blackboard)
         public Store Store { get; protected set; }
@@ -70,6 +71,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         {
             MinimapColor = k_MinimapColor;
             RegisterCallback<CustomStyleResolvedEvent>(OnCustomStyleResolved);
+
+            m_ContextualMenuManipulator = new ContextualMenuManipulator(BuildContextualMenu);
+            this.AddManipulator(m_ContextualMenuManipulator);
         }
 
         public void ResetLayer()
@@ -107,14 +111,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             }
         }
 
-        public void SetupBuildAndUpdate(IGTFGraphElementModel model, Store store, GraphView graphView)
+        protected virtual void BuildContextualMenu(ContextualMenuPopulateEvent evt)
+        {
+        }
+
+        public void SetupBuildAndUpdate(IGraphElementModel model, Store store, GraphView graphView)
         {
             Setup(model, store, graphView);
             BuildUI();
             UpdateFromModel();
         }
 
-        public void Setup(IGTFGraphElementModel model, Store store, GraphView graphView)
+        public void Setup(IGraphElementModel model, Store store, GraphView graphView)
         {
             Model = model;
             Store = store;
@@ -186,37 +194,37 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         public virtual bool IsSelectable()
         {
-            return Model is ISelectable;
+            return Model?.IsSelectable() ?? false;
         }
 
-        public virtual bool IsPositioned()
+        public virtual bool IsMovable()
         {
-            return Model is IPositioned;
+            return Model?.IsMovable() ?? false;
         }
 
         public virtual bool IsDeletable()
         {
-            return Model is IDeletable;
+            return Model?.IsDeletable() ?? false;
         }
 
         public virtual bool IsResizable()
         {
-            return Model is IResizable;
+            return Model?.IsResizable() ?? false;
         }
 
         public virtual bool IsDroppable()
         {
-            return Model is Overdrive.Model.IDroppable;
+            return Model?.IsDroppable() ?? false;
         }
 
         public virtual bool IsRenamable()
         {
-            return Model is IRenamable;
+            return Model?.IsRenamable() ?? false;
         }
 
         public virtual bool IsCopiable()
         {
-            return Model is ICopiable copiable && copiable.IsCopiable;
+            return Model?.IsCopiable() ?? false;
         }
 
         // PF: remove

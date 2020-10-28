@@ -6,7 +6,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Redux
     {
         public int ActionObserved { get; private set; }
 
-        public void Observe(IAction action)
+        public void Observe(BaseAction action)
         {
             ActionObserved++;
         }

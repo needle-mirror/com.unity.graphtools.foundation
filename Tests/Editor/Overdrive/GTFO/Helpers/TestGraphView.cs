@@ -1,10 +1,8 @@
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-
-namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.Helpers
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO
 {
     public class TestGraphView : GraphView
     {
-        public TestGraphView(Store store) : base(store)
+        public TestGraphView(GraphViewEditorWindow window, Store store) : base(window, store)
         {
             SetupZoom(ContentZoomer.DefaultMinScale, ContentZoomer.DefaultMaxScale);
             focusable = true;

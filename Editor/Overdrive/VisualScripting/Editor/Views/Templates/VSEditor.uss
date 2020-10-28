@@ -59,36 +59,6 @@
     display: flex;
 }
 
-.vseGraphView {
-    flex: 1 1 auto;
-    height: 100%;
-    min-height: 300px;
-    min-width: 300px;
-}
-
-.vseGraphView #disabled-overlay {
-    display: none;
-    left: 0px;
-    right: 0px;
-    bottom: 0px;
-    top: 0px;
-    position: absolute;
-    border-radius: 8px;
-
-}
-
-.vseGraphView GridBackground {
-    --grid-background-color: #202020;
-}
-
-.vseGraphView #contentViewContainer {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 0;
-    bottom: 0;
-}
-
 .vse-blank-page {
     position: absolute;
     left: 0;
@@ -131,50 +101,35 @@
     background-color: #1d9ad6;
 }
 
-#buttonBar {
-    position: absolute;
-    flex-direction: column;
-    width: 150px;
-    right: 0;
-    top: 18px;
-    background-color: #545454;
-}
-
-.vseGraphView Button#collapseButton {
-    position: absolute;
-    width: 0;
-    height: 0;
-}
-
-.vseGraphView .ge-node--token.trace-highlight .ge-node__selection-border {
+.ge-node--token.trace-highlight .ge-node__selection-border {
     border-color: #b4ff69;
 }
 
-.vseGraphView .ge-node.trace-highlight .ge-node__selection-border,
-.vseGraphView .ge-node.trace-highlight .ge-node__selection-border {
+.ge-node.trace-highlight .ge-node__selection-border,
+.ge-node.trace-highlight .ge-node__selection-border {
     border-color: #b4ff69;
     /*border-radius: 8px; this causes a uielements freeze, no idea why */
     border-width: 2px;
     margin: -1px;
 }
 
-.vseGraphView .ge-node--token.trace-secondary-highlight .ge-node__selection-border {
+.ge-node--token.trace-secondary-highlight .ge-node__selection-border {
     border-color: #a4ffff;
 }
 
-.vseGraphView .ge-node.trace-secondary-highlight .ge-node__selection-border {
+.ge-node.trace-secondary-highlight .ge-node__selection-border {
     border-color: #a4ffff;
 }
 
-.vseGraphView .ge-node--token.exception-highlight .ge-node__selection-border {
+.ge-node--token.exception-highlight .ge-node__selection-border {
     border-color: #ff0000;
 }
 
-.vseGraphView .ge-node.exception-highlight .ge-node__selection-border {
+.ge-node.exception-highlight .ge-node__selection-border {
     border-color: #ff0000;
 }
 
-.vseGraphView .ge-node__selection-border .port #type {
+.ge-node__selection-border .port #type {
     overflow: visible;
 }
 

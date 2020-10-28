@@ -5,24 +5,85 @@ using System.Linq;
 using JetBrains.Annotations;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Object = UnityEngine.Object;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
 {
-    class VseWindowTest : VseWindow
+    class TestGraphView : GtfoGraphView
     {
-        protected override IEditorDataModel CreateDataModel()
+        public TestGraphView(GraphViewEditorWindow window, Store store)
+            : base(window, store, "TestGraphView") {}
+
+        public override bool CanAcceptDrop(List<ISelectableGraphElement> dragSelection)
         {
-            return new TestEditorDataModel();
+            throw new NotImplementedException();
         }
 
-        protected override Overdrive.VisualScripting.State CreateInitialState()
+        public override bool DragUpdated(DragUpdatedEvent evt, IEnumerable<ISelectableGraphElement> dragSelection, IDropTarget dropTarget, ISelection dragSource)
         {
-            return new TestState(DataModel);
+            throw new NotImplementedException();
+        }
+
+        public override bool DragPerform(DragPerformEvent evt, IEnumerable<ISelectableGraphElement> dragSelection, IDropTarget dropTarget, ISelection dragSource)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override bool DragEnter(DragEnterEvent evt, IEnumerable<ISelectableGraphElement> dragSelection, IDropTarget enteredTarget, ISelection dragSource)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override bool DragLeave(DragLeaveEvent evt, IEnumerable<ISelectableGraphElement> dragSelection, IDropTarget leftTarget, ISelection dragSource)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override bool DragExited()
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    class TestBlankPage : BlankPage
+    {
+        public TestBlankPage(Store store)
+            : base(store) {}
+    }
+
+    class GtfoWindowTest : GtfoWindow
+    {
+        protected override State CreateInitialState()
+        {
+            DataModel = new TestEditorDataModel();
+            return new State(DataModel);
+        }
+
+        protected override BlankPage CreateBlankPage()
+        {
+            return new TestBlankPage(Store);
+        }
+
+        protected override MainToolbar CreateMainToolbar()
+        {
+            return new MainToolbar(Store, GraphView);
+        }
+
+        protected override ErrorToolbar CreateErrorToolbar()
+        {
+            return new ErrorToolbar(Store, GraphView);
+        }
+
+        protected override GtfoGraphView CreateGraphView()
+        {
+            return new TestGraphView(this, Store);
+        }
+
+        protected override Dictionary<Event, ShortcutDelegate> GetShortcutDictionary()
+        {
+            return new Dictionary<Event, ShortcutDelegate>();
         }
     }
 
@@ -30,12 +91,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
     [Category("UI")]
     abstract class BaseUIFixture
     {
+        protected const string k_GraphPath = "Assets/test.asset";
         const int k_PanAreaWidth = 100;
         static readonly Rect k_WindowRect = new Rect(Vector2.zero, new Vector2(k_PanAreaWidth * 8, k_PanAreaWidth * 6));
-        protected VseWindow Window { get; set; }
-        protected VseGraphView GraphView { get; private set; }
+        protected GtfoWindow Window { get; set; }
+        protected GtfoGraphView GraphView { get; private set; }
         protected TestEventHelpers Helpers { get; set; }
-        protected Store Store => ((GraphViewEditorWindow)Window).Store;
+        protected Store Store => Window.Store;
         protected GraphModel GraphModel => (GraphModel)Store.GetState().CurrentGraphModel;
 
         protected abstract bool CreateGraphOnStartup { get; }
@@ -62,14 +124,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         [SetUp]
         public virtual void SetUp()
         {
-            var windowWithRect = EditorWindow.GetWindowWithRect<VseWindowTest>(k_WindowRect);
+            var windowWithRect = EditorWindow.GetWindowWithRect<GtfoWindowTest>(k_WindowRect);
             Window = windowWithRect;
             GraphView = Window.GraphView;
             Helpers = new TestEventHelpers(Window);
 
             if (CreateGraphOnStartup)
             {
-                Store.Dispatch(new CreateGraphAssetAction(CreatedGraphType, typeof(TestGraphAssetModel), "Test", assetPath: string.Empty));
+                var graphAsset = GraphAssetCreationHelpers<TestGraphAssetModel>.CreateInMemoryGraphAsset(CreatedGraphType, "Test", k_GraphPath);
+                Store.Dispatch(new LoadGraphAssetAction(graphAsset));
             }
             TestContext.Instance.Reset();
         }
@@ -98,27 +161,27 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             return GetGraphElements()[index];
         }
 
-        IList<IGTFGraphElementModel> GetGraphElementModels()
+        IList<IGraphElementModel> GetGraphElementModels()
         {
             return GetGraphElements()
                 .Select(x => x.Model).ToList();
         }
 
-        protected IGTFGraphElementModel GetGraphElementModel(int index)
+        protected IGraphElementModel GetGraphElementModel(int index)
         {
             return GetGraphElementModels()[index];
         }
 
-        IList<IGTFNodeModel> GetNodeModels()
+        IList<INodeModel> GetNodeModels()
         {
             return GetGraphElements()
-                .Where(x => x is IGraphElement model && model.Model is IGTFNodeModel)
+                .Where(x => x is IGraphElement model && model.Model is INodeModel)
                 .Select(x => x.Model)
-                .Cast<IGTFNodeModel>()
+                .Cast<INodeModel>()
                 .ToList();
         }
 
-        protected IGTFNodeModel GetNodeModel(int index)
+        protected INodeModel GetNodeModel(int index)
         {
             return GetNodeModels()[index];
         }

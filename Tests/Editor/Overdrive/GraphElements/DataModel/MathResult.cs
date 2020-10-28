@@ -1,42 +1,45 @@
 using System.Collections.Generic;
 
-public class MathResult : MathNode
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    public MathNodeID m_RootID = MathNodeID.empty;
-
-    public MathNode root
+    public class MathResult : MathNode
     {
-        get
+        public MathNodeID m_RootID = MathNodeID.empty;
+
+        public MathNode root
         {
-            return m_RootID.Get(mathBook);
+            get
+            {
+                return m_RootID.Get(mathBook);
+            }
+            set
+            {
+                m_RootID.Set(value);
+            }
         }
-        set
+
+        public void OnEnable()
         {
-            m_RootID.Set(value);
+            name = "MathResult";
         }
-    }
 
-    public void OnEnable()
-    {
-        name = "MathResult";
-    }
+        public override void ResetConnections()
+        {
+            root = null;
+        }
 
-    public override void ResetConnections()
-    {
-        root = null;
-    }
+        public override float Evaluate()
+        {
+            if (root == null)
+                return 0;
 
-    public override float Evaluate()
-    {
-        if (root == null)
-            return 0;
+            return root.Evaluate();
+        }
 
-        return root.Evaluate();
-    }
-
-    public override void RemapReferences(Dictionary<string, string> oldIDNewIDMap)
-    {
-        base.RemapReferences(oldIDNewIDMap);
-        RemapID(oldIDNewIDMap, ref m_RootID);
+        public override void RemapReferences(Dictionary<string, string> oldIDNewIDMap)
+        {
+            base.RemapReferences(oldIDNewIDMap);
+            RemapID(oldIDNewIDMap, ref m_RootID);
+        }
     }
 }

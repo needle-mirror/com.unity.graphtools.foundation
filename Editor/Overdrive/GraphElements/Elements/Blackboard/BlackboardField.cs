@@ -1,9 +1,9 @@
-using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
+using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class BlackboardField : GraphElement
     {
@@ -80,7 +80,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             this.typeText = typeText;
 
             this.AddManipulator(new SelectionDropper());
-            this.AddManipulator(new ContextualMenuManipulator(BuildContextualMenu));
         }
 
         public override bool IsSelectable()
@@ -150,9 +149,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             m_TextField.SelectAll();
         }
 
-        void BuildContextualMenu(ContextualMenuPopulateEvent evt)
+        protected override void BuildContextualMenu(ContextualMenuPopulateEvent evt)
         {
-            evt.menu.AppendAction("Rename", (a) => OpenTextEditor(), DropdownMenuAction.AlwaysEnabled);
+            base.BuildContextualMenu(evt);
+
+            var rgeTarget = evt.target as IRenamableGraphElement;
+            evt.menu.AppendAction("Rename", (a) =>
+            {
+                if (rgeTarget != null)
+                    rgeTarget.Rename(true);
+                else
+                    OpenTextEditor();
+            }, DropdownMenuAction.AlwaysEnabled);
         }
     }
 }

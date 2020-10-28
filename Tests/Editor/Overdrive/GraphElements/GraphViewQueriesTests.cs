@@ -2,21 +2,18 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-using UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utilities;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    public class GraphViewQueriesTests : GraphViewTester
+    class GraphViewQueriesTests : GraphViewTester
     {
-        BasicNodeModel m_Node1;
-        BasicNodeModel m_Node2;
-        BasicNodeModel m_Node3;
-        BasicNodeModel m_Node4;
-        BasicEdgeModel m_Edge1;
-        BasicEdgeModel m_Edge2;
+        IInOutPortsNode m_Node1;
+        IInOutPortsNode m_Node2;
+        IInOutPortsNode m_Node3;
+        IInOutPortsNode m_Node4;
+        IEdgeModel m_Edge1;
+        IEdgeModel m_Edge2;
 
         [SetUp]
         public override void SetUp()
@@ -27,8 +24,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             m_Node2 = CreateNode("Node 2", new Vector2(200, 200), 2, 2);
             m_Node3 = CreateNode("Node 3", new Vector2(400, 400));
             m_Node4 = CreateNode("Node 4", new Vector2(500, 500));
-            m_Edge1 = GraphModel.CreateEdge(m_Node1.GetInputPorts().First(), m_Node2.GetOutputPorts().First()) as BasicEdgeModel;
-            m_Edge2 = GraphModel.CreateEdge(m_Node1.GetInputPorts().First(), m_Node2.GetOutputPorts().ElementAt(1)) as BasicEdgeModel;
+            m_Edge1 = GraphModel.CreateEdge(m_Node1.GetInputPorts().First(), m_Node2.GetOutputPorts().First());
+            m_Edge2 = GraphModel.CreateEdge(m_Node1.GetInputPorts().First(), m_Node2.GetOutputPorts().ElementAt(1));
         }
 
         IEnumerable<GraphElement> GetElements<T>() where T : GraphElement

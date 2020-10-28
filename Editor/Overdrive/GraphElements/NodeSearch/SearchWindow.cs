@@ -5,10 +5,11 @@ using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEngine;
 using UnityEngine.Scripting.APIUpdating;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     [Serializable]
-    [MovedFrom(false, "Unity.GraphElements", "Unity.GraphTools.Foundation.Overdrive.Editor")]
+    //[MovedFrom(false, "Unity.GraphElements", "Unity.GraphTools.Foundation.Overdrive.Editor")]
+    [MovedFrom(false, "UnityEditor.GraphToolsFoundation.Overdrive.GraphElements")]
     public struct SearchWindowContext
     {
         public Vector2 screenMousePosition { get; private set; }

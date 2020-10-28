@@ -1,9 +1,9 @@
 using System.Linq;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.Model
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public static class PortModelExtensions
     {
-        public static bool IsConnected(this IGTFPortModel self) => self.GetConnectedEdges().Any();
+        public static bool IsConnected(this IPortModel self) => self.GetConnectedEdges().Any();
     }
 }

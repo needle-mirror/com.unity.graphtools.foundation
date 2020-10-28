@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
 using UnityEditor.Searcher;
 using UnityEngine;
 
@@ -20,7 +18,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
             m_Stencil = stencil;
         }
 
-        public virtual List<SearcherDatabaseBase> GetGraphElementsSearcherDatabases(IGTFGraphModel graphModel)
+        public virtual List<SearcherDatabaseBase> GetGraphElementsSearcherDatabases(IGraphModel graphModel)
         {
             if (AssetWatcher.Version != m_AssetVersion || AssetModificationWatcher.Version != m_AssetModificationVersion)
             {
@@ -46,7 +44,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
             };
         }
 
-        public virtual List<SearcherDatabaseBase> GetGraphVariablesSearcherDatabases(IGTFGraphModel graphModel)
+        public virtual List<SearcherDatabaseBase> GetGraphVariablesSearcherDatabases(IGraphModel graphModel)
         {
             return new List<SearcherDatabaseBase>
             {
@@ -56,7 +54,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
             };
         }
 
-        public virtual List<SearcherDatabaseBase> GetDynamicSearcherDatabases(IGTFPortModel portModel)
+        public virtual List<SearcherDatabaseBase> GetDynamicSearcherDatabases(IPortModel portModel)
         {
             return new List<SearcherDatabaseBase>();
         }

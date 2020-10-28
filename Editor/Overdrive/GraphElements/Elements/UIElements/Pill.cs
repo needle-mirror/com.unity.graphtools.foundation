@@ -1,9 +1,8 @@
 using System.Collections.Generic;
-using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class Pill : VisualElement
     {

@@ -1,9 +1,8 @@
 using System;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class PortConnectorPart : BaseGraphElementPart
     {
@@ -12,9 +11,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         public static readonly string k_ConnectorCapUssName = "cap";
         public static readonly string k_LabelName = "label";
 
-        public static PortConnectorPart Create(string name, IGTFGraphElementModel model, IGraphElement graphElement, string parentClassName)
+        public static PortConnectorPart Create(string name, IGraphElementModel model, IGraphElement graphElement, string parentClassName)
         {
-            if (model is IGTFPortModel)
+            if (model is IPortModel)
             {
                 return new PortConnectorPart(name, model, graphElement, parentClassName);
             }
@@ -34,7 +33,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         public override VisualElement Root => m_Root;
 
-        protected PortConnectorPart(string name, IGTFGraphElementModel model, IGraphElement ownerElement, string parentClassName)
+        protected PortConnectorPart(string name, IGraphElementModel model, IGraphElement ownerElement, string parentClassName)
             : base(name, model, ownerElement, parentClassName) {}
 
         protected override void BuildPartUI(VisualElement container)
@@ -104,7 +103,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             {
                 bool showCap = m_Hovering || ((m_OwnerElement as VisualElement)?.ClassListContains(Port.k_WillConnectModifierUssClassName) ?? false);
 
-                if ((m_Model is IGTFPortModel portModel && portModel.IsConnected()) || showCap)
+                if ((m_Model is IPortModel portModel && portModel.IsConnected()) || showCap)
                 {
                     m_ConnectorBoxCap.style.visibility = StyleKeyword.Null;
                 }

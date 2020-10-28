@@ -5,13 +5,8 @@ using System.Linq;
 using JetBrains.Annotations;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Compilation;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
 using UnityEngine;
 using UnityEngine.TestTools;
-using Node = UnityEditor.GraphToolsFoundation.Overdrive.GraphElements.Node;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
 {
@@ -59,20 +54,23 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         [Serializable]
         class TestStencil : Stencil
         {
+            public override Blackboard CreateBlackboard(Store store, GraphView graphView)
+            {
+                return null;
+            }
+
             public override ISearcherDatabaseProvider GetSearcherDatabaseProvider()
             {
                 return new ClassSearcherDatabaseProvider(this);
             }
 
-            public override IBuilder Builder => null;
-
-            public override IEnumerable<IGTFNodeModel> GetEntryPoints(IGTFGraphModel graphModel)
+            public override IEnumerable<INodeModel> GetEntryPoints(IGraphModel graphModel)
             {
                 return graphModel.NodeModels.OfType<EntryPointNodeModel>();
             }
 
             // Lifted almost verbatim from DotsStencil
-            public override bool CreateDependencyFromEdge(IGTFEdgeModel model, out LinkedNodesDependency linkedNodesDependency, out IGTFNodeModel parent)
+            public override bool CreateDependencyFromEdge(IEdgeModel model, out LinkedNodesDependency linkedNodesDependency, out INodeModel parent)
             {
                 var outputNode = model.FromPort.NodeModel;
                 var inputNode = model.ToPort.NodeModel;
@@ -107,21 +105,21 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             }
 
             // Lifted verbatim from DotsStencil
-            public override IEnumerable<IGTFEdgePortalModel> GetPortalDependencies(IGTFEdgePortalModel model)
+            public override IEnumerable<IEdgePortalModel> GetPortalDependencies(IEdgePortalModel model)
             {
                 switch (model)
                 {
                     case ExecutionEdgePortalEntryModel edgePortalModel:
-                        return model.GraphModel.FindReferencesInGraph<IGTFEdgePortalExitModel>(edgePortalModel.DeclarationModel);
+                        return model.GraphModel.FindReferencesInGraph<IEdgePortalExitModel>(edgePortalModel.DeclarationModel);
                     case DataEdgePortalExitModel edgePortalModel:
-                        return model.GraphModel.FindReferencesInGraph<IGTFEdgePortalEntryModel>(edgePortalModel.DeclarationModel);
+                        return model.GraphModel.FindReferencesInGraph<IEdgePortalEntryModel>(edgePortalModel.DeclarationModel);
                     default:
-                        return Enumerable.Empty<IGTFEdgePortalModel>();
+                        return Enumerable.Empty<IEdgePortalModel>();
                 }
             }
 
             // Lifted almost verbatim from DotsModelExtensions
-            static bool IsDataNode(IGTFNodeModel nodeModel)
+            static bool IsDataNode(INodeModel nodeModel)
             {
                 switch (nodeModel)
                 {
@@ -145,14 +143,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         protected override bool CreateGraphOnStartup => true;
         protected override Type CreatedGraphType => typeof(TestStencil);
 
-        void TestEntryDependencies(IGTFEdgePortalEntryModel entryModel, ExecutionEdgePortalExitModel[] exitModels)
+        void TestEntryDependencies(IEdgePortalEntryModel entryModel, ExecutionEdgePortalExitModel[] exitModels)
         {
-            Assert.AreEqual(exitModels.Length, GraphView.PositionDependenciesManagers.GetPortalDependencies(entryModel).Count);
+            Assert.AreEqual(exitModels.Length, GraphView.PositionDependenciesManagers.GetPortalDependencies(entryModel).Count());
             var dependencyModels = GraphView.PositionDependenciesManagers.GetPortalDependencies(entryModel)
                 .Select(d => d.DependentNode).ToList();
             foreach (var exitModel in exitModels)
             {
-                Assert.AreEqual(0, GraphView.PositionDependenciesManagers.GetPortalDependencies(exitModel).Count);
+                Assert.AreEqual(0, GraphView.PositionDependenciesManagers.GetPortalDependencies(exitModel).Count());
                 Assert.IsTrue(dependencyModels.Contains(exitModel));
             }
         }
@@ -277,7 +275,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
 
             GraphView.PositionDependenciesManagers.UpdateNodeState();
 
-            bool IsUIEnabled(IGTFGraphElementModel model)
+            bool IsUIEnabled(IGraphElementModel model)
             {
                 GraphElement ui = model.GetUI(GraphView);
                 return ui != null && !(ui.ClassListContains(Node.k_DisabledModifierUssClassName) || ui.ClassListContains(Node.k_UnusedModifierUssClassName));

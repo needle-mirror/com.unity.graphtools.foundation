@@ -4,18 +4,18 @@ using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public delegate TState Reducer<TState, in TAction>(TState previousState, TAction action)
+    public delegate void Reducer<TState, in TAction>(TState previousState, TAction action)
         where TState : State
-        where TAction : class, IAction;
+        where TAction : BaseAction;
 
     public sealed class Store : IDisposable
     {
         abstract class ReducerFunctorBase
         {
-            public abstract State Invoke(State state, IAction action);
+            public abstract void Invoke(State state, BaseAction action);
         }
 
-        class ReducerFunctor<TState, TAction> : ReducerFunctorBase where TState : State where TAction : class, IAction
+        class ReducerFunctor<TState, TAction> : ReducerFunctorBase where TState : State where TAction : BaseAction
         {
             Reducer<TState, TAction> m_Callback;
 
@@ -24,9 +24,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 m_Callback = callback;
             }
 
-            public override State Invoke(State state, IAction action)
+            public override void Invoke(State state, BaseAction action)
             {
-                return m_Callback(state as TState, action as TAction);
+                m_Callback(state as TState, action as TAction);
             }
         }
 
@@ -34,7 +34,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         readonly Dictionary<Type, ReducerFunctorBase> m_Reducers = new Dictionary<Type, ReducerFunctorBase>();
 
-        readonly List<Action<IAction>> m_Observers = new List<Action<IAction>>();
+        readonly List<Action<BaseAction>> m_Observers = new List<Action<BaseAction>>();
 
         UndoRedoTraversal m_UndoRedoTraversal;
 
@@ -53,32 +53,32 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             remove => m_StateChanged -= value;
         }
 
-        public Store(State initialState, Action<Store> registerActions)
+        public Store(State initialState)
         {
             m_LastState = initialState;
             m_StoreDispatchCheck = new StoreDispatchCheck();
 
             Undo.undoRedoPerformed += UndoRedoPerformed;
+        }
 
-            registerActions?.Invoke(this);
+        public void RegisterReducer<TAction>(Reducer<State, TAction> reducer)
+            where TAction : BaseAction
+        {
+            RegisterReducer<State, TAction>(reducer);
         }
 
         public void RegisterReducer<TState, TAction>(Reducer<TState, TAction> reducer)
             where TState : State
-            where TAction : class, IAction
+            where TAction : BaseAction
         {
             lock (m_SyncRoot)
             {
                 Type actionType = typeof(TAction);
-
-                // PF: Accept reducer overrides for now. Need a better solution.
-                //if (m_Reducers.ContainsKey(actionType))
-                //    throw new InvalidOperationException("Redux: Cannot register two reducers for action " + actionType.Name);
                 m_Reducers[actionType] = new ReducerFunctor<TState, TAction>(reducer);
             }
         }
 
-        public void UnregisterReducer<TAction>() where TAction : IAction
+        public void UnregisterReducer<TAction>() where TAction : BaseAction
         {
             lock (m_SyncRoot)
             {
@@ -86,7 +86,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        public void RegisterObserver(Action<IAction> observer)
+        public void RegisterObserver(Action<BaseAction> observer)
         {
             lock (m_SyncRoot)
             {
@@ -96,7 +96,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        public void UnregisterObserver(Action<IAction> observer)
+        public void UnregisterObserver(Action<BaseAction> observer)
         {
             lock (m_SyncRoot)
             {
@@ -107,7 +107,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        public void Dispatch<TAction>(TAction action) where TAction : IAction
+        public void Dispatch<TAction>(TAction action) where TAction : BaseAction
         {
             Preferences preferences = GetState().Preferences;
 
@@ -120,7 +120,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 {
                     m_StoreDispatchCheck.BeginDispatch(action, preferences);
 
-                    foreach (Action<IAction> observer in m_Observers)
+                    foreach (Action<BaseAction> observer in m_Observers)
                     {
                         observer(action);
                     }
@@ -133,7 +133,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                         return;
                     }
 
-                    m_LastState = o.Invoke(m_LastState, action);
+                    o.Invoke(m_LastState, action);
                 }
             }
             finally

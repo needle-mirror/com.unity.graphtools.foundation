@@ -4,10 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-using UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utilities;
-using UnityEditor.GraphToolsFoundation.Overdrive.Tests.Stylesheets;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
@@ -18,7 +14,7 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    public class PlacematTests : GraphViewTester
+    class PlacematTests : GraphViewTester
     {
         public enum TestType
         {
@@ -42,31 +38,31 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         static readonly Vector2 k_NoNode = Vector2.negativeInfinity;
         static readonly Vector2 k_NoSecondPlacemat = Vector2.negativeInfinity;
 
-        BasicNodeModel AddNode(Vector2 pos)
+        IInOutPortsNode AddNode(Vector2 pos)
         {
             return CreateNode("", pos);
         }
 
-        BasicStickyNoteModel AddSticky(Vector2 pos)
+        IStickyNoteModel AddSticky(Vector2 pos)
         {
             return CreateSticky("FOO", "bar", new Rect(pos, k_DefaultNodeSize));
         }
 
-        BasicNodeModel AddNode(Vector2 pos, Direction direction, Orientation orientation = Orientation.Horizontal)
+        IInOutPortsNode AddNode(Vector2 pos, Direction direction, Orientation orientation = Orientation.Horizontal)
         {
             if (direction == Direction.Input)
-                return CreateNode("", pos, 1, 0, orientation);
-            return CreateNode("", pos, 0, 1, orientation);
+                return CreateNode("", pos, 1, 0, orientation: orientation);
+            return CreateNode("", pos, 0, 1, orientation: orientation);
         }
 
         IEnumerator PlacematTestMove(Vector2 startElementPos, Vector2 startSecondPmPos, ElementType elementType, TestType testType, EventModifiers modifier)
         {
-            BasicPlacematModel pmModel = CreatePlacemat(GraphViewStaticBridge.RoundToPixelGrid(k_DefaultPlacematRect), "", 1);
+            IPlacematModel pmModel = CreatePlacemat(GraphViewStaticBridge.RoundToPixelGrid(k_DefaultPlacematRect), "", 1);
             GraphElement element;
             Placemat pm;
             Placemat pm2;
 
-            IGTFGraphElementModel elementModel = null;
+            IGraphElementModel elementModel = null;
             if (!float.IsInfinity(startElementPos.magnitude))
             {
                 switch (elementType)
@@ -80,7 +76,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 }
             }
 
-            BasicPlacematModel pm2Model = null;
+            IPlacematModel pm2Model = null;
             if (!float.IsInfinity(startSecondPmPos.magnitude))
             {
                 pm2Model = CreatePlacemat(new Rect(GraphViewStaticBridge.RoundToPixelGrid(startSecondPmPos), k_SecondPlacematSize), "", 2);

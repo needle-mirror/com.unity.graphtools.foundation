@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public enum EventPropagation
     {
@@ -10,7 +10,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         Continue
     }
 
-    public delegate EventPropagation ShortcutDelegate();
+    public delegate EventPropagation ShortcutDelegate(KeyDownEvent evt);
 
     public class ShortcutHandler : Manipulator
     {
@@ -39,7 +39,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
             if (m_Dictionary.ContainsKey(evt.imguiEvent))
             {
-                var result = m_Dictionary[evt.imguiEvent]();
+                var result = m_Dictionary[evt.imguiEvent](evt);
                 if (result == EventPropagation.Stop)
                 {
                     evt.StopPropagation();

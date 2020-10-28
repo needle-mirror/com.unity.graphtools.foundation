@@ -7,9 +7,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public abstract class Enumeration : IComparable, IComparable<Enumeration>, IEquatable<Enumeration>
     {
-        string Name { get; }
+        public string Name { get; }
 
-        int Id { get; }
+        public int Id { get; }
 
         protected Enumeration(int id, string name)
         {

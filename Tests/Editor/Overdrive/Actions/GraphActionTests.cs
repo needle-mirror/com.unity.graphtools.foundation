@@ -3,10 +3,7 @@ using System.Collections;
 using System.Linq;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
@@ -39,7 +36,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                     Assert.NotNull(n0);
                     Assert.NotNull(n1);
                     Assert.That(n0.Input0, Is.ConnectedTo(n1.Output0));
-                    return new DeleteElementsAction(node0, node1);
+                    return new DeleteElementsAction(new[] { node0, node1 });
                 },
                 () =>
                 {
@@ -189,7 +186,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                     Assert.That(GetNode(0).Position, Is.EqualTo(origNodePosition));
                     Assert.That(GetStickyNote(0).PositionAndSize, Is.EqualTo(origStickyPosition));
                     Assert.That(GetPlacemat(0).PositionAndSize, Is.EqualTo(origPlacematPosition));
-                    return new MoveElementsAction(deltaMove, new IPositioned[] { node, placemat, stickyNote });
+                    return new MoveElementsAction(deltaMove, new IMovable[] { node, placemat, stickyNote });
                 },
                 () =>
                 {
@@ -236,7 +233,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                 Assert.IsTrue(m_Changed, "ViewTransform didn't change");
                 Assert.That(GraphView.Selection.
                     OfType<IGraphElement>().
-                    Where(x => x.Model is IGTFNodeModel n && n.Guid == nodeModel.Guid).Any,
+                    Where(x => x.Model is INodeModel n && n.Guid == nodeModel.Guid).Any,
                     () =>
                     {
                         var graphViewSelection = String.Join(",", GraphView.Selection);
@@ -255,10 +252,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
             yield return null;
 
             GraphView.ClearSelection();
-            GraphView.AddToSelection(GraphView.UIController.ModelsToNodeMapping[nodeA]);
+            GraphView.AddToSelection(nodeA.GetUI(GraphView));
             yield return SendPanToNodeAndRefresh(nodeA);
             GraphView.ClearSelection();
-            GraphView.AddToSelection(GraphView.UIController.ModelsToNodeMapping[nodeB]);
+            GraphView.AddToSelection(nodeB.GetUI(GraphView));
             yield return SendPanToNodeAndRefresh(nodeB);
 
             IEnumerator SendPanToNodeAndRefresh(NodeModel nodeModel)
@@ -267,7 +264,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                 yield return null;
                 Assert.That(GraphView.Selection.
                     OfType<IGraphElement>().
-                    Where(x => x.Model is IGTFNodeModel n && n.Guid == nodeModel.Guid).Any,
+                    Where(x => x.Model is INodeModel n && n.Guid == nodeModel.Guid).Any,
                     () =>
                     {
                         var graphViewSelection = String.Join(",", GraphView.Selection.Select(x =>

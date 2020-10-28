@@ -1,5 +1,6 @@
 using System;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Scripting.APIUpdating;
 
@@ -8,7 +9,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
     [Serializable]
     //[MovedFrom(false, "UnityEditor.VisualScripting.GraphViewModel", "Unity.GraphTools.Foundation.Overdrive.Editor")]
     [MovedFrom("UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel")]
-    public sealed class StickyNoteModel : IGTFStickyNoteModel, ISerializationCallbackReceiver, IGuidUpdate
+    public class StickyNoteModel : IStickyNoteModel, ISerializationCallbackReceiver, IGuidUpdate
     {
         [SerializeField]
         string m_Title;
@@ -47,26 +48,45 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         [SerializeField, Obsolete]
         string m_Id = "";
 
-        public IGTFGraphAssetModel AssetModel
+        [SerializeField]
+        List<string> m_SerializedCapabilities;
+
+        List<Capabilities> m_Capabilities;
+
+        public IGraphAssetModel AssetModel
         {
             get => m_GraphAssetModel;
             set => m_GraphAssetModel = (GraphAssetModel)value;
         }
 
-        public IGTFGraphModel GraphModel => m_GraphAssetModel.GraphModel;
-
-        public bool IsResizable => true;
+        public virtual IGraphModel GraphModel => m_GraphAssetModel.GraphModel;
 
         public Rect PositionAndSize
         {
             get => m_Position;
-            set => m_Position = value;
+            set
+            {
+                var r = value;
+                if (!this.IsResizable())
+                    r.size = m_Position.size;
+
+                if (!this.IsMovable())
+                    r.position = m_Position.position;
+
+                m_Position = r;
+            }
         }
 
         public Vector2 Position
         {
             get => PositionAndSize.position;
-            set => PositionAndSize = new Rect(value, PositionAndSize.size);
+            set
+            {
+                if (!this.IsMovable())
+                    return;
+
+                PositionAndSize = new Rect(value, PositionAndSize.size);
+            }
         }
 
         public string Title
@@ -76,8 +96,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         }
 
         public string DisplayTitle => Title;
-
-        public bool IsRenamable => true;
 
         public string Contents
         {
@@ -110,12 +128,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
         public bool Destroyed { get; private set; }
 
-        public bool IsDeletable => true;
-
-        public bool IsCopiable => true;
-
         public StickyNoteModel()
         {
+            InternalInitCapabilities();
             Title = string.Empty;
             Contents = string.Empty;
             Theme = StickyNoteColorTheme.Classic.ToString();
@@ -127,11 +142,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
         public void Move(Vector2 delta)
         {
+            if (!this.IsMovable())
+                return;
+
             Position += delta;
         }
 
         public void Rename(string newName)
         {
+            if (!this.IsRenamable())
+                return;
+
             Title = newName;
         }
 
@@ -147,8 +168,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
                 AssignNewGuid();
         }
 
+        public IReadOnlyList<Capabilities> Capabilities => m_Capabilities;
+
         public void OnBeforeSerialize()
         {
+            m_SerializedCapabilities = m_Capabilities?.Select(c => c.Name).ToList() ?? new List<string>();
         }
 
         public void OnAfterDeserialize()
@@ -171,6 +195,30 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             m_GraphAssetModel = (GraphAssetModel)m_GraphModel?.AssetModel;
             m_GraphModel = null;
 #pragma warning restore 612
+
+            if (!m_SerializedCapabilities.Any())
+                // If we're reloading an older node
+                InitCapabilities();
+            else
+                m_Capabilities = m_SerializedCapabilities.Select(Overdrive.Capabilities.Get).ToList();
+        }
+
+        protected virtual void InitCapabilities()
+        {
+            InternalInitCapabilities();
+        }
+
+        void InternalInitCapabilities()
+        {
+            m_Capabilities = new List<Capabilities>
+            {
+                Overdrive.Capabilities.Deletable,
+                Overdrive.Capabilities.Copiable,
+                Overdrive.Capabilities.Selectable,
+                Overdrive.Capabilities.Renamable,
+                Overdrive.Capabilities.Movable,
+                Overdrive.Capabilities.Resizable
+            };
         }
     }
 

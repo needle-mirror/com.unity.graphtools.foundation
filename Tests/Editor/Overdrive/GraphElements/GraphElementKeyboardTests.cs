@@ -2,18 +2,16 @@ using System;
 using System.Collections;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utilities;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    public class GraphElementKeyboardTests : GraphViewTester
+    class GraphElementKeyboardTests : GraphViewTester
     {
-        BasicNodeModel m_Node1Model;
-        BasicNodeModel m_Node2Model;
+        INodeModel m_Node1Model;
+        INodeModel m_Node2Model;
 
         [SetUp]
         public override void SetUp()

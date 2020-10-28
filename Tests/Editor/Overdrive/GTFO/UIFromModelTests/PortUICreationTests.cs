@@ -2,8 +2,7 @@ using System;
 using System.Collections;
 using System.Linq;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.Helpers;
+using UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
@@ -15,12 +14,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         [Test]
         public void InputPortHasExpectedParts()
         {
-            var model = new IONodeModel();
-            model.CreatePorts(1, 0);
+            var model = new SingleInputNodeModel();
+            model.DefineNode();
             var node = new Node();
             node.SetupBuildAndUpdate(model, null, null);
 
-            var portModel = model.InputPorts.First();
+            var portModel = model.GetInputPorts().First();
             Assert.IsNotNull(portModel);
 
             var port = portModel.GetUI<Port>(null);
@@ -35,12 +34,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         [Test]
         public void OutputPortHasExpectedParts()
         {
-            var model = new IONodeModel();
-            model.CreatePorts(0, 1);
+            var model = new SingleOutputNodeModel();
+            model.DefineNode();
             var node = new Node();
             node.SetupBuildAndUpdate(model, null, null);
 
-            var portModel = model.OutputPorts.First();
+            var portModel = model.GetOutputPorts().First();
             Assert.IsNotNull(portModel);
 
             var port = portModel.GetUI<Port>(null);
@@ -63,8 +62,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         public new void SetUp()
         {
             m_GraphModel = new GraphModel();
-            m_Store = new Store(new Helpers.TestState(m_GraphModel), StoreHelper.RegisterReducers);
-            m_GraphView = new TestGraphView(m_Store);
+            m_Store = new Store(new TestState(m_GraphModel));
+            StoreHelper.RegisterDefaultReducers(m_Store);
+            m_GraphView = new TestGraphView(m_Window, m_Store);
 
             m_GraphView.name = "theView";
             m_GraphView.viewDataKey = "theView";
@@ -76,8 +76,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         [UnityTest]
         public IEnumerator PortConnectorAndCapHavePortColor()
         {
-            var nodeModel = new IONodeModel();
-            nodeModel.CreatePorts(0, 1);
+            var nodeModel = new SingleOutputNodeModel();
+            nodeModel.DefineNode();
             var node = new CollapsibleInOutNode();
             node.SetupBuildAndUpdate(nodeModel, m_Store, m_GraphView);
             m_GraphView.AddElement(node);

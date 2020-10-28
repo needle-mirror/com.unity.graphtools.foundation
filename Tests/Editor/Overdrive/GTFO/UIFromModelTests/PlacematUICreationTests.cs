@@ -1,7 +1,5 @@
-using System;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.Helpers;
+using UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
@@ -16,14 +14,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         public void SetUp()
         {
             m_GraphModel = new GraphModel();
-            m_Store = new Store(new Helpers.TestState(m_GraphModel), StoreHelper.RegisterReducers);
-            m_GraphView = new TestGraphView(m_Store);
+            m_Store = new Store(new TestState(m_GraphModel));
+            StoreHelper.RegisterDefaultReducers(m_Store);
+            m_GraphView = new TestGraphView(null, m_Store);
         }
 
         [Test]
         public void PlacematHasExpectedParts()
         {
-            var placematModel = new PlacematModel();
+            var placematModel = m_GraphModel.CreatePlacemat();
             var placemat = new Placemat();
             placemat.SetupBuildAndUpdate(placematModel, m_Store, m_GraphView);
 

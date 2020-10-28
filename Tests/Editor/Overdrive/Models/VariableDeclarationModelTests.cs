@@ -1,9 +1,7 @@
 using System;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
-using IRenamable = UnityEditor.GraphToolsFoundation.Overdrive.Model.IRenamable;
 
 // ReSharper disable AccessToStaticMemberViaDerivedType
 
@@ -26,7 +24,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
         [TestCase("VeryWeird Name", "veryWeirdName", "Very Weird Name")]
         public void SetNameFromUserNameTest(string userInput, string expectedName, string expectedTitle)
         {
-            var graphAssetModel = GraphAssetModel.Create("test", "", typeof(TestGraphAssetModel));
+            var graphAssetModel = IGraphAssetModelHelper.Create("test", "", typeof(TestGraphAssetModel));
             graphAssetModel.CreateGraph("test", typeof(ClassStencil));
 
             var variable = graphAssetModel.GraphModel.CreateGraphVariableDeclaration("originalName", TypeHandle.Float, ModifierFlags.None, true);
@@ -38,7 +36,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
         [Test]
         public void CloningAVariableClonesFields()
         {
-            var graphAssetModel = GraphAssetModel.Create("test", "", typeof(TestGraphAssetModel));
+            var graphAssetModel = IGraphAssetModelHelper.Create("test", "", typeof(TestGraphAssetModel));
             graphAssetModel.CreateGraph("test", typeof(ClassStencil));
 
             var decl = graphAssetModel.GraphModel.CreateGraphVariableDeclaration("asd", TypeHandle.Float, ModifierFlags.None, true);

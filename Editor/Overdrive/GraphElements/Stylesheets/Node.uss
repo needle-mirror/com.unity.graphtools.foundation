@@ -16,10 +16,16 @@
     overflow: hidden;
 }
 
-.ge-node__title-container {
-    padding: 10px 6px;
+.ge-node__title-icon-container {
+    padding: 0 6px;
     border-radius: var(--border-radius) var(--border-radius) 0 0;
     background-color: rgba(63,63,63,0.8);
+}
+
+.ge-node__title-container {
+    padding: 10px 0;
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+    background-color: transparent;
 }
 
 .ge-node--collapsed.ge-node--not-connected .ge-node__title-container {
@@ -39,6 +45,10 @@
 
 .ge-node--highlighted .ge-node__selection-border {
     border-color: #FF8000;
+}
+
+.ge-node__icon--node {
+    background-image: url("Icons/Function@x3.png");
 }
 
 .ge-node__title {
@@ -66,4 +76,18 @@
     border-top-width: 1px;
     border-top-color: rgba(35,35,35,0.8);
     border-radius: 0 0 var(--border-radius) var(--border-radius);
+}
+
+.ge-node__progress-bar {
+    flex-grow: 1;
+    min-width: 60px;
+}
+
+.ge-node__progress-bar .unity-progress-bar__background {
+    height: 6px;
+}
+
+.ge-node .unity-property-field {
+    padding: 0;
+    margin: 0;
 }

@@ -1,15 +1,13 @@
 using System;
 using System.Collections;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utilities;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    public class GraphViewSelectionPersistenceTests : GraphViewTester
+    class GraphViewSelectionPersistenceTests : GraphViewTester
     {
         public GraphViewSelectionPersistenceTests() : base(enablePersistence: true) {}
 
@@ -17,9 +15,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         const string key2 = "node2";
         const string key3 = "node3";
 
-        BasicNodeModel node1Model;
-        BasicNodeModel node2Model;
-        BasicNodeModel node3Model;
+        INodeModel node1Model;
+        INodeModel node2Model;
+        INodeModel node3Model;
 
         [SetUp]
         public override void SetUp()

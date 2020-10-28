@@ -7,13 +7,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     {
         int m_LastActionFrame = -1;
 
-        IAction m_LastActionThisFrame;
+        BaseAction m_LastActionThisFrame;
 
-        IAction m_CurrentAction;
+        BaseAction m_CurrentAction;
 
         public int UpdateCounter { get; set; }
 
-        public void BeginDispatch(IAction action, Preferences preferences)
+        public void BeginDispatch(BaseAction action, Preferences preferences)
         {
             if (preferences != null && UpdateCounter == m_LastActionFrame &&
                 preferences.GetBool(BoolPref.ErrorOnMultipleDispatchesPerFrame))

@@ -1,8 +1,6 @@
 using System;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -14,7 +12,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Graph
         public string GraphTypeName => "Test Graph";
         public string DefaultAssetName => "testgraph";
 
-        public void InitBasicGraph(IGTFGraphModel graph)
+        public void InitBasicGraph(IGraphModel graph)
         {
             AssetDatabase.SaveAssets();
         }
@@ -27,35 +25,35 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Graph
         [Test]
         public void LoadGraphActionLoadsCorrectGraph()
         {
-            m_Store.Dispatch(new CreateGraphAssetAction(typeof(ClassStencil), typeof(TestGraphAssetModel), "test", k_GraphPath));
+            GraphAssetCreationHelpers<TestGraphAssetModel>.CreateGraphAsset(typeof(ClassStencil), "test", k_GraphPath);
             AssumeIntegrity();
 
             AssetDatabase.SaveAssets();
-            Resources.UnloadAsset((Object)GraphModel.AssetModel);
+            Resources.UnloadAsset((Object)m_Store.GetState().AssetModel);
             m_Store.Dispatch(new LoadGraphAssetAction(k_GraphPath));
             Assert.AreEqual(k_GraphPath, AssetDatabase.GetAssetPath((Object)GraphModel.AssetModel));
             AssertIntegrity();
         }
 
         [Test]
-        public void CreateGraphActionBuildsValidGraphModel()
+        public void CreateGraphAssetBuildsValidGraphModel()
         {
-            m_Store.Dispatch(new CreateGraphAssetAction(typeof(ClassStencil), typeof(TestGraphAssetModel), "test", k_GraphPath));
+            GraphAssetCreationHelpers<TestGraphAssetModel>.CreateGraphAsset(typeof(ClassStencil), "test", k_GraphPath);
             AssumeIntegrity();
         }
 
         [Test]
-        public void CreateTestGraphBuildsValidGraphModel()
+        public void CreateGraphAssetWithTemplateBuildsValidGraphModel()
         {
             var graphTemplate = new TestGraph();
-            m_Store.Dispatch(new CreateGraphAssetAction(typeof(ClassStencil), typeof(TestGraphAssetModel), graphTemplate.DefaultAssetName, k_GraphPath, graphTemplate: graphTemplate));
+            GraphAssetCreationHelpers<TestGraphAssetModel>.CreateGraphAsset(typeof(ClassStencil), graphTemplate.DefaultAssetName, k_GraphPath, graphTemplate);
             AssertIntegrity();
         }
 
         [Test]
         public void CreateTestGraphCanBeReloaded()
         {
-            CreateTestGraphBuildsValidGraphModel();
+            CreateGraphAssetWithTemplateBuildsValidGraphModel();
 
             GraphModel graph = AssetDatabase.LoadAssetAtPath<GraphAssetModel>(k_GraphPath)?.GraphModel as GraphModel;
             Resources.UnloadAsset((Object)graph?.AssetModel);
@@ -69,8 +67,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Graph
         {
             var graphTemplate = new TestGraph();
             var assetModel = ScriptableObject.CreateInstance<TestGraphAssetModel>();
-            m_Store.Dispatch(new CreateGraphAssetFromModelAction(
-                assetModel, graphTemplate, k_GraphPath));
+            var doCreateAction = ScriptableObject.CreateInstance<DoCreateAsset>();
+            doCreateAction.SetUp(null, assetModel, graphTemplate);
+            doCreateAction.CreateAndLoadAsset(k_GraphPath);
             AssertIntegrity();
         }
     }

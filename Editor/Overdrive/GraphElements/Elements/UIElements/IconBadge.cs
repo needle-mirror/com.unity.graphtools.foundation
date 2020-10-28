@@ -2,7 +2,7 @@ using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class IconBadge : VisualElement
     {
@@ -151,7 +151,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         {
             Detach();
             m_Alignment = align;
-            this.m_Target = badgeTarget;
+            m_Target = badgeTarget;
             m_IsAttached = true;
             badgeTarget.RegisterCallback<DetachFromPanelEvent>(OnTargetDetachedFromPanel);
             CreateAttacher();

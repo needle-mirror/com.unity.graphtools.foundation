@@ -1,18 +1,17 @@
 using System;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class IconTitleProgressPart : EditableTitlePart
     {
         public static new readonly string k_UssClassName = "ge-icon-title-progress";
         public static readonly string k_CollapseButtonPartName = "collapse-button";
 
-        public static IconTitleProgressPart Create(string name, IGTFGraphElementModel model, IGraphElement graphElement, string parentClassName)
+        public static IconTitleProgressPart Create(string name, IGraphElementModel model, IGraphElement graphElement, string parentClassName)
         {
-            if (model is IGTFNodeModel)
+            if (model is INodeModel)
             {
                 return new IconTitleProgressPart(name, model, graphElement, parentClassName);
             }
@@ -26,7 +25,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         public ProgressBar CoroutineProgressBar;
 
-        protected IconTitleProgressPart(string name, IGTFGraphElementModel model, IGraphElement ownerElement, string parentClassName)
+        protected IconTitleProgressPart(string name, IGraphElementModel model, IGraphElement ownerElement, string parentClassName)
             : base(name, model, ownerElement, parentClassName, multiline: false)
         {
             if (model is ICollapsible)
@@ -38,7 +37,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         protected override void BuildPartUI(VisualElement container)
         {
-            if (!(m_Model is IGTFNodeModel nodeModel))
+            if (!(m_Model is INodeModel nodeModel))
                 return;
 
             m_Root = new VisualElement { name = PartName };
@@ -60,7 +59,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             }
             TitleContainer.Add(icon);
 
-            bool isRenamable = m_Model is IRenamable renamable && renamable.IsRenamable;
+            bool isRenamable = m_Model.IsRenamable();
 
             if (isRenamable)
             {
@@ -97,7 +96,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         {
             base.UpdatePartFromModel();
 
-            var nodeModel = m_Model as IGTFNodeModel;
+            var nodeModel = m_Model as INodeModel;
             if (nodeModel == null)
                 return;
 

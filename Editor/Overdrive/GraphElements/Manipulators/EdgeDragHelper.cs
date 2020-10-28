@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
+using UnityEditor.GraphToolsFoundation.Overdrive.InternalModels;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class EdgeDragHelper
     {
@@ -14,13 +14,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         internal const float k_MaxSpeedFactor = 2.5f;
         internal const float k_MaxPanSpeed = k_MaxSpeedFactor * k_PanSpeed;
 
-        List<IGTFPortModel> m_CompatiblePorts;
+        List<IPortModel> m_CompatiblePorts;
         GhostEdgeModel m_GhostEdgeModel;
         Edge m_GhostEdge;
         public GraphView GraphView { get; }
         readonly Store m_Store;
         readonly EdgeConnectorListener m_Listener;
-        readonly Func<IGTFGraphModel, GhostEdgeModel> m_GhostEdgeViewModelCreator;
+        readonly Func<IGraphModel, GhostEdgeModel> m_GhostEdgeViewModelCreator;
 
         IVisualElementScheduledItem m_PanSchedule;
         Vector3 m_PanDiff = Vector3.zero;
@@ -28,7 +28,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         bool resetPositionOnPan { get; set; }
 
-        public EdgeDragHelper(Store store, GraphView graphView, EdgeConnectorListener listener, Func<IGTFGraphModel, GhostEdgeModel> ghostEdgeViewModelCreator)
+        public EdgeDragHelper(Store store, GraphView graphView, EdgeConnectorListener listener, Func<IGraphModel, GhostEdgeModel> ghostEdgeViewModelCreator)
         {
             m_Store = store;
             GraphView = graphView;
@@ -38,7 +38,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             Reset();
         }
 
-        public Edge CreateGhostEdge(IGTFGraphModel graphModel)
+        public Edge CreateGhostEdge(IGraphModel graphModel)
         {
             GhostEdgeModel ghostEdge;
 
@@ -58,7 +58,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         Edge m_EdgeCandidate;
         public GhostEdgeModel edgeCandidateModel => m_EdgeCandidateModel;
 
-        public void CreateEdgeCandidate(IGTFGraphModel graphModel)
+        public void CreateEdgeCandidate(IGraphModel graphModel)
         {
             m_EdgeCandidate = CreateGhostEdge(graphModel);
             m_EdgeCandidateModel = m_EdgeCandidate.EdgeModel as GhostEdgeModel;
@@ -70,7 +70,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             m_EdgeCandidate = null;
         }
 
-        public IGTFPortModel draggedPort { get; set; }
+        public IPortModel draggedPort { get; set; }
         public Edge originalEdge { get; set; }
 
         public void Reset(bool didConnect = false)

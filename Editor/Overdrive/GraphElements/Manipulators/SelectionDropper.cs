@@ -2,10 +2,9 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    // TODO: Should stay internal when GraphView becomes public
-    internal class DragAndDropDelay
+    class DragAndDropDelay
     {
         const float k_StartDragTreshold = 4.0f;
 

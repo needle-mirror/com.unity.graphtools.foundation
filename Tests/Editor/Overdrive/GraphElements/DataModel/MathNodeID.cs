@@ -1,68 +1,71 @@
 using System;
 using UnityEngine;
 
-[Serializable]
-public struct MathNodeID : IEquatable<MathNodeID>
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    [SerializeField]
-    private string m_NodeGuid;
-
-    private static readonly MathNodeID s_Empty = new MathNodeID { m_NodeGuid = "" };
-
-    public MathNode Get(MathBook book)
+    [Serializable]
+    public struct MathNodeID : IEquatable<MathNodeID>
     {
-        if (book == null)
-            return null;
-        return book.Get(this);
-    }
+        [SerializeField]
+        private string m_NodeGuid;
 
-    public void Set(MathNode node)
-    {
-        m_NodeGuid = node == null ? null : node.nodeID.m_NodeGuid;
-    }
+        private static readonly MathNodeID s_Empty = new MathNodeID { m_NodeGuid = "" };
 
-    public MathNodeID(string guid)
-    {
-        m_NodeGuid = guid;
-    }
+        public MathNode Get(MathBook book)
+        {
+            if (book == null)
+                return null;
+            return book.Get(this);
+        }
 
-    public static MathNodeID empty { get { return s_Empty; } }
+        public void Set(MathNode node)
+        {
+            m_NodeGuid = node == null ? null : node.nodeID.m_NodeGuid;
+        }
 
-    static public MathNodeID NewID()
-    {
-        return new MathNodeID { m_NodeGuid = Guid.NewGuid().ToString() };
-    }
+        public MathNodeID(string guid)
+        {
+            m_NodeGuid = guid;
+        }
 
-    public bool Equals(MathNodeID other)
-    {
-        if (ReferenceEquals(this, other)) return true;
-        return m_NodeGuid.Equals(other.m_NodeGuid);
-    }
+        public static MathNodeID empty { get { return s_Empty; } }
 
-    public override bool Equals(object obj)
-    {
-        if (ReferenceEquals(this, obj)) return true;
-        if (obj.GetType() != GetType()) return false;
-        return Equals((MathNodeID)obj);
-    }
+        static public MathNodeID NewID()
+        {
+            return new MathNodeID { m_NodeGuid = Guid.NewGuid().ToString() };
+        }
 
-    public static bool operator!=(MathNodeID lhs, MathNodeID rhs)
-    {
-        return !lhs.Equals(rhs);
-    }
+        public bool Equals(MathNodeID other)
+        {
+            if (ReferenceEquals(this, other)) return true;
+            return m_NodeGuid.Equals(other.m_NodeGuid);
+        }
 
-    public static bool operator==(MathNodeID lhs, MathNodeID rhs)
-    {
-        return lhs.Equals(rhs);
-    }
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != GetType()) return false;
+            return Equals((MathNodeID)obj);
+        }
 
-    public override int GetHashCode()
-    {
-        return m_NodeGuid.GetHashCode();
-    }
+        public static bool operator!=(MathNodeID lhs, MathNodeID rhs)
+        {
+            return !lhs.Equals(rhs);
+        }
 
-    public override string ToString()
-    {
-        return m_NodeGuid;
+        public static bool operator==(MathNodeID lhs, MathNodeID rhs)
+        {
+            return lhs.Equals(rhs);
+        }
+
+        public override int GetHashCode()
+        {
+            return m_NodeGuid.GetHashCode();
+        }
+
+        public override string ToString()
+        {
+            return m_NodeGuid;
+        }
     }
 }

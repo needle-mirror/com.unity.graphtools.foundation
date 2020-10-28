@@ -2,9 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-using UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.Helpers;
+using UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
 
@@ -29,8 +27,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         public new void SetUp()
         {
             m_GraphModel = new GraphModel();
-            m_Store = new Store(new Helpers.TestState(m_GraphModel), StoreHelper.RegisterReducers);
-            m_GraphView = new TestGraphView(m_Store) {name = "theView", viewDataKey = "theView"};
+            m_Store = new Store(new TestState(m_GraphModel));
+            StoreHelper.RegisterDefaultReducers(m_Store);
+            m_GraphView = new TestGraphView(m_Window, m_Store) {name = "theView", viewDataKey = "theView"};
 
             m_GraphView.StretchToParentSize();
 
@@ -55,14 +54,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
 
         Node CreateNode(int inputPortCount, int outputPortCount)
         {
-            var nodeModel = new IONodeModel {GraphModel = m_GraphModel};
+            var nodeModel = m_GraphModel.CreateNode<IONodeModel>();
+            nodeModel.InputCount = inputPortCount;
+            nodeModel.OuputCount = outputPortCount;
+            nodeModel.DefineNode();
             var sourceNode = new CollapsibleInOutNode();
             sourceNode.SetupBuildAndUpdate(nodeModel, m_Store, m_GraphView);
-            nodeModel.CreatePorts(inputPortCount, outputPortCount);
             return sourceNode;
         }
 
-        Edge CreateEdge(IGTFPortModel to, IGTFPortModel from)
+        Edge CreateEdge(IPortModel to, IPortModel from)
         {
             var model = m_GraphModel.CreateEdge(from, to);
             var edge = new Edge();
@@ -73,8 +74,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         [Test]
         public void CanGetPortsWithReorderableEdges()
         {
-            m_SourcePortModels[0].HasReorderableEdges = false;
-            m_SourcePortModels[1].HasReorderableEdges = true;
+            m_SourcePortModels[0].SetReorderable(false);
+            m_SourcePortModels[1].SetReorderable(true);
+
+            CreateEdge(m_SourcePortModels[0], m_DestinationPortModels1[0]);
+            CreateEdge(m_SourcePortModels[1], m_DestinationPortModels1[0]);
 
             var portsWithReorderableEdges = m_SourceNodeModel.ConnectedPortsWithReorderableEdges().ToList();
             Assert.AreEqual(1, portsWithReorderableEdges.Count);
@@ -84,7 +88,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         [Test]
         public void RevealOrderableEdgeDoesNothingIfPortIsNotReorderableEdgeReady()
         {
-            m_SourcePortModels[0].HasReorderableEdges = false;
+            m_SourcePortModels[0].SetReorderable(false);
             var port1Edge1 = CreateEdge(m_SourcePortModels[0], m_DestinationPortModels1[0]);
             var port1Edge2 = CreateEdge(m_SourcePortModels[0], m_DestinationPortModels2[0]);
 
@@ -96,8 +100,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         [Test]
         public void RevealOrderableEdgeShowsAndHidesEdgeOrderIfPortIsReorderableEdgeReady()
         {
-            m_SourcePortModels[0].HasReorderableEdges = true;
-            m_SourcePortModels[1].HasReorderableEdges = true;
+            m_SourcePortModels[0].SetReorderable(true);
+            m_SourcePortModels[1].SetReorderable(true);
             var port1Edge1 = CreateEdge(m_SourcePortModels[0], m_DestinationPortModels1[0]);
             var port1Edge2 = CreateEdge(m_SourcePortModels[0], m_DestinationPortModels2[0]);
             var port2Edge1 = CreateEdge(m_SourcePortModels[1], m_DestinationPortModels1[0]);
@@ -119,7 +123,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         [Test]
         public void RevealOrderableEdgeDoesNothingIfPortIsReorderableEdgeReadyWithSingleEdge()
         {
-            m_SourcePortModels[0].HasReorderableEdges = true;
+            m_SourcePortModels[0].SetReorderable(true);
             var port1Edge1 = CreateEdge(m_SourcePortModels[0], m_DestinationPortModels1[0]);
 
             m_SourceNodeModel.RevealReorderableEdgesOrder(true);
@@ -129,8 +133,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         [Test]
         public void RevealOrderableEdgeShowsAndHidesEdgeOrderIfPortIsReorderableEdgeReadyOnSpecificEdges()
         {
-            m_SourcePortModels[0].HasReorderableEdges = true;
-            m_SourcePortModels[1].HasReorderableEdges = true;
+            m_SourcePortModels[0].SetReorderable(true);
+            m_SourcePortModels[1].SetReorderable(true);
             var port1Edge1 = CreateEdge(m_SourcePortModels[0], m_DestinationPortModels1[0]);
             var port1Edge2 = CreateEdge(m_SourcePortModels[0], m_DestinationPortModels2[0]);
             var port2Edge1 = CreateEdge(m_SourcePortModels[1], m_DestinationPortModels1[0]);
@@ -152,8 +156,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         [UnityTest]
         public IEnumerable RevealOrderableEdgeCalledOnNodeSelection()
         {
-            m_SourcePortModels[0].HasReorderableEdges = true;
-            m_SourcePortModels[1].HasReorderableEdges = true;
+            m_SourcePortModels[0].SetReorderable(true);
+            m_SourcePortModels[1].SetReorderable(true);
             var port1Edge1 = CreateEdge(m_SourcePortModels[0], m_DestinationPortModels1[0]);
             var port1Edge2 = CreateEdge(m_SourcePortModels[0], m_DestinationPortModels2[0]);
             var port2Edge1 = CreateEdge(m_SourcePortModels[1], m_DestinationPortModels1[0]);

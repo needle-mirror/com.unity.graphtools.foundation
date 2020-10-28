@@ -1,38 +1,33 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 using UnityEngine.Scripting.APIUpdating;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 {
-    [Flags]
-    public enum PortModelOptions
-    {
-        None = 0,
-        NoEmbeddedConstant = 1,
-        Hidden = 2,
-        Default = None,
-    }
-
     [Serializable]
     //[MovedFrom(false, "UnityEditor.VisualScripting.GraphViewModel", "Unity.GraphTools.Foundation.Overdrive.Editor")]
     [MovedFrom("UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel")]
-    public class PortModel : IReorderableEdgesPort, IHasTitle
+    public class PortModel : IReorderableEdgesPort, IHasTitle, ISerializationCallbackReceiver
     {
         [SerializeField]
         SerializableGUID m_Guid;
 
+        [SerializeField]
+        List<string> m_SerializedCapabilities;
+
         string m_UniqueId;
 
-        public IGTFGraphAssetModel AssetModel
+        protected List<Capabilities> m_Capabilities;
+
+        public IGraphAssetModel AssetModel
         {
             get => GraphModel?.AssetModel;
             set => throw new NotImplementedException();
         }
 
-        public IGTFGraphModel GraphModel => NodeModel?.GraphModel;
+        public virtual IGraphModel GraphModel => NodeModel?.GraphModel;
 
         public IPortNode NodeModel { get; set; }
 
@@ -51,7 +46,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         public Orientation Orientation { get; set; }
 
         // Give node model priority over self
-        public PortCapacity Capacity => NodeModel?.GetPortCapacity(this) ?? GetDefaultCapacity();
+        public virtual PortCapacity Capacity => NodeModel?.GetPortCapacity(this) ?? GetDefaultCapacity();
 
         public TypeHandle DataTypeHandle { get; set; }
 
@@ -65,22 +60,22 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             }
         }
 
-        public virtual IEnumerable<IGTFPortModel> GetConnectedPorts()
+        public virtual IEnumerable<IPortModel> GetConnectedPorts()
         {
             return PortModelDefaultImplementations.GetConnectedPorts(this);
         }
 
-        public virtual IEnumerable<IGTFEdgeModel> GetConnectedEdges()
+        public virtual IEnumerable<IEdgeModel> GetConnectedEdges()
         {
             return PortModelDefaultImplementations.GetConnectedEdges(this);
         }
 
-        public virtual bool IsConnectedTo(IGTFPortModel toPort)
+        public virtual bool IsConnectedTo(IPortModel toPort)
         {
             return PortModelDefaultImplementations.IsConnectedTo(this, toPort);
         }
 
-        public bool HasReorderableEdges => PortType == PortType.Execution && Direction == Direction.Output && this.IsConnected();
+        public virtual bool HasReorderableEdges => PortType == PortType.Execution && Direction == Direction.Output && this.IsConnected();
 
         public IConstant EmbeddedValue
         {
@@ -131,6 +126,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
         public PortModel(string name = null, string uniqueId = null, PortModelOptions options = PortModelOptions.Default)
         {
+            InternalInitCapabilities();
             Title = name;
             m_UniqueId = uniqueId;
             Options = options;
@@ -141,6 +137,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             m_Guid = GUID.Generate();
         }
 
+        public virtual IReadOnlyList<Capabilities> Capabilities => m_Capabilities;
+
         public override string ToString()
         {
             return $"Port {NodeModel}: {PortType} {Title}(id: {UniqueName ?? "\"\""})";
@@ -150,12 +148,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         {
             return PortType == PortType.Data ? Direction == Direction.Input ? PortCapacity.Single :
                 PortCapacity.Multi :
-                (PortType == PortType.Execution) ? Direction == Direction.Output ? PortCapacity.Single :
-                PortCapacity.Multi :
                 PortCapacity.Multi;
         }
 
-        public static bool Equivalent(IGTFPortModel a, IGTFPortModel b)
+        public static bool Equivalent(IPortModel a, IPortModel b)
         {
             if (a == null || b == null)
                 return a == b;
@@ -163,24 +159,51 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             return a.Direction == b.Direction && a.NodeModel.Guid == b.NodeModel.Guid && a.UniqueName == b.UniqueName;
         }
 
-        public virtual void MoveEdgeFirst(IGTFEdgeModel edge)
+        public virtual void MoveEdgeFirst(IEdgeModel edge)
         {
             ReorderableEdgesPortDefaultImplementations.MoveEdgeFirst(this, edge);
         }
 
-        public virtual void MoveEdgeUp(IGTFEdgeModel edge)
+        public virtual void MoveEdgeUp(IEdgeModel edge)
         {
             ReorderableEdgesPortDefaultImplementations.MoveEdgeUp(this, edge);
         }
 
-        public virtual void MoveEdgeDown(IGTFEdgeModel edge)
+        public virtual void MoveEdgeDown(IEdgeModel edge)
         {
             ReorderableEdgesPortDefaultImplementations.MoveEdgeDown(this, edge);
         }
 
-        public virtual void MoveEdgeLast(IGTFEdgeModel edge)
+        public virtual void MoveEdgeLast(IEdgeModel edge)
         {
             ReorderableEdgesPortDefaultImplementations.MoveEdgeLast(this, edge);
+        }
+
+        public void OnBeforeSerialize()
+        {
+            m_SerializedCapabilities = m_Capabilities?.Select(c => c.Name).ToList() ?? new List<string>();
+        }
+
+        public void OnAfterDeserialize()
+        {
+            if (!m_SerializedCapabilities.Any())
+                // If we're reloading an older node
+                InitCapabilities();
+            else
+                m_Capabilities = m_SerializedCapabilities.Select(Overdrive.Capabilities.Get).ToList();
+        }
+
+        protected virtual void InitCapabilities()
+        {
+            InternalInitCapabilities();
+        }
+
+        void InternalInitCapabilities()
+        {
+            m_Capabilities = new List<Capabilities>
+            {
+                Overdrive.Capabilities.NoCapabilities
+            };
         }
     }
 }

@@ -1,14 +1,14 @@
 using System;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.Model
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public interface IReorderableEdgesPort : IGTFPortModel
+    public interface IReorderableEdgesPort : IPortModel
     {
         bool HasReorderableEdges { get; }
 
-        void MoveEdgeFirst(IGTFEdgeModel edge);
-        void MoveEdgeUp(IGTFEdgeModel edge);
-        void MoveEdgeDown(IGTFEdgeModel edge);
-        void MoveEdgeLast(IGTFEdgeModel edge);
+        void MoveEdgeFirst(IEdgeModel edge);
+        void MoveEdgeUp(IEdgeModel edge);
+        void MoveEdgeDown(IEdgeModel edge);
+        void MoveEdgeLast(IEdgeModel edge);
     }
 }

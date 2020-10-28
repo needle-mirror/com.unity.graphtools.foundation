@@ -1,4 +1,6 @@
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+using System;
+
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class GraphViewBlackboardWindow : GraphViewToolWindow
     {
@@ -8,29 +10,24 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         protected override string ToolName => k_ToolName;
 
-        new void OnEnable()
+        protected override void OnEnable()
         {
             base.OnEnable();
 
             OnGraphViewChanged();
         }
 
-        void OnDisable()
+        protected override void OnDisable()
         {
-            if (m_SelectedGraphView != null && m_Blackboard != null)
-            {
-                m_SelectedGraphView.ReleaseBlackboard(m_Blackboard);
-            }
+            base.OnDisable();
+
+            OnGraphViewChanging();
         }
 
         protected override void OnGraphViewChanging()
         {
             if (m_Blackboard != null)
             {
-                if (m_SelectedGraphView != null)
-                {
-                    m_SelectedGraphView.ReleaseBlackboard(m_Blackboard);
-                }
                 rootVisualElement.Remove(m_Blackboard);
                 m_Blackboard = null;
             }
@@ -40,7 +37,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         {
             if (m_SelectedGraphView != null)
             {
-                m_Blackboard = m_SelectedGraphView.GetBlackboard();
+                m_Blackboard = m_SelectedGraphView.Blackboard;
                 m_Blackboard.windowed = true;
                 rootVisualElement.Add(m_Blackboard);
             }

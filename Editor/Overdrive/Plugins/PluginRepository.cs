@@ -1,11 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    class PluginRepository : IPluginRepository, IDisposable
+    public class PluginRepository : IPluginRepository, IDisposable
     {
         Store m_Store;
         GraphViewEditorWindow m_GraphView;

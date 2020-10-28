@@ -1,6 +1,6 @@
-using System;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
+using UnityEditor.GraphToolsFoundation.Overdrive.InternalModels;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
@@ -10,7 +10,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         [Test]
         public void EdgeHasExpectedParts()
         {
-            var model = new EdgeModel(null, null);
+            var model = new EdgeModel();
             var edge = new Edge();
             edge.SetupBuildAndUpdate(model, null, null);
 
@@ -21,7 +21,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         [Test]
         public void GhostEdgeHasExpectedClass()
         {
-            var model = new GhostEdgeModel(null, null);
+            var model = new GhostEdgeModel(null);
             var edge = new Edge();
             edge.SetupBuildAndUpdate(model, null, null);
 
@@ -31,7 +31,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         [Test]
         public void EdgeHasNotGhostClass()
         {
-            var model = new EdgeModel(null, null);
+            var model = new EdgeModel();
             var edge = new Edge();
             edge.SetupBuildAndUpdate(model, null, null);
 

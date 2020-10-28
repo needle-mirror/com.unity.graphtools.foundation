@@ -1,13 +1,11 @@
 using System;
 using System.Collections;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.Helpers;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIElementsTests
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIToolkitTests
 {
     public class CollapseButtonTests : BaseTestFixture
     {

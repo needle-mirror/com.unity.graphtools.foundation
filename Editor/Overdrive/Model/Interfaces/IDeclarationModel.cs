@@ -1,8 +1,8 @@
 using System;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.Model
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public interface IDeclarationModel : IGTFGraphElementModel, IHasTitle
+    public interface IDeclarationModel : IGraphElementModel, IHasTitle
     {
     }
 }

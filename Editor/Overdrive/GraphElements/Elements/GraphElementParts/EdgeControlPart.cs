@@ -1,15 +1,14 @@
 using System;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class EdgeControlPart : BaseGraphElementPart
     {
-        public static EdgeControlPart Create(string name, IGTFGraphElementModel model, IGraphElement ownerElement, string parentClassName)
+        public static EdgeControlPart Create(string name, IGraphElementModel model, IGraphElement ownerElement, string parentClassName)
         {
-            if (model is IGTFEdgeModel)
+            if (model is IEdgeModel)
             {
                 return new EdgeControlPart(name, model, ownerElement, parentClassName);
             }
@@ -21,7 +20,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         EdgeControl m_EdgeControl;
 
-        protected EdgeControlPart(string name, IGTFGraphElementModel model, IGraphElement ownerElement, string parentClassName)
+        protected EdgeControlPart(string name, IGraphElementModel model, IGraphElement ownerElement, string parentClassName)
             : base(name, model, ownerElement, parentClassName) {}
 
         protected override void BuildPartUI(VisualElement container)
@@ -39,7 +38,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         {
             m_EdgeControl.RebuildControlPointsUI();
 
-            if (m_Model is IGTFEdgeModel edgeModel)
+            if (m_Model is IEdgeModel edgeModel)
             {
                 m_EdgeControl.OutputOrientation = edgeModel.FromPort?.Orientation ?? (edgeModel.ToPort?.Orientation ?? Orientation.Horizontal);
                 m_EdgeControl.InputOrientation = edgeModel.ToPort?.Orientation ?? (edgeModel.FromPort?.Orientation ?? Orientation.Horizontal);
@@ -60,7 +59,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             }
             else
             {
-                var edgeModel = m_Model as IGTFEdgeModel;
+                var edgeModel = m_Model as IEdgeModel;
                 var inputColor = Color.white;
                 var outputColor = Color.white;
 

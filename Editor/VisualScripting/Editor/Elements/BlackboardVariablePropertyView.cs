@@ -50,10 +50,6 @@ namespace UnityEditor.VisualScripting.Editor
                 {
                     m_Store.Dispatch(new RefreshUIAction(UpdateFlags.RequestCompilation));
                 });
-
-//                m_InitializationObject = new SerializedObject(variableDeclarationModel.InitializationModel.NodeAssetReference);
-//                m_InitializationObject.Update();
-//                m_InitializationElement = new IMGUIContainer(OnInitializationGUI);
             }
         }
 

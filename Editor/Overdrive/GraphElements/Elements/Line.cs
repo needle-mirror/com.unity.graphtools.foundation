@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     struct Line
     {

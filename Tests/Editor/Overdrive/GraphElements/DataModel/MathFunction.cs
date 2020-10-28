@@ -1,41 +1,44 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public abstract class MathFunction : MathNode
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    [SerializeField]
-    protected MathNodeID[] m_ParameterIDs = new MathNodeID[0];
-    protected string[] m_ParameterNames = new string[0];
-
-    public string[] parameterNames { get { return m_ParameterNames; } }
-
-    public int parameterCount { get { return m_ParameterIDs.Length; } }
-
-    public MathNode GetParameter(int index)
+    public abstract class MathFunction : MathNode
     {
-        return m_ParameterIDs[index].Get(mathBook);
-    }
+        [SerializeField]
+        protected MathNodeID[] m_ParameterIDs = new MathNodeID[0];
+        protected string[] m_ParameterNames = new string[0];
 
-    public void SetParameter(int index, MathNode node)
-    {
-        m_ParameterIDs[index].Set(node);
-    }
+        public string[] parameterNames { get { return m_ParameterNames; } }
 
-    public override void ResetConnections()
-    {
-        for (int i = 0; i < m_ParameterIDs.Length; i++)
+        public int parameterCount { get { return m_ParameterIDs.Length; } }
+
+        public MathNode GetParameter(int index)
         {
-            m_ParameterIDs[i] = MathNodeID.empty;
+            return m_ParameterIDs[index].Get(mathBook);
         }
-    }
 
-    public override void RemapReferences(Dictionary<string, string> oldIDNewIDMap)
-    {
-        base.RemapReferences(oldIDNewIDMap);
-
-        for (int i = 0; i < m_ParameterIDs.Length; i++)
+        public void SetParameter(int index, MathNode node)
         {
-            RemapID(oldIDNewIDMap, ref m_ParameterIDs[i]);
+            m_ParameterIDs[index].Set(node);
+        }
+
+        public override void ResetConnections()
+        {
+            for (int i = 0; i < m_ParameterIDs.Length; i++)
+            {
+                m_ParameterIDs[i] = MathNodeID.empty;
+            }
+        }
+
+        public override void RemapReferences(Dictionary<string, string> oldIDNewIDMap)
+        {
+            base.RemapReferences(oldIDNewIDMap);
+
+            for (int i = 0; i < m_ParameterIDs.Length; i++)
+            {
+                RemapID(oldIDNewIDMap, ref m_ParameterIDs[i]);
+            }
         }
     }
 }

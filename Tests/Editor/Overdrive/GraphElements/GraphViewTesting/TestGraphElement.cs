@@ -1,8 +1,7 @@
 using System;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utilities
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
     public class TestGraphElement : GraphElement
     {

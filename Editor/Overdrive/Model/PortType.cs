@@ -1,7 +1,7 @@
 using System;
 using JetBrains.Annotations;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.Model
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class PortType : Enumeration
     {

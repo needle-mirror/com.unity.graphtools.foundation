@@ -1,7 +1,5 @@
 using System;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
-using UnityEngine.Scripting.APIUpdating;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 {

@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     class AutoSpacingHelper : AutoPlacementHelper
     {
@@ -20,13 +19,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             m_Orientation = orientation;
 
             // Get spacing delta for each element
-            Dictionary<IGTFGraphElementModel, Vector2> results = GetElementDeltaResults();
+            Dictionary<IGraphElementModel, Vector2> results = GetElementDeltaResults();
 
             // Dispatch action
             SendPlacementAction(results.Keys.ToList(), results.Values.ToList());
         }
 
-        protected override float GetStartingPosition(List<Tuple<Rect, List<IGTFGraphElementModel>>> boundingRects)
+        protected override float GetStartingPosition(List<Tuple<Rect, List<IGraphElementModel>>> boundingRects)
         {
             return m_Orientation == Orientation.Horizontal ? boundingRects.First().Item1.xMin : boundingRects.First().Item1.yMin;
         }
@@ -43,7 +42,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             return m_Orientation == Orientation.Horizontal ? new Vector2(offset, 0f) : new Vector2(0f, offset);
         }
 
-        protected override List<Tuple<Rect, List<IGTFGraphElementModel>>> GetBoundingRectsList(List<Tuple<Rect, List<IGTFGraphElementModel>>> boundingRects)
+        protected override List<Tuple<Rect, List<IGraphElementModel>>> GetBoundingRectsList(List<Tuple<Rect, List<IGraphElementModel>>> boundingRects)
         {
             return boundingRects.OrderBy(rect => m_Orientation == Orientation.Horizontal ? rect.Item1.x : rect.Item1.y).ToList();
         }

@@ -1,10 +1,13 @@
 using UnityEngine;
 
-public class PIConstant : MathConstant
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    public new void OnEnable()
+    public class PIConstant : MathConstant
     {
-        name = "PI";
-        m_Value = Mathf.PI;
+        public new void OnEnable()
+        {
+            name = "PI";
+            m_Value = Mathf.PI;
+        }
     }
 }

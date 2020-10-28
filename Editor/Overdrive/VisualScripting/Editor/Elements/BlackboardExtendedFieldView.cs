@@ -1,5 +1,4 @@
 using System;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -7,7 +6,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 {
     public abstract class BlackboardExtendedFieldView : VisualElement
     {
-        protected readonly Blackboard.RebuildCallback m_RebuildCallback;
+        protected readonly Overdrive.Blackboard.RebuildCallback m_RebuildCallback;
 
         protected void AddRow(string labelText, VisualElement control)
         {
@@ -28,12 +27,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             Add(row);
         }
 
-        protected BlackboardExtendedFieldView(IGTFVariableDeclarationModel model, Blackboard.RebuildCallback rebuildCallback)
+        protected BlackboardExtendedFieldView(IVariableDeclarationModel model, Overdrive.Blackboard.RebuildCallback rebuildCallback)
         {
             userData = model;
             m_RebuildCallback = rebuildCallback;
 
-            styleSheets.Add(AssetDatabase.LoadAssetAtPath<StyleSheet>(UICreationHelper.templatePath + "Blackboard.uss"));
+            styleSheets.Add(AssetDatabase.LoadAssetAtPath<StyleSheet>(PackageTransitionHelper.VSTemplatePath + "Blackboard.uss"));
 
             AddToClassList("blackboardFieldPropertyView");
         }

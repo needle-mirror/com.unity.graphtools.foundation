@@ -1,66 +1,69 @@
 using System;
 using UnityEngine;
 
-public class MathBookInputNode : MathValueNode, IMathBookFieldNode
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    [SerializeField]
-    private string m_FieldName;
-
-    public event Action<IMathBookFieldNode> changed;
-
-    public string fieldName
+    public class MathBookInputNode : MathValueNode, IMathBookFieldNode
     {
-        get
-        {
-            return m_FieldName;
-        }
-        set
-        {
-            m_FieldName = value;
-        }
-    }
+        [SerializeField]
+        private string m_FieldName;
 
-    public MathBookField.Direction direction { get { return MathBookField.Direction.Input; } }
+        public event Action<IMathBookFieldNode> changed;
 
-    public MathBookField field
-    {
-        get
+        public string fieldName
         {
-            if (mathBook != null)
+            get
             {
-                return mathBook.inputOutputs.FindField(m_FieldName);
+                return m_FieldName;
             }
-            return null;
-        }
-    }
-
-    public override float value
-    {
-        get
-        {
-            if (field != null)
+            set
             {
-                return field.value;
+                m_FieldName = value;
             }
-
-            return 0;
         }
-    }
 
-    public void OnEnable()
-    {
-        name = "MathBookInputNodeNode";
-    }
+        public MathBookField.Direction direction { get { return MathBookField.Direction.Input; } }
 
-    public override void ResetConnections()
-    {
-    }
-
-    public void NotifyChange()
-    {
-        if (changed != null)
+        public MathBookField field
         {
-            changed(this);
+            get
+            {
+                if (mathBook != null)
+                {
+                    return mathBook.inputOutputs.FindField(m_FieldName);
+                }
+                return null;
+            }
+        }
+
+        public override float value
+        {
+            get
+            {
+                if (field != null)
+                {
+                    return field.value;
+                }
+
+                return 0;
+            }
+        }
+
+        public void OnEnable()
+        {
+            name = "MathBookInputNodeNode";
+        }
+
+        public override void ResetConnections()
+        {
+        }
+
+        public void NotifyChange()
+        {
+            if (changed != null)
+            {
+                changed(this);
+            }
         }
     }
 }

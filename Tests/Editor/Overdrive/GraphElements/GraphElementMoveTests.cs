@@ -2,21 +2,19 @@ using System;
 using System.Collections;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utilities;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    public class GraphElementMoveTests : GraphViewTester
+    class GraphElementMoveTests : GraphViewTester
     {
         static readonly Vector2 k_NodePos = new Vector2(SelectionDragger.k_PanAreaWidth * 2, SelectionDragger.k_PanAreaWidth * 3);
         static readonly Rect k_MinimapRect = new Rect(100, 100, 100, 100);
         Vector2 k_SelectionOffset = new Vector2(100, 100);
 
-        BasicNodeModel m_NodeModel { get; set; }
+        INodeModel m_NodeModel { get; set; }
 
         [SetUp]
         public override void SetUp()

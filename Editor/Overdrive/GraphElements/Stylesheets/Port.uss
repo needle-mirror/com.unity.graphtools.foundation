@@ -27,6 +27,16 @@
     --port-color: #ffff00;
 }
 
+.ge-port--drop-highlighted {
+    border-color: var(--dragndrop-highlight-color);
+    background-color: var(--dragndrop-highlight-background-color);
+}
+
+.ge-port--drop-highlighted--denied {
+    border-color: var(--dragndrop-denied-color);
+    background-color: var(--dragndrop-denied-background-color);
+}
+
 .ge-port--direction-input {
     flex-direction: row;
 }
@@ -157,4 +167,123 @@
 
 .ge-port--data-type-missing-port Label {
     color:#ff0000;
+}
+
+/**************/
+/* Port icons */
+/**************/
+
+.ge-node__inputs .ge-port__icon {
+    margin-left: 4px;
+}
+
+.ge-node__outputs .ge-port__icon {
+    margin-right: 4px;
+}
+
+.ge-port--data-type-execution-flow .ge-port__icon {
+    display: none;
+}
+
+.ge-port--data-type-object .ge-port__icon {
+    --unity-image: url("Icons/Port/GraphicScript@x3.png");
+}
+
+.ge-port--data-type-texture2D .ge-port__icon {
+    --unity-image: url("Icons/Port/2DTexture@x3.png");
+}
+
+.ge-port--data-type-float4 .ge-port__icon,
+.ge-port--data-type-vector4 .ge-port__icon {
+    --unity-image: url("Icons/Port/Vector4@x3.png");
+}
+
+.ge-port--data-type-quaternion .ge-port__icon {
+    --unity-image: url("Icons/Port/Quaternion@x3.png");
+}
+
+.ge-port--data-type-color .ge-port__icon {
+    --unity-image: url("Icons/Port/Color@x3.png");
+}
+
+.ge-port--data-type-int .ge-port__icon {
+    --unity-image: url("Icons/Port/Integer1@x3.png");
+}
+
+.ge-port--data-type-int32 .ge-port__icon {
+    --unity-image: url("Icons/Port/Integer32@x3.png");
+}
+
+.ge-port--data-type-int64 .ge-port__icon {
+    --unity-image: url("Icons/Port/Integer64@x3.png");
+}
+
+.ge-port--data-type-boolean .ge-port__icon {
+    --unity-image: url("Icons/Port/Boolean@x3.png");
+}
+
+.ge-port--data-type-matrix .ge-port__icon,
+.ge-port--data-type-matrix4x4 .ge-port__icon {
+    --unity-image: url("Icons/Port/Matrix@x3.png");
+}
+
+.ge-port--data-type-game-object .ge-port__icon {
+    --unity-image: url("Icons/Port/GameObject@x3.png");
+}
+
+.ge-port--data-type-float .ge-port__icon,
+.ge-port--data-type-float1 .ge-port__icon,
+.ge-port--data-type-single .ge-port__icon,
+.ge-port--data-type-double .ge-port__icon {
+    --unity-image: url("Icons/Port/Double@x3.png");
+}
+
+.ge-port--data-type-float2 .ge-port__icon,
+.ge-port--data-type-vector2 .ge-port__icon {
+    --unity-image: url("Icons/Port/Vector2@x3.png");
+}
+
+.ge-port--data-type-array .ge-port__icon {
+    --unity-image: url("Icons/Port/Array@x3.png");
+}
+
+.ge-port--data-type-component .ge-port__icon {
+    --unity-image: url("Icons/Port/Component@x3.png");
+}
+
+.ge-port--data-type-raycast-hit .ge-port__icon {
+    --unity-image: url("Icons/Port/RaycastHit@x3.png");
+}
+
+.ge-port--data-type-advanced .ge-port__icon {
+    --unity-image: url("Icons/Port/Advanced@x3.png");
+}
+
+.ge-port--data-type-float3 .ge-port__icon,
+.ge-port--data-type-vector3 .ge-port__icon {
+    --unity-image: url("Icons/Port/Vector3@x3.png");
+}
+
+.ge-port--data-type-rigid-body .ge-port__icon {
+    --unity-image: url("Icons/Port/RigidBody@x3.png");
+}
+
+.ge-port--data-type-string .ge-port__icon {
+    --unity-image: url("Icons/Port/String@x3.png");
+}
+
+.ge-port--data-type-key-code .ge-port__icon {
+    --unity-image: url("Icons/Port/Keycode@x3.png");
+}
+
+.ge-port--data-type-text .ge-port__icon {
+    --unity-image: url("Icons/Port/Text@x3.png");
+}
+
+.ge-port--data-type-transform .ge-port__icon {
+    --unity-image: url("Icons/Port/Transform@x3.png");
+}
+
+.ge-port--data-type-material .ge-port__icon {
+    --unity-image: url("Icons/Port/Material@x3.png");
 }

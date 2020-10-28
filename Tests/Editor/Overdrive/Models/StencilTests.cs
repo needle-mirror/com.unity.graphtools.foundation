@@ -3,26 +3,26 @@ using System.Linq;
 using System.Reflection;
 using JetBrains.Annotations;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Compilation;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
 using UnityEngine;
 using UnityEngine.TestTools;
 
-public class DummyTestType {}
-
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
 {
+    public class DummyTestType {}
+
     class StencilTests
     {
         class TestStencil : Stencil
         {
+            public override Blackboard CreateBlackboard(Store store, GraphView graphView)
+            {
+                return null;
+            }
+
             public override ISearcherDatabaseProvider GetSearcherDatabaseProvider()
             {
                 return new ClassSearcherDatabaseProvider(this);
             }
-
-            public override IBuilder Builder => null;
         }
 
         [Test]

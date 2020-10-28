@@ -1,70 +1,104 @@
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 using UnityEngine.Assertions;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public abstract class GenericPlacematAction<DataType> : GenericModelAction<IGTFPlacematModel, DataType>
+    public class CreatePlacematAction : BaseAction
     {
-        public GenericPlacematAction(IGTFPlacematModel[] models, DataType value) : base(models, value)
+        public string Title;
+        public Rect Position;
+
+        public CreatePlacematAction()
         {
+            UndoString = "Create Placemat";
+        }
+
+        public CreatePlacematAction(string title, Rect position) : this()
+        {
+            Title = title;
+            Position = position;
+        }
+
+        public static void DefaultReducer(State previousState, CreatePlacematAction action)
+        {
+            previousState.PushUndo(action);
+
+            previousState.CurrentGraphModel.CreatePlacemat(action.Title, action.Position);
+            previousState.MarkForUpdate(UpdateFlags.GraphTopology);
         }
     }
 
-    public class ChangePlacematColorAction : GenericPlacematAction<Color>
+    // PF: The way this action is called is flawed. PlacematContainer needs to update itself from the model.
+    public class ChangePlacematZOrdersAction : ModelAction<IPlacematModel, int[]>
     {
-        public ChangePlacematColorAction(Color color, IGTFPlacematModel placematModel)
-            : base(new[] { placematModel }, color) {}
+        const string k_UndoStringSingular = "Reorder Placemat";
+        const string k_UndoStringPlural = "Reorder Placemats";
 
-        public static TState DefaultReducer<TState>(TState previousState, ChangePlacematColorAction action) where TState : State
+        public ChangePlacematZOrdersAction() : base(k_UndoStringSingular) {}
+
+        public ChangePlacematZOrdersAction(int[] zOrders, IPlacematModel[] placematModels)
+            : base(k_UndoStringSingular, k_UndoStringPlural, placematModels, zOrders)
         {
-            foreach (var model in action.Models)
-                model.Color = action.Value;
+            if (zOrders == null || placematModels == null)
+                return;
 
-            return previousState;
-        }
-    }
-
-    public class ChangePlacematZOrdersAction : GenericPlacematAction<int[]>
-    {
-        public ChangePlacematZOrdersAction(int[] zOrders, IGTFPlacematModel[] placematModels)
-            : base(placematModels, zOrders)
-        {
-            Assert.AreEqual(zOrders.Length, placematModels.Length, "You need to provide the same number of zOrder as placemats.");
+            Assert.AreEqual(zOrders.Length, placematModels.Length,
+                "You need to provide the same number of zOrder as placemats.");
             foreach (var zOrder in zOrders)
             {
-                Assert.AreEqual(1, zOrders.Count(i => i == zOrder), "Each order should be unique in the provided list.");
+                Assert.AreEqual(1, zOrders.Count(i => i == zOrder),
+                    "Each order should be unique in the provided list.");
             }
         }
 
-        public static TState DefaultReducer<TState>(TState previousState, ChangePlacematZOrdersAction action) where TState : State
+        public static void DefaultReducer(State previousState, ChangePlacematZOrdersAction action)
         {
-            for (var i = 0; i < action.Models.Length; i++)
-            {
-                action.Models[i].ZOrder = action.Value[i];
-            }
+            if (!action.Models.Any())
+                return;
 
-            return previousState;
+            previousState.PushUndo(action);
+
+            for (var index = 0; index < action.Models.Count; index++)
+            {
+                var placematModel = action.Models[index];
+                var zOrder = action.Value[index];
+                placematModel.ZOrder = zOrder;
+                previousState.MarkForUpdate(UpdateFlags.UpdateView, placematModel);
+            }
         }
     }
 
-    public class ChangePlacematPositionAction : GenericPlacematAction<Rect>
+    public class ChangePlacematLayoutAction : ModelAction<IPlacematModel, Rect>
     {
+        const string k_UndoStringSingular = "Resize Placemat";
+        const string k_UndoStringPlural = "Resize Placemats";
+
         public ResizeFlags ResizeFlags;
 
-        public ChangePlacematPositionAction(Rect position, ResizeFlags resizeWhat, params IGTFPlacematModel[] placematModels)
-            : base(placematModels, position)
+        public ChangePlacematLayoutAction()
+            : base(k_UndoStringSingular) {}
+
+        public ChangePlacematLayoutAction(Rect position, ResizeFlags resizeWhat, params IPlacematModel[] placematModels)
+            : base(k_UndoStringSingular, k_UndoStringPlural, placematModels, position)
         {
             ResizeFlags = resizeWhat;
         }
 
-        public static TState DefaultReducer<TState>(TState previousState, ChangePlacematPositionAction action) where TState : State
+        public static void DefaultReducer(State previousState, ChangePlacematLayoutAction action)
         {
-            foreach (var model in action.Models)
+            if (!action.Models.Any())
+                return;
+
+            if (action.ResizeFlags == ResizeFlags.None)
+                return;
+
+            previousState.PushUndo(action);
+
+            foreach (var placematModel in action.Models)
             {
-                var newRect = model.PositionAndSize;
+                var newRect = placematModel.PositionAndSize;
                 if ((action.ResizeFlags & ResizeFlags.Left) == ResizeFlags.Left)
                 {
                     newRect.x = action.Value.x;
@@ -81,32 +115,41 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                 {
                     newRect.height = action.Value.height;
                 }
-                model.PositionAndSize = newRect;
+                placematModel.PositionAndSize = newRect;
+                previousState.MarkForUpdate(UpdateFlags.UpdateView, placematModel);
             }
-
-            return previousState;
         }
     }
 
-    public class ExpandOrCollapsePlacematAction : IAction
+    public class SetPlacematCollapsedAction : BaseAction
     {
-        public readonly IGTFPlacematModel PlacematModel;
+        public readonly IPlacematModel PlacematModel;
         public readonly bool Collapse;
-        public readonly IEnumerable<IGTFGraphElementModel> CollapsedElements;
+        public readonly IReadOnlyList<IGraphElementModel> CollapsedElements;
 
-        public ExpandOrCollapsePlacematAction(bool collapse, IEnumerable<IGTFGraphElementModel> collapsedElements, IGTFPlacematModel placematModel)
+        public SetPlacematCollapsedAction()
+        {
+            UndoString = "Collapse Or Expand Placemat";
+        }
+
+        public SetPlacematCollapsedAction(IPlacematModel placematModel, bool collapse,
+                                          IReadOnlyList<IGraphElementModel> collapsedElements) : this()
         {
             PlacematModel = placematModel;
             Collapse = collapse;
             CollapsedElements = collapsedElements;
+
+            UndoString = Collapse ? "Collapse Placemat" : "Expand Placemat";
         }
 
-        public static TState DefaultReducer<TState>(TState previousState, ExpandOrCollapsePlacematAction action) where TState : State
+        public static void DefaultReducer(State previousState, SetPlacematCollapsedAction action)
         {
+            previousState.PushUndo(action);
+
             action.PlacematModel.Collapsed = action.Collapse;
             action.PlacematModel.HiddenElements = action.PlacematModel.Collapsed ? action.CollapsedElements : null;
 
-            return previousState;
+            previousState.MarkForUpdate(UpdateFlags.UpdateView, action.PlacematModel);
         }
     }
 }

@@ -1,11 +1,14 @@
 using UnityEngine;
 
-public abstract class MathValueNode : MathNode
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    public abstract float value { get; }
-
-    public override float Evaluate()
+    public abstract class MathValueNode : MathNode
     {
-        return value;
+        public abstract float value { get; }
+
+        public override float Evaluate()
+        {
+            return value;
+        }
     }
 }

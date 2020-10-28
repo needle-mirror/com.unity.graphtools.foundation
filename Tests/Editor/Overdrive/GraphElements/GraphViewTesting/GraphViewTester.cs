@@ -1,27 +1,25 @@
-using System;
 using System.Collections;
+using System.Linq;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-using UnityEditor.GraphToolsFoundation.Overdrive.Tests.Stylesheets;
+using UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utilities
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    public class State : Overdrive.State
+    class State : Overdrive.State
     {
-        BasicGraphModel m_GraphModel;
-        public override IGTFGraphModel CurrentGraphModel => m_GraphModel;
+        IGraphModel m_GraphModel;
+        public override IGraphModel CurrentGraphModel => m_GraphModel;
 
-        public State(BasicGraphModel graphModel) : base(null)
+        public State(IGraphModel graphModel) : base(null)
         {
             m_GraphModel = graphModel;
         }
     }
 
-    public class GraphViewTester
+    class GraphViewTester
     {
         static readonly Rect k_WindowRect = new Rect(Vector2.zero, new Vector2(SelectionDragger.k_PanAreaWidth * 8, SelectionDragger.k_PanAreaWidth * 6));
 
@@ -34,7 +32,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
         protected TestGraphViewWindow window { get; private set; }
         protected TestGraphView graphView { get; private set; }
         protected TestEventHelpers helpers { get; private set; }
-        protected BasicGraphModel GraphModel => window.GraphModel;
+        protected IGraphModel GraphModel => window.GraphModel;
         protected Store Store => window.Store;
 
         bool m_EnablePersistence;
@@ -104,30 +102,33 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
             }
         }
 
-        protected BasicNodeModel CreateNode(string title = "", Vector2 position = default, int inCount = 0, int outCount = 0, Orientation orientation = Orientation.Horizontal)
+        protected IONodeModel CreateNode(string title = "", Vector2 position = default, int inCount = 0, int outCount = 0, int exeInCount = 0, int exeOutCount = 0, Orientation orientation = Orientation.Horizontal)
         {
-            return CreateNode<BasicNodeModel>(title, position, inCount, outCount, orientation);
+            return CreateNode<IONodeModel>(title, position, inCount, outCount, exeInCount, exeOutCount, orientation);
         }
 
-        protected TNodeModel CreateNode<TNodeModel>(string title, Vector2 position, int inCount = 0, int outCount = 0, Orientation orientation = Orientation.Horizontal) where TNodeModel : BasicNodeModel, new()
+        protected TNodeModel CreateNode<TNodeModel>(string title, Vector2 position, int inCount = 0, int outCount = 0, int exeInCount = 0, int exeOutCount = 0, Orientation orientation = Orientation.Horizontal) where TNodeModel : IONodeModel, new()
         {
             var node = GraphModel.CreateNode<TNodeModel>(title);
             node.Position = position;
+            node.InputCount = inCount;
+            node.OuputCount = outCount;
+            node.ExeInputCount = exeInCount;
+            node.ExeOuputCount = exeOutCount;
 
-            for (int i = 0; i < outCount; i++)
+            node.DefineNode();
+
+            foreach (var portModel in node.Ports.Cast<PortModel>())
             {
-                node.AddPort(orientation, Direction.Output, PortCapacity.Multi, typeof(float));
-            }
-            for (int i = 0; i < inCount; i++)
-            {
-                node.AddPort(orientation, Direction.Input, PortCapacity.Single, typeof(float));
+                portModel.Orientation = orientation;
             }
 
             return node;
         }
 
-        protected IEnumerator ConnectPorts(IGTFPortModel fromPort, IGTFPortModel toPort)
+        protected IEnumerator ConnectPorts(IPortModel fromPort, IPortModel toPort)
         {
+            var originalEdgeCount = GraphModel.EdgeModels.Count;
             var fromPortUI = fromPort.GetUI<Port>(graphView);
             var toPortUI = toPort.GetUI<Port>(graphView);
 
@@ -140,16 +141,23 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
 
             graphView.RebuildUI(GraphModel, Store);
             yield return null;
+
+            Assert.AreEqual(originalEdgeCount + 1, GraphModel.EdgeModels.Count, "Edge has not been created");
         }
 
-        protected BasicPlacematModel CreatePlacemat(Rect posAndDim, string title = "", int zOrder = 0)
+        protected IPlacematModel CreatePlacemat(Rect posAndDim, string title = "", int zOrder = 0)
         {
-            return GraphModel.CreatePlacemat(title, posAndDim, zOrder);
+            var pm = GraphModel.CreatePlacemat(title, posAndDim);
+            pm.ZOrder = zOrder;
+            return pm;
         }
 
-        protected BasicStickyNoteModel CreateSticky(string title = "", string contents = "", Rect stickyRect = default)
+        protected IStickyNoteModel CreateSticky(string title = "", string contents = "", Rect stickyRect = default)
         {
-            return GraphModel.CreateStickyNodeGTF(title, contents, stickyRect);
+            var sticky = GraphModel.CreateStickyNote(stickyRect);
+            sticky.Contents = contents;
+            sticky.Title = title;
+            return sticky;
         }
 
         public static void AssertVector2AreEqualWithinDelta(Vector2 expected, Vector2 actual, float withinDelta, string message = null)

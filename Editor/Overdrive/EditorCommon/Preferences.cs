@@ -1,6 +1,7 @@
-using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
+
+// ReSharper disable InconsistentNaming
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
@@ -17,6 +18,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public static readonly BoolPref ErrorOnMultipleDispatchesPerFrame = new BoolPref(8, nameof(ErrorOnMultipleDispatchesPerFrame));
         public static readonly BoolPref LogAllDispatchedActions = new BoolPref(9, nameof(LogAllDispatchedActions));
         public static readonly BoolPref ShowUnusedNodes = new BoolPref(10, nameof(ShowUnusedNodes));
+        public static readonly BoolPref SearcherInRegularWindow = new BoolPref(11, nameof(SearcherInRegularWindow));
 
         [PublicAPI]
         protected static readonly int k_ToolBasePrefId = 10000;

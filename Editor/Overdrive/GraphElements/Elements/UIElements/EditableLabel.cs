@@ -2,7 +2,7 @@ using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class EditableLabel : VisualElementBridge
     {
@@ -28,6 +28,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         string m_CurrentValue;
 
+        protected ContextualMenuManipulator m_ContextualMenuManipulator;
+
         public bool multiline
         {
             set => m_TextField.multiline = value;
@@ -50,12 +52,37 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             m_TextField.RegisterCallback<BlurEvent>(OnFieldBlur);
             m_TextField.RegisterCallback<ChangeEvent<string>>(OnChange);
             m_TextField.isDelayed = true;
+
+            m_ContextualMenuManipulator = new ContextualMenuManipulator(BuildContextualMenu);
+            this.AddManipulator(m_ContextualMenuManipulator);
         }
 
         public void SetValueWithoutNotify(string value)
         {
             ((INotifyValueChanged<string>)m_Label).SetValueWithoutNotify(value);
             m_TextField.SetValueWithoutNotify(value);
+        }
+
+        protected virtual void BuildContextualMenu(ContextualMenuPopulateEvent evt)
+        {
+            if (evt.menu.MenuItems().Count > 0)
+                evt.menu.AppendSeparator();
+
+            if (m_TextField.style.display == DisplayStyle.None)
+            {
+                evt.menu.AppendAction("Edit", action => BeginEditing());
+            }
+        }
+
+        public void BeginEditing()
+        {
+            m_CurrentValue = m_Label.text;
+
+            m_Label.style.display = DisplayStyle.None;
+            m_TextField.style.display = StyleKeyword.Null;
+
+            m_TextField.Q(TextField.textInputUssName).Focus();
+            m_TextField.SelectAll();
         }
 
         void OnLabelMouseDown(MouseDownEvent e)
@@ -71,13 +98,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                     }
                     else if (e.clickCount == 2)
                     {
-                        m_CurrentValue = m_Label.text;
-
-                        m_Label.style.display = DisplayStyle.None;
-                        m_TextField.style.display = StyleKeyword.Null;
-
-                        m_TextField.Q(TextField.textInputUssName).Focus();
-                        m_TextField.SelectAll();
+                        BeginEditing();
 
                         e.StopPropagation();
                         e.PreventDefault();

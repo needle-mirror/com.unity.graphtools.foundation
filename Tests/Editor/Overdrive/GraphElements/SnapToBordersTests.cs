@@ -2,15 +2,13 @@ using System;
 using System.Collections;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEngine.UIElements;
 using UnityEngine.TestTools;
-using UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utilities;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    public class SnapToBordersTests : GraphViewSnappingTester
+    class SnapToBordersTests : GraphViewSnappingTester
     {
         static readonly Vector2 k_ReferenceNodePos = new Vector2(SelectionDragger.k_PanAreaWidth, SelectionDragger.k_PanAreaWidth);
         static readonly Vector2 k_SnappedNodeSize = new Vector2(100, 100);

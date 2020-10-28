@@ -1,27 +1,27 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.Model
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public static class NodeModelExtensions
     {
-        public static IEnumerable<IGTFPortModel> GetInputPorts(this IInOutPortsNode self)
+        public static IEnumerable<IPortModel> GetInputPorts(this IInOutPortsNode self)
         {
             return self.InputsById.Values;
         }
 
-        public static IEnumerable<IGTFPortModel> GetOutputPorts(this IInOutPortsNode self)
+        public static IEnumerable<IPortModel> GetOutputPorts(this IInOutPortsNode self)
         {
             return self.OutputsById.Values;
         }
 
-        internal static IEnumerable<IGTFPortModel> ConnectedPortsWithReorderableEdges(this IPortNode self)
+        internal static IEnumerable<IPortModel> ConnectedPortsWithReorderableEdges(this IPortNode self)
         {
             return self.Ports?.OfType<IReorderableEdgesPort>().Where(p => p.HasReorderableEdges)
-                ?? Enumerable.Empty<IGTFPortModel>();
+                ?? Enumerable.Empty<IPortModel>();
         }
 
-        public static void RevealReorderableEdgesOrder(this IPortNode self, bool show, IGTFEdgeModel edgeToShow = null)
+        public static void RevealReorderableEdgesOrder(this IPortNode self, bool show, IEdgeModel edgeToShow = null)
         {
             var outputPortsWithReorderableEdges = self.ConnectedPortsWithReorderableEdges();
             if (edgeToShow != null)
@@ -34,7 +34,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Model
                 ShowEdgeIndex(portModel);
             }
 
-            void ShowEdgeIndex(IGTFPortModel portModel)
+            void ShowEdgeIndex(IPortModel portModel)
             {
                 var edges = portModel.GetConnectedEdges().ToList();
 

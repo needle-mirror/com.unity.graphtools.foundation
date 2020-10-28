@@ -1,14 +1,13 @@
 using System;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class StickyNoteContentPart : BaseGraphElementPart
     {
-        public static StickyNoteContentPart Create(string name, IGTFGraphElementModel model, IGraphElement graphElement, string parentClassName)
+        public static StickyNoteContentPart Create(string name, IGraphElementModel model, IGraphElement graphElement, string parentClassName)
         {
-            if (model is IGTFStickyNoteModel)
+            if (model is IStickyNoteModel)
             {
                 return new StickyNoteContentPart(name, model, graphElement, parentClassName);
             }
@@ -20,12 +19,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         public override VisualElement Root => TextLabel;
 
-        protected StickyNoteContentPart(string name, IGTFGraphElementModel model, IGraphElement ownerElement, string parentClassName)
+        protected StickyNoteContentPart(string name, IGraphElementModel model, IGraphElement ownerElement, string parentClassName)
             : base(name, model, ownerElement, parentClassName) {}
 
         protected override void BuildPartUI(VisualElement container)
         {
-            if (m_Model is IGTFStickyNoteModel)
+            if (m_Model is IStickyNoteModel)
             {
                 TextLabel = new EditableLabel { name = PartName };
                 TextLabel.multiline = true;
@@ -40,14 +39,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         {
             if (TextLabel != null)
             {
-                var value = (m_Model as IGTFStickyNoteModel)?.Contents ?? String.Empty;
+                var value = (m_Model as IStickyNoteModel)?.Contents ?? String.Empty;
                 TextLabel.SetValueWithoutNotify(value);
             }
         }
 
         protected void OnRename(ChangeEvent<string> e)
         {
-            m_OwnerElement.Store.Dispatch(new UpdateStickyNoteAction(m_Model as IGTFStickyNoteModel, null, e.newValue));
+            m_OwnerElement.Store.Dispatch(new UpdateStickyNoteAction(m_Model as IStickyNoteModel, null, e.newValue));
         }
     }
 }

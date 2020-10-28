@@ -1,12 +1,15 @@
 using System;
 
-public interface IMathBookFieldNode
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    event Action<IMathBookFieldNode> changed;
+    public interface IMathBookFieldNode
+    {
+        event Action<IMathBookFieldNode> changed;
 
-    string fieldName { get; set; }
-    MathBookField.Direction direction { get; }
-    MathBookField field { get; }
+        string fieldName { get; set; }
+        MathBookField.Direction direction { get; }
+        MathBookField field { get; }
 
-    void NotifyChange();
+        void NotifyChange();
+    }
 }

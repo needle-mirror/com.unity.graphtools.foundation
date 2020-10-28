@@ -2,16 +2,14 @@ using System;
 using System.Collections;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
+using UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels;
 using UnityEngine.UIElements;
 using UnityEngine.TestTools;
-using UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utilities;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    public class SnapToPortTests : GraphViewSnappingTester
+    class SnapToPortTests : GraphViewSnappingTester
     {
         static readonly Vector2 k_NodeSize = new Vector2(200, 200);
         static readonly Vector2 k_ReferenceNodePos = new Vector2(SelectionDragger.k_PanAreaWidth, SelectionDragger.k_PanAreaWidth);
@@ -139,7 +137,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 yield return null;
             }
 
-
             // The node should snap to the reference node's position in X: the Y should be dragged normally
             Assert.AreEqual(outputPortUI.GetGlobalCenter().x, inputPortUI.GetGlobalCenter().x);
             Assert.AreNotEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.x + moveOffset.x),
@@ -205,20 +202,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             //             +-------+ o Node3 |
             //                       +-------+
 
-            referenceNode1Model = CreateNode("Node1", GraphViewStaticBridge.RoundToPixelGrid(k_ReferenceNodePos));
+            referenceNode1Model = CreateNode("Node1", GraphViewStaticBridge.RoundToPixelGrid(k_ReferenceNodePos), 0, 1);
 
             m_SnappingNodePos = GraphViewStaticBridge.RoundToPixelGrid(new Vector2(k_ReferenceNodePos.x + k_NodeSize.x, k_ReferenceNodePos.y + k_NodeSize.y * 0.5f));
-            snappingNodeModel = CreateNode("Node2", m_SnappingNodePos);
+            snappingNodeModel = CreateNode("Node2", m_SnappingNodePos, 1, 1);
 
             // Third node
             Vector2 secondReferenceNodePos = GraphViewStaticBridge.RoundToPixelGrid(new Vector2(m_SnappingNodePos.x + k_NodeSize.x, m_SnappingNodePos.y + k_NodeSize.y * 0.5f));
-            BasicNodeModel secondReferenceNodeModel = CreateNode("Node3", secondReferenceNodePos);
+            IInOutPortsNode secondReferenceNodeModel = CreateNode("Node3", secondReferenceNodePos, 1);
 
-            // Add a horizontal port on each node
-            var node1OutputPort = referenceNode1Model.AddPort(Orientation.Horizontal, Direction.Output, PortCapacity.Single, typeof(float));
-            var node2InputPort = snappingNodeModel.AddPort(Orientation.Horizontal, Direction.Input, PortCapacity.Single, typeof(float));
-            var node2OutputPort = snappingNodeModel.AddPort(Orientation.Horizontal, Direction.Output, PortCapacity.Single, typeof(float));
-            var node3InputPort = secondReferenceNodeModel.AddPort(Orientation.Horizontal, Direction.Input, PortCapacity.Single, typeof(float));
+            var node1OutputPort = referenceNode1Model.OutputsByDisplayOrder[0];
+            var node2InputPort = snappingNodeModel.InputsByDisplayOrder[0];
+            var node2OutputPort = snappingNodeModel.OutputsByDisplayOrder[0];
+            var node3InputPort = secondReferenceNodeModel.InputsByDisplayOrder[0];
             Assert.IsNotNull(node1OutputPort);
             Assert.IsNotNull(node2InputPort);
             Assert.IsNotNull(node2OutputPort);
@@ -245,12 +241,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             // We move the snapping Node2 toward reference Node1 within the snapping range
             float offSetY = k_SnapDistance - k_NodeSize.y * 0.5f;
             Vector2 moveOffset = GraphViewStaticBridge.RoundToPixelGrid(new Vector2(0, offSetY));
+            Vector2 end = start + moveOffset;
 
             // Move the snapping node.
             helpers.MouseDownEvent(start);
             yield return null;
 
-            Vector2 end = start + moveOffset;
             helpers.MouseDragEvent(start, end);
             yield return null;
 
@@ -314,20 +310,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             //             +-------+ o Node3 |
             //                       +-------+
 
-            referenceNode1Model = CreateNode("Node1", k_ReferenceNodePos);
+            referenceNode1Model = CreateNode("Node1", k_ReferenceNodePos, 0, 1);
 
             m_SnappingNodePos = new Vector2(k_ReferenceNodePos.x + k_NodeSize.x, k_ReferenceNodePos.y + k_NodeSize.y * 0.5f);
-            snappingNodeModel = CreateNode("Node2", m_SnappingNodePos);
+            snappingNodeModel = CreateNode("Node2", m_SnappingNodePos, 1, 1);
 
             // Third node
             Vector2 secondSelectedNodePos = new Vector2(m_SnappingNodePos.x + k_NodeSize.x, m_SnappingNodePos.y + k_NodeSize.y * 0.5f);
-            BasicNodeModel secondSelectedNodeModel = CreateNode("Node3", secondSelectedNodePos);
+            IInOutPortsNode secondSelectedNodeModel = CreateNode("Node3", secondSelectedNodePos, 1);
 
-            // Add a horizontal port on each node
-            var node1OutputPort = referenceNode1Model.AddPort(Orientation.Horizontal, Direction.Output, PortCapacity.Single, typeof(float));
-            var node2InputPort = snappingNodeModel.AddPort(Orientation.Horizontal, Direction.Input, PortCapacity.Single, typeof(float));
-            var node2OutputPort = snappingNodeModel.AddPort(Orientation.Horizontal, Direction.Output, PortCapacity.Single, typeof(float));
-            var node3InputPort = secondSelectedNodeModel.AddPort(Orientation.Horizontal, Direction.Input, PortCapacity.Single, typeof(float));
+            var node1OutputPort = referenceNode1Model.OutputsByDisplayOrder[0];
+            var node2InputPort = snappingNodeModel.InputsByDisplayOrder[0];
+            var node2OutputPort = snappingNodeModel.OutputsByDisplayOrder[0];
+            var node3InputPort = secondSelectedNodeModel.InputsByDisplayOrder[0];
             Assert.IsNotNull(node1OutputPort);
             Assert.IsNotNull(node2InputPort);
             Assert.IsNotNull(node2OutputPort);
@@ -417,13 +412,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             m_SnappingNodePos = new Vector2(k_ReferenceNodePos.x + k_NodeSize.x, k_ReferenceNodePos.y);
 
-            referenceNode1Model = CreateNode("Node1", k_ReferenceNodePos);
-            snappingNodeModel = CreateNode("Node2", m_SnappingNodePos);
+            referenceNode1Model = CreateNode("Node1", k_ReferenceNodePos, 0, 0, 0, 2);
+            snappingNodeModel = CreateNode("Node2", m_SnappingNodePos, 0, 0, 1);
 
-            // Add horizontal ports on each node
-            var node1FirstOutputPort = referenceNode1Model.AddPort(Orientation.Horizontal, Direction.Output, PortCapacity.Single, typeof(float));
-            var node1SecondOutputPort = referenceNode1Model.AddPort(Orientation.Horizontal, Direction.Output, PortCapacity.Single, typeof(float));
-            var node2InputPort = snappingNodeModel.AddPort(Orientation.Horizontal, Direction.Input, PortCapacity.Multi, typeof(float));
+            var node1FirstOutputPort = referenceNode1Model.OutputsByDisplayOrder[0];
+            var node1SecondOutputPort = referenceNode1Model.OutputsByDisplayOrder[1];
+            var node2InputPort = snappingNodeModel.InputsByDisplayOrder[0] as PortModel;
+
+            Debug.Log("Capacity = " + node2InputPort.Capacity);
+
             Assert.IsNotNull(node1FirstOutputPort);
             Assert.IsNotNull(node1SecondOutputPort);
             Assert.IsNotNull(node2InputPort);

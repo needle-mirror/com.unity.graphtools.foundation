@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public abstract class GraphViewToolWindow : GraphViewToolWindowBridge
     {
@@ -21,7 +21,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         const string k_DefaultSelectorName = "Select a panel";
 
-        Toolbar m_Toolbar;
+        UIElements.Toolbar m_Toolbar;
         protected VisualElement m_ToolbarContainer;
         ToolbarMenu m_SelectorMenu;
 
@@ -52,13 +52,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             SelectGraphView(gvChoice);
         }
 
-        protected void OnEnable()
+        protected virtual void OnEnable()
         {
             var root = rootVisualElement;
 
             this.SetAntiAliasing(4);
 
-            m_Toolbar = new Toolbar();
+            m_Toolbar = new UIElements.Toolbar();
 
             // Register panel choice refresh on the toolbar so the event
             // is received before the ToolbarPopup clickable handle it.
@@ -89,7 +89,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             titleContent.text = ToolName;
         }
 
-        void Update()
+        protected virtual void OnDisable()
+        {
+        }
+
+        protected virtual void Update()
         {
             // We need to wait until all the windows are created to re-assign a potential graphView.
             if (m_FirstUpdate)

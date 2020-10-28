@@ -1,7 +1,7 @@
 using UnityEngine.Assertions;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Stylesheets
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
 {
     public static class StylesheetsHelper
     {

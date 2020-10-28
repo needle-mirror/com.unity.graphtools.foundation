@@ -1,6 +1,6 @@
 using System;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
+using UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
 {
@@ -9,7 +9,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         [Test]
         public void ChangingEditModeAddClassName()
         {
-            var model = new EdgeModel(null, null);
+            var model = new EdgeModel();
             var edge = new Edge();
             edge.SetupBuildAndUpdate(model, null, null);
 

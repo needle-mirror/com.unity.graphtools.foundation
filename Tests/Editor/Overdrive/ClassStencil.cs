@@ -1,13 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Compilation;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
 using UnityEngine;
 using UnityEngine.Scripting.APIUpdating;
-using PortInitializationTraversal = UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.PortInitializationTraversal;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
 {
@@ -34,9 +29,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
             "visualscripting"
         };
 
-        public override IBuilder Builder => null;
-
-        public override void PreProcessGraph(IGTFGraphModel graphModel)
+        public override void PreProcessGraph(IGraphModel graphModel)
         {
             new PortInitializationTraversal().VisitGraph(graphModel);
         }
@@ -49,6 +42,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
         public override ISearcherDatabaseProvider GetSearcherDatabaseProvider()
         {
             return m_SearcherDatabaseProvider ?? (m_SearcherDatabaseProvider = new ClassSearcherDatabaseProvider(this));
+        }
+
+        public override Blackboard CreateBlackboard(Store store, GraphView graphView)
+        {
+            return new Blackboard(store, graphView);
         }
 
         public override List<ITypeMetadata> GetAssembliesTypesMetadata()

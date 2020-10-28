@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Scripting.APIUpdating;
 using UnityEngine.Serialization;
@@ -10,7 +10,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
     [Serializable]
     //[MovedFrom(false, "UnityEditor.VisualScripting.GraphViewModel", "Unity.GraphTools.Foundation.Overdrive.Editor")]
     [MovedFrom("UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel")]
-    public class EdgeModel : IEditableEdge
+    public class EdgeModel : IEditableEdge, ISerializationCallbackReceiver
     {
         [SerializeField]
         GraphAssetModel m_GraphAssetModel;
@@ -28,22 +28,27 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         bool m_EditMode;
 
         [SerializeField]
-        string m_EdgeLabel;
+        protected string m_EdgeLabel;
 
         [SerializeField]
         SerializableGUID m_Guid;
 
-        IGTFPortModel m_FromPortModelCache;
+        [SerializeField]
+        List<string> m_SerializedCapabilities;
 
-        IGTFPortModel m_ToPortModelCache;
+        protected List<Capabilities> m_Capabilities;
 
-        public IGTFGraphAssetModel AssetModel
+        IPortModel m_FromPortModelCache;
+
+        IPortModel m_ToPortModelCache;
+
+        public IGraphAssetModel AssetModel
         {
             get => m_GraphAssetModel;
             set => m_GraphAssetModel = (GraphAssetModel)value;
         }
 
-        public IGTFGraphModel GraphModel
+        public virtual IGraphModel GraphModel
         {
             get
             {
@@ -59,7 +64,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             set => throw new NotImplementedException();
         }
 
-        public IGTFPortModel FromPort
+        public virtual IPortModel FromPort
         {
             get => m_FromPortReference.GetPortModel(Direction.Output, ref m_FromPortModelCache);
             set
@@ -69,7 +74,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             }
         }
 
-        public IGTFPortModel ToPort
+        public virtual IPortModel ToPort
         {
             get => m_ToPortReference.GetPortModel(Direction.Input, ref m_ToPortModelCache);
             set
@@ -87,7 +92,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
         public GUID ToNodeGuid => m_ToPortReference.NodeModelGuid;
 
-        public string EdgeLabel
+        public virtual string EdgeLabel
         {
             get => m_EdgeLabel ?? (FromPort as IHasTitle)?.Title ?? "";
             set => m_EdgeLabel = value;
@@ -110,11 +115,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             set => m_EditMode = value;
         }
 
-        public bool IsCopiable => true;
+        public virtual IReadOnlyList<Capabilities> Capabilities => m_Capabilities;
 
-        public virtual bool IsDeletable => true;
+        public EdgeModel()
+        {
+            InternalInitCapabilities();
+        }
 
-        public void SetPorts(IGTFPortModel toPortModel, IGTFPortModel fromPortModel)
+        public virtual void SetPorts(IPortModel toPortModel, IPortModel fromPortModel)
         {
             FromPort = fromPortModel;
             ToPort = toPortModel;
@@ -155,6 +163,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
         public void Move(Vector2 delta)
         {
+            if (!this.IsMovable())
+                return;
+
             int i = 0;
             foreach (var point in EdgeControlPoints)
             {
@@ -171,7 +182,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             return true;
         }
 
-        public bool AddPlaceHolderPorts(out IGTFNodeModel inputNode, out IGTFNodeModel outputNode)
+        public bool AddPlaceHolderPorts(out INodeModel inputNode, out INodeModel outputNode)
         {
             bool result = true;
             inputNode = outputNode = null;
@@ -204,6 +215,36 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         public void AssignNewGuid()
         {
             m_Guid = GUID.Generate();
+        }
+
+        public void OnBeforeSerialize()
+        {
+            m_SerializedCapabilities = m_Capabilities?.Select(c => c.Name).ToList() ?? new List<string>();
+        }
+
+        public void OnAfterDeserialize()
+        {
+            if (!m_SerializedCapabilities.Any())
+                // If we're reloading an older node
+                InitCapabilities();
+            else
+                m_Capabilities = m_SerializedCapabilities.Select(Overdrive.Capabilities.Get).ToList();
+        }
+
+        protected virtual void InitCapabilities()
+        {
+            InternalInitCapabilities();
+        }
+
+        void InternalInitCapabilities()
+        {
+            m_Capabilities = new List<Capabilities>
+            {
+                Overdrive.Capabilities.Deletable,
+                Overdrive.Capabilities.Copiable,
+                Overdrive.Capabilities.Selectable,
+                Overdrive.Capabilities.Movable
+            };
         }
     }
 }

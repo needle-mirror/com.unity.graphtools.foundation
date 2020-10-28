@@ -1,7 +1,6 @@
 using System;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEngine;
 
 // ReSharper disable AccessToStaticMemberViaDerivedType
@@ -69,7 +68,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                     Assert.That(GetEdgeCount(), Is.EqualTo(0));
                     Assert.That(GetStickyNoteCount(), Is.EqualTo(1));
                     Assert.That(GetStickyNote(0).PositionAndSize, Is.EqualTo(k_StickyNoteRect));
-                    return new ResizeStickyNoteAction(stickyNote, k_StickyNote2Rect, ResizeFlags.All);
+                    return new ChangeStickyNoteLayoutAction(stickyNote, k_StickyNote2Rect, ResizeFlags.All);
                 },
                 () =>
                 {

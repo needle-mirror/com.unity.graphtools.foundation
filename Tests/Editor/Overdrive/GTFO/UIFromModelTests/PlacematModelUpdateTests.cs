@@ -1,7 +1,5 @@
-using System;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.Helpers;
+using UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -17,14 +15,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         public void SetUp()
         {
             m_GraphModel = new GraphModel();
-            m_Store = new Store(new Helpers.TestState(m_GraphModel), StoreHelper.RegisterReducers);
-            m_GraphView = new TestGraphView(m_Store);
+            m_Store = new Store(new TestState(m_GraphModel));
+            StoreHelper.RegisterDefaultReducers(m_Store);
+            m_GraphView = new TestGraphView(null, m_Store);
         }
 
         [Test]
         public void CollapsingPlacematModelCollapsesPlacemat()
         {
-            var placematModel = new PlacematModel();
+            var placematModel = m_GraphModel.CreatePlacemat();
             var placemat = new Placemat();
             placemat.SetupBuildAndUpdate(placematModel, m_Store, m_GraphView);
 
@@ -42,7 +41,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             const string initialTitle = "Initial title";
             const string newTitle = "New title";
 
-            var placematModel = new PlacematModel { Title = initialTitle };
+            var placematModel = m_GraphModel.CreatePlacemat();
+            placematModel.Title = initialTitle;
             var placemat = new Placemat();
             placemat.SetupBuildAndUpdate(placematModel, m_Store, m_GraphView);
 
@@ -58,9 +58,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         public void ResizingPlacematModelUpdatesPlacematRect()
         {
             var initialRect = new Rect(0, 0, 400, 400);
-            var newRect = new Rect(50, 70, 500, 300);;
+            var newRect = new Rect(50, 70, 500, 300);
 
-            var placematModel = new PlacematModel { PositionAndSize = initialRect };
+            var placematModel = m_GraphModel.CreatePlacemat();
+            placematModel.PositionAndSize = initialRect;
             var placemat = new Placemat();
             placemat.SetupBuildAndUpdate(placematModel, m_Store, m_GraphView);
 

@@ -1,8 +1,6 @@
-using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class BlackboardRow : VisualElement
     {
@@ -12,7 +10,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         private VisualElement m_PropertyViewContainer;
         private bool m_Expanded = true;
 
-        public IGTFVariableDeclarationModel Model { get; set; }
+        public IVariableDeclarationModel Model { get; set; }
 
         public bool expanded
         {

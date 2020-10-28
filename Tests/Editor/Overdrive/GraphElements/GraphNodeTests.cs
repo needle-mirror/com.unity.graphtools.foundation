@@ -1,22 +1,18 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-using UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utilities;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    public class GraphNodeTests : GraphViewTester
+    class GraphNodeTests : GraphViewTester
     {
-        BasicNodeModel m_Node1;
-        BasicNodeModel m_Node2;
+        IInOutPortsNode m_Node1;
+        IInOutPortsNode m_Node2;
 
         [SetUp]
         public override void SetUp()
@@ -61,7 +57,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             }
 
             // Disconnect the ports of the 2 nodes.
-            GraphModel.Disconnect(edge);
+            GraphModel.DeleteEdge(edge);
             graphView.RebuildUI(GraphModel, Store);
             nodeList = graphView.Nodes.ToList();
 

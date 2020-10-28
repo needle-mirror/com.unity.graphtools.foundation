@@ -5,7 +5,7 @@ using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class MiniMap : GraphElement
     {
@@ -123,13 +123,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             RegisterCallback<MouseDownEvent>(OnMouseDown);
             m_Label.RegisterCallback<MouseDownEvent>(EatMouseDown);
 
-            this.AddManipulator(new ContextualMenuManipulator(BuildContextualMenu));
             this.AddStylesheet("Minimap.uss");
 
             generateVisualContent += OnGenerateVisualContent;
         }
 
-        public override bool IsPositioned()
+        public override bool IsMovable()
         {
             return !m_Windowed && !m_Anchored;
         }
@@ -137,12 +136,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         void ToggleAnchorState(DropdownMenuAction a)
         {
             Anchored = !Anchored;
-        }
-
-        public virtual void BuildContextualMenu(ContextualMenuPopulateEvent evt)
-        {
-            if (!Windowed)
-                evt.menu.AppendAction(Anchored ? "Make floating" : "Anchor", ToggleAnchorState, DropdownMenuAction.AlwaysEnabled);
         }
 
         void Resize()
@@ -427,7 +420,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         void EatMouseDown(MouseDownEvent e)
         {
             // The minimap should not let any left mouse down go through when it's not movable.
-            if (e.button == (int)MouseButton.LeftMouse && !IsPositioned())
+            if (e.button == (int)MouseButton.LeftMouse && !IsMovable())
             {
                 e.StopPropagation();
             }

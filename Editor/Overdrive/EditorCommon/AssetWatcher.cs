@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -49,20 +47,20 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public void AddWatchedType(Type t)
         {
-            if (typeof(IGTFGraphAssetModel).IsAssignableFrom(t))
+            if (typeof(IGraphAssetModel).IsAssignableFrom(t))
             {
                 var graphAssetGUIDs = AssetDatabase.FindAssets("t:" + t.FullName);
                 foreach (var guid in graphAssetGUIDs)
                 {
                     var path = AssetDatabase.GUIDToAssetPath(guid);
-                    var graphAssetModel = AssetDatabase.LoadMainAssetAtPath(path) as IGTFGraphAssetModel;
+                    var graphAssetModel = AssetDatabase.LoadMainAssetAtPath(path) as IGraphAssetModel;
                     if (graphAssetModel != null)
                         WatchGraphAssetAtPath(path, graphAssetModel);
                 }
             }
         }
 
-        public void WatchGraphAssetAtPath(string path, IGTFGraphAssetModel graphAssetModel)
+        public void WatchGraphAssetAtPath(string path, IGraphAssetModel graphAssetModel)
         {
             if (graphAssetModel != null)
             {
@@ -122,7 +120,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                         if (!string.IsNullOrEmpty(newGraphName) && newGraphName != oldGraphName)
                         {
                             AssetDatabase.DeleteAsset(path);
-                            if (AssetDatabase.LoadAssetAtPath<Object>(newAsset) is IGTFGraphAssetModel newAssetModel)
+                            if (AssetDatabase.LoadAssetAtPath<Object>(newAsset) is IGraphAssetModel newAssetModel)
                             {
                                 newAssetModel.Name = newGraphName;
                                 newAssetModel.GraphModel.Name = newGraphName;
@@ -137,7 +135,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             var importedGraphAssets = importedAssets.Where(AssetAtPathIsGraphAsset).ToList();
             foreach (var importedGraphAsset in importedGraphAssets)
             {
-                if (AssetDatabase.LoadAssetAtPath<Object>(importedGraphAsset) is IGTFGraphAssetModel graphAssetModel)
+                if (AssetDatabase.LoadAssetAtPath<Object>(importedGraphAsset) is IGraphAssetModel graphAssetModel)
                 {
                     var path = graphAssetModel.GraphModel?.GetSourceFilePath();
                     if (path != null)
@@ -155,7 +153,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (Path.GetExtension(path) != ".asset")
                 return false;
 
-            return typeof(IGTFGraphAssetModel).IsAssignableFrom(AssetDatabase.GetMainAssetTypeAtPath(path));
+            return typeof(IGraphAssetModel).IsAssignableFrom(AssetDatabase.GetMainAssetTypeAtPath(path));
         }
     }
 }

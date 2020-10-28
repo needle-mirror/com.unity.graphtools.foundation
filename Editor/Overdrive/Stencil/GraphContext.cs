@@ -1,5 +1,4 @@
 using System;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
@@ -12,7 +11,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             TypeMetadataResolver = new TypeMetadataResolver();
         }
 
-        public bool RequiresInitialization(IGTFVariableDeclarationModel decl)
+        public bool RequiresInitialization(IVariableDeclarationModel decl)
         {
             if (decl == null)
                 return false;
@@ -23,7 +22,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             return (variableType == VariableType.GraphVariable) && (dataType.IsValueType || dataType == typeof(string));
         }
 
-        public bool RequiresInspectorInitialization(IGTFVariableDeclarationModel decl)
+        public bool RequiresInspectorInitialization(IVariableDeclarationModel decl)
         {
             Type dataType = TypeSerializer.ResolveType(decl.DataType);
             return RequiresInitialization(decl);

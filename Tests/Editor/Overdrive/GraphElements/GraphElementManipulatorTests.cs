@@ -2,22 +2,24 @@ using System;
 using System.Collections;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utilities;
+using UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    public class GraphElementManipulatorTests : GraphViewTester
+    class GraphElementManipulatorTests : GraphViewTester
     {
-        BasicNodeModel m_NodeModel1;
-        BasicNodeModel m_NodeModel2;
+        INodeModel m_NodeModel1;
+        INodeModel m_NodeModel2;
 
-        class NonDeletableNodeModel : BasicNodeModel
+        class NonDeletableNodeModel : IONodeModel
         {
-            public override bool IsDeletable => false;
+            public NonDeletableNodeModel()
+            {
+                this.SetCapability(Overdrive.Capabilities.Deletable, false);
+            }
         }
 
         [SetUp]
@@ -36,6 +38,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             yield return null;
             var node1 = m_NodeModel1.GetUI<Node>(graphView);
             var node2 = m_NodeModel2.GetUI<Node>(graphView);
+
+            Assert.True(node1.IsDeletable());
+            Assert.False(node2.IsDeletable());
 
             // We need to get the graphView in focus for the commands to be properly sent.
             graphView.Focus();

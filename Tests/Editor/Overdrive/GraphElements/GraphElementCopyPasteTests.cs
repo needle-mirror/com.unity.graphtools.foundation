@@ -3,15 +3,13 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utilities;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    public class GraphElementCopyPasteTests : GraphViewTester
+    class GraphElementCopyPasteTests : GraphViewTester
     {
         readonly Rect k_NodePosition = new Rect(10, 30, 50, 50);
         const int k_DefaultNodeCount = 4;

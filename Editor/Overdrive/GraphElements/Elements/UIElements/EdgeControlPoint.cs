@@ -1,14 +1,15 @@
 using System;
 using System.Linq;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class EdgeControlPoint : VisualElement
     {
-        static readonly string k_ClassName = "ge-edge-control-point";
+        public static readonly string k_ClassName = "ge-edge-control-point";
+
+        public static readonly string k_RemoveControlPointMenuItem = "Remove control point";
 
         EdgeControl m_EdgeControl;
 
@@ -26,6 +27,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         Vector2 m_OriginalPointerPosition;
 
+        protected ContextualMenuManipulator m_ContextualMenuManipulator;
+
         public EdgeControlPoint(EdgeControl edgeControl, IEditableEdge edgeModel, int controlPointIndex)
         {
             m_EdgeControl = edgeControl;
@@ -39,6 +42,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             RegisterCallback<PointerUpEvent>(OnPointerUp);
 
             style.position = Position.Absolute;
+
+            m_ContextualMenuManipulator = new ContextualMenuManipulator(BuildContextualMenu);
+            this.AddManipulator(m_ContextualMenuManipulator);
         }
 
         void OnPointerDown(PointerDownEvent e)
@@ -128,6 +134,22 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         {
             style.left = cpPosition.x;
             style.top = cpPosition.y;
+        }
+
+        protected virtual void BuildContextualMenu(ContextualMenuPopulateEvent evt)
+        {
+            if (evt.menu.MenuItems().Count > 0)
+                evt.menu.AppendSeparator();
+
+            evt.menu.AppendAction(k_RemoveControlPointMenuItem, menuAction =>
+            {
+                var graphView = GetFirstAncestorOfType<GraphView>();
+                if (graphView == null)
+                    return;
+
+                int controlPointIndex = parent.Children().IndexOf(this);
+                graphView.Store.Dispatch(new RemoveEdgeControlPointAction(m_EdgeModel, controlPointIndex));
+            });
         }
     }
 }

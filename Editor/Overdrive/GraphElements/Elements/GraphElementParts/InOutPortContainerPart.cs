@@ -1,8 +1,7 @@
 using System;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class InOutPortContainerPart : BaseGraphElementPart
     {
@@ -10,7 +9,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         public static readonly string k_InputPortsUssName = "inputs";
         public static readonly string k_OutputPortsUssName = "outputs";
 
-        public static InOutPortContainerPart Create(string name, IGTFGraphElementModel model, IGraphElement graphElement, string parentClassName)
+        public static InOutPortContainerPart Create(string name, IGraphElementModel model, IGraphElement graphElement, string parentClassName)
         {
             if (model is IPortNode)
             {
@@ -28,7 +27,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         public override VisualElement Root => m_Root;
 
-        protected InOutPortContainerPart(string name, IGTFGraphElementModel model, IGraphElement ownerElement, string parentClassName)
+        protected InOutPortContainerPart(string name, IGraphElementModel model, IGraphElement ownerElement, string parentClassName)
             : base(name, model, ownerElement, parentClassName) {}
 
         protected override void BuildPartUI(VisualElement container)
@@ -59,18 +58,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         protected override void UpdatePartFromModel()
         {
-            if (m_Model is IInOutPortsNode portHolder)
+            switch (m_Model)
             {
-                m_InputPortContainer?.UpdatePorts(portHolder.GetInputPorts(), m_OwnerElement.GraphView, m_OwnerElement.Store);
-                m_OutputPortContainer?.UpdatePorts(portHolder.GetOutputPorts(), m_OwnerElement.GraphView, m_OwnerElement.Store);
-            }
-            else if (m_Model is ISingleInputPortNode inputPortHolder)
-            {
-                m_InputPortContainer?.UpdatePorts(new[] { inputPortHolder.InputPort }, m_OwnerElement.GraphView, m_OwnerElement.Store);
-            }
-            else if (m_Model is ISingleOutputPortNode outputPortHolder)
-            {
-                m_OutputPortContainer?.UpdatePorts(new[] { outputPortHolder.OutputPort }, m_OwnerElement.GraphView, m_OwnerElement.Store);
+                // TODO: Reinstate.
+                // case ISingleInputPortNode inputPortHolder:
+                //     m_InputPortContainer?.UpdatePorts(new[] { inputPortHolder.InputPort }, m_OwnerElement.GraphView, m_OwnerElement.Store);
+                //     break;
+                // case ISingleOutputPortNode outputPortHolder:
+                //     m_OutputPortContainer?.UpdatePorts(new[] { outputPortHolder.OutputPort }, m_OwnerElement.GraphView, m_OwnerElement.Store);
+                //     break;
+                case IInOutPortsNode portHolder:
+                    m_InputPortContainer?.UpdatePorts(portHolder.GetInputPorts(), m_OwnerElement.GraphView, m_OwnerElement.Store);
+                    m_OutputPortContainer?.UpdatePorts(portHolder.GetOutputPorts(), m_OwnerElement.GraphView, m_OwnerElement.Store);
+                    break;
             }
         }
     }

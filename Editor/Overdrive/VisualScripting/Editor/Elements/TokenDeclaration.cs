@@ -1,16 +1,13 @@
 using System;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.UIElements;
-using IDroppable = UnityEditor.GraphToolsFoundation.Overdrive.GraphElements.IDroppable;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 {
-    public class TokenDeclaration : GraphElement, IDroppable, IHighlightable, IRenamable
+    public class TokenDeclaration : GraphElement, IDroppable, IHighlightable, IRenamableGraphElement
     {
         readonly Pill m_Pill;
         TextField m_TitleTextfield;
@@ -22,7 +19,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         public bool EditTitleCancelled { get; set; } = false;
 
         public VisualElement TitleElement => this;
-        public IGTFVariableDeclarationModel Declaration => Model as IGTFVariableDeclarationModel;
+        public IVariableDeclarationModel Declaration => Model as IVariableDeclarationModel;
 
         public bool IsFramable() => true;
 
@@ -37,12 +34,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             AddToClassList(Declaration?.VariableType == VariableType.GraphVariable ? "graphVariable" : "functionVariable");
         }
 
-        public TokenDeclaration(Store store, IGTFVariableDeclarationModel model, GraphView graphView)
+        public TokenDeclaration(Store store, IVariableDeclarationModel model, GraphView graphView)
         {
             m_Pill = new Pill();
             Add(m_Pill);
 
-            styleSheets.Add(AssetDatabase.LoadAssetAtPath<StyleSheet>(UICreationHelper.templatePath + "Token.uss"));
+            styleSheets.Add(AssetDatabase.LoadAssetAtPath<StyleSheet>(PackageTransitionHelper.VSTemplatePath + "Token.uss"));
 
             SetupBuildAndUpdate(model, store, graphView);
 
@@ -74,16 +71,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         public override void OnUnselected()
         {
             base.OnUnselected();
-            (GraphView as VseGraphView).ClearGraphElementsHighlight(ShouldHighlightItemUsage);
+            GraphView.ClearGraphElementsHighlight(ShouldHighlightItemUsage);
         }
 
-        public bool ShouldHighlightItemUsage(IGTFGraphElementModel model)
+        public bool ShouldHighlightItemUsage(IGraphElementModel model)
         {
             switch (model)
             {
-                case IGTFVariableNodeModel variableModel
+                case IVariableNodeModel variableModel
                     when ReferenceEquals(variableModel.VariableDeclarationModel, Declaration):
-                case IGTFVariableDeclarationModel variableDeclarationModel
+                case IVariableDeclarationModel variableDeclarationModel
                     when ReferenceEquals(variableDeclarationModel, Declaration):
                     return true;
             }

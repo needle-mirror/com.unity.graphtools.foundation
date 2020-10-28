@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
 using UnityEngine;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     // Use this attribute to tag classes containing static extension methods you want to cache in an ExtensionMethodCache
     [MeansImplicitUse(ImplicitUseTargetFlags.WithMembers)]

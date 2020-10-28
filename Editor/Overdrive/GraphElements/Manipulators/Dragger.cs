@@ -2,7 +2,7 @@ using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class Dragger : MouseManipulator
     {
@@ -69,7 +69,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             }
 
             GraphElement ce = e.target as GraphElement;
-            if (ce != null && !ce.IsPositioned())
+            if (ce != null && !ce.IsMovable())
             {
                 return;
             }
@@ -87,7 +87,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         protected void OnMouseMove(MouseMoveEvent e)
         {
             GraphElement ce = e.target as GraphElement;
-            if (ce != null && !ce.IsPositioned())
+            if (ce != null && !ce.IsMovable())
             {
                 return;
             }
@@ -122,7 +122,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         protected void OnMouseUp(MouseUpEvent e)
         {
             GraphElement ce = e.target as GraphElement;
-            if (ce != null && !ce.IsPositioned())
+            if (ce != null && !ce.IsMovable())
             {
                 return;
             }

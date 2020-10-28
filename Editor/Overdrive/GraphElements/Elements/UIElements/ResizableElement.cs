@@ -1,7 +1,7 @@
 using System;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     [Flags]
     public enum ResizerDirection

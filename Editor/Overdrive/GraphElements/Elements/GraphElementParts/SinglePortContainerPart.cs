@@ -1,14 +1,13 @@
 using System;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class SinglePortContainerPart : BaseGraphElementPart
     {
-        public static SinglePortContainerPart Create(string name, IGTFGraphElementModel model, IGraphElement graphElement, string parentClassName)
+        public static SinglePortContainerPart Create(string name, IGraphElementModel model, IGraphElement graphElement, string parentClassName)
         {
-            if (model is IGTFPortModel)
+            if (model is IPortModel)
             {
                 return new SinglePortContainerPart(name, model, graphElement, parentClassName);
             }
@@ -20,12 +19,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         public override VisualElement Root => m_PortContainer;
 
-        protected SinglePortContainerPart(string name, IGTFGraphElementModel model, IGraphElement ownerElement, string parentClassName)
+        protected SinglePortContainerPart(string name, IGraphElementModel model, IGraphElement ownerElement, string parentClassName)
             : base(name, model, ownerElement, parentClassName) {}
 
         protected override void BuildPartUI(VisualElement container)
         {
-            if (m_Model is IGTFPortModel)
+            if (m_Model is IPortModel)
             {
                 m_PortContainer = new PortContainer { name = PartName };
                 m_PortContainer.AddToClassList(m_ParentClassName.WithUssElement(PartName));
@@ -35,7 +34,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         protected override void UpdatePartFromModel()
         {
-            if (m_Model is IGTFPortModel portModel)
+            if (m_Model is IPortModel portModel)
                 m_PortContainer?.UpdatePorts(new[] { portModel }, m_OwnerElement.GraphView, m_OwnerElement.Store);
         }
     }

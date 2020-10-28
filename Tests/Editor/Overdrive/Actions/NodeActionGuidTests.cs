@@ -1,7 +1,5 @@
 using System;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
@@ -39,7 +37,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                     () =>
                     {
                         Assert.IsTrue(GraphModel.NodesByGuid.TryGetValue(n.Guid, out var model));
-                        return new DeleteElementsAction(model);
+                        return new DeleteElementsAction(new[] { model });
                     },
                     () =>
                     {

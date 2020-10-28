@@ -1,14 +1,13 @@
 using System;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.Helpers
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO
 {
     public class TestState : State
     {
-        IGTFGraphModel m_GraphModel;
-        public override IGTFGraphModel CurrentGraphModel => m_GraphModel;
+        IGraphModel m_GraphModel;
+        public override IGraphModel CurrentGraphModel => m_GraphModel;
 
-        public TestState(IGTFGraphModel graphModel) : base(null)
+        public TestState(IGraphModel graphModel) : base(null)
         {
             m_GraphModel = graphModel;
         }

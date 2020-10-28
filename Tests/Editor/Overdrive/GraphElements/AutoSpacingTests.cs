@@ -2,15 +2,13 @@ using System;
 using System.Collections;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
 
-namespace GraphElements.UsingDataModel
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    public class AutoSpacingTests : AutoPlacementTestHelper
+    class AutoSpacingTests : AutoPlacementTestHelper
     {
         AutoSpacingHelper m_AutoSpacingHelper;
 

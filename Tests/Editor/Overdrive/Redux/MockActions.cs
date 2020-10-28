@@ -2,10 +2,10 @@ using System;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Redux
 {
-    class PassThroughAction : object, IAction
+    class PassThroughAction : BaseAction
     {}
 
-    class ChangeFooAction : object, IAction
+    class ChangeFooAction : BaseAction
     {
         public int Value { get; }
 
@@ -15,7 +15,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Redux
         }
     }
 
-    class ChangeBarAction : object, IAction
+    class ChangeBarAction : BaseAction
     {
         public int Value { get; }
 
@@ -25,6 +25,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Redux
         }
     }
 
-    class UnregisteredAction : object, IAction
+    class UnregisteredAction : BaseAction
     {}
 }

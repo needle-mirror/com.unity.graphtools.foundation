@@ -4,14 +4,12 @@ using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utilities;
 using UnityEngine;
 using UnityEngine.TestTools;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    public class GraphViewDelegatesTests : GraphViewTester
+    class GraphViewDelegatesTests : GraphViewTester
     {
         class TestGraphElement : GraphElement
         {
@@ -35,7 +33,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 return graphViewChange;
             };
 
-            BasicNodeModel node1 = CreateNode("", new Vector2(50, 50));
+            INodeModel node1 = CreateNode("", new Vector2(50, 50));
             graphView.RebuildUI(GraphModel, Store);
             yield return null;
 
@@ -63,7 +61,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             Vector2 nodePosition = new Vector2(50, 50);
             const int nodeCount = 10;
-            List<BasicNodeModel> nodes = new List<BasicNodeModel>();
+            var nodes = new List<INodeModel>();
             for (int i = 0; i < nodeCount; i++)
             {
                 var node = CreateNode("Node " + (i + 1), nodePosition);

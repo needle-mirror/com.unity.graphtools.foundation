@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
+using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public class Node : GraphElement, IMovableGraphElement, IHighlightable, IBadgeContainer
+    public class Node : GraphElement, IHighlightable, IBadgeContainer
     {
         public new static readonly string k_UssClassName = "ge-node";
         public static readonly string k_NotConnectedModifierUssClassName = k_UssClassName.WithUssModifier("not-connected");
@@ -13,6 +13,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         public static readonly string k_DisabledModifierUssClassName = k_UssClassName.WithUssModifier("disabled");
         public static readonly string k_UnusedModifierUssClassName = k_UssClassName.WithUssModifier("unused");
         public static readonly string k_HighlightedModifierUssClassName = k_UssClassName.WithUssModifier("highlighted");
+        public static readonly string k_ReadOnlyModifierUssClassName = k_UssClassName.WithUssModifier("read-only");
+        public static readonly string k_WriteOnlyModifierUssClassName = k_UssClassName.WithUssModifier("write-only");
 
         public static readonly string k_SelectionBorderElementName = "selection-border";
         public static readonly string k_DisabledOverlayElementName = "disabled-overlay";
@@ -21,9 +23,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         VisualElement m_ContentContainer;
 
-        protected ContextualMenuManipulator m_ContextualMenuManipulator;
-
-        public IGTFNodeModel NodeModel => Model as IGTFNodeModel;
+        public INodeModel NodeModel => Model as INodeModel;
 
         public override VisualElement contentContainer => m_ContentContainer ?? this;
 
@@ -37,14 +37,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             set => EnableInClassList(k_HighlightedModifierUssClassName, value);
         }
 
-        public virtual bool IsMovable => true;
-
         public Node()
         {
             RegisterCallback<GeometryChangedEvent>(OnGeometryChanged);
-
-            m_ContextualMenuManipulator = new ContextualMenuManipulator(BuildContextualMenu);
-            this.AddManipulator(m_ContextualMenuManipulator);
         }
 
         protected override void BuildPartList()
@@ -92,15 +87,25 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                 EnableInClassList(k_NotConnectedModifierUssClassName, noPortConnected);
             }
 
-            tooltip = NodeModel.Tooltip;
-        }
-
-        protected virtual void BuildContextualMenu(ContextualMenuPopulateEvent evt)
-        {
-            if (evt.target == this)
+            if (Model is IVariableNodeModel variableModel)
             {
-                evt.menu.AppendAction("Disconnect all", DisconnectAll, DisconnectAllStatus);
-                evt.menu.AppendSeparator();
+                EnableInClassList(k_ReadOnlyModifierUssClassName, variableModel.VariableDeclarationModel?.Modifiers == ModifierFlags.ReadOnly);
+                EnableInClassList(k_WriteOnlyModifierUssClassName, variableModel.VariableDeclarationModel?.Modifiers == ModifierFlags.WriteOnly);
+            }
+
+            tooltip = NodeModel.Tooltip;
+
+            if (NodeModel.HasUserColor)
+            {
+                var border = this.MandatoryQ(SelectionBorder.k_ContentContainerElementName);
+                border.style.backgroundColor = NodeModel.Color;
+                border.style.backgroundImage = null;
+            }
+            else
+            {
+                var border = this.MandatoryQ(SelectionBorder.k_ContentContainerElementName);
+                border.style.backgroundColor = StyleKeyword.Null;
+                border.style.backgroundImage = StyleKeyword.Null;
             }
         }
 
@@ -125,41 +130,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                 UpdateEdges();
         }
 
-        static void AddConnectionsToDeleteSet(IEnumerable<IGTFPortModel> ports, ref HashSet<IGTFGraphElementModel> toDelete)
-        {
-            if (ports == null)
-                return;
-
-            foreach (var port in ports.Where(p => p.IsConnected()))
-            {
-                foreach (var c in port.GetConnectedEdges().Where(c => c.IsDeletable))
-                {
-                    toDelete.Add(c);
-                }
-            }
-        }
-
-        void DisconnectAll(DropdownMenuAction a)
-        {
-            if (NodeModel is IPortNode portHolder)
-            {
-                HashSet<IGTFGraphElementModel> toDeleteModels = new HashSet<IGTFGraphElementModel>();
-                AddConnectionsToDeleteSet(portHolder.Ports, ref toDeleteModels);
-                Store.Dispatch(new DeleteElementsAction(toDeleteModels.ToArray()));
-            }
-        }
-
-        DropdownMenuAction.Status DisconnectAllStatus(DropdownMenuAction a)
-        {
-            if (NodeModel is IPortNode portHolder && portHolder.Ports != null && portHolder.Ports.Any(port => port.IsConnected()))
-            {
-                return DropdownMenuAction.Status.Normal;
-            }
-
-            return DropdownMenuAction.Status.Disabled;
-        }
-
-        public virtual bool ShouldHighlightItemUsage(IGTFGraphElementModel graphElementModel)
+        public virtual bool ShouldHighlightItemUsage(IGraphElementModel graphElementModel)
         {
             return false;
         }

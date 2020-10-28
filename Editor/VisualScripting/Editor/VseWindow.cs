@@ -246,7 +246,7 @@ namespace UnityEditor.VisualScripting.Editor
             return false;
         }
 
-        public static VseWindow OpenVseAssetInWindow(string path)
+        public static VseWindow OpenVseAssetInWindow(string path, Object boundObject = null)
         {
             var asset = AssetDatabase.LoadAssetAtPath<VSGraphAssetModel>(path);
             if (asset == null)
@@ -254,7 +254,7 @@ namespace UnityEditor.VisualScripting.Editor
 
             VseWindow vseWindow = ShowVsEditorWindow(asset);
 
-            vseWindow.SetCurrentSelection(path, OpenMode.OpenAndFocus);
+            vseWindow.SetCurrentSelection(path, OpenMode.OpenAndFocus, boundObject);
 
             return vseWindow;
         }

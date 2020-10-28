@@ -1,10 +1,9 @@
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
+
 using UnityEngine;
 
-namespace UnityEditor.VisualScriptingTests.Models
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
 {
     public class QuaternionNodeModelTests
     {

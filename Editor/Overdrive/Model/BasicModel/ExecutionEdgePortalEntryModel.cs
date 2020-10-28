@@ -1,5 +1,4 @@
 using System;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine.Scripting.APIUpdating;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
@@ -7,11 +6,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
     [Serializable]
     //[MovedFrom(false, "UnityEditor.VisualScripting.GraphViewModel", "Unity.GraphTools.Foundation.Overdrive.Editor")]
     [MovedFrom("UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel")]
-    public class ExecutionEdgePortalEntryModel : EdgePortalModel, IGTFEdgePortalEntryModel, IHasMainExecutionInputPort
+    public class ExecutionEdgePortalEntryModel : EdgePortalModel, IEdgePortalEntryModel, IHasMainExecutionInputPort
     {
-        public IGTFPortModel InputPort { get; private set; }
+        public IPortModel InputPort { get; private set; }
 
-        public IGTFPortModel ExecutionInputPort => InputPort;
+        public IPortModel ExecutionInputPort => InputPort;
 
         protected override void OnDefineNode()
         {

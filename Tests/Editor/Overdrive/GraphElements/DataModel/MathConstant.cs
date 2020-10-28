@@ -1,20 +1,23 @@
 using UnityEngine;
 
-public class MathConstant : MathNode
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    public float m_Value; // For property field (later)
-
-    public void OnEnable()
+    public class MathConstant : MathNode
     {
-        name = "MathConstant";
-    }
+        public float m_Value; // For property field (later)
 
-    public override void ResetConnections()
-    {
-    }
+        public void OnEnable()
+        {
+            name = "MathConstant";
+        }
 
-    public override float Evaluate()
-    {
-        return m_Value;
+        public override void ResetConnections()
+        {
+        }
+
+        public override float Evaluate()
+        {
+            return m_Value;
+        }
     }
 }

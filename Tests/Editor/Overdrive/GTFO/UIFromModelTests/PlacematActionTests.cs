@@ -1,8 +1,6 @@
-using System;
 using System.Collections;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.Helpers;
+using UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
@@ -19,8 +17,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         public new void SetUp()
         {
             m_GraphModel = new GraphModel();
-            m_Store = new Store(new Helpers.TestState(m_GraphModel), StoreHelper.RegisterReducers);
-            m_GraphView = new TestGraphView(m_Store);
+            m_Store = new Store(new TestState(m_GraphModel));
+            StoreHelper.RegisterDefaultReducers(m_Store);
+            m_GraphView = new TestGraphView(m_Window, m_Store);
 
             m_GraphView.name = "theView";
             m_GraphView.viewDataKey = "theView";
@@ -32,7 +31,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         [UnityTest]
         public IEnumerator PlacematCollapsesOnValueChanged()
         {
-            var placematModel = new PlacematModel();
+            var placematModel = m_GraphModel.CreatePlacemat();
             var placemat = new Placemat();
             placemat.SetupBuildAndUpdate(placematModel, m_Store, m_GraphView);
             yield return null;
@@ -51,7 +50,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         [UnityTest]
         public IEnumerator PlacematCollapsesOnClick()
         {
-            var placematModel = new PlacematModel();
+            var placematModel = m_GraphModel.CreatePlacemat();
             var placemat = new Placemat();
             placemat.SetupBuildAndUpdate(placematModel, m_Store, m_GraphView);
             yield return null;
@@ -74,7 +73,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         {
             const string newName = "New Name";
 
-            var placematModel = new PlacematModel { Title = "Placemat" };
+            var placematModel = m_GraphModel.CreatePlacemat();
+            placematModel.Title = "Placemat";
             var placemat = new Placemat();
             placemat.SetupBuildAndUpdate(placematModel, m_Store, m_GraphView);
             yield return null;
@@ -97,7 +97,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             var originalRect = new Rect(0, 0, 400, 400);
             var move = new Vector2(100, 0);
 
-            var placematModel = new PlacematModel { Title = "Placemat", PositionAndSize = originalRect};
+            var placematModel = m_GraphModel.CreatePlacemat("Placemat", originalRect);
             var placemat = new Placemat();
             placemat.SetupBuildAndUpdate(placematModel, m_Store, m_GraphView);
             yield return null;

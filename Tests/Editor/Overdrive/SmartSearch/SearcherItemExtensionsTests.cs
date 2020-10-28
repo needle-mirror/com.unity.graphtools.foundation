@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
 using UnityEditor.Searcher;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.SmartSearch

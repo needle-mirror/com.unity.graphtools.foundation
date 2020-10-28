@@ -1,33 +1,32 @@
 using System;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
+using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public class CollapsibleInOutNode : Node
+    public class CollapsibleInOutNode : Node, IDroppable, ICustomSearcherHandler
     {
         public static readonly string k_CollapsedUssClassName = k_UssClassName.WithUssModifier("collapsed");
         public static readonly string k_CollapseButtonPartName = "collapse-button";
+        public static readonly string k_TitleIconContainerPartName = "title-icon-container";
+
+        const float k_ByteToPercentFactor = 100 / 255.0f;
+        public byte Progress
+        {
+            set
+            {
+                var titleComponent = PartList.GetPart(k_TitleContainerPartName) as IconTitleProgressPart;
+                if (titleComponent?.CoroutineProgressBar != null)
+                {
+                    titleComponent.CoroutineProgressBar.value = value * k_ByteToPercentFactor;
+                }
+            }
+        }
 
         protected override void BuildPartList()
         {
-            var editableTitlePart = EditableTitlePart.Create(k_TitleContainerPartName, Model, this, k_UssClassName);
-            PartList.AppendPart(editableTitlePart);
+            PartList.AppendPart(IconTitleProgressPart.Create(k_TitleIconContainerPartName, Model, this, k_UssClassName));
             PartList.AppendPart(InOutPortContainerPart.Create(k_PortContainerPartName, Model, this, k_UssClassName));
-
-            var collapseButtonPart = NodeCollapseButtonPart.Create(k_CollapseButtonPartName, Model, this, k_UssClassName);
-            // PF FIXME: move collapse button in EditableTitlePart
-            if (collapseButtonPart != null)
-            {
-                if (editableTitlePart != null)
-                {
-                    editableTitlePart.PartList.AppendPart(collapseButtonPart);
-                }
-                else
-                {
-                    PartList.AppendPart(collapseButtonPart);
-                }
-            }
         }
 
         protected override void PostBuildUI()
@@ -46,11 +45,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             EnableInClassList(k_CollapsedUssClassName, collapsed);
         }
 
-        protected override void BuildContextualMenu(ContextualMenuPopulateEvent evt) {}
-
         protected void OnCollapseChangeEvent(ChangeEvent<bool> evt)
         {
-            Store.Dispatch(new SetNodeCollapsedAction(NodeModel, evt.newValue));
+            Store.Dispatch(new SetNodeCollapsedAction(new[] { NodeModel}, evt.newValue));
+        }
+
+        public Func<Node, Store, Vector2, SearcherFilter, bool> CustomSearcherHandler { get; set; }
+
+        public bool HandleCustomSearcher(Vector2 mousePosition, SearcherFilter filter = null)
+        {
+            return CustomSearcherHandler == null || CustomSearcherHandler(this, Store, mousePosition, filter);
         }
     }
 }

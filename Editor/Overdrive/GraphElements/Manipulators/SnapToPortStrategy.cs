@@ -1,11 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
-using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     class SnapToPortStrategy : SnapStrategy
     {
@@ -86,19 +84,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
                 if (inputPort != null)
                 {
-                    Vector2 inputPortPosInContentViewContainerSpace = inputPort.parent.ChangeCoordinatesTo(m_GraphView.contentViewContainer, inputPort.layout.center);
                     if (!connectedPortsOriginalPos.ContainsKey(inputPort))
                     {
-                        connectedPortsOriginalPos.Add(inputPort, inputPortPosInContentViewContainerSpace);
+                        connectedPortsOriginalPos.Add(inputPort, inputPort.GetGlobalCenter());
                     }
                 }
 
                 if (outputPort != null)
                 {
-                    Vector2 outputPortPosInContentViewContainerSpace = outputPort.parent.ChangeCoordinatesTo(m_GraphView.contentViewContainer, outputPort.layout.center);
                     if (!connectedPortsOriginalPos.ContainsKey(outputPort))
                     {
-                        connectedPortsOriginalPos.Add(outputPort, outputPortPosInContentViewContainerSpace);
+                        connectedPortsOriginalPos.Add(outputPort, outputPort.GetGlobalCenter());
                     }
                 }
             }

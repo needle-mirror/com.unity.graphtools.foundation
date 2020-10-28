@@ -1,8 +1,7 @@
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class EdgeManipulator : MouseManipulator
     {
@@ -10,7 +9,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         Edge m_Edge;
         Vector2 m_PressPos;
         EdgeDragHelper m_ConnectedEdgeDragHelper;
-        IGTFPortModel m_DetachedPort;
+        IPortModel m_DetachedPort;
         bool m_DetachedFromInputPort;
         static int s_StartDragDistance = 10;
         MouseDownEvent m_LastMouseDownEvent;
@@ -113,7 +112,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
                 m_DetachedFromInputPort = distanceFromInput < distanceFromOutput;
 
-                IGTFPortModel connectedPort;
+                IPortModel connectedPort;
                 Port connectedPortUI;
 
                 if (m_DetachedFromInputPort)

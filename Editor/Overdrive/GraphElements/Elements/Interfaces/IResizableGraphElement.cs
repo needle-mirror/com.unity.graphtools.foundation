@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     // PF: Fixme: Could we do without flags by initializing newRect to current rect?
     [Flags]

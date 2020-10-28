@@ -1,7 +1,8 @@
-namespace UnityEditor.GraphToolsFoundation.Overdrive.Model
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
+    // PF: Get rid of this interface
     public interface IHasMainOutputPort
     {
-        IGTFPortModel MainOutputPort { get; }
+        IPortModel MainOutputPort { get; }
     }
 }

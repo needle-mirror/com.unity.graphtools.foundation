@@ -4,12 +4,7 @@ using System.Linq;
 using JetBrains.Annotations;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
 using UnityEngine;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Compilation;
 using UnityEditor.Searcher;
 using UnityEngine.GraphToolsFoundation.Overdrive;
 
@@ -46,6 +41,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             return TypeHandle.Object;
         }
 
+        public abstract Blackboard CreateBlackboard(Store store, GraphView graphView);
+
         public virtual IBlackboardProvider GetBlackboardProvider()
         {
             return m_BlackboardProvider ?? (m_BlackboardProvider = new BlackboardProvider(this));
@@ -79,15 +76,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         }
 
         [CanBeNull]
-        public virtual ISearcherAdapter GetSearcherAdapter(IGTFGraphModel graphModel, string title, IGTFPortModel contextPortModel = null)
+        public virtual ISearcherAdapter GetSearcherAdapter(IGraphModel graphModel, string title, IPortModel contextPortModel = null)
         {
             return new GraphNodeSearcherAdapter(graphModel, title);
         }
 
         public abstract ISearcherDatabaseProvider GetSearcherDatabaseProvider();
-        public virtual void OnCompilationStarted(IGTFGraphModel graphModel) {}
-        public virtual void OnCompilationSucceeded(IGTFGraphModel graphModel, CompilationResult results) {}
-        public virtual void OnCompilationFailed(IGTFGraphModel graphModel, CompilationResult results) {}
+        public virtual void OnCompilationStarted(IGraphModel graphModel) {}
+        public virtual void OnCompilationSucceeded(IGraphModel graphModel, CompilationResult results) {}
+        public virtual void OnCompilationFailed(IGraphModel graphModel, CompilationResult results) {}
 
         public virtual IEnumerable<IPluginHandler> GetCompilationPluginHandlers(CompilationOptions getCompilationOptions)
         {
@@ -95,10 +92,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 yield return new DebugInstrumentationHandler();
         }
 
-        public bool RequiresInitialization(IGTFVariableDeclarationModel decl) => GraphContext.RequiresInitialization(decl);
-        public bool RequiresInspectorInitialization(IGTFVariableDeclarationModel decl) => GraphContext.RequiresInspectorInitialization(decl);
-
-        public abstract IBuilder Builder { get; }
+        public virtual bool RequiresInitialization(IVariableDeclarationModel decl) => GraphContext.RequiresInitialization(decl);
+        public bool RequiresInspectorInitialization(IVariableDeclarationModel decl) => GraphContext.RequiresInspectorInitialization(decl);
 
         // PF: To preference
         public virtual bool MoveNodeDependenciesByDefault => true;
@@ -116,7 +111,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     { typeof(Color).GenerateTypeHandle(), typeof(ColorConstant) },
                     { typeof(Double).GenerateTypeHandle(), typeof(DoubleConstant) },
                     { typeof(Single).GenerateTypeHandle(), typeof(FloatConstant) },
-                    { typeof(InputName).GenerateTypeHandle(), typeof(InputConstant) },
                     { typeof(Int32).GenerateTypeHandle(), typeof(IntConstant) },
                     { typeof(Quaternion).GenerateTypeHandle(), typeof(QuaternionConstant) },
                     { typeof(String).GenerateTypeHandle(), typeof(StringConstant) },
@@ -136,36 +130,44 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             return null;
         }
 
-        public virtual void CreateNodesFromPort(Store store, IGTFPortModel portModel, Vector2 localPosition, Vector2 worldPosition,
-            IEnumerable<IGTFEdgeModel> edgesToDelete)
+        public virtual IConstant CreateConstantValue(TypeHandle constantTypeHandle)
+        {
+            var nodeType = GetConstantNodeValueType(constantTypeHandle);
+            var instance = (IConstant)Activator.CreateInstance(nodeType);
+            instance.ObjectValue = instance.DefaultValue;
+            return instance;
+        }
+
+        public virtual void CreateNodesFromPort(Store store, IPortModel portModel, Vector2 localPosition, Vector2 worldPosition,
+            IReadOnlyList<IEdgeModel> edgesToDelete)
         {
             switch (portModel.Direction)
             {
                 case Direction.Output:
                     SearcherService.ShowOutputToGraphNodes(store.GetState(), portModel, worldPosition, item =>
-                        store.Dispatch(new CreateNodeFromOutputPortAction(portModel, localPosition, item, edgesToDelete)));
+                        store.Dispatch(new CreateNodeFromPortAction(portModel, localPosition, item, edgesToDelete)));
                     break;
 
                 case Direction.Input:
                     SearcherService.ShowInputToGraphNodes(store.GetState(), portModel, worldPosition, item =>
-                        store.Dispatch(new CreateNodeFromInputPortAction(portModel, localPosition, item, edgesToDelete)));
+                        store.Dispatch(new CreateNodeFromPortAction(portModel, localPosition, item, edgesToDelete)));
                     break;
             }
         }
 
-        public virtual void PreProcessGraph(IGTFGraphModel graphModel)
+        public virtual void PreProcessGraph(IGraphModel graphModel)
         {
         }
 
-        public virtual IEnumerable<IGTFNodeModel> GetEntryPoints(IGTFGraphModel graphModel)
+        public virtual IEnumerable<INodeModel> GetEntryPoints(IGraphModel graphModel)
         {
-            return Enumerable.Empty<IGTFNodeModel>();
+            return Enumerable.Empty<INodeModel>();
         }
 
         public virtual void OnInspectorGUI()
         {}
 
-        public virtual bool CreateDependencyFromEdge(IGTFEdgeModel model, out LinkedNodesDependency linkedNodesDependency, out IGTFNodeModel parent)
+        public virtual bool CreateDependencyFromEdge(IEdgeModel model, out LinkedNodesDependency linkedNodesDependency, out INodeModel parent)
         {
             linkedNodesDependency = new LinkedNodesDependency
             {
@@ -177,27 +179,27 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             return true;
         }
 
-        public virtual IEnumerable<IGTFEdgePortalModel> GetPortalDependencies(IGTFEdgePortalModel model)
+        public virtual IEnumerable<IEdgePortalModel> GetPortalDependencies(IEdgePortalModel model)
         {
-            if (model is IGTFEdgePortalEntryModel edgePortalModel)
+            if (model is IEdgePortalEntryModel edgePortalModel)
             {
-                return edgePortalModel.GraphModel.FindReferencesInGraph<IGTFEdgePortalExitModel>(edgePortalModel.DeclarationModel);
+                return edgePortalModel.GraphModel.FindReferencesInGraph<IEdgePortalExitModel>(edgePortalModel.DeclarationModel);
             }
 
-            return Enumerable.Empty<IGTFEdgePortalModel>();
+            return Enumerable.Empty<IEdgePortalModel>();
         }
 
-        public virtual IEnumerable<IGTFEdgePortalModel> GetLinkedPortals(IGTFEdgePortalModel model)
+        public virtual IEnumerable<IEdgePortalModel> GetLinkedPortals(IEdgePortalModel model)
         {
-            if (model is IGTFEdgePortalModel edgePortalModel)
+            if (model is IEdgePortalModel edgePortalModel)
             {
-                return edgePortalModel.GraphModel.FindReferencesInGraph<IGTFEdgePortalModel>(edgePortalModel.DeclarationModel);
+                return edgePortalModel.GraphModel.FindReferencesInGraph<IEdgePortalModel>(edgePortalModel.DeclarationModel);
             }
 
-            return Enumerable.Empty<IGTFEdgePortalModel>();
+            return Enumerable.Empty<IEdgePortalModel>();
         }
 
-        public virtual void OnDragAndDropVariableDeclarations(Store store, List<(IGTFVariableDeclarationModel, SerializableGUID, Vector2)> variablesToCreate)
+        public virtual void OnDragAndDropVariableDeclarations(Store store, List<(IVariableDeclarationModel, SerializableGUID, Vector2)> variablesToCreate)
         {
             store.Dispatch(new CreateVariableNodesAction(variablesToCreate));
         }
@@ -208,7 +210,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         /// <param name="portModel"></param>
         /// <param name="capacity"></param>
         /// <returns></returns>
-        public virtual bool GetPortCapacity(IGTFPortModel portModel, out PortCapacity capacity)
+        public virtual bool GetPortCapacity(IPortModel portModel, out PortCapacity capacity)
         {
             capacity = default;
             return false;
@@ -220,15 +222,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         /// <param name="originalModel"></param>
         /// <param name="graph"></param>
         /// <returns>If the node can be pasted/duplicated</returns>
-        public virtual bool CanPasteNode(IGTFNodeModel originalModel, IGTFGraphModel graph) => true;
+        public virtual bool CanPasteNode(INodeModel originalModel, IGraphModel graph) => true;
 
-        public virtual bool MigrateNode(IGTFNodeModel nodeModel, out IGTFNodeModel migrated)
+        public virtual bool MigrateNode(INodeModel nodeModel, out INodeModel migrated)
         {
             migrated = null;
             return false;
         }
 
-        public virtual string GetNodeDocumentation(SearcherItem node, IGTFGraphElementModel model) =>
+        public virtual string GetNodeDocumentation(SearcherItem node, IGraphElementModel model) =>
             null;
     }
 }

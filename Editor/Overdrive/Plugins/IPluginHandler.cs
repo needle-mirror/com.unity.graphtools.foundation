@@ -1,5 +1,3 @@
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public interface IPluginHandler

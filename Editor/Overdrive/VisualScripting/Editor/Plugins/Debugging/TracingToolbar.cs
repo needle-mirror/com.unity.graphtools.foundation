@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEditor.Searcher;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -10,7 +9,7 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
 {
-    class TracingToolbar : VisualElement
+    class TracingToolbar : Toolbar
     {
         class TargetSearcherItem : SearcherItem
         {
@@ -24,8 +23,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
 
         const int k_UpdateIntervalMs = 500;
 
-        readonly GraphView m_GraphView;
-        readonly Store m_Store;
         TracingTimeline m_TracingTimeline;
 
         Button m_PickTargetButton;
@@ -41,15 +38,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
         Label m_TotalFrameLabel;
         Stopwatch m_LastUpdate = Stopwatch.StartNew();
 
-        public TracingToolbar(GraphView graphView, Store store)
+        public TracingToolbar(GraphView graphView, Store store) : base(store, graphView)
         {
-            m_GraphView = graphView;
-            m_Store = store;
-
             name = "tracingToolbar";
             AddToClassList("gtf-toolbar");
             AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(PackageTransitionHelper.AssetPath + "VisualScripting/Editor/Plugins/Debugging/TracingToolbar.uxml").CloneTree(this);
-            styleSheets.Add(AssetDatabase.LoadAssetAtPath<StyleSheet>(PackageTransitionHelper.AssetPath + "VisualScripting/Editor/Menu/VseMenu.uss"));
             styleSheets.Add(AssetDatabase.LoadAssetAtPath<StyleSheet>(PackageTransitionHelper.AssetPath + "VisualScripting/Editor/Plugins/Debugging/Tracing.uss"));
 
             m_PickTargetButton = this.Q<Button>("pickTargetButton");
@@ -94,13 +87,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
 
         protected void AddTracingTimeline()
         {
-            IMGUIContainer imguiContainer = null;
+            IMGUIContainer imguiContainer;
             imguiContainer = new IMGUIContainer(() =>
             {
                 // weird bug if this starts rendering too early
                 if (style.display.value == DisplayStyle.None)
                     return;
-                var timeRect = new Rect(0, 0, (m_GraphView as VseGraphView).window.rootVisualElement.layout.width - (m_PickTargetButton?.layout.xMax ?? 0),  18 /*imguiContainer.layout.height*/);
+                var timeRect = new Rect(0, 0, m_GraphView.Window.rootVisualElement.layout.width - (m_PickTargetButton?.layout.xMax ?? 0),  18 /*imguiContainer.layout.height*/);
                 m_TracingTimeline.OnGUI(timeRect);
             });
 
@@ -124,7 +117,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
             if (items == null || !items.Any())
                 items = new List<SearcherItem> {new SearcherItem("<No Object found>")};
 
-            SearcherWindow.Show(EditorWindow.focusedWindow, items, "Entities", i =>
+            Searcher.SearcherWindow.Show(EditorWindow.focusedWindow, items, "Entities", i =>
             {
                 if (i == null || !(i is TargetSearcherItem targetSearcherItem))
                     return true;

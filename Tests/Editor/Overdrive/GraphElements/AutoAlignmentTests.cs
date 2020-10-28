@@ -1,17 +1,13 @@
-using System;
 using System.Collections;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-using UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utilities;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
 
-namespace GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    public class AutoAlignmentTests : AutoPlacementTestHelper
+    class AutoAlignmentTests : AutoPlacementTestHelper
     {
         AutoAlignmentHelper m_AlignmentHelper;
 
@@ -762,32 +758,32 @@ namespace GraphElements
             Vector2 fourthNodePos = new Vector2(400, 200);
             Vector2 fifthNodePos = new Vector2(600, 0);
 
-            FirstNodeModel = CreateNode("Node1", firstNodePos);
-            SecondNodeModel = CreateNode("Node2", secondNodePos);
-            ThirdNodeModel = CreateNode("Node3", thirdNodePos);
-            FourthNodeModel = CreateNode("Node4", fourthNodePos);
-            var fifthNodeModel = CreateNode("Node5", fifthNodePos);
+            FirstNodeModel = CreateNode("Node1", firstNodePos, 0, 0, 0, 1);
+            SecondNodeModel = CreateNode("Node2", secondNodePos, 0, 0, 0, 1);
+            ThirdNodeModel = CreateNode("Node3", thirdNodePos, 0, 0, 1, 1);
+            FourthNodeModel = CreateNode("Node4", fourthNodePos, 0, 0, 1, 1);
+            var fifthNodeModel = CreateNode("Node5", fifthNodePos, 0, 0, 1);
 
             graphView.RebuildUI(GraphModel, Store);
             yield return null;
 
-            BasicPortModel outputPortFirstNode = FirstNodeModel.AddPort(Orientation.Horizontal, Direction.Output, PortCapacity.Multi, typeof(float));
+            IPortModel outputPortFirstNode = FirstNodeModel.OutputsByDisplayOrder[0];
             Assert.IsNotNull(outputPortFirstNode);
 
-            BasicPortModel outputPortSecondNode = SecondNodeModel.AddPort(Orientation.Horizontal, Direction.Output, PortCapacity.Multi, typeof(float));
+            IPortModel outputPortSecondNode = SecondNodeModel.OutputsByDisplayOrder[0];
             Assert.IsNotNull(outputPortSecondNode);
 
-            BasicPortModel inputPortThirdNode = ThirdNodeModel.AddPort(Orientation.Horizontal, Direction.Input, PortCapacity.Multi, typeof(float));
-            BasicPortModel outputPortThirdNode = ThirdNodeModel.AddPort(Orientation.Horizontal, Direction.Output, PortCapacity.Multi, typeof(float));
+            IPortModel inputPortThirdNode = ThirdNodeModel.InputsByDisplayOrder[0];
+            IPortModel outputPortThirdNode = ThirdNodeModel.OutputsByDisplayOrder[0];
             Assert.IsNotNull(inputPortThirdNode);
             Assert.IsNotNull(outputPortThirdNode);
 
-            BasicPortModel inputPortFourthNode = FourthNodeModel.AddPort(Orientation.Horizontal, Direction.Input, PortCapacity.Multi, typeof(float));
-            BasicPortModel outputPortFourthNode = FourthNodeModel.AddPort(Orientation.Horizontal, Direction.Output, PortCapacity.Multi, typeof(float));
+            IPortModel inputPortFourthNode = FourthNodeModel.InputsByDisplayOrder[0];
+            IPortModel outputPortFourthNode = FourthNodeModel.OutputsByDisplayOrder[0];
             Assert.IsNotNull(inputPortFourthNode);
             Assert.IsNotNull(outputPortFourthNode);
 
-            BasicPortModel inputPortFifthNode = fifthNodeModel.AddPort(Orientation.Horizontal, Direction.Input, PortCapacity.Multi, typeof(float));
+            IPortModel inputPortFifthNode = fifthNodeModel.InputsByDisplayOrder[0];
             Assert.IsNotNull(inputPortFifthNode);
 
             graphView.RebuildUI(GraphModel, Store);
@@ -826,6 +822,8 @@ namespace GraphElements
 
             graphView.RebuildUI(GraphModel, Store);
             yield return null;
+
+            Assert.AreEqual(5, GraphModel.EdgeModels.Count, "Not all edges were created.");
 
             // Get the UI nodes
             m_FirstNode = FirstNodeModel.GetUI<Node>(graphView);
@@ -895,32 +893,32 @@ namespace GraphElements
             Vector2 fourthNodePos = new Vector2(400, 200);
             Vector2 fifthNodePos = new Vector2(600, 0);
 
-            FirstNodeModel = CreateNode("Node1", firstNodePos);
-            SecondNodeModel = CreateNode("Node2", secondNodePos);
-            ThirdNodeModel = CreateNode("Node3", thirdNodePos);
-            FourthNodeModel = CreateNode("Node4", fourthNodePos);
-            var fifthNodeModel = CreateNode("Node5", fifthNodePos);
+            FirstNodeModel = CreateNode("Node1", firstNodePos, 0, 0, 0, 1);
+            SecondNodeModel = CreateNode("Node2", secondNodePos, 0, 0, 0, 1);
+            ThirdNodeModel = CreateNode("Node3", thirdNodePos, 0, 0, 1, 1);
+            FourthNodeModel = CreateNode("Node4", fourthNodePos, 0, 0, 1, 1);
+            var fifthNodeModel = CreateNode("Node5", fifthNodePos, 0, 0, 1);
 
             graphView.RebuildUI(GraphModel, Store);
             yield return null;
 
-            BasicPortModel outputPortFirstNode = FirstNodeModel.AddPort(Orientation.Horizontal, Direction.Output, PortCapacity.Multi, typeof(float));
+            IPortModel outputPortFirstNode = FirstNodeModel.OutputsByDisplayOrder[0];
             Assert.IsNotNull(outputPortFirstNode);
 
-            BasicPortModel outputPortSecondNode = SecondNodeModel.AddPort(Orientation.Horizontal, Direction.Output, PortCapacity.Multi, typeof(float));
+            IPortModel outputPortSecondNode = SecondNodeModel.OutputsByDisplayOrder[0];
             Assert.IsNotNull(outputPortSecondNode);
 
-            BasicPortModel inputPortThirdNode = ThirdNodeModel.AddPort(Orientation.Horizontal, Direction.Input, PortCapacity.Multi, typeof(float));
-            BasicPortModel outputPortThirdNode = ThirdNodeModel.AddPort(Orientation.Horizontal, Direction.Output, PortCapacity.Multi, typeof(float));
+            IPortModel inputPortThirdNode = ThirdNodeModel.InputsByDisplayOrder[0];
+            IPortModel outputPortThirdNode = ThirdNodeModel.OutputsByDisplayOrder[0];
             Assert.IsNotNull(inputPortThirdNode);
             Assert.IsNotNull(outputPortThirdNode);
 
-            BasicPortModel inputPortFourthNode = FourthNodeModel.AddPort(Orientation.Horizontal, Direction.Input, PortCapacity.Multi, typeof(float));
-            BasicPortModel outputPortFourthNode = FourthNodeModel.AddPort(Orientation.Horizontal, Direction.Output, PortCapacity.Multi, typeof(float));
+            IPortModel inputPortFourthNode = FourthNodeModel.InputsByDisplayOrder[0];
+            IPortModel outputPortFourthNode = FourthNodeModel.OutputsByDisplayOrder[0];
             Assert.IsNotNull(inputPortFourthNode);
             Assert.IsNotNull(outputPortFourthNode);
 
-            BasicPortModel inputPortFifthNode = fifthNodeModel.AddPort(Orientation.Horizontal, Direction.Input, PortCapacity.Multi, typeof(float));
+            IPortModel inputPortFifthNode = fifthNodeModel.InputsByDisplayOrder[0];
             Assert.IsNotNull(inputPortFifthNode);
 
             graphView.RebuildUI(GraphModel, Store);
@@ -959,6 +957,8 @@ namespace GraphElements
 
             graphView.RebuildUI(GraphModel, Store);
             yield return null;
+
+            Assert.AreEqual(5, GraphModel.EdgeModels.Count, "Not all edges were created.");
 
             // Get the UI nodes
             m_FirstNode = FirstNodeModel.GetUI<Node>(graphView);
@@ -1023,34 +1023,34 @@ namespace GraphElements
             Vector2 fourthNodePos = new Vector2(400, 200);
             Vector2 fifthNodePos = new Vector2(600, 10);
 
-            FirstNodeModel = CreateNode("Node1", firstNodePos);
-            SecondNodeModel = CreateNode("Node2", secondNodePos);
-            ThirdNodeModel = CreateNode("Node3", thirdNodePos);
-            FourthNodeModel = CreateNode("Node4", fourthNodePos);
-            var fifthNodeModel = CreateNode("Node5", fifthNodePos);
+            FirstNodeModel = CreateNode("Node1", firstNodePos, 0, 0, 0, 1);
+            SecondNodeModel = CreateNode("Node2", secondNodePos, 0, 0, 1, 1);
+            ThirdNodeModel = CreateNode("Node3", thirdNodePos, 0, 0, 1, 1);
+            FourthNodeModel = CreateNode("Node4", fourthNodePos, 0, 0, 1, 1);
+            var fifthNodeModel = CreateNode("Node5", fifthNodePos, 0, 0, 1);
 
             graphView.RebuildUI(GraphModel, Store);
             yield return null;
 
-            BasicPortModel outputPortFirstNode = FirstNodeModel.AddPort(Orientation.Horizontal, Direction.Output, PortCapacity.Multi, typeof(float));
+            IPortModel outputPortFirstNode = FirstNodeModel.OutputsByDisplayOrder[0];
             Assert.IsNotNull(outputPortFirstNode);
 
-            BasicPortModel inputPortSecondNode = SecondNodeModel.AddPort(Orientation.Horizontal, Direction.Input, PortCapacity.Multi, typeof(float));
-            BasicPortModel outputPortSecondNode = SecondNodeModel.AddPort(Orientation.Horizontal, Direction.Output, PortCapacity.Multi, typeof(float));
+            IPortModel inputPortSecondNode = SecondNodeModel.InputsByDisplayOrder[0];
+            IPortModel outputPortSecondNode = SecondNodeModel.OutputsByDisplayOrder[0];
             Assert.IsNotNull(inputPortSecondNode);
             Assert.IsNotNull(outputPortSecondNode);
 
-            BasicPortModel inputPortThirdNode = ThirdNodeModel.AddPort(Orientation.Horizontal, Direction.Input, PortCapacity.Multi, typeof(float));
-            BasicPortModel outputPortThirdNode = ThirdNodeModel.AddPort(Orientation.Horizontal, Direction.Output, PortCapacity.Multi, typeof(float));
+            IPortModel inputPortThirdNode = ThirdNodeModel.InputsByDisplayOrder[0];
+            IPortModel outputPortThirdNode = ThirdNodeModel.OutputsByDisplayOrder[0];
             Assert.IsNotNull(inputPortThirdNode);
             Assert.IsNotNull(outputPortThirdNode);
 
-            BasicPortModel inputPortFourthNode = FourthNodeModel.AddPort(Orientation.Horizontal, Direction.Input, PortCapacity.Multi, typeof(float));
-            BasicPortModel outputPortFourthNode = FourthNodeModel.AddPort(Orientation.Horizontal, Direction.Output, PortCapacity.Multi, typeof(float));
+            IPortModel inputPortFourthNode = FourthNodeModel.InputsByDisplayOrder[0];
+            IPortModel outputPortFourthNode = FourthNodeModel.OutputsByDisplayOrder[0];
             Assert.IsNotNull(inputPortFourthNode);
             Assert.IsNotNull(outputPortFourthNode);
 
-            BasicPortModel inputPortFifthNode = fifthNodeModel.AddPort(Orientation.Horizontal, Direction.Input, PortCapacity.Multi, typeof(float));
+            IPortModel inputPortFifthNode = fifthNodeModel.InputsByDisplayOrder[0];
             Assert.IsNotNull(inputPortFifthNode);
 
             graphView.RebuildUI(GraphModel, Store);
@@ -1090,6 +1090,8 @@ namespace GraphElements
 
             graphView.RebuildUI(GraphModel, Store);
             yield return null;
+
+            Assert.AreEqual(5, GraphModel.EdgeModels.Count, "Not all edges were created.");
 
             // Get the UI nodes
             m_FirstNode = FirstNodeModel.GetUI<Node>(graphView);

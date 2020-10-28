@@ -1,13 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public class Placemat : GraphElement, IResizableGraphElement, IMovableGraphElement, IDropTarget
+    public class Placemat : GraphElement, IResizableGraphElement, IDropTarget
     {
         public enum MinSizePolicy
         {
@@ -32,15 +31,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         static readonly float k_MinWidth = 200;
         static readonly float k_MinHeight = 100;
 
-        protected ContextualMenuManipulator m_ContextualMenuManipulator;
-
         VisualElement m_ContentContainer;
 
         PlacematContainer m_PlacematContainer;
 
         HashSet<GraphElement> m_CollapsedElements  = new HashSet<GraphElement>();
 
-        public IGTFPlacematModel PlacematModel => Model as IGTFPlacematModel;
+        public IPlacematModel PlacematModel => Model as IPlacematModel;
 
         public override VisualElement contentContainer => m_ContentContainer ?? this;
 
@@ -100,16 +97,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             }
         }
 
-        public virtual bool IsMovable => true;
-
         public Placemat()
         {
             focusable = true;
 
             RegisterCallback<DetachFromPanelEvent>(OnDetachFromPanel);
-
-            m_ContextualMenuManipulator = new ContextualMenuManipulator(BuildContextualMenu);
-            this.AddManipulator(m_ContextualMenuManipulator);
         }
 
         protected override void BuildPartList()
@@ -232,7 +224,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                         case Placemat placemat when !placemat.Collapsed:
                             yield return element;
                             break;
-                        case IMovableGraphElement _:
+                        case GraphElement e when e.IsMovable():
                             yield return element;
                             break;
                     }
@@ -249,7 +241,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                         collapsedElements.Add(edge);
         }
 
-        internal List<IGTFGraphElementModel> GatherCollapsedElements()
+        internal List<IGraphElementModel> GatherCollapsedElements()
         {
             List<GraphElement> collapsedElements = new List<GraphElement>();
 
@@ -260,7 +252,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             var collapsedElementsElsewhere = new List<GraphElement>();
             RecurseGatherCollapsedElements(this, graphElements, collapsedElementsElsewhere);
 
-            var nodes = new HashSet<IGTFNodeModel>(AllCollapsedElements(collapsedElements).Select(e => e.Model).OfType<IGTFNodeModel>());
+            var nodes = new HashSet<INodeModel>(AllCollapsedElements(collapsedElements).Select(e => e.Model).OfType<INodeModel>());
 
             foreach (var edge in GraphView.Edges.ToList())
                 if (AnyNodeIsConnectedToPort(nodes, edge.Input) && AnyNodeIsConnectedToPort(nodes, edge.Output))
@@ -302,7 +294,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             }
         }
 
-        static bool AnyNodeIsConnectedToPort(IEnumerable<IGTFNodeModel> nodes, IGTFPortModel port)
+        static bool AnyNodeIsConnectedToPort(IEnumerable<INodeModel> nodes, IPortModel port)
         {
             if (port.NodeModel == null)
             {
@@ -429,7 +421,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                     pos.yMax = currentRect.yMax;
 
                 MakeRectAtLeastMinimalSize(ref pos);
-                Store.Dispatch(new ChangePlacematPositionAction(pos, ResizeFlags.All, PlacematModel));
+                Store.Dispatch(new ChangePlacematLayoutAction(pos, ResizeFlags.All, PlacematModel));
             }
         }
 
@@ -440,7 +432,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
             var pos = new Rect();
             if (elements.Count > 0 && ComputeElementBounds(ref pos, elements))
-                Store.Dispatch(new ChangePlacematPositionAction(pos, ResizeFlags.All, PlacematModel));
+                Store.Dispatch(new ChangePlacematLayoutAction(pos, ResizeFlags.All, PlacematModel));
         }
 
         void ResizeToIncludeSelectedNodes()
@@ -467,7 +459,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
                 MakeRectAtLeastMinimalSize(ref pos);
 
-                Store.Dispatch(new ChangePlacematPositionAction(pos, ResizeFlags.All, PlacematModel));
+                Store.Dispatch(new ChangePlacematLayoutAction(pos, ResizeFlags.All, PlacematModel));
             }
         }
 
@@ -493,52 +485,59 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         public void OnResized(Rect newRect, ResizeFlags resizeWhat)
         {
-            Store.Dispatch(new ChangePlacematPositionAction(newRect, resizeWhat, PlacematModel));
+            Store.Dispatch(new ChangePlacematLayoutAction(newRect, resizeWhat, PlacematModel));
         }
 
-        protected virtual void BuildContextualMenu(ContextualMenuPopulateEvent evt)
+        protected override void BuildContextualMenu(ContextualMenuPopulateEvent evt)
         {
-            BuildContextualMenu(evt.target as Placemat, evt.menu);
-        }
+            base.BuildContextualMenu(evt);
 
-        public static void BuildContextualMenu(Placemat placemat, DropdownMenu menu)
-        {
-            if (placemat != null)
-            {
-                menu.AppendAction(placemat.Collapsed ? "Expand" : "Collapse", a => placemat.SetCollapsed(!placemat.Collapsed));
+            if (!(evt.currentTarget is Placemat placemat))
+                return;
 
-                // Gather nodes here so that we don't recycle this code in the resize functions.
-                List<GraphElement> hoveringNodes = placemat.GetHoveringNodes();
+            if (evt.menu.MenuItems().Count > 0)
+                evt.menu.AppendSeparator();
 
-                menu.AppendAction("Resize/Grow To Fit",
-                    a => placemat.GrowToFitElements(hoveringNodes),
-                    hoveringNodes.Count > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+            evt.menu.AppendAction(placemat.Collapsed ? "Expand Placemat" : "Collapse Placemat",
+                a => placemat.SetCollapsed(!placemat.Collapsed));
 
-                menu.AppendAction("Resize/Shrink To Fit",
-                    a => placemat.ShrinkToFitElements(hoveringNodes),
-                    hoveringNodes.Count > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+            // Gather nodes here so that we don't recycle this code in the resize functions.
+            List<GraphElement> hoveringNodes = placemat.GetHoveringNodes();
 
-                menu.AppendAction("Resize/Grow To Fit Selection",
-                    a => placemat.ResizeToIncludeSelectedNodes(),
-                    s =>
-                    {
-                        foreach (ISelectableGraphElement sel in placemat.GraphView.Selection)
-                        {
-                            var node = sel as Node;
-                            if (node != null && !hoveringNodes.Contains(node))
-                                return DropdownMenuAction.Status.Normal;
-                        }
+            evt.menu.AppendAction("Resize Placemat/Grow to Fit",
+                a => placemat.GrowToFitElements(hoveringNodes),
+                hoveringNodes.Count > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
 
-                        return DropdownMenuAction.Status.Disabled;
-                    });
+            evt.menu.AppendAction("Resize Placemat/Shrink to Fit",
+                a => placemat.ShrinkToFitElements(hoveringNodes),
+                hoveringNodes.Count > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
 
-                var status = placemat.Container.Placemats.Any() ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled;
+            evt.menu.AppendAction("Resize Placemat/Grow to Fit Selection",
+                a => placemat.ResizeToIncludeSelectedNodes(),
+                s =>
+                {
+                    if (placemat.GraphView.Selection.OfType<Node>().Any(n => !hoveringNodes.Contains(n)))
+                        return DropdownMenuAction.Status.Normal;
 
-                menu.AppendAction("Order/Bring To Front", a => placemat.Container.BringToFront(placemat), status);
-                menu.AppendAction("Order/Bring Forward", a => placemat.Container.CyclePlacemat(placemat, PlacematContainer.CycleDirection.Up), status);
-                menu.AppendAction("Order/Send Backward", a => placemat.Container.CyclePlacemat(placemat, PlacematContainer.CycleDirection.Down), status);
-                menu.AppendAction("Order/Send To Back", a => placemat.Container.SendToBack(placemat), status);
-            }
+                    return DropdownMenuAction.Status.Disabled;
+                });
+
+            var placematIsTop = placemat.Container.Placemats.Last() == placemat;
+            var placematIsBottom = placemat.Container.Placemats.First() == placemat;
+            var canBeReordered = placemat.Container.Placemats.Count > 1;
+
+            evt.menu.AppendAction("Reorder Placemat/Bring to Front",
+                a => placemat.Container.BringToFront(placemat),
+                canBeReordered && !placematIsTop ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+            evt.menu.AppendAction("Reorder Placemat/Bring Forward",
+                a => placemat.Container.CyclePlacemat(placemat, PlacematContainer.CycleDirection.Up),
+                canBeReordered && !placematIsTop ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+            evt.menu.AppendAction("Reorder Placemat/Send Backward",
+                a => placemat.Container.CyclePlacemat(placemat, PlacematContainer.CycleDirection.Down),
+                canBeReordered && !placematIsBottom ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+            evt.menu.AppendAction("Reorder Placemat/Send to Back",
+                a => placemat.Container.SendToBack(placemat),
+                canBeReordered && !placematIsBottom ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
         }
 
         List<GraphElement> GetHoveringNodes()
@@ -552,7 +551,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         internal void SetCollapsed(bool value)
         {
             var collapsedModels = value ? GatherCollapsedElements() : null;
-            Store.Dispatch(new ExpandOrCollapsePlacematAction(value, collapsedModels, PlacematModel));
+            Store.Dispatch(new SetPlacematCollapsedAction(PlacematModel, value, collapsedModels));
         }
 
         void OnDetachFromPanel(DetachFromPanelEvent evt)
@@ -560,7 +559,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             CollapsedElements = null;
         }
 
-        internal bool GetPortCenterOverride(IGTFPortModel port, out Vector2 overriddenPosition)
+        internal bool GetPortCenterOverride(IPortModel port, out Vector2 overriddenPosition)
         {
             if (!Collapsed || parent == null)
             {

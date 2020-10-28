@@ -1,30 +1,29 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Profiling;
 using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     interface IDependency
     {
-        IGTFNodeModel DependentNode { get; }
+        INodeModel DependentNode { get; }
     }
 
     public class PortalNodesDependency : IDependency
     {
-        public IGTFNodeModel DependentNode { get; set; }
+        public INodeModel DependentNode { get; set; }
     }
 
     public class LinkedNodesDependency : IDependency
     {
-        public IGTFPortModel DependentPort;
-        public IGTFPortModel ParentPort;
-        public IGTFNodeModel DependentNode => DependentPort.NodeModel;
+        public IPortModel DependentPort;
+        public IPortModel ParentPort;
+        public INodeModel DependentNode => DependentPort.NodeModel;
         public int count;
     }
 
@@ -35,8 +34,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         readonly GraphView m_GraphView;
         readonly Dictionary<GUID, Dictionary<GUID, IDependency>> m_DependenciesByNode = new Dictionary<GUID, Dictionary<GUID, IDependency>>();
         readonly Dictionary<GUID, Dictionary<GUID, IDependency>> m_PortalDependenciesByNode = new Dictionary<GUID, Dictionary<GUID, IDependency>>();
-        readonly HashSet<IGTFNodeModel> m_ModelsToMove = new HashSet<IGTFNodeModel>();
-        readonly HashSet<IGTFNodeModel> m_TempMovedModels = new HashSet<IGTFNodeModel>();
+        readonly HashSet<INodeModel> m_ModelsToMove = new HashSet<INodeModel>();
+        readonly HashSet<INodeModel> m_TempMovedModels = new HashSet<INodeModel>();
 
         Vector2 m_StartPos;
         Preferences m_Preferences;
@@ -47,7 +46,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             m_Preferences = preferences;
         }
 
-        void AddEdgeDependency(IGTFNodeModel parent, IDependency child)
+        void AddEdgeDependency(INodeModel parent, IDependency child)
         {
             if (!m_DependenciesByNode.TryGetValue(parent.Guid, out Dictionary<GUID, IDependency> link))
                 m_DependenciesByNode.Add(parent.Guid, new Dictionary<GUID, IDependency> { {child.DependentNode.Guid, child }});
@@ -67,14 +66,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             }
         }
 
-        internal List<IDependency> GetDependencies(IGTFNodeModel parent)
+        internal List<IDependency> GetDependencies(INodeModel parent)
         {
             if (!m_DependenciesByNode.TryGetValue(parent.Guid, out var link))
                 return null;
             return link.Values.ToList();
         }
 
-        internal List<IDependency> GetPortalDependencies(IGTFEdgePortalModel parent)
+        internal List<IDependency> GetPortalDependencies(IEdgePortalModel parent)
         {
             if (!m_PortalDependenciesByNode.TryGetValue(parent.Guid, out var link))
                 return null;
@@ -140,11 +139,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         void Log(string message)
         {
-            if (m_Preferences.GetBool(BoolPref.DependenciesLogging))
+            if (m_Preferences?.GetBool(BoolPref.DependenciesLogging) ?? false)
                 Debug.Log(message);
         }
 
-        void ProcessDependency(IGTFNodeModel nodeModel, Vector2 delta, Action<GraphElement, IDependency, Vector2, IGTFNodeModel> dependencyCallback)
+        void ProcessDependency(INodeModel nodeModel, Vector2 delta, Action<GraphElement, IDependency, Vector2, INodeModel> dependencyCallback)
         {
             Log($"ProcessDependency {nodeModel}");
 
@@ -171,13 +170,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             }
         }
 
-        void ProcessMovedNodes(Vector2 lastMousePosition, Action<GraphElement, IDependency, Vector2, IGTFNodeModel> dependencyCallback)
+        void ProcessMovedNodes(Vector2 lastMousePosition, Action<GraphElement, IDependency, Vector2, INodeModel> dependencyCallback)
         {
             Profiler.BeginSample("VS.ProcessMovedNodes");
 
             m_TempMovedModels.Clear();
             Vector2 delta = lastMousePosition - m_StartPos;
-            foreach (IGTFNodeModel nodeModel in m_ModelsToMove)
+            foreach (INodeModel nodeModel in m_ModelsToMove)
                 ProcessDependency(nodeModel, delta, dependencyCallback);
 
             Profiler.EndSample();
@@ -186,7 +185,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         public void UpdateNodeState()
         {
             HashSet<GUID> processed = new HashSet<GUID>();
-            void ProcessDependency(IGTFNodeModel nodeModel, ModelState state)
+            void ProcessDependency(INodeModel nodeModel, ModelState state)
             {
                 if (nodeModel.State == ModelState.Disabled)
                     state = ModelState.Disabled;
@@ -200,7 +199,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
                 Dictionary<GUID, IDependency> dependencies = null;
 
-                if (nodeModel is IGTFEdgePortalModel edgePortalModel)
+                if (nodeModel is IEdgePortalModel edgePortalModel)
                     m_PortalDependenciesByNode.TryGetValue(edgePortalModel.Guid, out dependencies);
 
                 if ((dependencies == null || !dependencies.Any()) &&
@@ -241,7 +240,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             ProcessMovedNodes(lastMousePosition, OffsetDependency);
         }
 
-        static void OffsetDependency(GraphElement element, IDependency model, Vector2 delta, IGTFNodeModel _)
+        static void OffsetDependency(GraphElement element, IDependency model, Vector2 delta, INodeModel _)
         {
             Vector2 prevPos = model.DependentNode.Position;
             Rect posRect = element.GetPosition();
@@ -249,7 +248,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             element.SetPosition(posRect);
         }
 
-        IGTFGraphModel m_GraphModel;
+        IGraphModel m_GraphModel;
 
         public void StartNotifyMove(List<ISelectableGraphElement> selection, Vector2 lastMousePosition)
         {
@@ -259,7 +258,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
             foreach (var element in selection.OfType<IGraphElement>())
             {
-                if (element.Model is IGTFNodeModel nodeModel)
+                if (element.Model is INodeModel nodeModel)
                 {
                     if (m_GraphModel == null)
                         m_GraphModel = nodeModel.GraphModel;
@@ -295,7 +294,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             m_ModelsToMove.Clear();
         }
 
-        void AlignDependency(GraphElement element, IDependency dependency, Vector2 _, IGTFNodeModel prev)
+        void AlignDependency(GraphElement element, IDependency dependency, Vector2 _, INodeModel prev)
         {
             // Warning: Don't try to use the VisualElement.layout Rect as it is not up to date yet.
             // Use Node.GetPosition() when possible
@@ -339,14 +338,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         public void AlignNodes(GraphView graphView, bool follow, List<ISelectableGraphElement> selection)
         {
-            HashSet<IGTFNodeModel> topMostModels = new HashSet<IGTFNodeModel>();
+            HashSet<INodeModel> topMostModels = new HashSet<INodeModel>();
 
             topMostModels.Clear();
 
             bool anyEdge = false;
             foreach (Edge edge in selection.OfType<Edge>())
             {
-                if (!edge.EdgeModel.GraphModel.Stencil.CreateDependencyFromEdge(edge.EdgeModel, out LinkedNodesDependency dependency, out IGTFNodeModel parent))
+                if (!edge.EdgeModel.GraphModel.Stencil.CreateDependencyFromEdge(edge.EdgeModel, out LinkedNodesDependency dependency, out INodeModel parent))
                     continue;
                 anyEdge = true;
 
@@ -362,7 +361,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             {
                 foreach (GraphElement element in selection.OfType<GraphElement>())
                 {
-                    if (element.Model is IGTFNodeModel nodeModel)
+                    if (element.Model is INodeModel nodeModel)
                     {
                         topMostModels.Add(nodeModel);
                     }
@@ -372,13 +371,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             if (!anyEdge && !follow)
             {
                 // Align each top-most node then move dependencies by the same delta
-                foreach (IGTFNodeModel model in topMostModels)
+                foreach (INodeModel model in topMostModels)
                 {
                     if (!m_DependenciesByNode.TryGetValue(model.Guid, out Dictionary<GUID, IDependency> dependencies))
                         continue;
                     foreach (KeyValuePair<GUID, IDependency> dependency in dependencies)
                     {
-                        IGTFNodeModel dependentNode = dependency.Value.DependentNode;
+                        INodeModel dependentNode = dependency.Value.DependentNode;
                         GraphElement element = dependentNode.GetUI<Node>(graphView);
                         Vector2 startPos = dependentNode.Position;
                         AlignDependency(element, dependency.Value, Vector2.zero, model);
@@ -400,7 +399,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             m_TempMovedModels.Clear();
         }
 
-        void OffsetNodeDependencies(IGTFNodeModel dependentNode, Vector2 delta)
+        void OffsetNodeDependencies(INodeModel dependentNode, Vector2 delta)
         {
             Log($"Moving all dependencies of {dependentNode.GetType().Name} by {delta}");
 
@@ -410,15 +409,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             ProcessDependency(dependentNode, delta, OffsetDependency);
         }
 
-        public void AddPositionDependency(IGTFEdgeModel model)
+        public void AddPositionDependency(IEdgeModel model)
         {
-            if (!model.GraphModel.Stencil.CreateDependencyFromEdge(model, out var dependency, out IGTFNodeModel parent))
+            if (!model.GraphModel.Stencil.CreateDependencyFromEdge(model, out var dependency, out INodeModel parent))
                 return;
             AddEdgeDependency(parent, dependency);
             LogDependencies();
         }
 
-        public void AddPortalDependency(IGTFEdgePortalModel model)
+        public void AddPortalDependency(IEdgePortalModel model)
         {
             var stencil = model.GraphModel.Stencil;
 
@@ -432,7 +431,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             LogDependencies();
         }
 
-        public void RemovePortalDependency(IGTFNodeModel model)
+        public void RemovePortalDependency(INodeModel model)
         {
             foreach (var dependencies in m_PortalDependenciesByNode.Values)
             {

@@ -1,17 +1,16 @@
 using System;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class PortConstantEditorPart : BaseGraphElementPart
     {
         public static readonly string k_ConstantEditorUssName = "constant-editor";
 
-        public static PortConstantEditorPart Create(string name, IGTFGraphElementModel model,
-            IGraphElement graphElement, string parentClassName, IGTFEditorDataModel editorDataModel)
+        public static PortConstantEditorPart Create(string name, IGraphElementModel model,
+            IGraphElement graphElement, string parentClassName, IEditorDataModel editorDataModel)
         {
-            if (model is IGTFPortModel)
+            if (model is IPortModel)
             {
                 return new PortConstantEditorPart(name, model, graphElement, parentClassName, editorDataModel);
             }
@@ -19,7 +18,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             return null;
         }
 
-        readonly IGTFEditorDataModel m_EditorDataModel;
+        readonly IEditorDataModel m_EditorDataModel;
 
         VisualElement m_Editor;
 
@@ -29,8 +28,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         public override VisualElement Root => m_Root;
 
-        protected PortConstantEditorPart(string name, IGTFGraphElementModel model, IGraphElement ownerElement,
-                                         string parentClassName, IGTFEditorDataModel editorDataModel)
+        protected PortConstantEditorPart(string name, IGraphElementModel model, IGraphElement ownerElement,
+                                         string parentClassName, IEditorDataModel editorDataModel)
             : base(name, model, ownerElement, parentClassName)
         {
             m_EditorDataModel = editorDataModel;
@@ -38,21 +37,26 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         protected override void BuildPartUI(VisualElement container)
         {
-            var portModel = m_Model as IGTFPortModel;
-            if (portModel != null && portModel.Direction == Direction.Input && portModel.EmbeddedValue != null)
+            var portModel = m_Model as IPortModel;
+            if (portModel != null && portModel.Direction == Direction.Input)
             {
-                m_Root = new VisualElement { name = PartName };
-                m_Root.AddToClassList(m_ParentClassName.WithUssElement(PartName));
-
-                BuildConstantEditor();
-
-                container.Add(m_Root);
+                InitRoot(container);
+                if (portModel.EmbeddedValue != null)
+                    BuildConstantEditor();
             }
+        }
+
+        private void InitRoot(VisualElement container)
+        {
+            m_Root = new VisualElement {name = PartName};
+            m_Root.AddToClassList(m_ParentClassName.WithUssElement(PartName));
+
+            container.Add(m_Root);
         }
 
         protected override void UpdatePartFromModel()
         {
-            if (m_Model is IGTFPortModel portModel)
+            if (m_Model is IPortModel portModel)
             {
                 BuildConstantEditor();
                 m_Editor?.SetEnabled(!portModel.DisableEmbeddedValueEditor);
@@ -61,10 +65,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         void BuildConstantEditor()
         {
-            if (m_Model is IGTFPortModel portModel)
+            if (m_Model is IPortModel portModel)
             {
                 // Rebuild editor if port data type changed.
-                if (m_Editor != null && portModel.EmbeddedValue.Type != m_EditorDataType)
+                if (m_Editor != null && portModel.EmbeddedValue?.Type != m_EditorDataType)
                 {
                     m_Editor.RemoveFromHierarchy();
                     m_Editor = null;
@@ -88,7 +92,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         void OnValueChanged(IChangeEvent evt, object newValue)
         {
-            if (m_Model is IGTFPortModel portModel)
+            if (m_Model is IPortModel portModel)
             {
                 m_OwnerElement.Store.Dispatch(new UpdatePortConstantAction(portModel, newValue));
             }

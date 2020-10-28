@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public enum StickyNoteTheme
     {
@@ -27,7 +26,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         Huge
     }
 
-    public class StickyNote : GraphElement, IResizableGraphElement, IMovableGraphElement
+    public class StickyNote : GraphElement, IResizableGraphElement
     {
         public new class UxmlFactory : UxmlFactory<StickyNote> {}
 
@@ -47,13 +46,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         public override VisualElement contentContainer => m_ContentContainer ?? this;
 
-        public IGTFStickyNoteModel StickyNoteModel => Model as IGTFStickyNoteModel;
-
-        public bool IsMovable => true;
+        public IStickyNoteModel StickyNoteModel => Model as IStickyNoteModel;
 
         public StickyNote()
         {
-            this.AddManipulator(new ContextualMenuManipulator(BuildContextualMenu));
             Layer = -100;
         }
 
@@ -102,8 +98,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             this.PrefixRemoveFromClassList(k_SizeClassNamePrefix);
             AddToClassList(k_SizeClassNamePrefix + StickyNoteModel.TextSize.ToKebabCase());
         }
-
-        public virtual void BuildContextualMenu(ContextualMenuPopulateEvent evt) {}
 
         public static IEnumerable<string> GetThemes()
         {
@@ -192,7 +186,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         {
             if (resizeWhat != ResizeFlags.None)
             {
-                Store.Dispatch(new ResizeStickyNoteAction(StickyNoteModel, newRect, resizeWhat));
+                Store.Dispatch(new ChangeStickyNoteLayoutAction(StickyNoteModel, newRect, resizeWhat));
             }
         }
 

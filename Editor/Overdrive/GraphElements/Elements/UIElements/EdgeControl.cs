@@ -5,9 +5,8 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine.Profiling;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class EdgeControl : VisualElement
     {

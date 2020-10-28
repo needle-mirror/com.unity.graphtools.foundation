@@ -2,16 +2,16 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.Model
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public abstract class GraphTraversal
     {
-        public void VisitGraph(IGTFGraphModel graphModel)
+        public void VisitGraph(IGraphModel graphModel)
         {
             if (graphModel?.Stencil == null)
                 return;
 
-            var visitedNodes = new HashSet<IGTFNodeModel>();
+            var visitedNodes = new HashSet<INodeModel>();
             foreach (var entryPoint in graphModel.Stencil.GetEntryPoints(graphModel))
             {
                 VisitNode(entryPoint, visitedNodes);
@@ -37,11 +37,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Model
             }
         }
 
-        protected virtual void VisitEdge(IGTFEdgeModel edgeModel)
+        protected virtual void VisitEdge(IEdgeModel edgeModel)
         {
         }
 
-        protected virtual void VisitNode(IGTFNodeModel nodeModel, HashSet<IGTFNodeModel> visitedNodes)
+        protected virtual void VisitNode(INodeModel nodeModel, HashSet<INodeModel> visitedNodes)
         {
             if (nodeModel == null)
                 return;
@@ -62,6 +62,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Model
             }
         }
 
-        protected virtual void VisitVariableDeclaration(IGTFVariableDeclarationModel variableDeclarationModel) {}
+        protected virtual void VisitVariableDeclaration(IVariableDeclarationModel variableDeclarationModel) {}
     }
 }

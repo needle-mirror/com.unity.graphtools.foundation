@@ -1,7 +1,7 @@
-namespace UnityEditor.GraphToolsFoundation.Overdrive.Model
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public interface IHasMainExecutionOutputPort
     {
-        IGTFPortModel ExecutionOutputPort { get; }
+        IPortModel ExecutionOutputPort { get; }
     }
 }

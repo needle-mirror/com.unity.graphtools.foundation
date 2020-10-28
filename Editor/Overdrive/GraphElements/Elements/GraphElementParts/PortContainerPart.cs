@@ -1,15 +1,14 @@
 using System;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class PortContainerPart : BaseGraphElementPart
     {
         public static readonly string k_UssClassName = "ge-port-container-part";
         public static readonly string k_PortsUssName = "ports";
 
-        public static PortContainerPart Create(string name, IGTFGraphElementModel model, IGraphElement graphElement, string parentClassName)
+        public static PortContainerPart Create(string name, IGraphElementModel model, IGraphElement graphElement, string parentClassName)
         {
             if (model is IPortNode)
             {
@@ -25,7 +24,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         public override VisualElement Root => m_Root;
 
-        protected PortContainerPart(string name, IGTFGraphElementModel model, IGraphElement ownerElement, string parentClassName)
+        protected PortContainerPart(string name, IGraphElementModel model, IGraphElement ownerElement, string parentClassName)
             : base(name, model, ownerElement, parentClassName) {}
 
         protected override void BuildPartUI(VisualElement container)

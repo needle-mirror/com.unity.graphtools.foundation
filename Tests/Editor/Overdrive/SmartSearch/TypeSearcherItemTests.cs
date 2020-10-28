@@ -1,7 +1,5 @@
 using System;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
 using UnityEngine;
 using Object = UnityEngine.Object;
 

@@ -1,28 +1,31 @@
 using UnityEngine;
 
-public class AtanFunction : MathFunction
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    void OnEnable()
+    public class AtanFunction : MathFunction
     {
-        name = "Atan";
-        if (m_ParameterIDs.Length == 0)
+        void OnEnable()
         {
-            m_ParameterIDs = new MathNodeID[1];
+            name = "Atan";
+            if (m_ParameterIDs.Length == 0)
+            {
+                m_ParameterIDs = new MathNodeID[1];
+            }
+
+            if (m_ParameterNames.Length == 0)
+            {
+                m_ParameterNames = new string[] { "f" };
+            }
         }
 
-        if (m_ParameterNames.Length == 0)
+        public override float Evaluate()
         {
-            m_ParameterNames = new string[] { "f" };
+            float input = 0.0f;
+            if (GetParameter(0) != null)
+            {
+                input =  GetParameter(0).Evaluate();
+            }
+            return Mathf.Atan(input);
         }
-    }
-
-    public override float Evaluate()
-    {
-        float input = 0.0f;
-        if (GetParameter(0) != null)
-        {
-            input =  GetParameter(0).Evaluate();
-        }
-        return Mathf.Atan(input);
     }
 }

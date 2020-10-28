@@ -1,16 +1,13 @@
 using System;
 using System.Collections.Generic;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Blackboard = UnityEditor.GraphToolsFoundation.Overdrive.GraphElements.Blackboard;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    class BlackboardProvider : IBlackboardProvider
+    public class BlackboardProvider : IBlackboardProvider
     {
         const int k_MainSection = 0;
         const string k_MainSectionTitle = "Graph Variables";
@@ -26,7 +23,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             m_Stencil = stencil;
         }
 
-        VisualElement CreateExtendedFieldView(Store store, IGTFVariableDeclarationModel variableDeclarationModel,
+        VisualElement CreateExtendedFieldView(Store store, IVariableDeclarationModel variableDeclarationModel,
             Blackboard.RebuildCallback rebuild)
         {
             return new BlackboardVariablePropertyView(store, variableDeclarationModel, rebuild, m_Stencil)
@@ -56,7 +53,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             return k_ClassLibrarySubTitle;
         }
 
-        public void AddItemRequested<TAction>(Store store, TAction _) where TAction : IAction
+        public void AddItemRequested<TAction>(Store store, TAction _) where TAction : BaseAction
         {
             store.Dispatch(new CreateGraphVariableDeclarationAction(k_FieldName, true, typeof(float).GenerateTypeHandle()));
         }
@@ -79,14 +76,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             var currentGraphModel = blackboard.Store.GetState().CurrentGraphModel;
 
-            Dictionary<IGTFVariableDeclarationModel, bool> expandedRows = new Dictionary<IGTFVariableDeclarationModel, bool>();
+            Dictionary<IVariableDeclarationModel, bool> expandedRows = new Dictionary<IVariableDeclarationModel, bool>();
             foreach (BlackboardSection blackBoardSection in blackboard.Sections)
             {
                 foreach (VisualElement visualElement in blackBoardSection.Children())
                 {
                     if (visualElement is BlackboardRow row)
                     {
-                        if (row.Model is IGTFVariableDeclarationModel model)
+                        if (row.Model is IVariableDeclarationModel model)
                             expandedRows[model] = row.expanded;
                     }
                 }
@@ -136,6 +133,30 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 });
         }
 
+        public static void DisplayTokenDeclarationSearcher(Store store, IVariableDeclarationModel declaration, Vector2 pos)
+        {
+            if (store.GetState().CurrentGraphModel == null || !(declaration is VariableDeclarationModel vdm))
+            {
+                return;
+            }
+
+            SearcherService.ShowVariableTypes(
+                store.GetState().CurrentGraphModel.Stencil,
+                pos,
+                (t, i) =>
+                {
+                    var graphModel = store.GetState().CurrentGraphModel;
+                    vdm.DataType = t;
+
+                    foreach (var usage in graphModel.FindReferencesInGraph<VariableNodeModel>(vdm))
+                    {
+                        usage.UpdateTypeFromDeclaration();
+                    }
+
+                    store.ForceRefreshUI(UpdateFlags.All);
+                });
+        }
+
         public void DisplayAppropriateSearcher(Vector2 mousePosition, Blackboard blackboard)
         {
             VisualElement picked = blackboard.panel.Pick(mousePosition);
@@ -144,13 +165,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             // optimization: stop at the first IVsBlackboardField, but still exclude BlackboardThisFields
             if (picked != null && picked is BlackboardVariableField field)
-                (blackboard.GraphView as VseGraphView)?.DisplayTokenDeclarationSearcher(field.VariableDeclarationModel, mousePosition);
+                DisplayTokenDeclarationSearcher(blackboard.Store, field.VariableDeclarationModel, mousePosition);
             else
                 DisplayAddVariableSearcher(blackboard.Store, mousePosition);
         }
 
         public bool CanAddItems => true;
-
-        public void BuildContextualMenu(DropdownMenu evtMenu, VisualElement visualElement, Store store, Vector2 mousePosition) {}
     }
 }

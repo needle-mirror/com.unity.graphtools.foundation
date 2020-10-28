@@ -1,5 +1,4 @@
 using System;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 using UnityEngine.Scripting.APIUpdating;
 
@@ -10,10 +9,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     [MovedFrom(false, "UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting")]
     public struct OpenedGraph
     {
-        public IGTFGraphAssetModel GraphAssetModel;
+        public IGraphAssetModel GraphAssetModel;
         public GameObject BoundObject;
 
-        public OpenedGraph(IGTFGraphAssetModel graphAssetModel, GameObject boundObject)
+        public OpenedGraph(IGraphAssetModel graphAssetModel, GameObject boundObject)
         {
             GraphAssetModel = graphAssetModel;
             BoundObject = boundObject;

@@ -2,7 +2,7 @@ using System;
 using System.Collections;
 using System.Text;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public static class StringUtilsExtensions
     {

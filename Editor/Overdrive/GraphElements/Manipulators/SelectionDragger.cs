@@ -1,17 +1,18 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class SelectionDragger : Dragger
     {
         IDropTarget m_PrevDropTarget;
         bool m_Dragging;
         readonly Snapper m_Snapper = new Snapper();
+
+        public bool IsActive => m_Active;
 
         // selectedElement is used to store a unique selection candidate for cases where user clicks on an item not to
         // drag it but just to reset the selection -- we only know this after the manipulation has ended
@@ -207,7 +208,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                 }
 
                 // Only start manipulating if the clicked element is movable, selected and that the mouse is in its clickable region (it must be deselected otherwise).
-                if (!clickedElement.IsPositioned() || !clickedElement.ContainsPoint(clickedElement.WorldToLocal(e.mousePosition)))
+                if (!clickedElement.IsMovable() || !clickedElement.ContainsPoint(clickedElement.WorldToLocal(e.mousePosition)))
                     return;
 
                 // If we hit this, this likely because the element has just been unselected
@@ -230,7 +231,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                     placemat.GetElementsToMove(e.shiftKey, elementsToMove);
 
                 m_EdgesToUpdate.Clear();
-                HashSet<IGTFNodeModel> nodeModelsToMove = new HashSet<IGTFNodeModel>(elementsToMove.Select(element => element.Model).OfType<IGTFNodeModel>());
+                HashSet<INodeModel> nodeModelsToMove = new HashSet<INodeModel>(elementsToMove.Select(element => element.Model).OfType<INodeModel>());
                 foreach (var edge in m_GraphView.Edges.ToList())
                 {
                     if (nodeModelsToMove.Contains(edge.Input.NodeModel) && nodeModelsToMove.Contains(edge.Output.NodeModel))
@@ -241,7 +242,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
                 foreach (GraphElement ce in elementsToMove)
                 {
-                    if (ce == null || !ce.IsPositioned())
+                    if (ce == null || !ce.IsMovable())
                         continue;
 
                     Rect geometry = ce.GetPosition();
@@ -542,9 +543,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                             var delta = firstPos.Key.GetPosition().position - firstPos.Value.pos.position;
                             var models = m_MovedElements
                                 // PF remove this Where clause. It comes from VseGraphView.OnGraphViewChanged.
-                                .Where(e => e is IMovableGraphElement movable && (!(e.Model is IGTFNodeModel) || movable.IsMovable))
+                                .Where(e => !(e.Model is INodeModel) || e.IsMovable())
                                 .Select(e => e.Model)
-                                .OfType<IPositioned>();
+                                .OfType<IMovable>();
                             m_GraphView.Store.Dispatch(new MoveElementsAction(delta, models.ToArray()));
                         }
                         m_MovedElements.Clear();

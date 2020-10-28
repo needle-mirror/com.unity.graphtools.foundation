@@ -1,18 +1,17 @@
 using System;
 using System.Reflection;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class ConstantEditorBuilder : IConstantEditorBuilder
     {
         public Action<IChangeEvent> OnValueChanged { get; }
-        public IGTFEditorDataModel EditorDataModel { get; }
+        public IEditorDataModel EditorDataModel { get; }
         public bool ConstantIsLocked { get; }
 
-        public ConstantEditorBuilder(Action<IChangeEvent> onValueChanged, IGTFEditorDataModel editorDataModel,
+        public ConstantEditorBuilder(Action<IChangeEvent> onValueChanged, IEditorDataModel editorDataModel,
                                      bool constantIsLocked)
         {
             OnValueChanged = onValueChanged;

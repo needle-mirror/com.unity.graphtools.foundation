@@ -1,5 +1,4 @@
 using System;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.UIElements;
@@ -8,7 +7,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 {
     public static class RenamableVariableHelper
     {
-        internal static void EnableRename(this IRenamable renamable)
+        internal static void EnableRename(this IRenamableGraphElement renamable)
         {
             var clickable = new SimpleClickable(renamable.Rename);
             clickable.activators.Clear();
@@ -17,12 +16,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             renamable.TitleElement.AddManipulator(clickable);
         }
 
-        static void Rename(this IRenamable renamable, MouseDownEvent mouseDownEvent = null)
+        static void Rename(this IRenamableGraphElement renamable, MouseDownEvent mouseDownEvent = null)
         {
             Rename(renamable, false, mouseDownEvent);
         }
 
-        internal static void Rename(this IRenamable renamable, bool forceRename, MouseDownEvent mouseDownEvent = null)
+        public static void Rename(this IRenamableGraphElement renamable, bool forceRename, MouseDownEvent mouseDownEvent = null)
         {
             if (renamable.RenameDelegate != null)
             {
@@ -34,8 +33,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             if (!graphElement.IsRenamable())
                 return;
 
-            var timeDelta = EditorApplication.timeSinceStartup - VseGraphView.clickTimeSinceStartupSecs;
-            if (!forceRename && (graphElement != VseGraphView.clickTarget ||
+            if (!forceRename && (graphElement != GtfoGraphView.clickTarget ||
                                  mouseDownEvent != null && mouseDownEvent.clickCount != 2))
             {
                 return;
@@ -58,7 +56,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         static void OnKeyPressed(KeyDownEvent evt)
         {
-            var renamable = ((VisualElement)evt.target).GetFirstAncestorOfType<IRenamable>();
+            var renamable = ((VisualElement)evt.target).GetFirstAncestorOfType<IRenamableGraphElement>();
             Assert.IsNotNull(renamable);
 
             switch (evt.keyCode)
@@ -73,9 +71,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             }
         }
 
-        static void OnFocusOut(this IRenamable renamable, FocusOutEvent evt)
+        static void OnFocusOut(this IRenamableGraphElement renamable, FocusOutEvent evt)
         {
-            VseWindow window = renamable.TitleElement.GetFirstAncestorOfType<VseGraphView>()?.window;
+            var window = renamable.TitleElement.GetFirstAncestorOfType<GtfoGraphView>()?.Window;
             if (window != null)
                 window.RefreshUIDisabled = false;
 
@@ -91,7 +89,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             if (!renamable.EditTitleCancelled)
             {
                 if (renamable.TitleEditor is TextField textField && renamable.TitleValue != textField.text)
-                    renamable.Store.Dispatch(new RenameElementAction((UnityEditor.GraphToolsFoundation.Overdrive.Model.IRenamable)renamable.Model, textField.text));
+                    renamable.Store.Dispatch(new RenameElementAction((IRenamable)renamable.Model, textField.text));
             }
             else
             {
@@ -99,12 +97,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             }
         }
 
-        static void OnFocus(this IRenamable renamable, FocusEvent evt)
+        static void OnFocus(this IRenamableGraphElement renamable, FocusEvent evt)
         {
             var textField = renamable.TitleEditor as TextField;
             textField?.SelectAll();
 
-            VseWindow window = renamable.TitleElement.GetFirstAncestorOfType<VseGraphView>()?.window;
+            var window = renamable.TitleElement.GetFirstAncestorOfType<GtfoGraphView>()?.Window;
             // OnBlur is not called after a function is created in a new window and the window is closed, e.g. in tests
             ((VisualElement)renamable).RegisterCallback<DetachFromPanelEvent>(Callback);
             if (window != null)
@@ -117,7 +115,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         static void Callback<T>(EventBase<T> evt) where T : EventBase<T>, new()
         {
-            var renamable = ((IRenamable)evt.target);
+            var renamable = ((IRenamableGraphElement)evt.target);
             // ReSharper disable once DelegateSubtraction
             Undo.undoRedoPerformed -= renamable.UndoRedoPerformed;
 
@@ -126,7 +124,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             renamable.TitleEditor.Q(TextInputBaseField<string>.textInputUssName).UnregisterCallback<KeyDownEvent>(OnKeyPressed);
         }
 
-        static void UndoRedoPerformed(this IRenamable renamable)
+        static void UndoRedoPerformed(this IRenamableGraphElement renamable)
         {
             var textField = renamable.TitleEditor as TextField;
             if (textField == null)

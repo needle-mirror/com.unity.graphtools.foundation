@@ -1,15 +1,13 @@
 using System;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 using UnityEngine.Scripting.APIUpdating;
-using ICloneable = UnityEditor.GraphToolsFoundation.Overdrive.Model.ICloneable;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 {
     [Serializable]
     //[MovedFrom(false, "UnityEditor.VisualScripting.Model", "Unity.GraphTools.Foundation.Overdrive.Editor")]
     [MovedFrom("UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting")]
-    public class VariableNodeModel : NodeModel, IGTFVariableNodeModel, IRenamable, ICloneable, IHasDeclarationModel, IHasMainOutputPort
+    public class VariableNodeModel : NodeModel, IVariableNodeModel, IRenamable, ICloneable, IHasMainOutputPort
     {
         const string k_MainPortName = "MainPortName";
 
@@ -18,12 +16,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
         protected PortModel m_MainPortModel;
 
-        public VariableType VariableType => VariableDeclarationModel.VariableType;
-
-        public TypeHandle DataType => VariableDeclarationModel?.DataType ?? TypeHandle.Unknown;
-
+        // PF: remove base implementation
         public override string DataTypeString => VariableDeclarationModel?.DataType.GetMetadata(Stencil).FriendlyName ?? string.Empty;
 
+        // PF: remove base implementation
         public override string VariableString => DeclarationModel == null ? string.Empty : VariableDeclarationModel.IsExposed ? "Exposed variable" : "Variable";
 
         public override string Title => m_DeclarationModel == null ? "" : m_DeclarationModel.Title;
@@ -34,15 +30,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             set => m_DeclarationModel = (VariableDeclarationModel)value;
         }
 
-        public IGTFVariableDeclarationModel VariableDeclarationModel => DeclarationModel as IGTFVariableDeclarationModel;
+        public IVariableDeclarationModel VariableDeclarationModel => DeclarationModel as IVariableDeclarationModel;
 
-        public IGTFPortModel InputPort => m_MainPortModel?.Direction == Direction.Input ? m_MainPortModel : null;
+        public IPortModel InputPort => m_MainPortModel?.Direction == Direction.Input ? m_MainPortModel : null;
 
-        public IGTFPortModel OutputPort => m_MainPortModel?.Direction == Direction.Output ? m_MainPortModel : null;
+        public IPortModel OutputPort => m_MainPortModel?.Direction == Direction.Output ? m_MainPortModel : null;
 
-        public IGTFPortModel MainOutputPort => m_MainPortModel;
+        public IPortModel MainOutputPort => m_MainPortModel;
 
-        public virtual bool IsRenamable => true;
+        public VariableNodeModel()
+        {
+            InternalInitCapabilities();
+        }
 
         public virtual void UpdateTypeFromDeclaration()
         {
@@ -60,26 +59,29 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             // used by macro outputs
             if (m_DeclarationModel != null /* this node */ && m_DeclarationModel.Modifiers.HasFlag(ModifierFlags.WriteOnly))
             {
-                if (DataType == TypeHandle.ExecutionFlow)
+                if (this.GetDataType() == TypeHandle.ExecutionFlow)
                     m_MainPortModel = AddExecutionInputPort(null);
                 else
-                    m_MainPortModel = AddDataInputPort(null, DataType, k_MainPortName);
+                    m_MainPortModel = AddDataInputPort(null, this.GetDataType(), k_MainPortName);
             }
             else
             {
-                if (DataType == TypeHandle.ExecutionFlow)
+                if (this.GetDataType() == TypeHandle.ExecutionFlow)
                     m_MainPortModel = AddExecutionOutputPort(null);
                 else
-                    m_MainPortModel = AddDataOutputPort(null, DataType, k_MainPortName);
+                    m_MainPortModel = AddDataOutputPort(null, this.GetDataType(), k_MainPortName);
             }
         }
 
-        public void Rename(string newName)
+        public virtual void Rename(string newName)
         {
+            if (!this.IsRenamable())
+                return;
+
             (DeclarationModel as IRenamable)?.Rename(newName);
         }
 
-        public IGTFGraphElementModel Clone()
+        public IGraphElementModel Clone()
         {
             var decl = m_DeclarationModel;
             try
@@ -93,6 +95,35 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             {
                 m_DeclarationModel = decl;
             }
+        }
+
+        public override string Tooltip
+        {
+            get
+            {
+                var tooltip = $"{VariableString}";
+                if (!string.IsNullOrEmpty(DataTypeString))
+                    tooltip += $" of type {DataTypeString}";
+                if (!string.IsNullOrEmpty(VariableDeclarationModel?.Tooltip))
+                    tooltip += "\n" + VariableDeclarationModel.Tooltip;
+
+                if (string.IsNullOrEmpty(tooltip))
+                    return base.Tooltip;
+
+                return tooltip;
+            }
+            set => base.Tooltip = value;
+        }
+
+        protected override void InitCapabilities()
+        {
+            base.InitCapabilities();
+            InternalInitCapabilities();
+        }
+
+        void InternalInitCapabilities()
+        {
+            this.SetCapability(Overdrive.Capabilities.Renamable, true);
         }
     }
 }

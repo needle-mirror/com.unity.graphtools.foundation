@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public static class GraphElementHelper
     {
-        public static void LoadTemplateAndStylesheet(VisualElement container, string name, string rootClassName, IEnumerable<string> additionalStylesheets = null)
+        internal static void LoadTemplateAndStylesheet(VisualElement container, string name, string rootClassName, IEnumerable<string> additionalStylesheets = null)
         {
             if (name != null && container != null)
             {
@@ -33,9 +33,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         static string StylesheetPath = PackageTransitionHelper.AssetPath + "GraphElements/Stylesheets/";
         static string NewLookStylesheetPath = PackageTransitionHelper.AssetPath + "GraphElements/Stylesheets/NewLook/";
         static string TemplatePath = PackageTransitionHelper.AssetPath + "GraphElements/Templates/";
-        static internal bool UseNewStylesheets { get; set; } = false;
+        internal static bool UseNewStylesheets { get; set; }
 
-        public static void AddStylesheet(this VisualElement ve, string stylesheetName)
+        internal static void AddStylesheet(this VisualElement ve, string stylesheetName)
         {
             StyleSheet stylesheet = null;
 

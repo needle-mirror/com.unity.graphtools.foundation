@@ -1,6 +1,5 @@
 using System;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
 using UnityEngine;
 
 // ReSharper disable AccessToStaticMemberViaDerivedType

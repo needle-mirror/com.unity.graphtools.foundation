@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.Searcher;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -87,7 +85,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
                 try
                 {
                     var searcherItems = stepList.Select(MakeStepItem).ToList();
-                    SearcherWindow.Show(EditorWindow.focusedWindow, searcherItems, "Steps", item =>
+                    Searcher.SearcherWindow.Show(EditorWindow.focusedWindow, searcherItems, "Steps", item =>
                     {
                         if (item != null)
                             state.TracingDataModel.CurrentTracingStep = ((StepSearcherItem)item).Index;
@@ -200,19 +198,24 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
 
         void ClearHighlights()
         {
-            VseGraphView gv = (VseGraphView)m_GraphView;
-            foreach (GraphElements.Node x in m_GraphView.Nodes.ToList())
+            foreach (Node x in m_GraphView.Nodes.ToList())
             {
                 x.RemoveFromClassList(k_TraceHighlight);
                 x.RemoveFromClassList(k_TraceSecondaryHighlight);
                 x.RemoveFromClassList(k_ExceptionHighlight);
 
-                VseUIController.ClearErrorBadge(x);
+                x.HideErrorBadge();
                 if (x is Node n)
-                    VseUIController.ClearPorts(n);
+                {
+                    n.Query<Port>().ForEach(p =>
+                    {
+                        p.HideValueBadge();
+                        p.ExecutionPortActive = false;
+                    });
+                }
 
                 // TODO ugly
-                gv.UIController.DisplayCompilationErrors(gv.store.GetState());
+                (m_GraphView.Window as GtfoWindow)?.UpdateCompilationErrorsDisplay(m_GraphView.Store.GetState());
             }
         }
 
@@ -263,32 +266,33 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
                     AddValueToPort(step.PortModel, step.ValueString);
                     break;
                 case TracingStepType.Error:
-                    var element = step.NodeModel.GetUI<GraphElements.Node>(m_GraphView);
-                    if (element is IBadgeContainer)
-                        ((VseGraphView)m_GraphView).UIController.AttachErrorBadge(element, step.ErrorMessage, SpriteAlignment.RightCenter);
+                    var element = step.NodeModel.GetUI<Node>(m_GraphView);
+                    if (element != null)
+                        ((GtfoGraphView)m_GraphView).AttachErrorBadge(element, step.ErrorMessage, SpriteAlignment.RightCenter);
                     break;
             }
 
-            var node = step.NodeModel.GetUI<GraphElements.Node>(m_GraphView);
-            if ((step.NodeModel?.HasProgress ?? false) && node != null && node is Node vsNode)
+            if (step.NodeModel?.HasProgress ?? false)
             {
-                vsNode.Progress = step.Progress;
+                var node = step.NodeModel.GetUI<CollapsibleInOutNode>(m_GraphView);
+                if (node != null)
+                    node.Progress = step.Progress;
             }
         }
 
-        void AddValueToPort(IGTFPortModel port, string valueReadableValue)
+        void AddValueToPort(IPortModel port, string valueReadableValue)
         {
-            var node = port?.NodeModel.GetUI<GraphElements.Node>(m_GraphView);
+            var node = port?.NodeModel.GetUI<Node>(m_GraphView);
             if (port != null && node != null)
             {
                 if (m_PauseState == PauseState.Paused || m_PlayState == PlayModeStateChange.EnteredEditMode)
                 {
-                    var p = port.GetUI<GraphElements.Port>(m_GraphView);
+                    var p = port.GetUI<Overdrive.Port>(m_GraphView);
                     if (!(p is IBadgeContainer badgeContainer))
                         return;
                     VisualElement cap = p.Q(className: "ge-port__cap") ?? p;
                     var color = p.PortColor;
-                    ((VseGraphView)m_GraphView).UIController.AttachValue(badgeContainer, cap, valueReadableValue, color, port.Direction == Direction.Output ? SpriteAlignment.BottomRight : SpriteAlignment.BottomLeft);
+                    ((GtfoGraphView)m_GraphView).AttachValue(badgeContainer, cap, valueReadableValue, color, port.Direction == Direction.Output ? SpriteAlignment.BottomRight : SpriteAlignment.BottomLeft);
                 }
             }
         }

@@ -1,12 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class Blackboard : GraphElement, ISelection
     {
@@ -79,7 +77,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         }
 
         // PF: remove Is..
-        public override bool IsPositioned()
+        public override bool IsMovable()
         {
             return !m_Windowed;
         }
@@ -287,7 +285,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
             GraphVariables.Clear();
 
-            IGTFGraphModel currentGraphModel = null;
+            IGraphModel currentGraphModel = null;
             if (!(Store.GetState().AssetModel as ScriptableObject))
             {
                 title = k_ClassLibraryTitle;

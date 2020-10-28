@@ -3,29 +3,50 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public abstract class GraphViewEditorWindow : GraphViewEditorWindowBridge
     {
         Store m_Store;
         protected GraphView m_GraphView;
         protected VisualElement m_GraphContainer;
-        protected VseBlankPage m_BlankPage;
+        protected BlankPage m_BlankPage;
         protected VisualElement m_SidePanel;
         protected Label m_SidePanelTitle;
         protected Label m_CompilationPendingLabel;
-        protected UIElements.Toolbar m_Menu;
+        protected MainToolbar m_MainToolbar;
         protected string m_LastGraphFilePath;
 
         public virtual IEnumerable<GraphView> GraphViews { get; }
         public Store Store
         {
             get => m_Store;
-            protected set => m_Store = value;
+            private set => m_Store = value;
+        }
+
+        public GraphView GraphView => m_GraphView;
+        protected MainToolbar MainToolbar => m_MainToolbar;
+
+        protected abstract State CreateInitialState();
+
+        protected virtual void RegisterReducers()
+        {
+            StoreHelper.RegisterDefaultReducers(Store);
+        }
+
+        protected virtual void OnEnable()
+        {
+            var initialState = CreateInitialState();
+            Store = new Store(initialState);
+            RegisterReducers();
+        }
+
+        protected virtual void OnDisable()
+        {
+            Store.Dispose();
         }
 
         public override IEnumerable<Type> GetExtraPaneTypes()
@@ -84,7 +105,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         public void UnloadGraphIfDeleted()
         {
-            var iGraphModel = m_Store.GetState().CurrentGraphModel.AssetModel as ScriptableObject;
+            var iGraphModel = m_Store.GetState().AssetModel as ScriptableObject;
             if (!iGraphModel)
             {
                 UnloadGraph();

@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utilities
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
     public class TestEventHelpers
     {

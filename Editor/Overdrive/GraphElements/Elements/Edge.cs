@@ -1,10 +1,11 @@
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
+using System.Linq;
+using UnityEditor.GraphToolsFoundation.Overdrive.InternalModels;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public class Edge : GraphElement, IMovableGraphElement
+    public class Edge : GraphElement
     {
         public new static readonly string k_UssClassName = "ge-edge";
         public static readonly string k_EditModeModifierUssClassName = k_UssClassName.WithUssModifier("edit-mode");
@@ -15,11 +16,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         protected EdgeManipulator m_EdgeManipulator;
 
-        protected ContextualMenuManipulator m_ContextualMenuManipulator;
-
         EdgeControl m_EdgeControl;
 
-        public IGTFEdgeModel EdgeModel => Model as IGTFEdgeModel;
+        public IEdgeModel EdgeModel => Model as IEdgeModel;
 
         public bool IsGhostEdge => EdgeModel is IGhostEdge;
 
@@ -91,13 +90,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             }
         }
 
-        public IGTFPortModel Output => EdgeModel.FromPort;
+        public IPortModel Output => EdgeModel.FromPort;
 
-        public IGTFPortModel Input => EdgeModel.ToPort;
+        public IPortModel Input => EdgeModel.ToPort;
 
         public override bool ShowInMiniMap => false;
-
-        public bool IsMovable => true;
 
         public Edge()
         {
@@ -105,9 +102,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
             m_EdgeManipulator = new EdgeManipulator();
             this.AddManipulator(m_EdgeManipulator);
-
-            m_ContextualMenuManipulator = new ContextualMenuManipulator(BuildContextualMenu);
-            this.AddManipulator(m_ContextualMenuManipulator);
         }
 
         protected override void BuildPartList()
@@ -135,8 +129,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                 EnableInClassList(k_EditModeModifierUssClassName, editableEdge.EditMode);
         }
 
-        protected virtual void BuildContextualMenu(ContextualMenuPopulateEvent evt) {}
-
         public override bool Overlaps(Rect rectangle)
         {
             return EdgeControl.Overlaps(this.ChangeCoordinatesTo(EdgeControl, rectangle));
@@ -154,7 +146,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             var edgeControlPart = PartList.GetPart(k_EdgeControlPartName);
             edgeControlPart?.UpdateFromModel();
 
-            ((IPortNode)EdgeModel.FromPort.NodeModel).RevealReorderableEdgesOrder(true, EdgeModel);
+            EdgeModel.FromPort.NodeModel.RevealReorderableEdgesOrder(true, EdgeModel);
+
             // TODO JOCE: This is required until we have a dirtying mechanism (see ShowConnectedExecutionEdgesOrder in NodeModel.cs)
             EdgeModel.FromPort.NodeModel.GetUI<Node>(GraphView)?.UpdateOutgoingExecutionEdges();
         }
@@ -168,7 +161,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
             if (EdgeModel.FromPort != null)
             {
-                ((IPortNode)EdgeModel.FromPort.NodeModel).RevealReorderableEdgesOrder(false);
+                EdgeModel.FromPort.NodeModel.RevealReorderableEdgesOrder(false);
 
                 // TODO JOCE: This is required until we have a dirtying mechanism (see ShowConnectedExecutionEdgesOrder in NodeModel.cs)
                 EdgeModel.FromPort.NodeModel.GetUI<Node>(GraphView)?.UpdateOutgoingExecutionEdges();
@@ -178,6 +171,90 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         void OnEdgeGeometryChanged(GeometryChangedEvent evt)
         {
             UpdateFromModel();
+        }
+
+        protected override void BuildContextualMenu(ContextualMenuPopulateEvent evt)
+        {
+            base.BuildContextualMenu(evt);
+
+            if (!(evt.currentTarget is Edge edge))
+                return;
+
+            var editableEdge = edge.EdgeModel as IEditableEdge;
+
+            if (editableEdge?.EditMode ?? false)
+            {
+                if (evt.menu.MenuItems().Count > 0)
+                    evt.menu.AppendSeparator();
+
+                var p = edge.EdgeControl.WorldToLocal(evt.triggerEvent.originalMousePosition);
+                edge.EdgeControl.FindNearestCurveSegment(p, out _, out var controlPointIndex, out _);
+                p = edge.WorldToLocal(evt.triggerEvent.originalMousePosition);
+
+                if (!(evt.target is EdgeControlPoint))
+                {
+                    evt.menu.AppendAction("Add Control Point", menuAction =>
+                    {
+                        Store.Dispatch(new AddControlPointOnEdgeAction(editableEdge, controlPointIndex, p));
+                    });
+                }
+
+                evt.menu.AppendAction("Stop Editing Edge", menuAction =>
+                {
+                    Store.Dispatch(new SetEdgeEditModeAction(editableEdge, false));
+                });
+            }
+            else
+            {
+                bool initialSeparatorAdded = false;
+                int initialMenuItemCount = evt.menu.MenuItems().Count;
+
+                if (editableEdge != null)
+                {
+                    if (initialMenuItemCount > 0)
+                    {
+                        initialSeparatorAdded = true;
+                        evt.menu.AppendSeparator();
+                    }
+
+                    evt.menu.AppendAction("Edit Edge", menuAction =>
+                    {
+                        Store.Dispatch(new SetEdgeEditModeAction(editableEdge, true));
+                    });
+                }
+
+                if ((edge.EdgeModel.FromPort as IReorderableEdgesPort)?.HasReorderableEdges ?? false)
+                {
+                    if (!initialSeparatorAdded && initialMenuItemCount > 0)
+                        evt.menu.AppendSeparator();
+
+                    var siblingEdges = edge.EdgeModel.FromPort.GetConnectedEdges().ToList();
+                    var siblingEdgesCount = siblingEdges.Count;
+
+                    var index = siblingEdges.IndexOf(edge.EdgeModel);
+                    evt.menu.AppendAction("Reorder Edge/Move First",
+                        a => ReorderEdges(ReorderEdgeAction.ReorderType.MoveFirst),
+                        siblingEdgesCount > 1 && index > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+                    evt.menu.AppendAction("Reorder Edge/Move Up",
+                        a => ReorderEdges(ReorderEdgeAction.ReorderType.MoveUp),
+                        siblingEdgesCount > 1 && index > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+                    evt.menu.AppendAction("Reorder Edge/Move Down",
+                        a => ReorderEdges(ReorderEdgeAction.ReorderType.MoveDown),
+                        siblingEdgesCount > 1 && index < siblingEdgesCount - 1 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+                    evt.menu.AppendAction("Reorder Edge/Move Last",
+                        a => ReorderEdges(ReorderEdgeAction.ReorderType.MoveLast),
+                        siblingEdgesCount > 1 && index < siblingEdgesCount - 1 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+
+                    void ReorderEdges(ReorderEdgeAction.ReorderType reorderType)
+                    {
+                        Store.Dispatch(new ReorderEdgeAction(edge.EdgeModel, reorderType));
+
+                        // Refresh the edge bubbles
+                        edge.EdgeModel.FromPort.NodeModel.RevealReorderableEdgesOrder(true, edge.EdgeModel);
+                        edge.EdgeModel.FromPort.NodeModel.GetUI<Node>(GraphView)?.UpdateOutgoingExecutionEdges();
+                    }
+                }
+            }
         }
     }
 }

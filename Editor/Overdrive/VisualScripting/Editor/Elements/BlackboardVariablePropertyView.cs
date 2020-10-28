@@ -1,10 +1,5 @@
 using System;
-using System.Collections.Generic;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
-using UnityEditor.Searcher;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -15,16 +10,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         Toggle m_ExposedToggle;
         TextField m_TooltipTextField;
         readonly VisualElement m_InitializationElement;
-        readonly Store m_Store;
-        readonly Stencil m_Stencil;
+        protected readonly Store m_Store;
+        protected readonly Stencil m_Stencil;
 
-        protected IGTFVariableDeclarationModel VariableDeclarationModel => userData as IGTFVariableDeclarationModel;
+        protected IVariableDeclarationModel VariableDeclarationModel => userData as IVariableDeclarationModel;
         string TypeText => VariableDeclarationModel.DataType.GetMetadata(m_Stencil).FriendlyName;
 
         static readonly GUIContent k_InitializationContent = new GUIContent("");
 
-        public BlackboardVariablePropertyView(Store store, IGTFVariableDeclarationModel variableDeclarationModel,
-                                              GraphElements.Blackboard.RebuildCallback rebuildCallback, Stencil stencil)
+        public BlackboardVariablePropertyView(Store store, IVariableDeclarationModel variableDeclarationModel,
+                                              Overdrive.Blackboard.RebuildCallback rebuildCallback, Stencil stencil)
             : base(variableDeclarationModel, rebuildCallback)
         {
             m_Store = store;
@@ -48,7 +43,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             {
                 m_InitializationElement = InlineValueEditor.CreateEditorForConstant(VariableDeclarationModel.AssetModel, variableDeclarationModel.InitializationModel, (_, v) =>
                 {
-                    m_Store.Dispatch(new UpdateConstantNodeActionValue(variableDeclarationModel.InitializationModel, v, null));
+                    m_Store.Dispatch(new UpdateConstantNodeValueAction(variableDeclarationModel.InitializationModel, v, null));
                 }, store.GetState()?.EditorDataModel, false);
 
 //                m_InitializationObject = new SerializedObject(variableDeclarationModel.InitializationModel.NodeAssetReference);
@@ -57,7 +52,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             }
         }
 
-        public BlackboardVariablePropertyView WithTypeSelector()
+        public virtual BlackboardVariablePropertyView WithTypeSelector()
         {
             var typeButton = new Button(() =>
                 SearcherService.ShowVariableTypes(
@@ -115,7 +110,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             m_TooltipTextField.RegisterValueChangedCallback(OnTooltipChanged);
         }
 
-        void RefreshUI(GraphElements.Blackboard.RebuildMode rebuildMode = GraphElements.Blackboard.RebuildMode.BlackboardAndGraphView)
+        protected void RefreshUI(Overdrive.Blackboard.RebuildMode rebuildMode = Overdrive.Blackboard.RebuildMode.BlackboardAndGraphView)
         {
             m_ExposedToggle?.UnregisterValueChangedCallback(OnExposedChanged);
             m_RebuildCallback?.Invoke(rebuildMode);
@@ -128,9 +123,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             RefreshUI();
         }
 
-        void OnTypeChanged(TypeHandle handle)
+        protected void OnTypeChanged(TypeHandle handle)
         {
-            m_Store.Dispatch(new UpdateTypeAction((VariableDeclarationModel)VariableDeclarationModel, handle));
+            m_Store.Dispatch(new ChangeVariableTypeAction((VariableDeclarationModel)VariableDeclarationModel, handle));
             RefreshUI();
         }
 

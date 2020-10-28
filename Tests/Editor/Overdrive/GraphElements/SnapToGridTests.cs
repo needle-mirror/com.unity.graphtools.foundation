@@ -2,15 +2,13 @@ using System;
 using System.Collections;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEngine.UIElements;
 using UnityEngine.TestTools;
-using UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utilities;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    public class SnapToGridHelper
+    class SnapToGridHelper
     {
         public const float k_SnapDistance = 8.0f;
 
@@ -43,7 +41,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         }
     }
 
-    public class SnapToGridTests : GraphViewSnappingTester
+    class SnapToGridTests : GraphViewSnappingTester
     {
         const float k_Spacing = 200f;
         const float k_HalfSpacing = k_Spacing * 0.5f;

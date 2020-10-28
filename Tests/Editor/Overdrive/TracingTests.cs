@@ -2,10 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Compilation;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
 {
@@ -130,9 +127,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
 
         class TestStencil : Stencil
         {
-            public override ISearcherDatabaseProvider GetSearcherDatabaseProvider() => null;
+            public override Blackboard CreateBlackboard(Store store, GraphView graphView)
+            {
+                return null;
+            }
 
-            public override IBuilder Builder { get; }
+            public override ISearcherDatabaseProvider GetSearcherDatabaseProvider() => null;
         }
     }
 }

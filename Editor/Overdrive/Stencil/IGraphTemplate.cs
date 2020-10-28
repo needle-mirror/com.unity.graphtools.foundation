@@ -1,5 +1,4 @@
 using System;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
@@ -7,7 +6,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     public interface IGraphTemplate
     {
         Type StencilType { get; }
-        void InitBasicGraph(IGTFGraphModel graphModel);
+        void InitBasicGraph(IGraphModel graphModel);
     }
 
     public interface ICreatableGraphTemplate : IGraphTemplate

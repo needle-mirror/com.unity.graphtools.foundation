@@ -1,16 +1,14 @@
 using System;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine.UIElements;
-using IRenamable = UnityEditor.GraphToolsFoundation.Overdrive.Model.IRenamable;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class EditableTitlePart : BaseGraphElementPart
     {
         public static readonly string k_UssClassName = "ge-editable-title-part";
         public static readonly string k_TitleLabelName = "title";
 
-        public static EditableTitlePart Create(string name, IGTFGraphElementModel model, IGraphElement graphElement, string parentClassName, bool multiline = false)
+        public static EditableTitlePart Create(string name, IGraphElementModel model, IGraphElement graphElement, string parentClassName, bool multiline = false)
         {
             if (model is IHasTitle)
             {
@@ -28,7 +26,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         public override VisualElement Root => TitleContainer;
 
-        protected EditableTitlePart(string name, IGTFGraphElementModel model, IGraphElement ownerElement, string parentClassName, bool multiline)
+        protected EditableTitlePart(string name, IGraphElementModel model, IGraphElement ownerElement, string parentClassName, bool multiline)
             : base(name, model, ownerElement, parentClassName)
         {
             m_Multiline = multiline;
@@ -38,7 +36,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         {
             if (m_Model is IHasTitle)
             {
-                bool isRenamable = m_Model is IRenamable renamable && renamable.IsRenamable;
+                bool isRenamable = m_Model.IsRenamable();
                 TitleContainer = new VisualElement { name = PartName };
                 TitleContainer.AddToClassList(k_UssClassName);
                 TitleContainer.AddToClassList(m_ParentClassName.WithUssElement(PartName));

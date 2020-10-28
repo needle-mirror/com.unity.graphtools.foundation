@@ -2,21 +2,19 @@ using System;
 using System.Collections;
 using System.Linq;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-using UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utilities;
+using UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels;
 using UnityEngine;
 using UnityEngine.TestTools;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    public class GraphElementFrameTests : GraphViewTester
+    class GraphElementFrameTests : GraphViewTester
     {
-        class FooNode : BasicNodeModel
+        class FooNode : IONodeModel
         {
         }
 
-        class BarNode : BasicNodeModel
+        class BarNode : IONodeModel
         {
         }
 
@@ -157,10 +155,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             graphView.AddToSelection(graphView.GraphElements.First());
 
             graphView.FrameNext(x => (x.Model as IHasTitle)?.Title.Contains("0") ?? false);
-            AssertSingleSelectedElementTypeAndName(typeof(BasicNodeModel), "B0");
+            AssertSingleSelectedElementTypeAndName(typeof(NodeModel), "B0");
 
             graphView.FrameNext(x => (x.Model as IHasTitle)?.Title.Contains("0") ?? false);
-            AssertSingleSelectedElementTypeAndName(typeof(BasicNodeModel), "F0");
+            AssertSingleSelectedElementTypeAndName(typeof(NodeModel), "F0");
         }
 
         private bool IsFooNode(GraphElement element)

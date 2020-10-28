@@ -5,12 +5,11 @@ using System.Linq;
 using JetBrains.Annotations;
 using NUnit.Framework.Constraints;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.Searcher;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
 {
-    sealed class TypeHandleCollectionEquivalentConstraint : CollectionItemsEqualConstraint
+    public sealed class TypeHandleCollectionEquivalentConstraint : CollectionItemsEqualConstraint
     {
         readonly List<ITypeMetadata> m_Expected;
 
@@ -57,7 +56,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
         }
     }
 
-    sealed class SearcherItemCollectionEquivalentConstraint : CollectionItemsEqualConstraint
+    public sealed class SearcherItemCollectionEquivalentConstraint : CollectionItemsEqualConstraint
     {
         readonly List<SearcherItem> m_Expected;
 
@@ -111,11 +110,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
         }
     }
 
-    class ConnectedToConstraint : Constraint
+    public class ConnectedToConstraint : Constraint
     {
-        readonly IGTFPortModel m_ExpectedPort;
+        readonly IPortModel m_ExpectedPort;
 
-        public ConnectedToConstraint(IGTFPortModel expected)
+        public ConnectedToConstraint(IPortModel expected)
             : base(expected)
         {
             m_ExpectedPort = expected;
@@ -150,7 +149,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
     }
 
     [PublicAPI]
-    static class CustomConstraintExtensions
+    public static class CustomConstraintExtensions
     {
         public static SearcherItemCollectionEquivalentConstraint SearcherItemCollectionEquivalent(
             this ConstraintExpression expression, IEnumerable<SearcherItem> expected)
@@ -160,7 +159,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
             return constraint;
         }
 
-        public static ConnectedToConstraint ConnectedTo(this ConstraintExpression expression, IGTFPortModel expectedPort)
+        public static ConnectedToConstraint ConnectedTo(this ConstraintExpression expression, IPortModel expectedPort)
         {
             var constraint = new ConnectedToConstraint(expectedPort);
             expression.Append(constraint);
@@ -169,7 +168,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
     }
 
     [PublicAPI]
-    class Is : NUnit.Framework.Is
+    public class Is : NUnit.Framework.Is
     {
         public static TypeHandleCollectionEquivalentConstraint TypeHandleCollectionEquivalent(
             IEnumerable<ITypeMetadata> expected)
@@ -183,7 +182,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
             return new SearcherItemCollectionEquivalentConstraint(expected);
         }
 
-        public static ConnectedToConstraint ConnectedTo(IGTFPortModel expected)
+        public static ConnectedToConstraint ConnectedTo(IPortModel expected)
         {
             return new ConnectedToConstraint(expected);
         }

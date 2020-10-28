@@ -1,13 +1,12 @@
 using System;
 using System.Linq;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class NodeCollapseButtonPart : CollapseButtonPart
     {
-        public new static NodeCollapseButtonPart Create(string name, IGTFGraphElementModel model, IGraphElement graphElement, string parentClassName)
+        public new static NodeCollapseButtonPart Create(string name, IGraphElementModel model, IGraphElement graphElement, string parentClassName)
         {
             if (model is ICollapsible)
             {
@@ -17,7 +16,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             return null;
         }
 
-        protected NodeCollapseButtonPart(string name, IGTFGraphElementModel model, IGraphElement ownerElement, string parentClassName)
+        protected NodeCollapseButtonPart(string name, IGraphElementModel model, IGraphElement ownerElement, string parentClassName)
             : base(name, model, ownerElement, parentClassName) {}
 
         protected override void UpdatePartFromModel()

@@ -1,8 +1,7 @@
 using System;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public abstract class BaseGraphElementPart : IGraphElementPart
     {
@@ -12,13 +11,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         public abstract VisualElement Root { get; }
 
-        protected IGTFGraphElementModel m_Model;
+        protected IGraphElementModel m_Model;
 
         protected IGraphElement m_OwnerElement;
 
         protected string m_ParentClassName;
 
-        protected BaseGraphElementPart(string name, IGTFGraphElementModel model, IGraphElement ownerElement, string parentClassName)
+        protected BaseGraphElementPart(string name, IGraphElementModel model, IGraphElement ownerElement, string parentClassName)
         {
             PartName = name;
             m_Model = model;

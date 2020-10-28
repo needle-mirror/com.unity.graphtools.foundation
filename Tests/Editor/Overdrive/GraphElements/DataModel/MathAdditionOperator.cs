@@ -1,14 +1,17 @@
 using UnityEngine;
 
-public class MathAdditionOperator : MathOperator
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    public void OnEnable()
+    public class MathAdditionOperator : MathOperator
     {
-        name = "Add";
-    }
+        public void OnEnable()
+        {
+            name = "Add";
+        }
 
-    public override float Evaluate()
-    {
-        return (left != null ? left.Evaluate() : 0) + (right != null ? right.Evaluate() : 0);
+        public override float Evaluate()
+        {
+            return (left != null ? left.Evaluate() : 0) + (right != null ? right.Evaluate() : 0);
+        }
     }
 }

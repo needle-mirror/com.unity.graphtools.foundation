@@ -1,9 +1,6 @@
-using System;
 using System.Collections;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.Helpers;
+using UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
@@ -20,8 +17,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         public new void SetUp()
         {
             m_GraphModel = new GraphModel();
-            m_Store = new Store(new Helpers.TestState(m_GraphModel), StoreHelper.RegisterReducers);
-            m_GraphView = new TestGraphView(m_Store);
+            m_Store = new Store(new TestState(m_GraphModel));
+            StoreHelper.RegisterDefaultReducers(m_Store);
+            m_GraphView = new TestGraphView(m_Window, m_Store);
 
             m_GraphView.name = "theView";
             m_GraphView.viewDataKey = "theView";
@@ -35,7 +33,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         {
             const string newName = "New Name";
 
-            var stickyNoteModel = new StickyNoteModel { Title = "My Note" };
+            var stickyNoteModel = m_GraphModel.CreateStickyNote();
+            stickyNoteModel.Title = "My Note";
             var stickyNote = new StickyNote();
             stickyNote.SetupBuildAndUpdate(stickyNoteModel, m_Store, m_GraphView);
             m_GraphView.AddElement(stickyNote);
@@ -58,7 +57,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         {
             const string newContent = "New Content";
 
-            var stickyNoteModel = new StickyNoteModel { Title = "My Note", Contents = "Old Content", PositionAndSize = new Rect(0, 0, 200, 200)};
+            var stickyNoteModel = m_GraphModel.CreateStickyNote(new Rect(0, 0, 200, 200));
+            stickyNoteModel.Title = "My Note";
+            stickyNoteModel.Contents = "Old Content";
             var stickyNote = new StickyNote();
             stickyNote.SetupBuildAndUpdate(stickyNoteModel, m_Store, m_GraphView);
             m_GraphView.AddElement(stickyNote);
@@ -82,7 +83,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             var originalRect = new Rect(0, 0, 400, 400);
             var move = new Vector2(100, 0);
 
-            var stickyNoteModel = new StickyNoteModel { Title = "Placemat", PositionAndSize = originalRect};
+            var stickyNoteModel = m_GraphModel.CreateStickyNote(originalRect);
+            stickyNoteModel.Title = "Placemat";
+            stickyNoteModel.PositionAndSize = originalRect;
             var stickyNote = new StickyNote();
             stickyNote.SetupBuildAndUpdate(stickyNoteModel, m_Store, m_GraphView);
             m_GraphView.AddElement(stickyNote);

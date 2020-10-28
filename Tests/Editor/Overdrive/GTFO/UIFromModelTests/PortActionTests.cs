@@ -1,9 +1,7 @@
-using System;
 using System.Collections;
 using System.Linq;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.Helpers;
+using UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
@@ -20,8 +18,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         public new void SetUp()
         {
             m_GraphModel = new GraphModel();
-            m_Store = new Store(new Helpers.TestState(m_GraphModel), StoreHelper.RegisterReducers);
-            m_GraphView = new TestGraphView(m_Store);
+            m_Store = new Store(new TestState(m_GraphModel));
+            StoreHelper.RegisterDefaultReducers(m_Store);
+            m_GraphView = new TestGraphView(m_Window, m_Store);
 
             m_GraphView.name = "theView";
             m_GraphView.viewDataKey = "theView";
@@ -33,9 +32,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         [UnityTest]
         public IEnumerator DraggingFromPortCreateGhostEdge()
         {
-            var nodeModel = new IONodeModel();
-            m_GraphModel.AddNode(nodeModel);
-            nodeModel.CreatePorts(0, 1);
+            var nodeModel = m_GraphModel.CreateNode<SingleOutputNodeModel>();
             var node = new CollapsibleInOutNode();
             node.SetupBuildAndUpdate(nodeModel, m_Store, m_GraphView);
             m_GraphView.AddElement(node);
@@ -62,16 +59,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         [UnityTest]
         public IEnumerator ReleasingInPortCallsDelegate()
         {
-            var nodeModel1 = new IONodeModel { Position = Vector2.zero };
-            m_GraphModel.AddNode(nodeModel1);
-            nodeModel1.CreatePorts(0, 1);
+            var nodeModel1 = m_GraphModel.CreateNode<SingleOutputNodeModel>();
+            nodeModel1.Position = Vector2.zero;
             var node1 = new CollapsibleInOutNode();
             node1.SetupBuildAndUpdate(nodeModel1, m_Store, m_GraphView);
             m_GraphView.AddElement(node1);
 
-            var nodeModel2 = new IONodeModel { Position = new Vector2(0, 200) };
-            m_GraphModel.AddNode(nodeModel2);
-            nodeModel2.CreatePorts(1, 0);
+            var nodeModel2 = m_GraphModel.CreateNode<SingleInputNodeModel>();
+            nodeModel2.Position = new Vector2(0, 200);
             var node2 = new CollapsibleInOutNode();
             node2.SetupBuildAndUpdate(nodeModel2, m_Store, m_GraphView);
             m_GraphView.AddElement(node2);
@@ -112,16 +107,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         [UnityTest]
         public IEnumerator ReleasingOutsidePortCallsDelegate()
         {
-            var nodeModel1 = new IONodeModel { Position = Vector2.zero };
-            m_GraphModel.AddNode(nodeModel1);
-            nodeModel1.CreatePorts(0, 1);
+            var nodeModel1 = m_GraphModel.CreateNode<SingleOutputNodeModel>();
+            nodeModel1.Position = Vector2.zero;
             var node1 = new CollapsibleInOutNode();
             node1.SetupBuildAndUpdate(nodeModel1, m_Store, m_GraphView);
             m_GraphView.AddElement(node1);
 
-            var nodeModel2 = new IONodeModel { Position = new Vector2(0, 200) };
-            m_GraphModel.AddNode(nodeModel2);
-            nodeModel2.CreatePorts(1, 0);
+            var nodeModel2 = m_GraphModel.CreateNode<SingleInputNodeModel>();
+            nodeModel2.Position = new Vector2(0, 200);
             var node2 = new CollapsibleInOutNode();
             node2.SetupBuildAndUpdate(nodeModel2, m_Store, m_GraphView);
             m_GraphView.AddElement(node2);

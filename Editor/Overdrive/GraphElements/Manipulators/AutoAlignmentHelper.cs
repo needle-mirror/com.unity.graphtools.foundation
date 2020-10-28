@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     class AutoAlignmentHelper : AutoPlacementHelper
     {
@@ -30,13 +29,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             m_AlignmentReference = reference;
 
             // Get alignment delta for each element
-            Dictionary<IGTFGraphElementModel, Vector2> results = GetElementDeltaResults();
+            Dictionary<IGraphElementModel, Vector2> results = GetElementDeltaResults();
 
             // Dispatch action
             SendPlacementAction(results.Keys.ToList(), results.Values.ToList());
         }
 
-        protected override float GetStartingPosition(List<Tuple<Rect, List<IGTFGraphElementModel>>> boundingRects)
+        protected override float GetStartingPosition(List<Tuple<Rect, List<IGraphElementModel>>> boundingRects)
         {
             float alignmentBorderPosition;
             if (m_AlignmentReference == AlignmentReference.Left || m_AlignmentReference == AlignmentReference.Top)

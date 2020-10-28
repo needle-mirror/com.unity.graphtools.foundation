@@ -1,18 +1,17 @@
 using System;
 using System.Collections;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utilities;
+using UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels;
 using UnityEngine;
 using UnityEngine.TestTools;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    public class GraphElementSelectTests : GraphViewTester
+    class GraphElementSelectTests : GraphViewTester
     {
-        BasicNodeModel m_Node1;
-        BasicNodeModel m_Node2;
-        BasicNodeModel m_Node3;
+        IONodeModel m_Node1;
+        IONodeModel m_Node2;
+        IONodeModel m_Node3;
 
         [SetUp]
         public override void SetUp()

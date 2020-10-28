@@ -1,11 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class PlacematContainer : GraphView.Layer
     {
@@ -19,7 +18,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         LinkedList<Placemat> m_Placemats;
 
-        public IEnumerable<Placemat> Placemats => m_Placemats;
+        public IReadOnlyCollection<Placemat> Placemats => m_Placemats;
 
         public static int PlacematsLayer => Int32.MinValue;
 
@@ -121,7 +120,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         void UpdateElementsOrder()
         {
             List<int> newOrders = new List<int>();
-            List<IGTFPlacematModel> changedPlacemats = new List<IGTFPlacematModel>();
+            List<IPlacematModel> changedPlacemats = new List<IPlacematModel>();
 
             // Reset ZOrder from placemat order in array
             int idx = 1;

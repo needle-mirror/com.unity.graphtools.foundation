@@ -1,8 +1,6 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEngine;
 using UnityEngine.TestTools;
 
@@ -22,7 +20,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Redux
         [SetUp]
         public void SetUp()
         {
-            m_Store = new Store(new MockState(k_MockStateDefault), StoreHelper.RegisterReducers);
+            m_Store = new Store(new MockState(k_MockStateDefault));
+            StoreHelper.RegisterDefaultReducers(m_Store);
         }
 
         [Test]

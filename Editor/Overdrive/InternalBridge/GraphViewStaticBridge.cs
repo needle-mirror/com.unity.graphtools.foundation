@@ -385,14 +385,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
             base.SaveViewData();
         }
 
-        protected void DisplayContextualMenu(EventBase evt)
-        {
-            if (elementPanel != null && elementPanel.contextualMenuManager != null)
-            {
-                elementPanel.contextualMenuManager.DisplayMenuIfEventMatches(evt, this);
-            }
-        }
-
         public new uint controlid => base.controlid;
 
         protected void SetIsCompositeRoot()

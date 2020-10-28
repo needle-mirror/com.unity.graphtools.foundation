@@ -1,6 +1,5 @@
-using System;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
+using UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
@@ -61,10 +60,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         [Test]
         public void ChangingPortsOnNodeModelUpdatesNodePort()
         {
-            var nodeModel = new IONodeModel();
             const int originalInputPortCount = 3;
             const int originalOutputPortCount = 2;
-            nodeModel.CreatePorts(originalInputPortCount, originalOutputPortCount);
+            var nodeModel = new IONodeModel {InputCount = originalInputPortCount, OuputCount = originalOutputPortCount};
+            nodeModel.DefineNode();
             var node = new Node();
             node.SetupBuildAndUpdate(nodeModel, null, null);
 
@@ -73,7 +72,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
 
             const int newInputPortCount = 1;
             const int newOutputPortCount = 3;
-            nodeModel.CreatePorts(newInputPortCount, newOutputPortCount);
+            nodeModel.InputCount = newInputPortCount;
+            nodeModel.OuputCount = newOutputPortCount;
+            nodeModel.DefineNode();
             node.UpdateFromModel();
 
             ports = node.Query(className: "ge-port").ToList();
@@ -83,10 +84,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         [Test]
         public void ChangingPortsOnNodeModelUpdatesCollapsibleInOutNodePort()
         {
-            var nodeModel = new IONodeModel();
             const int originalInputPortCount = 3;
             const int originalOutputPortCount = 2;
-            nodeModel.CreatePorts(originalInputPortCount, originalOutputPortCount);
+            var nodeModel = new IONodeModel {InputCount = originalInputPortCount, OuputCount = originalOutputPortCount};
+            nodeModel.DefineNode();
             var node = new CollapsibleInOutNode();
             node.SetupBuildAndUpdate(nodeModel, null, null);
 
@@ -98,7 +99,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
 
             const int newInputPortCount = 1;
             const int newOutputPortCount = 3;
-            nodeModel.CreatePorts(newInputPortCount, newOutputPortCount);
+            nodeModel.InputCount = newInputPortCount;
+            nodeModel.OuputCount = newOutputPortCount;
+            nodeModel.DefineNode();
             node.UpdateFromModel();
 
             ports = node.Q("inputs").Query(className: "ge-port").ToList();

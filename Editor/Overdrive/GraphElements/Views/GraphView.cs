@@ -1,14 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEngine;
 using UnityEngine.Scripting.APIUpdating;
 using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     interface IGraphViewSelection
     {
@@ -128,7 +127,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         }
 
         [Serializable]
-        [MovedFrom(false, "Unity.GraphElements", "Unity.GraphTools.Foundation.Overdrive.Editor")]
+        //[MovedFrom(false, "Unity.GraphElements", "Unity.GraphTools.Foundation.Overdrive.Editor")]
+        [MovedFrom(false, "UnityEditor.GraphToolsFoundation.Overdrive.GraphElements")]
         class PersistedViewTransform
         {
             public Vector3 position = Vector3.zero;
@@ -158,6 +158,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         Store m_Store;
 
+        GraphViewEditorWindow m_Window;
+
         GraphViewChange m_GraphViewChange;
 
         List<GraphElement> m_ElementsToRemove;
@@ -180,11 +182,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         UQueryState<GraphElement> m_AllGraphElements;
 
+        protected ContextualMenuManipulator m_ContextualMenuManipulator;
+
+        AutoSpacingHelper m_AutoSpacingHelper;
+        AutoAlignmentHelper m_AutoAlignmentHelper;
+
         ContentZoomer m_Zoomer;
         float m_MinScale = ContentZoomer.DefaultMinScale;
         float m_MaxScale = ContentZoomer.DefaultMaxScale;
         float m_ScaleStep = ContentZoomer.DefaultScaleStep;
         float m_ReferenceScale = ContentZoomer.DefaultReferenceScale;
+
+        Blackboard m_Blackboard;
 
         float MinScale => m_MinScale;
 
@@ -193,6 +202,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
         string m_Clipboard = string.Empty;
 
         public Store Store => m_Store;
+
+        public GraphViewEditorWindow Window => m_Window;
 
         public UQueryState<GraphElement> GraphElements { get; }
 
@@ -254,7 +265,26 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         public UnserializeAndPasteDelegate UnserializeAndPasteCallback { get; set; }
 
-        public virtual IEnumerable<IHighlightable> Highlightables => GraphElements.ToList().OfType<IHighlightable>();
+        public virtual IEnumerable<IHighlightable> Highlightables
+        {
+            get
+            {
+                IEnumerable<IHighlightable> elements = GraphElements.ToList().OfType<IHighlightable>();
+
+                // PF: FIX this comment by @joce
+                // This assumes that:
+                //
+                // The blackboard will never again be part of the GraphView (not a guarantee)
+                // The blackboard will only ever have GraphVariables that will be highlightable
+                //
+                // To address this, I think you'd need to query all the elements of the blackboard that
+                // are highlightable (similar to the GraphElements.ToList().OfType<IHighlightable> above)
+                // and add a Distinct after the Concat call.
+                //
+                // We could add a Highlightables property to the Blackboard.
+                return elements.Concat(Blackboard?.GraphVariables ?? Enumerable.Empty<IHighlightable>());
+            }
+        }
 
         // The system clipboard is unreliable, at least on Windows.
         // For testing clipboard operations on GraphView,
@@ -292,24 +322,26 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         bool IsReframable { get; }
 
-        protected GraphView(Store store)
+        public Blackboard Blackboard =>
+            m_Blackboard ?? (m_Blackboard =
+                    m_Store?.GetState()?.CurrentGraphModel?.Stencil?.CreateBlackboard(m_Store, this));
+
+        internal PositionDependenciesManager PositionDependenciesManagers { get; }
+
+        protected GraphView(GraphViewEditorWindow window, Store store)
         {
+            m_Window = window;
             m_Store = store;
 
             PersistedSelectionRestoreEnabled = true;
 
-            AddToClassList("graphView");
+            AddToClassList("ge-graph-view");
 
             this.SetRenderHintsForGraphView();
 
             Selection = new List<ISelectableGraphElement>();
-            style.overflow = Overflow.Hidden;
 
-            style.flexDirection = FlexDirection.Column;
-
-            GraphViewContainer = new VisualElement();
-            GraphViewContainer.style.flexGrow = 1f;
-            GraphViewContainer.style.flexBasis = 0f;
+            GraphViewContainer = new VisualElement() {name = "graph-view-container"};
             GraphViewContainer.pickingMode = PickingMode.Ignore;
             hierarchy.Add(GraphViewContainer);
 
@@ -341,7 +373,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             RegisterCallback<ExecuteCommandEvent>(OnExecuteCommand);
             RegisterCallback<AttachToPanelEvent>(OnEnterPanel);
             RegisterCallback<DetachFromPanelEvent>(OnLeavePanel);
-            RegisterCallback<ContextualMenuPopulateEvent>(OnContextualMenu);
+
+            m_ContextualMenuManipulator = new ContextualMenuManipulator(BuildContextualMenu);
+            this.AddManipulator(m_ContextualMenuManipulator);
+
+            PositionDependenciesManagers = new PositionDependenciesManager(this, Store?.GetState().Preferences);
+            m_AutoAlignmentHelper = new AutoAlignmentHelper(this);
+            m_AutoSpacingHelper = new AutoSpacingHelper(this);
         }
 
         public bool PersistentSelectionContainsElement(GraphElement element)
@@ -717,40 +755,334 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         public virtual void BuildContextualMenu(ContextualMenuPopulateEvent evt)
         {
-            if (evt.target is GraphView || evt.target is Node)
+            if (evt.menu.MenuItems().Count > 0)
+                evt.menu.AppendSeparator();
+
+            evt.menu.AppendAction("Create Node", menuAction =>
             {
-                evt.menu.AppendAction("Cut", (a) => { CutSelectionCallback(); },
-                    (a) => { return CanCutSelection ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled; });
-            }
-            if (evt.target is GraphView || evt.target is Node)
+                Vector2 mousePosition = menuAction?.eventInfo?.mousePosition ?? Event.current.mousePosition;
+                DisplaySmartSearch(mousePosition);
+            });
+
+            evt.menu.AppendAction("Create Placemat", menuAction =>
             {
-                evt.menu.AppendAction("Copy", (a) => { CopySelectionCallback(); },
-                    (a) => { return CanCopySelection ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled; });
-            }
-            if (evt.target is GraphView)
+                Vector2 mousePosition = menuAction?.eventInfo?.mousePosition ?? Event.current.mousePosition;
+                Vector2 graphPosition = contentViewContainer.WorldToLocal(mousePosition);
+
+                m_Store.Dispatch(new CreatePlacematAction(null, new Rect(graphPosition.x, graphPosition.y, 200, 200)));
+            });
+
+            if (Selection.Any())
             {
-                evt.menu.AppendAction("Paste", (a) => { PasteCallback(); },
-                    (a) => { return CanPaste ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled; });
+                var nodesAndNotes = Selection.OfType<GraphElement>().Where(e => (e is Node || e is StickyNote)).ToList();
+                evt.menu.AppendAction("Create Placemat Under Selection", _ =>
+                {
+                    Rect bounds = new Rect();
+                    if (Placemat.ComputeElementBounds(ref bounds, nodesAndNotes))
+                    {
+                        m_Store.Dispatch(new CreatePlacematAction(null, bounds));
+                    }
+                }, nodesAndNotes.Count == 0 ? DropdownMenuAction.Status.Disabled : DropdownMenuAction.Status.Normal);
+
+                /* Actions on selection */
+
+                evt.menu.AppendSeparator();
+
+                evt.menu.AppendAction("Align Elements/Align Items", _ =>
+                {
+                    m_Store.Dispatch(new AlignNodesAction(this, false));
+                });
+
+                evt.menu.AppendAction("Align Elements/Align Hierarchy", _ =>
+                {
+                    m_Store.Dispatch(new AlignNodesAction(this, true));
+                });
+
+                if (Selection.OfType<GraphElement>().Count(elem => !(elem is Edge) && elem.visible) > 1)
+                {
+                    evt.menu.AppendAction("Align Elements/Top",
+                        _ => m_AutoAlignmentHelper.SendAlignAction(AutoAlignmentHelper.AlignmentReference.Top));
+
+                    evt.menu.AppendAction("Align Elements/Bottom",
+                        _ => m_AutoAlignmentHelper.SendAlignAction(AutoAlignmentHelper.AlignmentReference.Bottom));
+
+                    evt.menu.AppendAction("Align Elements/Left",
+                        _ => m_AutoAlignmentHelper.SendAlignAction(AutoAlignmentHelper.AlignmentReference.Left));
+
+                    evt.menu.AppendAction("Align Elements/Right",
+                        _ => m_AutoAlignmentHelper.SendAlignAction(AutoAlignmentHelper.AlignmentReference.Right));
+
+                    evt.menu.AppendAction("Align Elements/Horizontal Center",
+                        _ => m_AutoAlignmentHelper.SendAlignAction(AutoAlignmentHelper.AlignmentReference.HorizontalCenter));
+
+                    evt.menu.AppendAction("Align Elements/Vertical Center",
+                        _ => m_AutoAlignmentHelper.SendAlignAction(AutoAlignmentHelper.AlignmentReference.VerticalCenter));
+
+                    evt.menu.AppendAction("Space Elements/Horizontal",
+                        _ => m_AutoSpacingHelper.SendSpacingAction(Orientation.Horizontal));
+
+                    evt.menu.AppendAction("Space Elements/Vertical",
+                        _ => m_AutoSpacingHelper.SendSpacingAction(Orientation.Vertical));
+                }
+
+                var nodes = Selection.OfType<Node>().Select(e => e.NodeModel).ToArray();
+                if (nodes.Length > 0)
+                {
+                    var connectedNodes = nodes
+                        .Where(m => m.GetConnectedEdges().Any())
+                        .ToArray();
+
+                    evt.menu.AppendAction("Disconnect Nodes", _ =>
+                    {
+                        m_Store.Dispatch(new DisconnectNodeAction(connectedNodes));
+                    }, connectedNodes.Length == 0 ? DropdownMenuAction.Status.Disabled : DropdownMenuAction.Status.Normal);
+
+                    var ioConnectedNodes = connectedNodes.OfType<IInOutPortsNode>()
+                        .Where(x => x.InputsByDisplayOrder.Any(y => y.IsConnected()) &&
+                            x.OutputsByDisplayOrder.Any(y => y.IsConnected())).ToArray();
+
+                    evt.menu.AppendAction("Bypass Nodes", _ =>
+                    {
+                        m_Store.Dispatch(new BypassNodesAction(ioConnectedNodes, nodes));
+                    }, ioConnectedNodes.Length == 0 ? DropdownMenuAction.Status.Disabled : DropdownMenuAction.Status.Normal);
+
+                    var willDisable = nodes.Any(n => n.State == ModelState.Enabled);
+                    evt.menu.AppendAction(willDisable ? "Disable Nodes" : "Enable Nodes", _ =>
+                    {
+                        m_Store.Dispatch(new SetNodeEnabledStateAction(nodes, willDisable ? ModelState.Disabled : ModelState.Enabled));
+                    });
+                }
+
+                var graphElementModels = Selection.OfType<GraphElement>().Select(e => e.Model).ToList();
+                if (graphElementModels.Count == 2)
+                {
+                    // PF: FIXME check conditions correctly for this actions (exclude single port nodes, check if already connected).
+                    if (graphElementModels.FirstOrDefault(x => x is IEdgeModel) is IEdgeModel edgeModel &&
+                        graphElementModels.FirstOrDefault(x => x is IInOutPortsNode) is IInOutPortsNode nodeModel)
+                    {
+                        evt.menu.AppendAction("Insert Node on Edge", _ => m_Store.Dispatch(new SplitEdgeAndInsertExistingNodeAction(edgeModel, nodeModel)),
+                            eventBase => DropdownMenuAction.Status.Normal);
+                    }
+                }
+
+                var variableNodes = nodes.OfType<IVariableNodeModel>().ToArray();
+                if (variableNodes.Length > 0)
+                {
+                    evt.menu.AppendAction("Variable/Convert",
+                        _ =>
+                        {
+                            m_Store.Dispatch(new ConvertVariableNodesToConstantNodesAction(variableNodes));
+                        });
+
+                    evt.menu.AppendAction("Variable/Itemize",
+                        _ =>
+                        {
+                            m_Store.Dispatch(new ItemizeNodeAction(variableNodes));
+                        });
+                }
+
+                var constants = nodes.OfType<IConstantNodeModel>().ToArray();
+                if (constants.Length > 0)
+                {
+                    evt.menu.AppendAction("Constant/Convert",
+                        _ => m_Store.Dispatch(new ConvertConstantNodesToVariableNodesAction(constants)), x => DropdownMenuAction.Status.Normal);
+
+                    evt.menu.AppendAction("Constant/Itemize",
+                        _ => m_Store.Dispatch(new ItemizeNodeAction(constants)), x => DropdownMenuAction.Status.Normal);
+
+                    evt.menu.AppendAction("Constant/Lock",
+                        _ => m_Store.Dispatch(new ToggleLockConstantNodeAction(constants)), x => DropdownMenuAction.Status.Normal);
+                }
+
+                var portals = nodes.OfType<IEdgePortalModel>().ToArray();
+                if (portals.Length > 0)
+                {
+                    var canCreate = portals.Where(p => p.CanCreateOppositePortal()).ToArray();
+                    evt.menu.AppendAction("Create Opposite Portal",
+                        _ =>
+                        {
+                            m_Store.Dispatch(new CreateOppositePortalAction(canCreate));
+                        }, canCreate.Length > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+                }
+
+                var placemats = Selection.OfType<Placemat>()
+                    .Select(e => e.PlacematModel).ToArray();
+
+                if (nodes.Length > 0 || placemats.Length > 0)
+                {
+                    evt.menu.AppendAction("Color/Change...", _ =>
+                    {
+                        void ChangeNodesColor(Color pickedColor)
+                        {
+                            m_Store.Dispatch(new ChangeElementColorAction(pickedColor, nodes, placemats));
+                        }
+
+                        var defaultColor = new Color(0.5f, 0.5f, 0.5f);
+                        if (nodes.Length == 0 && placemats.Length == 1)
+                        {
+                            defaultColor = placemats[0].Color;
+                        }
+                        else if (nodes.Length == 1 && placemats.Length == 0)
+                        {
+                            defaultColor = nodes[0].Color;
+                        }
+
+                        GraphViewStaticBridge.ShowColorPicker(ChangeNodesColor, defaultColor, true);
+                    });
+
+                    evt.menu.AppendAction("Color/Reset", _ =>
+                    {
+                        m_Store.Dispatch(new ResetElementColorAction(nodes, placemats));
+                    });
+                }
+                else
+                {
+                    evt.menu.AppendAction("Color", _ => {}, eventBase => DropdownMenuAction.Status.Disabled);
+                }
+
+                var edges = Selection.OfType<Edge>().Select(e => e.EdgeModel).ToArray();
+                if (edges.Length > 0)
+                {
+                    evt.menu.AppendSeparator();
+
+                    var edgeData = edges.Select(
+                        s =>
+                        {
+                            var e = s.GetUI<Edge>(this);
+                            var outputPort = s.FromPort.GetUI<Port>(this);
+                            var inputPort = s.ToPort.GetUI<Port>(this);
+                            var outputNode = s.FromPort.NodeModel.GetUI<Node>(this);
+                            var inputNode = s.ToPort.NodeModel.GetUI<Node>(this);
+                            return (s,
+                                outputPort.ChangeCoordinatesTo(outputNode.parent, outputPort.layout.center),
+                                inputPort.ChangeCoordinatesTo(inputNode.parent, inputPort.layout.center));
+                        }).ToList();
+
+                    evt.menu.AppendAction("Create Portals", _ =>
+                    {
+                        m_Store.Dispatch(new ConvertEdgesToPortalsAction(edgeData));
+                    });
+                }
+
+                var stickyNotes = Selection?.OfType<StickyNote>().Select(e => e.StickyNoteModel).ToArray();
+
+                if (stickyNotes.Length > 0)
+                {
+                    evt.menu.AppendSeparator();
+
+                    DropdownMenuAction.Status GetThemeStatus(DropdownMenuAction a)
+                    {
+                        if (stickyNotes.Any(noteModel => noteModel.Theme != stickyNotes.First().Theme))
+                        {
+                            // Values are not all the same.
+                            return DropdownMenuAction.Status.Normal;
+                        }
+
+                        return stickyNotes.First().Theme == (a.userData as string) ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.Normal;
+                    }
+
+                    DropdownMenuAction.Status GetSizeStatus(DropdownMenuAction a)
+                    {
+                        if (stickyNotes.Any(noteModel => noteModel.TextSize != stickyNotes.First().TextSize))
+                        {
+                            // Values are not all the same.
+                            return DropdownMenuAction.Status.Normal;
+                        }
+
+                        return stickyNotes.First().TextSize == (a.userData as string) ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.Normal;
+                    }
+
+                    foreach (var value in StickyNote.GetThemes())
+                    {
+                        evt.menu.AppendAction("Sticky Note Theme/" + value,
+                            menuAction => m_Store.Dispatch(new UpdateStickyNoteThemeAction(stickyNotes, menuAction.userData as string)),
+                            GetThemeStatus, value);
+                    }
+
+                    foreach (var value in StickyNote.GetSizes())
+                    {
+                        evt.menu.AppendAction("Sticky Note Text Size/" + value,
+                            menuAction => m_Store.Dispatch(new UpdateStickyNoteTextSizeAction(stickyNotes, menuAction.userData as string)),
+                            GetSizeStatus, value);
+                    }
+                }
             }
-            if (evt.target is GraphView || evt.target is Node || evt.target is Edge)
+
+            evt.menu.AppendSeparator();
+
+            var models = Selection.OfType<GraphElement>().Select(e => e.Model).ToArray();
+
+            // PF: FIXME use an Action.
+            evt.menu.AppendAction("Cut", (a) => { CutSelectionCallback(); },
+                CanCutSelection ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+
+            evt.menu.AppendAction("Copy", (a) => { CopySelectionCallback(); },
+                CanCopySelection ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+
+            // PF: FIXME use an Action.
+            evt.menu.AppendAction("Paste", (a) => { PasteCallback(); },
+                CanPaste ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+
+            evt.menu.AppendSeparator();
+
+            // PF: FIXME use an Action.
+            evt.menu.AppendAction("Duplicate", (a) => { DuplicateSelectionCallback(); },
+                CanDuplicateSelection ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+
+            evt.menu.AppendAction("Delete", _ =>
+            {
+                m_Store.Dispatch(new DeleteElementsAction(models));
+            }, CanDeleteSelection ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+
+            if (Unsupported.IsDeveloperBuild())
             {
                 evt.menu.AppendSeparator();
-                evt.menu.AppendAction("Delete", (a) => { DeleteSelection(); },
-                    (a) => { return CanDeleteSelection ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled; });
-            }
-            if (evt.target is GraphView || evt.target is Node)
-            {
-                evt.menu.AppendSeparator();
-                evt.menu.AppendAction("Duplicate", (a) => { DuplicateSelectionCallback(); },
-                    (a) => { return CanDuplicateSelection ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled; });
-                evt.menu.AppendSeparator();
+                evt.menu.AppendAction("Internal/Refresh All UI", _ => m_Store.ForceRefreshUI(UpdateFlags.All));
+
+                if (Selection.Any())
+                {
+                    var selectedModels = Selection.OfType<GraphElement>().Select(e => e.Model).ToArray();
+
+                    evt.menu.AppendAction("Internal/Refresh Selected Element(s)",
+                        _ =>
+                        {
+                            m_Store.GetState().CurrentGraphModel.LastChanges.ChangedElements.AddRange(selectedModels);
+                            m_Store.ForceRefreshUI(UpdateFlags.None);
+                        });
+
+                    if (selectedModels.OfType<INodeModel>().Any())
+                    {
+                        evt.menu.AppendAction("Internal/Redefine Node",
+                            action =>
+                            {
+                                foreach (var model in selectedModels.OfType<INodeModel>())
+                                    model.DefineNode();
+                            });
+                    }
+                }
             }
         }
 
-        protected override void ExecuteDefaultActionAtTarget(EventBase evt)
+        public virtual void DisplaySmartSearch(Vector2 mousePosition)
         {
-            base.ExecuteDefaultActionAtTarget(evt);
-            DisplayContextualMenu(evt);
+            var graphPosition = contentViewContainer.WorldToLocal(mousePosition);
+            var element = panel.Pick(mousePosition).GetFirstOfType<IGraphElement>();
+            switch (element)
+            {
+                case Edge edge:
+                    SearcherService.ShowEdgeNodes(Store.GetState(), edge.EdgeModel, mousePosition, item =>
+                    {
+                        Store.Dispatch(new CreateNodeOnEdgeAction(edge.EdgeModel, graphPosition, item));
+                    });
+                    break;
+
+                default:
+                    SearcherService.ShowGraphNodes(Store.GetState(), mousePosition, item =>
+                    {
+                        Store.Dispatch(new CreateNodeFromSearcherAction(graphPosition, item, new[] {GUID.Generate() }));
+                    });
+                    break;
+            }
         }
 
         protected override void ExecuteDefaultAction(EventBase evt)
@@ -784,12 +1116,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                     m_GraphViewUndoRedoSelection.hideFlags = HideFlags.HideAndDontSave;
                 }
             }
-        }
-
-        void OnContextualMenu(ContextualMenuPopulateEvent evt)
-        {
-            // If popping a contextual menu on a GraphElement, add the cut/copy actions.
-            BuildContextualMenu(evt);
         }
 
         void OnEnterPanel(AttachToPanelEvent e)
@@ -893,7 +1219,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             }
             else if (evt.commandName == EventCommandNames.SoftDelete)
             {
-                DeleteSelection("Delete", DeleteElementsAction.AskUser.AskUser);
+                DeleteSelection();
                 evt.StopPropagation();
             }
             else if (evt.commandName == EventCommandNames.FrameSelected)
@@ -1042,12 +1368,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             graphElement.RemoveFromHierarchy();
         }
 
-        public void DeleteSelection(string operationName = "Delete", DeleteElementsAction.AskUser askUser = DeleteElementsAction.AskUser.DontAskUser)
+        public void DeleteSelection(string operationName = "Delete")
         {
-            IGTFGraphElementModel[] elementsToRemove = Selection.Cast<GraphElement>()
+            IGraphElementModel[] elementsToRemove = Selection.Cast<GraphElement>()
                 .Select(x => x.Model)
                 .Where(m => m != null).ToArray(); // 'this' has no model
-            m_Store.Dispatch(new DeleteElementsAction(operationName, askUser, elementsToRemove));
+            m_Store.Dispatch(new DeleteElementsAction(elementsToRemove) { UndoString = operationName });
         }
 
         public void DeleteElements(IEnumerable<GraphElement> elementsToRemove)
@@ -1269,18 +1595,63 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
             GUI.matrix = m;
         }
 
-        public virtual Blackboard GetBlackboard()
-        {
-            return null;
-        }
-
-        public virtual void ReleaseBlackboard(Blackboard toRelease)
-        {
-        }
-
         protected virtual PlacematContainer CreatePlacematContainer()
         {
             return new PlacematContainer(this);
+        }
+
+        public void PanToNode(GUID nodeGuid)
+        {
+            var graphModel = Store.GetState().CurrentGraphModel;
+
+            if (!graphModel.NodesByGuid.TryGetValue(nodeGuid, out var nodeModel))
+                return;
+
+            var graphElement = nodeModel.GetUI(this);
+            if (graphElement == null)
+                return;
+
+            graphElement.Select(this, false);
+            FrameSelection();
+        }
+
+        public virtual IEnumerable<(IVariableDeclarationModel, SerializableGUID, Vector2)> ExtractVariablesFromDroppedElements(
+            IReadOnlyCollection<GraphElement> dropElements, Vector2 initialPosition)
+        {
+            return Enumerable.Empty<(IVariableDeclarationModel, SerializableGUID, Vector2)>();
+        }
+
+        public void AddPositionDependency(IEdgeModel model)
+        {
+            PositionDependenciesManagers.AddPositionDependency(model);
+        }
+
+        public void RemovePositionDependency(IEdgeModel edgeModel)
+        {
+            PositionDependenciesManagers.Remove(edgeModel.FromNodeGuid, edgeModel.ToNodeGuid);
+            PositionDependenciesManagers.LogDependencies();
+        }
+
+        public void AddPortalDependency(IEdgePortalModel model)
+        {
+            PositionDependenciesManagers.AddPortalDependency(model);
+        }
+
+        public void RemovePortalDependency(IEdgePortalModel model)
+        {
+            PositionDependenciesManagers.RemovePortalDependency(model);
+            PositionDependenciesManagers.LogDependencies();
+        }
+
+        public EventPropagation AlignSelection(bool follow)
+        {
+            PositionDependenciesManagers.AlignNodes(this, follow, Selection);
+            return EventPropagation.Stop;
+        }
+
+        public void AlignGraphElements(IEnumerable<GraphElement> entryPoints)
+        {
+            PositionDependenciesManagers.AlignNodes(this, true, entryPoints.OfType<ISelectableGraphElement>().ToList());
         }
     }
 }

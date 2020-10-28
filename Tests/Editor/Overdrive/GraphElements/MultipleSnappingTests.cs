@@ -2,14 +2,12 @@ using System;
 using System.Collections;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEngine.TestTools;
-using UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utilities;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    public class MultipleSnappingTests : GraphViewSnappingTester
+    class MultipleSnappingTests : GraphViewSnappingTester
     {
         const float k_Spacing = 200f;
         const float k_HalfSpacing = k_Spacing * 0.5f;

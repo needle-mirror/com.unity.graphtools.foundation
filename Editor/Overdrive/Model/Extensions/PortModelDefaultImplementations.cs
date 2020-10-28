@@ -2,22 +2,22 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.Model
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public static class PortModelDefaultImplementations
     {
-        public static IEnumerable<IGTFPortModel> GetConnectedPorts(IGTFPortModel self)
+        public static IEnumerable<IPortModel> GetConnectedPorts(IPortModel self)
         {
-            return self?.GraphModel?.GetConnections(self) ?? Enumerable.Empty<IGTFPortModel>();
+            return self?.GraphModel?.GetConnections(self) ?? Enumerable.Empty<IPortModel>();
         }
 
-        public static IEnumerable<IGTFEdgeModel> GetConnectedEdges(IGTFPortModel self)
+        public static IEnumerable<IEdgeModel> GetConnectedEdges(IPortModel self)
         {
             return self?.GraphModel?.EdgeModels.Where(e => e.ToPort == self || e.FromPort == self) ??
-                Enumerable.Empty<IGTFEdgeModel>();
+                Enumerable.Empty<IEdgeModel>();
         }
 
-        public static bool IsConnectedTo(IGTFPortModel self, IGTFPortModel toPort)
+        public static bool IsConnectedTo(IPortModel self, IPortModel toPort)
         {
             if (self.GraphModel == null)
                 return false;

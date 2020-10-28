@@ -1,9 +1,9 @@
 using System;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
+using UnityEditor.GraphToolsFoundation.Overdrive.InternalModels;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class EdgeConnector : MouseManipulator
     {
@@ -14,7 +14,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
 
         internal const float k_ConnectionDistanceThreshold = 10f;
 
-        public EdgeConnector(Store store, GraphView graphView, EdgeConnectorListener listener, Func<IGTFGraphModel, GhostEdgeModel> ghostEdgeViewModelCreator = null)
+        public EdgeConnector(Store store, GraphView graphView, EdgeConnectorListener listener, Func<IGraphModel, GhostEdgeModel> ghostEdgeViewModelCreator = null)
         {
             m_EdgeConnectorListener = listener;
             m_EdgeDragHelper = new EdgeDragHelper(store, graphView, listener, ghostEdgeViewModelCreator);

@@ -1,17 +1,20 @@
 using UnityEngine;
 
-public class MathMultiplicationOperator : MathOperator
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    public void OnEnable()
+    public class MathMultiplicationOperator : MathOperator
     {
-        name = "Multiply";
-    }
+        public void OnEnable()
+        {
+            name = "Multiply";
+        }
 
-    public override float Evaluate()
-    {
-        if (left != null && right != null)
-            return left.Evaluate() * right.Evaluate();
-        else
-            return 0;
+        public override float Evaluate()
+        {
+            if (left != null && right != null)
+                return left.Evaluate() * right.Evaluate();
+            else
+                return 0;
+        }
     }
 }

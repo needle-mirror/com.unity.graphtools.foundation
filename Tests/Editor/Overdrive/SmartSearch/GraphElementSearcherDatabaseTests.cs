@@ -4,8 +4,6 @@ using System.Linq;
 using JetBrains.Annotations;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.SmartSearch
@@ -53,7 +51,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.SmartSearch
 #pragma warning restore CS0414
 
         void CreateNodesAndValidateGraphModel(GraphNodeModelSearcherItem item, SpawnFlags mode,
-            Action<List<IGTFNodeModel>> assertNodesCreation)
+            Action<List<INodeModel>> assertNodesCreation)
         {
             var initialNodes = GraphModel.NodeModels.ToList();
             var initialEdges = GraphModel.EdgeModels.ToList();
@@ -96,7 +94,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.SmartSearch
                 Assert.IsNotNull(node);
                 Assert.AreEqual(initialNodes.Count + 1, GraphModel.NodeModels.Count);
                 Assert.AreEqual(name.Nicify(), node.DisplayTitle);
-                Assert.AreEqual(typeof(int), node.DataType.Resolve());
+                Assert.AreEqual(typeof(int), node.GetDataType().Resolve());
             });
         }
 
@@ -111,11 +109,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.SmartSearch
 
             if (context == SearcherContext.Graph)
             {
-                Assert.That(results[0], Is.TypeOf<GraphNodeModelSearcherItem>());
+                Assert.That(results[0], NUnit.Framework.Is.TypeOf<GraphNodeModelSearcherItem>());
                 var item = (GraphNodeModelSearcherItem)results[0];
-                Assert.That(item.Data, Is.TypeOf<TagSearcherItemData>());
+                Assert.That(item.Data, NUnit.Framework.Is.TypeOf<TagSearcherItemData>());
                 var tag = (TagSearcherItemData)item.Data;
-                Assert.That(tag.Tag, Is.EqualTo(expectedTag));
+                Assert.That(tag.Tag, NUnit.Framework.Is.EqualTo(expectedTag));
             }
         }
 

@@ -1,8 +1,5 @@
 using System;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
 using UnityEditor.Searcher;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
@@ -43,5 +40,5 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
         }
     }
 
-    interface IFakeNode : IGTFNodeModel {}
+    interface IFakeNode : INodeModel {}
 }

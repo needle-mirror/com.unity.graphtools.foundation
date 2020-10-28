@@ -1,36 +1,36 @@
 using System;
 using System.Collections.Generic;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.Model
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public interface IPortNode : IGTFNodeModel
+    public interface IPortNode : INodeModel
     {
-        IEnumerable<IGTFPortModel> Ports { get; }
+        IEnumerable<IPortModel> Ports { get; }
         // PF: Add PortsById and PortsByDisplayOrder?
 
         // PF: these should probably be removed.
-        void OnConnection(IGTFPortModel selfConnectedPortModel, IGTFPortModel otherConnectedPortModel);
-        void OnDisconnection(IGTFPortModel selfConnectedPortModel, IGTFPortModel otherConnectedPortModel);
-        PortCapacity GetPortCapacity(IGTFPortModel portModel);
+        void OnConnection(IPortModel selfConnectedPortModel, IPortModel otherConnectedPortModel);
+        void OnDisconnection(IPortModel selfConnectedPortModel, IPortModel otherConnectedPortModel);
+        PortCapacity GetPortCapacity(IPortModel portModel);
 
-        IGTFPortModel GetPortFitToConnectTo(IGTFPortModel portModel);
+        IPortModel GetPortFitToConnectTo(IPortModel portModel);
     }
 
     public interface IInOutPortsNode : IPortNode
     {
-        IReadOnlyDictionary<string, IGTFPortModel> InputsById { get; }
-        IReadOnlyDictionary<string, IGTFPortModel> OutputsById { get; }
-        IReadOnlyList<IGTFPortModel> InputsByDisplayOrder { get; }
-        IReadOnlyList<IGTFPortModel> OutputsByDisplayOrder { get; }
+        IReadOnlyDictionary<string, IPortModel> InputsById { get; }
+        IReadOnlyDictionary<string, IPortModel> OutputsById { get; }
+        IReadOnlyList<IPortModel> InputsByDisplayOrder { get; }
+        IReadOnlyList<IPortModel> OutputsByDisplayOrder { get; }
     }
 
     public interface ISingleInputPortNode : IInOutPortsNode
     {
-        IGTFPortModel InputPort { get; }
+        IPortModel InputPort { get; }
     }
 
     public interface ISingleOutputPortNode : IInOutPortsNode
     {
-        IGTFPortModel OutputPort { get; }
+        IPortModel OutputPort { get; }
     }
 }

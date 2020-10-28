@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.GraphToolsFoundation.Overdrive;
@@ -11,7 +10,7 @@ using Object = UnityEngine.Object;
 namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 {
     [Serializable]
-    public abstract class GraphModel : IGTFGraphModel
+    public abstract class GraphModel : IGraphModel
     {
         const string k_DefaultPlacematName = "Placemat";
         static readonly Vector2 k_PortalOffset = Vector2.right * 150;
@@ -20,30 +19,32 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         GraphAssetModel m_AssetModel;
 
         [SerializeReference]
-        protected List<IGTFNodeModel> m_GraphNodeModels;
+        protected List<INodeModel> m_GraphNodeModels;
 
-        [SerializeReference, Obsolete]
+        [SerializeField, Obsolete]
         // ReSharper disable once Unity.RedundantFormerlySerializedAsAttribute
-        [FormerlySerializedAs("m_PolymorphicEdgeModels")]
         List<EdgeModel> m_EdgeModels;
 
         [SerializeReference]
-        protected List<IGTFEdgeModel> m_GraphEdgeModels;
+        protected List<IEdgeModel> m_GraphEdgeModels;
+
+        [SerializeReference, Obsolete]
+        List<EdgeModel> m_PolymorphicEdgeModels;
 
         [SerializeField, Obsolete]
         List<StickyNoteModel> m_StickyNoteModels;
 
         [SerializeReference]
-        protected List<IGTFStickyNoteModel> m_GraphStickyNoteModels;
+        protected List<IStickyNoteModel> m_GraphStickyNoteModels;
 
         [SerializeField, Obsolete]
         List<PlacematModel> m_PlacematModels;
 
         [SerializeReference]
-        protected List<IGTFPlacematModel> m_GraphPlacematModels;
+        protected List<IPlacematModel> m_GraphPlacematModels;
 
         [SerializeReference]
-        protected List<IGTFVariableDeclarationModel> m_GraphVariableModels;
+        protected List<IVariableDeclarationModel> m_GraphVariableModels;
 
         [SerializeReference]
         protected List<IDeclarationModel> m_GraphPortalModels;
@@ -56,9 +57,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
         GraphChangeList m_LastChanges;
 
-        Dictionary<GUID, IGTFNodeModel> m_NodesByGuid;
+        Dictionary<GUID, INodeModel> m_NodesByGuid;
 
-        public IGTFGraphAssetModel AssetModel
+        public IGraphAssetModel AssetModel
         {
             get => m_AssetModel;
             set => m_AssetModel = (GraphAssetModel)value;
@@ -70,19 +71,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             set => m_Stencil = value;
         }
 
-        public IReadOnlyList<IGTFNodeModel> NodeModels => m_GraphNodeModels;
+        public IReadOnlyList<INodeModel> NodeModels => m_GraphNodeModels;
 
-        public IReadOnlyList<IGTFEdgeModel> EdgeModels => m_GraphEdgeModels;
+        public IReadOnlyList<IEdgeModel> EdgeModels => m_GraphEdgeModels;
 
-        public IReadOnlyList<IGTFStickyNoteModel> StickyNoteModels => m_GraphStickyNoteModels;
+        public IReadOnlyList<IStickyNoteModel> StickyNoteModels => m_GraphStickyNoteModels;
 
-        public IReadOnlyList<IGTFPlacematModel> PlacematModels => m_GraphPlacematModels;
+        public IReadOnlyList<IPlacematModel> PlacematModels => m_GraphPlacematModels;
 
-        public IList<IGTFVariableDeclarationModel> VariableDeclarations => m_GraphVariableModels;
+        public IList<IVariableDeclarationModel> VariableDeclarations => m_GraphVariableModels;
 
         public IReadOnlyList<IDeclarationModel> PortalDeclarations => m_GraphPortalModels;
 
-        public IReadOnlyDictionary<GUID, IGTFNodeModel> NodesByGuid => m_NodesByGuid ?? (m_NodesByGuid = new Dictionary<GUID, IGTFNodeModel>());
+        public IReadOnlyDictionary<GUID, INodeModel> NodesByGuid => m_NodesByGuid ?? (m_NodesByGuid = new Dictionary<GUID, INodeModel>());
 
         Dictionary<string, IGuidUpdate> m_OldToNewGuids;
 
@@ -98,17 +99,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
         protected GraphModel()
         {
-            m_GraphNodeModels = new List<IGTFNodeModel>();
-            m_GraphEdgeModels = new List<IGTFEdgeModel>();
-            m_GraphStickyNoteModels = new List<IGTFStickyNoteModel>();
-            m_GraphPlacematModels = new List<IGTFPlacematModel>();
-            m_GraphVariableModels = new List<IGTFVariableDeclarationModel>();
+            m_GraphNodeModels = new List<INodeModel>();
+            m_GraphEdgeModels = new List<IEdgeModel>();
+            m_GraphStickyNoteModels = new List<IStickyNoteModel>();
+            m_GraphPlacematModels = new List<IPlacematModel>();
+            m_GraphVariableModels = new List<IVariableDeclarationModel>();
             m_GraphPortalModels = new List<IDeclarationModel>();
         }
 
-        public virtual List<IGTFPortModel> GetCompatiblePorts(IGTFPortModel startPortModel)
+        public virtual List<IPortModel> GetCompatiblePorts(IPortModel startPortModel)
         {
-            var startEdgePortalModel = startPortModel.NodeModel as IGTFEdgePortalModel;
+            var startEdgePortalModel = startPortModel.NodeModel as IEdgePortalModel;
 
             return this.GetPortModels().ToList().Where(pModel =>
             {
@@ -124,18 +125,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
                     return false;
 
                 // No good if it's on the same portal either.
-                if (pModel.NodeModel is IGTFEdgePortalModel edgePortalModel)
+                if (pModel.NodeModel is IEdgePortalModel edgePortalModel)
                 {
                     if (edgePortalModel.DeclarationModel.Guid == startEdgePortalModel?.DeclarationModel.Guid)
                         return false;
                 }
 
                 // This is true for all ports
-                if (pModel.Direction == startPortModel.Direction)
-                    return false;
-
-                // Last resort: same orientation required
-                return pModel.Orientation == startPortModel.Orientation;
+                return pModel.Direction != startPortModel.Direction;
             })
                 // deep in GraphView's EdgeDragHelper, this list is used to find the first port to use when dragging an
                 // edge. as ports are returned in hierarchy order (back to front), in case of a conflict, the one behind
@@ -153,9 +150,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
         public TNodeType CreateNode<TNodeType>(string nodeName = "", Vector2 position = default,
             SpawnFlags spawnFlags = SpawnFlags.Default, Action<TNodeType> preDefineSetup = null, GUID? guid = null)
-            where TNodeType : class, IGTFNodeModel
+            where TNodeType : class, INodeModel
         {
-            Action<IGTFNodeModel> setupWrapper = null;
+            Action<INodeModel> setupWrapper = null;
             if (preDefineSetup != null)
             {
                 setupWrapper = n => preDefineSetup.Invoke(n as TNodeType);
@@ -164,22 +161,22 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             return (TNodeType)CreateNodeInternal(typeof(TNodeType), nodeName, position, spawnFlags, setupWrapper, guid);
         }
 
-        public IGTFNodeModel CreateNode(Type nodeTypeToCreate, string nodeName, Vector2 position,
-            SpawnFlags spawnFlags = SpawnFlags.Default, Action<IGTFNodeModel> preDefineSetup = null, GUID? guid = null)
+        public INodeModel CreateNode(Type nodeTypeToCreate, string nodeName, Vector2 position,
+            SpawnFlags spawnFlags = SpawnFlags.Default, Action<INodeModel> preDefineSetup = null, GUID? guid = null)
         {
             return CreateNodeInternal(nodeTypeToCreate, nodeName, position, spawnFlags, preDefineSetup, guid);
         }
 
-        protected virtual IGTFNodeModel CreateNodeInternal(Type nodeTypeToCreate, string nodeName, Vector2 position,
-            SpawnFlags spawnFlags = SpawnFlags.Default, Action<IGTFNodeModel> preDefineSetup = null, GUID? guid = null)
+        protected virtual INodeModel CreateNodeInternal(Type nodeTypeToCreate, string nodeName, Vector2 position,
+            SpawnFlags spawnFlags = SpawnFlags.Default, Action<INodeModel> preDefineSetup = null, GUID? guid = null)
         {
             if (nodeTypeToCreate == null)
                 throw new ArgumentNullException(nameof(nodeTypeToCreate));
-            IGTFNodeModel nodeModel;
+            INodeModel nodeModel;
             if (typeof(IConstant).IsAssignableFrom(nodeTypeToCreate))
                 nodeModel = new ConstantNodeModel {Value = (IConstant)Activator.CreateInstance(nodeTypeToCreate)};
-            else if (typeof(IGTFNodeModel).IsAssignableFrom(nodeTypeToCreate))
-                nodeModel = (IGTFNodeModel)Activator.CreateInstance(nodeTypeToCreate);
+            else if (typeof(INodeModel).IsAssignableFrom(nodeTypeToCreate))
+                nodeModel = (INodeModel)Activator.CreateInstance(nodeTypeToCreate);
             else
                 throw new ArgumentOutOfRangeException(nameof(nodeTypeToCreate));
 
@@ -193,73 +190,53 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             nodeModel.DefineNode();
             if (!spawnFlags.IsOrphan())
             {
-                if (spawnFlags.IsUndoable())
-                    AddNode(nodeModel);
-                else
-                    AddNodeNoUndo(nodeModel);
-                EditorUtility.SetDirty(m_AssetModel);
+                AddNode(nodeModel);
+                if (m_AssetModel)
+                    EditorUtility.SetDirty(m_AssetModel);
             }
             return nodeModel;
         }
 
-        public virtual IGTFVariableNodeModel CreateVariableNode(IGTFVariableDeclarationModel declarationModel, Vector2 position,
+        public virtual IVariableNodeModel CreateVariableNode(IVariableDeclarationModel declarationModel, Vector2 position,
             SpawnFlags spawnFlags = SpawnFlags.Default, GUID? guid = null)
         {
             return CreateNode<VariableNodeModel>(declarationModel.DisplayTitle, position, spawnFlags,
                 v => v.DeclarationModel = declarationModel, guid);
         }
 
-        public virtual IGTFConstantNodeModel CreateConstantNode(string constantName, TypeHandle constantTypeHandle, Vector2 position,
-            SpawnFlags spawnFlags = SpawnFlags.Default, GUID? guid = null, Action<IGTFConstantNodeModel> preDefine = null)
+        public virtual IConstantNodeModel CreateConstantNode(string constantName, TypeHandle constantTypeHandle, Vector2 position,
+            SpawnFlags spawnFlags = SpawnFlags.Default, GUID? guid = null, Action<IConstantNodeModel> preDefine = null)
         {
             var nodeType = Stencil.GetConstantNodeValueType(constantTypeHandle);
 
-            void PreDefineSetup(IGTFNodeModel model)
+            void PreDefineSetup(INodeModel model)
             {
-                if (model is IGTFConstantNodeModel constantModel)
+                if (model is IConstantNodeModel constantModel)
                 {
                     constantModel.PredefineSetup();
                     preDefine?.Invoke(constantModel);
                 }
             }
 
-            return (IGTFConstantNodeModel)CreateNode(nodeType, constantName, position, spawnFlags, PreDefineSetup, guid);
+            return (IConstantNodeModel)CreateNode(nodeType, constantName, position, spawnFlags, PreDefineSetup, guid);
         }
 
-        public IConstant CreateConstantValue(TypeHandle constantTypeHandle,
-            Action<IConstant> preDefine = null)
-        {
-            var nodeType = Stencil.GetConstantNodeValueType(constantTypeHandle);
-            var instance = (IConstant)Activator.CreateInstance(nodeType);
-            instance.ObjectValue = instance.DefaultValue;
-            preDefine?.Invoke(instance);
-            return instance;
-        }
-
-        public void AddNode(IGTFNodeModel nodeModel)
-        {
-            // PF: Move undo to reducers. Eliminate calls to this function.
-            Undo.RegisterCompleteObjectUndo(m_AssetModel, "Add Node");
-            AddNodeInternal(nodeModel);
-            LastChanges?.ChangedElements.Add(nodeModel);
-        }
-
-        public void AddNodeNoUndo(IGTFNodeModel nodeModel)
+        public void AddNode(INodeModel nodeModel)
         {
             AddNodeInternal(nodeModel);
             LastChanges?.ChangedElements.Add(nodeModel);
         }
 
-        void AddNodeInternal(IGTFNodeModel nodeModel)
+        void AddNodeInternal(INodeModel nodeModel)
         {
             nodeModel.AssetModel = AssetModel;
             m_GraphNodeModels.Add(nodeModel);
             if (m_NodesByGuid == null)
-                m_NodesByGuid = new Dictionary<GUID, IGTFNodeModel>();
+                m_NodesByGuid = new Dictionary<GUID, INodeModel>();
             m_NodesByGuid.Add(nodeModel.Guid, nodeModel);
         }
 
-        public IGTFNodeModel DuplicateNode(IGTFNodeModel copiedNode, Dictionary<IGTFNodeModel, IGTFNodeModel> mapping, Vector2 delta)
+        public INodeModel DuplicateNode(INodeModel copiedNode, Dictionary<INodeModel, INodeModel> mapping, Vector2 delta)
         {
             // PF FIXME cast to NodeModel
             var pastedNodeModel = (copiedNode as NodeModel).Clone();
@@ -278,16 +255,33 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             return pastedNodeModel;
         }
 
-        public void DeleteNodes(IReadOnlyCollection<IGTFNodeModel> nodesToDelete, DeleteConnections deleteConnections)
+        public virtual void CreateItemizedNode(State state, int nodeOffset, ref IPortModel outputPortModel)
+        {
+            if (!outputPortModel.IsConnected())
+                return;
+
+            if (outputPortModel.NodeModel is IConstantNodeModel || outputPortModel.NodeModel is IVariableNodeModel)
+            {
+                CreateItemizedNode(nodeOffset, ref outputPortModel);
+            }
+        }
+
+        protected void CreateItemizedNode(int nodeOffset, ref IPortModel outputPortModel)
+        {
+            Vector2 offset = Vector2.up * nodeOffset;
+            var nodeToConnect = DuplicateNode(outputPortModel.NodeModel,
+                new Dictionary<INodeModel, INodeModel>(), offset) as IInOutPortsNode;
+            outputPortModel = nodeToConnect?.OutputsById[outputPortModel.UniqueName];
+        }
+
+        public void DeleteNodes(IReadOnlyCollection<INodeModel> nodesToDelete, DeleteConnections deleteConnections)
         {
             foreach (var node in nodesToDelete)
                 DeleteNode(node, deleteConnections);
         }
 
-        public void DeleteNode(IGTFNodeModel nodeModel, DeleteConnections deleteConnections)
+        public void DeleteNode(INodeModel nodeModel, DeleteConnections deleteConnections)
         {
-            Undo.RegisterCompleteObjectUndo(m_AssetModel, "Delete Node");
-
             if (LastChanges != null)
                 LastChanges.DeletedElements += 1;
             m_GraphNodeModels.Remove(nodeModel);
@@ -301,7 +295,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
             // If this is the last portal with the given declaration, delete the declaration.
             if (nodeModel is EdgePortalModel edgePortalModel &&
-                !this.FindReferencesInGraph<IGTFEdgePortalModel>(edgePortalModel.DeclarationModel).Any())
+                !this.FindReferencesInGraph<IEdgePortalModel>(edgePortalModel.DeclarationModel).Any())
             {
                 m_GraphPortalModels.Remove(edgePortalModel.DeclarationModel);
             }
@@ -309,7 +303,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             nodeModel.Destroy();
         }
 
-        public virtual IGTFEdgeModel CreateEdge(IGTFPortModel inputPort, IGTFPortModel outputPort)
+        public virtual IEdgeModel CreateEdge(IPortModel inputPort, IPortModel outputPort)
         {
             var existing = GetEdgeConnectedToPorts(inputPort, outputPort);
             if (existing != null)
@@ -318,9 +312,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             var edgeModel = CreateOrphanEdge<EdgeModel>(inputPort, outputPort);
             if (edgeModel != null)
             {
-                // PF: Undo does not belong here. Move to reducers.
-                Undo.RegisterCompleteObjectUndo(m_AssetModel, "Add Edge");
-
                 m_GraphEdgeModels.Add(edgeModel);
                 LastChanges?.ChangedElements.Add(edgeModel);
                 LastChanges?.ChangedElements.Add(inputPort.NodeModel);
@@ -330,7 +321,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             return edgeModel;
         }
 
-        protected EdgeT CreateOrphanEdge<EdgeT>(IGTFPortModel input, IGTFPortModel output) where EdgeT : IGTFEdgeModel, new()
+        protected EdgeT CreateOrphanEdge<EdgeT>(IPortModel input, IPortModel output) where EdgeT : IEdgeModel, new()
         {
             Assert.IsNotNull(input);
             Assert.IsNotNull(input.NodeModel);
@@ -346,11 +337,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             return edgeModel;
         }
 
-        public void DeleteEdge(IGTFEdgeModel edgeModel)
+        public void DeleteEdge(IEdgeModel edgeModel)
         {
-            // PF: Undo does not belong here. Move to reducers.
-            Undo.RegisterCompleteObjectUndo(m_AssetModel, "Delete Edge");
-
             edgeModel?.ToPort?.NodeModel?.OnDisconnection(edgeModel.ToPort, edgeModel.FromPort);
             edgeModel?.FromPort?.NodeModel?.OnDisconnection(edgeModel.FromPort, edgeModel.ToPort);
 
@@ -365,36 +353,36 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             }
         }
 
-        public void DeleteEdges(IEnumerable<IGTFEdgeModel> edgeModels)
+        public void DeleteEdges(IEnumerable<IEdgeModel> edgeModels)
         {
             var edgesCopy = edgeModels.ToList();
             foreach (var edgeModel in edgesCopy)
                 DeleteEdge(edgeModel);
         }
 
-        public void MoveEdgeBefore(IGTFEdgeModel toMove, IGTFEdgeModel reference)
+        public void MoveEdgeBefore(IEdgeModel toMove, IEdgeModel reference)
         {
             m_GraphEdgeModels.Remove((EdgeModel)toMove);
             m_GraphEdgeModels.Insert(m_GraphEdgeModels.IndexOf((EdgeModel)reference), (EdgeModel)toMove);
         }
 
-        public void MoveEdgeAfter(IGTFEdgeModel toMove, IGTFEdgeModel reference)
+        public void MoveEdgeAfter(IEdgeModel toMove, IEdgeModel reference)
         {
             m_GraphEdgeModels.Remove((EdgeModel)toMove);
             m_GraphEdgeModels.Insert(m_GraphEdgeModels.IndexOf((EdgeModel)reference) + 1, (EdgeModel)toMove);
         }
 
-        public void DeleteElements(IEnumerable<IGTFGraphElementModel> graphElementModels)
+        public void DeleteElements(IEnumerable<IGraphElementModel> graphElementModels)
         {
             foreach (var model in graphElementModels)
             {
                 switch (model)
                 {
-                    case IGTFNodeModel nodeModel:
+                    case INodeModel nodeModel:
                         m_GraphNodeModels.Remove(nodeModel);
                         // If this is the last portal with the given declaration, delete the declaration.
                         if (nodeModel is EdgePortalModel edgePortalModel &&
-                            !this.FindReferencesInGraph<IGTFEdgePortalModel>(edgePortalModel.DeclarationModel).Any())
+                            !this.FindReferencesInGraph<IEdgePortalModel>(edgePortalModel.DeclarationModel).Any())
                         {
                             m_GraphPortalModels.Remove(edgePortalModel.DeclarationModel);
                         }
@@ -412,7 +400,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             }
         }
 
-        public virtual IGTFStickyNoteModel CreateStickyNote(Rect position, SpawnFlags dataSpawnFlags = SpawnFlags.Default)
+        public virtual IStickyNoteModel CreateStickyNote(Rect position, SpawnFlags dataSpawnFlags = SpawnFlags.Default)
         {
             var stickyNodeModel = CreateOrphanStickyNote<StickyNoteModel>(position);
             if (!dataSpawnFlags.IsOrphan())
@@ -423,7 +411,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             return stickyNodeModel;
         }
 
-        protected StickyNoteT CreateOrphanStickyNote<StickyNoteT>(Rect position) where StickyNoteT : IGTFStickyNoteModel, new()
+        protected StickyNoteT CreateOrphanStickyNote<StickyNoteT>(Rect position) where StickyNoteT : IStickyNoteModel, new()
         {
             var stickyNodeModel = new StickyNoteT();
             stickyNodeModel.PositionAndSize = position;
@@ -441,13 +429,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             stickyNoteModel.Destroy();
         }
 
-        public void DeleteStickyNotes(IGTFStickyNoteModel[] stickyNotesToDelete)
+        public void DeleteStickyNotes(IStickyNoteModel[] stickyNotesToDelete)
         {
-            foreach (IGTFStickyNoteModel stickyNoteModel in stickyNotesToDelete)
+            foreach (IStickyNoteModel stickyNoteModel in stickyNotesToDelete)
                 DeleteStickyNote(stickyNoteModel as StickyNoteModel);
         }
 
-        public IGTFPlacematModel CreatePlacemat(string title, Rect position, SpawnFlags dataSpawnFlags = SpawnFlags.Default)
+        public virtual IPlacematModel CreatePlacemat(string title, Rect position, SpawnFlags dataSpawnFlags = SpawnFlags.Default)
         {
             var placematModel = CreateOrphanPlacemat<PlacematModel>(title ?? k_DefaultPlacematName, position);
             if (!dataSpawnFlags.IsOrphan())
@@ -456,7 +444,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             return placematModel;
         }
 
-        PlacematT CreateOrphanPlacemat<PlacematT>(string title, Rect position) where PlacematT : IGTFPlacematModel, new()
+        PlacematT CreateOrphanPlacemat<PlacematT>(string title, Rect position) where PlacematT : IPlacematModel, new()
         {
             var placematModel = new PlacematT();
             placematModel.Title = title;
@@ -478,9 +466,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
         void AddPlacemat(PlacematModel placematModel)
         {
-            // PF: Move undo to reducers
-            Undo.RegisterCompleteObjectUndo(m_AssetModel, "Add Placemat");
-
             m_GraphPlacematModels.Add(placematModel);
             LastChanges?.ChangedElements.Add(placematModel);
         }
@@ -497,27 +482,24 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             placematModel.Destroy();
         }
 
-        public void DeletePlacemats(IGTFPlacematModel[] placematsToDelete)
+        public void DeletePlacemats(IPlacematModel[] placematsToDelete)
         {
             foreach (var placematModel in placematsToDelete)
                 DeletePlacemat(placematModel as PlacematModel);
         }
 
-        public IGTFVariableDeclarationModel CreateGraphVariableDeclaration(string variableName,
+        public IVariableDeclarationModel CreateGraphVariableDeclaration(string variableName,
             TypeHandle variableDataType, ModifierFlags modifierFlags, bool isExposed,
             IConstant initializationModel = null, GUID? guid = null)
         {
-            // PF: Move Undo to reducers
-            Undo.RegisterCompleteObjectUndo((Object)AssetModel, "Create Graph Variable");
-
             var field = VariableDeclarationModel.Create(variableName, variableDataType, isExposed, this, VariableType.GraphVariable, modifierFlags, initializationModel, guid);
             VariableDeclarations.Add(field);
             return field;
         }
 
-        public List<IGTFVariableDeclarationModel> DuplicateGraphVariableDeclarations(List<IGTFVariableDeclarationModel> variableDeclarationModels)
+        public List<IVariableDeclarationModel> DuplicateGraphVariableDeclarations(List<IVariableDeclarationModel> variableDeclarationModels)
         {
-            List<IGTFVariableDeclarationModel> duplicatedModels = new List<IGTFVariableDeclarationModel>();
+            List<IVariableDeclarationModel> duplicatedModels = new List<IVariableDeclarationModel>();
             foreach (var original in variableDeclarationModels)
             {
                 if (original.VariableType != VariableType.GraphVariable)
@@ -542,26 +524,25 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             return duplicatedModels;
         }
 
-        public void ReorderGraphVariableDeclaration(IGTFVariableDeclarationModel variableDeclarationModel, int index)
+        public void ReorderGraphVariableDeclaration(IVariableDeclarationModel variableDeclarationModel, int index)
         {
             Assert.IsTrue(index >= 0);
 
-            var varDeclarationModel = (VariableDeclarationModel)variableDeclarationModel;
-            if (varDeclarationModel.VariableType == VariableType.GraphVariable)
+            if (variableDeclarationModel.VariableType == VariableType.GraphVariable)
             {
-                var oldIndex = VariableDeclarations.IndexOf(varDeclarationModel);
+                var oldIndex = VariableDeclarations.IndexOf(variableDeclarationModel);
                 VariableDeclarations.RemoveAt(oldIndex);
                 if (index > oldIndex) index--;    // the actual index could have shifted due to the removal
                 if (index >= VariableDeclarations.Count)
-                    VariableDeclarations.Add(varDeclarationModel);
+                    VariableDeclarations.Add(variableDeclarationModel);
                 else
-                    VariableDeclarations.Insert(index, varDeclarationModel);
+                    VariableDeclarations.Insert(index, variableDeclarationModel);
                 LastChanges.ChangedElements.Add(variableDeclarationModel);
                 LastChanges.DeletedElements++;
             }
         }
 
-        public void DeleteVariableDeclarations(IEnumerable<IGTFVariableDeclarationModel> variableModels, bool deleteUsages)
+        public void DeleteVariableDeclarations(IEnumerable<IVariableDeclarationModel> variableModels, bool deleteUsages)
         {
             foreach (var variableModel in variableModels)
             {
@@ -569,23 +550,20 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
                 {
                     LastChanges.BlackBoardChanged = true;
                 }
-                if (variableModel.VariableType == VariableType.GraphVariable || variableModel.VariableType == VariableType.ComponentQueryField)
+                if (variableModel.VariableType == VariableType.GraphVariable)
                 {
                     VariableDeclarations.Remove(variableModel);
                 }
                 if (deleteUsages)
                 {
-                    var nodesToDelete = this.FindReferencesInGraph(variableModel).Cast<IGTFNodeModel>().ToList();
+                    var nodesToDelete = this.FindReferencesInGraph(variableModel).Cast<INodeModel>().ToList();
                     DeleteNodes(nodesToDelete, DeleteConnections.True);
                 }
             }
         }
 
-        public IGTFVariableDeclarationModel CreateGraphPortalDeclaration(string portalName, SpawnFlags spawnFlags = SpawnFlags.Default)
+        public IVariableDeclarationModel CreateGraphPortalDeclaration(string portalName, SpawnFlags spawnFlags = SpawnFlags.Default)
         {
-            // PF: Move Undo to reducers
-            Undo.RegisterCompleteObjectUndo((Object)AssetModel, "Create Graph Portal Declaration Model");
-
             // TODO JOCE: We should use something lighter than a variable declaration for portals. We don't need all that's in there
             var field = VariableDeclarationModel.Create(portalName, TypeHandle.Unknown, false, this, VariableType.EdgePortal, ModifierFlags.ReadWrite);
 
@@ -595,15 +573,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             return field;
         }
 
-        public IGTFEdgePortalModel CreateOppositePortal(IGTFEdgePortalModel edgePortalModel, SpawnFlags spawnFlags = SpawnFlags.Default)
+        public IEdgePortalModel CreateOppositePortal(IEdgePortalModel edgePortalModel, SpawnFlags spawnFlags = SpawnFlags.Default)
         {
             var offset = Vector2.zero;
             switch (edgePortalModel)
             {
-                case IGTFEdgePortalEntryModel _:
+                case IEdgePortalEntryModel _:
                     offset = k_PortalOffset;
                     break;
-                case IGTFEdgePortalExitModel _:
+                case IEdgePortalExitModel _:
                     offset = -k_PortalOffset;
                     break;
             }
@@ -611,7 +589,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             return CreateOppositePortal(edgePortalModel, currentPos + offset, spawnFlags);
         }
 
-        public IGTFEdgePortalModel CreateOppositePortal(IGTFEdgePortalModel edgePortalModel, Vector2 position, SpawnFlags spawnFlags = SpawnFlags.Default)
+        public IEdgePortalModel CreateOppositePortal(IEdgePortalModel edgePortalModel, Vector2 position, SpawnFlags spawnFlags = SpawnFlags.Default)
         {
             EdgePortalModel createdPortal = null;
             Type oppositeType = null;
@@ -640,6 +618,24 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             }
 
             return createdPortal;
+        }
+
+        public IEdgePortalEntryModel CreateEntryPortalFromEdge(IEdgeModel edgeModel)
+        {
+            var outputPortModel = edgeModel.FromPort;
+            if (outputPortModel.PortType == PortType.Execution)
+                return CreateNode<ExecutionEdgePortalEntryModel>();
+
+            return CreateNode<DataEdgePortalEntryModel>();
+        }
+
+        public IEdgePortalExitModel CreateExitPortalFromEdge(IEdgeModel edgeModel)
+        {
+            var inputPortModel = edgeModel.ToPort;
+            if (inputPortModel?.PortType == PortType.Execution)
+                return CreateNode<ExecutionEdgePortalExitModel>();
+
+            return CreateNode<DataEdgePortalExitModel>();
         }
 
         internal void AddGuidToUpdate(IGuidUpdate element, string oldGuid)
@@ -676,23 +672,29 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             m_OldToNewGuids.Clear();
         }
 
-        protected internal virtual void OnEnable()
+        public virtual void OnEnable()
         {
             if (m_GraphEdgeModels == null)
-                m_GraphEdgeModels = new List<IGTFEdgeModel>();
+                m_GraphEdgeModels = new List<IEdgeModel>();
 
             if (m_GraphStickyNoteModels == null)
-                m_GraphStickyNoteModels = new List<IGTFStickyNoteModel>();
+                m_GraphStickyNoteModels = new List<IStickyNoteModel>();
 
             if (m_GraphPlacematModels == null)
-                m_GraphPlacematModels = new List<IGTFPlacematModel>();
+                m_GraphPlacematModels = new List<IPlacematModel>();
 
 #pragma warning disable 612
             // Serialized data conversion code
-            if (m_EdgeModels != null)
+            if (m_EdgeModels?.Count > 0)
             {
                 m_GraphEdgeModels.AddRange(m_EdgeModels);
                 m_EdgeModels = null;
+            }
+
+            if (m_PolymorphicEdgeModels?.Count > 0)
+            {
+                m_GraphEdgeModels.AddRange(m_PolymorphicEdgeModels);
+                m_PolymorphicEdgeModels = null;
             }
 
             // Serialized data conversion code
@@ -713,9 +715,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             UpdateGuids();
 
             if (m_GraphNodeModels == null)
-                m_GraphNodeModels = new List<IGTFNodeModel>();
+                m_GraphNodeModels = new List<INodeModel>();
 
-            m_NodesByGuid = new Dictionary<GUID, IGTFNodeModel>(m_GraphNodeModels.Count);
+            m_NodesByGuid = new Dictionary<GUID, INodeModel>(m_GraphNodeModels.Count);
 
             foreach (var model in NodeModels)
             {
@@ -727,27 +729,31 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             }
         }
 
+        public void OnDisable()
+        {
+        }
+
         public void Dispose() {}
 
-        public IEnumerable<IGTFEdgeModel> GetEdgesConnections(IGTFPortModel portModel)
+        public IEnumerable<IEdgeModel> GetEdgesConnections(IPortModel portModel)
         {
             return EdgeModels.Where(e => portModel.Direction == Direction.Input ? PortModel.Equivalent(e.ToPort, portModel) : PortModel.Equivalent(e.FromPort, portModel));
         }
 
-        public IEnumerable<IGTFEdgeModel> GetEdgesConnections(IGTFNodeModel node)
+        public IEnumerable<IEdgeModel> GetEdgesConnections(INodeModel nodeModel)
         {
-            return EdgeModels.Where(e => e.ToPort?.NodeModel.Guid == node.Guid
-                || e.FromPort?.NodeModel.Guid == node.Guid);
+            return EdgeModels.Where(e => e.ToPort?.NodeModel.Guid == nodeModel.Guid
+                || e.FromPort?.NodeModel.Guid == nodeModel.Guid);
         }
 
-        public IEnumerable<IGTFPortModel> GetConnections(IGTFPortModel portModel)
+        public IEnumerable<IPortModel> GetConnections(IPortModel portModel)
         {
             return GetEdgesConnections(portModel)
                 .Select(e => portModel.Direction == Direction.Input ? e.FromPort : e.ToPort)
                 .Where(p => p != null);
         }
 
-        public IGTFEdgeModel GetEdgeConnectedToPorts(IGTFPortModel input, IGTFPortModel output)
+        public IEdgeModel GetEdgeConnectedToPorts(IPortModel input, IPortModel output)
         {
             return EdgeModels.FirstOrDefault(e => e.ToPort == input && e.FromPort == output);
         }
@@ -797,13 +803,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             return !failed;
         }
 
-        void CheckNodeList(IList<IGTFNodeModel> nodeModels, Dictionary<GUID, int> existingGuids = null)
+        void CheckNodeList(IList<INodeModel> nodeModels, Dictionary<GUID, int> existingGuids = null)
         {
             if (existingGuids == null)
                 existingGuids = new Dictionary<GUID, int>(nodeModels.Count * 4); // wild guess of total number of nodes, including stacked nodes
             for (var i = 0; i < nodeModels.Count; i++)
             {
-                IGTFNodeModel node = nodeModels[i];
+                INodeModel node = nodeModels[i];
 
                 Assert.IsTrue(node.GraphModel != null, $"Node {i} {node} graph is null");
                 Assert.IsTrue(node.AssetModel != null, $"Node {i} {node} asset is null");
@@ -836,7 +842,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             }
         }
 
-        static void CheckNodePorts(IReadOnlyDictionary<string, IGTFPortModel> portsById)
+        static void CheckNodePorts(IReadOnlyDictionary<string, IPortModel> portsById)
         {
             foreach (var kv in portsById)
             {
@@ -857,7 +863,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             CleanupNodes(m_GraphNodeModels);
         }
 
-        static void CleanupNodes(IList<IGTFNodeModel> models)
+        static void CleanupNodes(IList<INodeModel> models)
         {
             for (var i = models.Count - 1; i >= 0; i--)
             {

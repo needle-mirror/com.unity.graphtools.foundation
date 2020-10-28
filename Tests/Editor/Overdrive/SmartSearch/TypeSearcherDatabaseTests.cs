@@ -1,10 +1,6 @@
 using System;
 using System.Collections.Generic;
-using JetBrains.Annotations;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Compilation;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
 using UnityEditor.Searcher;
 using UnityEngine;
 
@@ -15,13 +11,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.SmartSearch
     {
         sealed class TestStencil : Stencil
         {
+            public override Blackboard CreateBlackboard(Store store, GraphView graphView)
+            {
+                return null;
+            }
+
             public override ISearcherDatabaseProvider GetSearcherDatabaseProvider()
             {
                 return new ClassSearcherDatabaseProvider(this);
             }
-
-            [CanBeNull]
-            public override IBuilder Builder => null;
         }
 
         Stencil m_Stencil;

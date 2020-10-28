@@ -1,5 +1,4 @@
 using System;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Scripting.APIUpdating;
@@ -19,7 +18,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         [SerializeField]
         public string UniqueId;
 
-        public IGTFNodeModel NodeModel
+        public INodeModel NodeModel
         {
             get => GraphAssetModel != null && GraphAssetModel.GraphModel.NodesByGuid.TryGetValue(NodeModelGuid, out var node) ? node : null;
             set
@@ -29,14 +28,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             }
         }
 
-        public void Assign(IGTFPortModel portModel)
+        public void Assign(IPortModel portModel)
         {
             Assert.IsNotNull(portModel);
             NodeModel = portModel.NodeModel;
             UniqueId = portModel.UniqueName;
         }
 
-        public IGTFPortModel GetPortModel(Direction direction, ref IGTFPortModel previousValue)
+        public IPortModel GetPortModel(Direction direction, ref IPortModel previousValue)
         {
             var nodeModel = NodeModel;
             if (nodeModel == null)
@@ -81,7 +80,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             return String.Empty;
         }
 
-        public static bool TryMigratePorts(ref PortReference portReference, Direction direction, ref IGTFPortModel portModel)
+        public static bool TryMigratePorts(ref PortReference portReference, Direction direction, ref IPortModel portModel)
         {
             if (portReference.NodeModel == null)
                 return false;

@@ -1,9 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Profiling;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
 using UnityEngine;
 using UnityEngine.Assertions;
 
@@ -15,12 +12,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         const int k_MinTimeVisibleOnTheRight = 30;
 
         readonly GraphView m_GraphView;
-        readonly Overdrive.State m_WindowState;
+        readonly State m_WindowState;
         TimeArea m_TimeArea;
         AnimEditorOverlay m_Overlay;
         TimelineState m_State;
 
-        public TracingTimeline(GraphView graphView, Overdrive.State windowState)
+        public TracingTimeline(GraphView graphView, State windowState)
         {
             m_GraphView = graphView;
             m_WindowState = windowState;
@@ -84,10 +81,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
                 if (framesPerNode != null)
                 {
-                    IGTFNodeModel nodeModelSelected = m_GraphView.Selection
+                    INodeModel nodeModelSelected = m_GraphView.Selection
                         .OfType<IGraphElement>()
                         .Select(x => x.Model)
-                        .OfType<IGTFNodeModel>()
+                        .OfType<INodeModel>()
                         .FirstOrDefault();
 
                     if (nodeModelSelected != null && framesPerNode.TryGetValue(nodeModelSelected.Guid, out List<(int InclusiveFirstFrame, int ExclusiveLastFrame)> frames))

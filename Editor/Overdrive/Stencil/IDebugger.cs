@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
@@ -14,7 +13,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         /// </summary>
         /// <param name="graphModel">The current graph model</param>
         /// <param name="tracingEnabled">The initial tracing state</param>
-        void Start(IGTFGraphModel graphModel, bool tracingEnabled);
+        void Start(IGraphModel graphModel, bool tracingEnabled);
 
         /// <summary>
         /// Tear down called when the tracing plugin is stopping
@@ -26,7 +25,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         /// </summary>
         /// <param name="graphModel">The current graph model</param>
         /// <returns>The list of targets or null if none could be produced</returns>
-        IEnumerable<int> GetDebuggingTargets(IGTFGraphModel graphModel);
+        IEnumerable<int> GetDebuggingTargets(IGraphModel graphModel);
 
         /// <summary>
         /// Used to fill the current tracing target label in the UI
@@ -34,7 +33,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         /// <param name="graphModel"></param>
         /// <param name="target"></param>
         /// <returns></returns>
-        string GetTargetLabel(IGTFGraphModel graphModel, int target);
+        string GetTargetLabel(IGraphModel graphModel, int target);
 
         /// <summary>
         /// Produces a list of steps for a given graph, frame and target
@@ -44,7 +43,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         /// <param name="tracingTarget">The current target</param>
         /// <param name="stepList">The resulting list of steps</param>
         /// <returns>Returns true if successful</returns>
-        bool GetTracingSteps(IGTFGraphModel currentGraphModel, int frame, int tracingTarget, out List<TracingStep> stepList);
+        bool GetTracingSteps(IGraphModel currentGraphModel, int frame, int tracingTarget, out List<TracingStep> stepList);
 
         /// <summary>
         /// Get the existing graph trace of a given graph and target including all recorded frames
@@ -52,13 +51,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         /// <param name="assetModelGraphModel">The current graph</param>
         /// <param name="currentTracingTarget">The current target</param>
         /// <returns>The trace of all frames relevant to this specific graph and target tuple</returns>
-        IGraphTrace GetGraphTrace(IGTFGraphModel assetModelGraphModel, int currentTracingTarget);
+        IGraphTrace GetGraphTrace(IGraphModel assetModelGraphModel, int currentTracingTarget);
 
         /// <summary>
         /// Called when the tracing is toggle in a graph
         /// </summary>
         /// <param name="currentGraphModel"></param>
         /// <param name="enabled"></param>
-        void OnToggleTracing(IGTFGraphModel currentGraphModel, bool enabled);
+        void OnToggleTracing(IGraphModel currentGraphModel, bool enabled);
     }
 }

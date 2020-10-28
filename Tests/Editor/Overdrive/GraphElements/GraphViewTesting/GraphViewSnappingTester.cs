@@ -1,14 +1,13 @@
 using System.Collections;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
+using UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utilities
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    public class GraphViewSnappingTester : GraphViewTester
+    class GraphViewSnappingTester : GraphViewTester
     {
         protected const float k_SnapDistance = 8.0f;
 
@@ -17,12 +16,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
         protected Vector2 m_SnappingNodePos;
         protected Vector2 m_SelectionOffset = new Vector2(25, 25);
 
-        protected BasicNodeModel snappingNodeModel { get; set; }
-        protected BasicNodeModel referenceNode1Model { get; set; }
-        protected BasicNodeModel referenceNode2Model { get; set; }
+        protected IONodeModel snappingNodeModel { get; set; }
+        protected IONodeModel referenceNode1Model { get; set; }
+        protected IONodeModel referenceNode2Model { get; set; }
 
-        protected IGTFPortModel m_InputPort;
-        protected IGTFPortModel m_OutputPort;
+        protected IPortModel m_InputPort;
+        protected IPortModel m_OutputPort;
 
         protected Node m_SnappedNode;
         protected Node m_ReferenceNode1;
@@ -50,28 +49,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
             m_ReferenceNode1Pos = referenceNode1Pos;
             m_ReferenceNode2Pos = referenceNode2Pos;
 
-            snappingNodeModel = CreateNode("Snapping Node", GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos));
-            referenceNode1Model = CreateNode("Reference Node 1", GraphViewStaticBridge.RoundToPixelGrid(m_ReferenceNode1Pos));
-            referenceNode2Model = CreateNode("Reference Node 2", GraphViewStaticBridge.RoundToPixelGrid(m_ReferenceNode2Pos));
+            snappingNodeModel = CreateNode("Snapping Node", GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos), inCount: 1,
+                orientation: isVerticalPort ? Orientation.Vertical : Orientation.Horizontal);
+            referenceNode1Model = CreateNode("Reference Node 1", GraphViewStaticBridge.RoundToPixelGrid(m_ReferenceNode1Pos), outCount: 1,
+                orientation: isVerticalPort ? Orientation.Vertical : Orientation.Horizontal);
+            referenceNode2Model = CreateNode("Reference Node 2", GraphViewStaticBridge.RoundToPixelGrid(m_ReferenceNode2Pos),
+                orientation: isVerticalPort ? Orientation.Vertical : Orientation.Horizontal);
 
             if (isPortSnapping)
             {
-                if (isVerticalPort)
-                {
-                    // Add a vertical port on snapping node and reference node 1
-                    m_InputPort = snappingNodeModel.AddPort(Orientation.Vertical, Direction.Input, PortCapacity.Single, typeof(float));
-                    m_OutputPort = referenceNode1Model.AddPort(Orientation.Vertical, Direction.Output, PortCapacity.Single, typeof(float));
-                    Assert.IsNotNull(m_OutputPort);
-                    Assert.IsNotNull(m_InputPort);
-                }
-                else
-                {
-                    // Add a horizontal port on snapping node and reference node 1
-                    m_InputPort = snappingNodeModel.AddPort(Orientation.Horizontal, Direction.Input, PortCapacity.Single, typeof(float));
-                    m_OutputPort = referenceNode1Model.AddPort(Orientation.Horizontal, Direction.Output, PortCapacity.Single, typeof(float));
-                    Assert.IsNotNull(m_OutputPort);
-                    Assert.IsNotNull(m_InputPort);
-                }
+                m_InputPort = snappingNodeModel.InputsByDisplayOrder[0];
+                m_OutputPort = referenceNode1Model.OutputsByDisplayOrder[0];
+                Assert.IsNotNull(m_OutputPort);
+                Assert.IsNotNull(m_InputPort);
 
                 graphView.RebuildUI(GraphModel, Store);
                 yield return null;

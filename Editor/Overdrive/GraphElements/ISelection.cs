@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public interface ISelection
     {

@@ -1,12 +1,10 @@
 using System;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
-using ICloneable = UnityEditor.GraphToolsFoundation.Overdrive.Model.ICloneable;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 {
     [Serializable]
-    public abstract class EdgePortalModel : NodeModel, IGTFEdgePortalModel, IRenamable, ICloneable
+    public abstract class EdgePortalModel : NodeModel, IEdgePortalModel, IRenamable, ICloneable
     {
         [SerializeField]
         int m_EvaluationOrder;
@@ -28,14 +26,20 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             protected set => m_EvaluationOrder = value;
         }
 
-        public bool IsRenamable => true;
+        public EdgePortalModel()
+        {
+            InternalInitCapabilities();
+        }
 
         public void Rename(string newName)
         {
+            if (!this.IsRenamable())
+                return;
+
             (DeclarationModel as IRenamable)?.Rename(newName);
         }
 
-        public IGTFGraphElementModel Clone()
+        public IGraphElementModel Clone()
         {
             var decl = m_DeclarationModel;
             try
@@ -54,6 +58,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         public virtual bool CanCreateOppositePortal()
         {
             return true;
+        }
+
+        protected override void InitCapabilities()
+        {
+            base.InitCapabilities();
+            InternalInitCapabilities();
+        }
+
+        void InternalInitCapabilities()
+        {
+            this.SetCapability(Overdrive.Capabilities.Renamable, true);
         }
     }
 }

@@ -1,36 +1,36 @@
-using System;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEngine.UIElements;
+using UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utilities
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    public class TestGraphViewWindow : EditorWindow
+    class TestGraphViewWindow : GraphViewEditorWindow
     {
-        public GraphView GraphView { get; private set; }
-        public Store Store { get; private set; }
-        public BasicGraphModel GraphModel { get; private set; }
+        public IGraphModel GraphModel { get; private set; }
 
         public TestGraphViewWindow()
         {
             this.SetDisableInputEvents(true);
         }
 
-        public void OnEnable()
+        protected override Overdrive.State CreateInitialState()
         {
-            GraphModel = new BasicGraphModel();
-            Store = new Store(new State(GraphModel), StoreHelper.RegisterReducers);
-            GraphView = new TestGraphView(Store);
+            GraphModel = new GraphModel();
+            ((GraphModel)GraphModel).Stencil = new TestStencil();
+            return new State(GraphModel);
+        }
 
-            GraphView.name = "theView";
-            GraphView.viewDataKey = "theView";
-            GraphView.StretchToParentSize();
+        protected override void OnEnable()
+        {
+            base.OnEnable();
 
+            m_GraphView = new TestGraphView(this, Store);
             rootVisualElement.Add(GraphView);
         }
 
-        public void OnDisable()
+        protected override void OnDisable()
         {
+            base.OnDisable();
+
             rootVisualElement.Remove(GraphView);
         }
     }

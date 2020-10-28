@@ -1,7 +1,7 @@
 using System.Linq;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public static class VisualElementExtensions
     {

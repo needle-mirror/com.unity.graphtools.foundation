@@ -1,33 +1,36 @@
 using UnityEngine;
 
-public class MinFunction : MathFunction
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    void OnEnable()
+    public class MinFunction : MathFunction
     {
-        name = "Min";
-        if (m_ParameterIDs.Length == 0)
+        void OnEnable()
         {
-            m_ParameterIDs = new MathNodeID[2];
+            name = "Min";
+            if (m_ParameterIDs.Length == 0)
+            {
+                m_ParameterIDs = new MathNodeID[2];
+            }
+
+            if (m_ParameterNames.Length == 0)
+            {
+                m_ParameterNames = new string[] { "a", "b" };
+            }
         }
 
-        if (m_ParameterNames.Length == 0)
+        public override float Evaluate()
         {
-            m_ParameterNames = new string[] { "a", "b" };
+            float left = 0.0f;
+            float right = 0.0f;
+            if (GetParameter(0) != null)
+            {
+                left =  GetParameter(0).Evaluate();
+            }
+            if (GetParameter(1) != null)
+            {
+                right =  GetParameter(1).Evaluate();
+            }
+            return Mathf.Min(left, right);
         }
-    }
-
-    public override float Evaluate()
-    {
-        float left = 0.0f;
-        float right = 0.0f;
-        if (GetParameter(0) != null)
-        {
-            left =  GetParameter(0).Evaluate();
-        }
-        if (GetParameter(1) != null)
-        {
-            right =  GetParameter(1).Evaluate();
-        }
-        return Mathf.Min(left, right);
     }
 }

@@ -5,7 +5,7 @@ using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utilities
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
     [SetUpFixture]
     // Since GraphView tests rely on some global state related to UIElements mouse capture
@@ -19,7 +19,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
             SetDisableInputEventsOnAllWindows(true);
             MouseCaptureController.ReleaseMouse();
 
-            Debug.Assert(!GraphViewStaticBridge.GetDisableThrottling());
             GraphViewStaticBridge.SetDisableThrottling(true);
         }
 

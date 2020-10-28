@@ -1,13 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using JetBrains.Annotations;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
 using UnityEngine;
 
 // ReSharper disable AccessToStaticMemberViaDerivedType
@@ -54,7 +53,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
         {
             //Prepare
             var allNodeModelTypes = TypeCache.GetTypesDerivedFrom(typeof(NodeModel))
-                .Where(t => !t.IsAbstract && !t.IsGenericType);
+                .Where(t => !t.IsAbstract && !t.IsGenericType && !Path.GetFileNameWithoutExtension(t.Assembly.Location).EndsWith("Tests"));
             var serializableNodeTypes = allNodeModelTypes.Where(t => t.GetCustomAttributes(typeof(SerializableAttribute)).Any());
             var serializableTypesLookup = new HashSet<Type>(serializableNodeTypes);
 
@@ -82,9 +81,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
         [Serializable]
         public class TestNodeModelWithCustomPorts : NodeModel
         {
-            public Func<IGTFPortModel> CreatePortFunc { get; set; }
+            public Func<IPortModel> CreatePortFunc { get; set; }
 
-            public Func<IGTFPortModel> CreatePort<T>(T value = default)
+            public Func<IPortModel> CreatePort<T>(T value = default)
             {
                 return () => AddDataInputPort(typeof(T).Name, defaultValue: value);
             }
@@ -104,7 +103,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
         }
 
         [Test, TestCaseSource(nameof(GetPortModelDefaultValueTestCases))]
-        public void PortModelsCanHaveDefaultValues(object expectedValue, Func<TestNodeModelWithCustomPorts, Func<IGTFPortModel>> createPort, Func<IConstant, object> getValue)
+        public void PortModelsCanHaveDefaultValues(object expectedValue, Func<TestNodeModelWithCustomPorts, Func<IPortModel>> createPort, Func<IConstant, object> getValue)
         {
             var asset = ScriptableObject.CreateInstance<TestGraphAssetModel>();
             asset.CreateGraph("asd", typeof(ClassStencil));
@@ -121,7 +120,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
             {
                 getCompareValue = c => ((EnumConstant)c).EnumValue;
             }
-            return new object[] { value, new Func<TestNodeModelWithCustomPorts, Func<IGTFPortModel>>(m => m.CreatePort(value)), getCompareValue };
+            return new object[] { value, new Func<TestNodeModelWithCustomPorts, Func<IPortModel>>(m => m.CreatePort(value)), getCompareValue };
         }
     }
 }

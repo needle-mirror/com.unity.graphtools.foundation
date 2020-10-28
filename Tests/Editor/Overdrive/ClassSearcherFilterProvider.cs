@@ -1,9 +1,5 @@
 using System;
 using JetBrains.Annotations;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
 {
@@ -19,10 +15,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
 
         public virtual SearcherFilter GetGraphSearcherFilter() => new SearcherFilter();
 
-        public virtual SearcherFilter GetOutputToGraphSearcherFilter(IGTFPortModel portModel) => new SearcherFilter();
+        public virtual SearcherFilter GetOutputToGraphSearcherFilter(IPortModel portModel) => new SearcherFilter();
 
-        public virtual SearcherFilter GetInputToGraphSearcherFilter(IGTFPortModel portModel) => new SearcherFilter();
+        public virtual SearcherFilter GetInputToGraphSearcherFilter(IPortModel portModel) => new SearcherFilter();
 
-        public virtual SearcherFilter GetEdgeSearcherFilter(IGTFEdgeModel edgeModel) => new SearcherFilter();
+        public virtual SearcherFilter GetEdgeSearcherFilter(IEdgeModel edgeModel) => new SearcherFilter();
     }
 }

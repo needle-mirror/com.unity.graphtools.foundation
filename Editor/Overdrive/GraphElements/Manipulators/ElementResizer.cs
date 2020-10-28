@@ -2,7 +2,7 @@ using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     internal class ElementResizer : MouseManipulator
     {
@@ -206,9 +206,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                 VisualElement resizedTarget = resizedElement.parent;
                 if (m_ResizeFlags != ResizeFlags.None)
                 {
-                    if (resizedTarget is IResizableGraphElement)
+                    if (resizedTarget is IResizableGraphElement element)
                     {
-                        (resizedTarget as IResizableGraphElement).OnResized(m_NewRect, m_ResizeFlags);
+                        element.OnResized(m_NewRect, m_ResizeFlags);
                     }
                 }
                 target.UnregisterCallback<MouseMoveEvent>(OnMouseMove);

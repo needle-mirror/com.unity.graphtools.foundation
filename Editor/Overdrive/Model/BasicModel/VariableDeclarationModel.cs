@@ -1,5 +1,6 @@
 using System;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Scripting.APIUpdating;
@@ -19,7 +20,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
     [Serializable]
     //[MovedFrom(false, "UnityEditor.VisualScripting.Model", "Unity.GraphTools.Foundation.Overdrive.Editor")]
     [MovedFrom("UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting")]
-    public class VariableDeclarationModel : IGTFVariableDeclarationModel, ISelectable, IDroppable, ICopiable, IDeletable, IRenamable, ISerializationCallbackReceiver, IGuidUpdate
+    public class VariableDeclarationModel : IVariableDeclarationModel, IRenamable, ISerializationCallbackReceiver, IGuidUpdate
     {
         [FormerlySerializedAs("name")]
         [SerializeField]
@@ -40,11 +41,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         [SerializeField]
         int m_Modifiers;
 
-        public virtual bool IsDeletable => true;
+        [SerializeField]
+        List<string> m_SerializedCapabilities;
 
-        public virtual bool IsRenamable => true;
-
-        public virtual bool IsDroppable => true;
+        protected List<Capabilities> m_Capabilities;
 
         public VariableFlags variableFlags;
 
@@ -120,13 +120,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
         [SerializeField]
         GraphAssetModel m_AssetModel;
-        public IGTFGraphAssetModel AssetModel
+        public IGraphAssetModel AssetModel
         {
             get => m_AssetModel;
             set => m_AssetModel = (GraphAssetModel)value;
         }
 
-        public IGTFGraphModel GraphModel
+        public IGraphModel GraphModel
         {
             get
             {
@@ -135,10 +135,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
                 return null;
             }
 
+            // TODO JOCE: Get rid of this. Should be done by just setting the asset.
             private set => m_AssetModel = value?.AssetModel as GraphAssetModel;
         }
 
-        public void SetGraphModel(IGTFGraphModel model)
+        // TODO JOCE: Get rid of this. Should be done by just setting the asset.
+        public void SetGraphModel(IGraphModel model)
         {
             GraphModel = model;
         }
@@ -180,14 +182,22 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
                 AssignNewGuid();
         }
 
+        public virtual IReadOnlyList<Capabilities> Capabilities => m_Capabilities;
+
         [SerializeField]
         string m_Id = "";
 
         [SerializeReference]
         IVariableDeclarationMetadataModel m_MetadataModel;
 
+        public VariableDeclarationModel()
+        {
+            InternalInitCapabilities();
+        }
+
         public void OnBeforeSerialize()
         {
+            m_SerializedCapabilities = m_Capabilities?.Select(c => c.Name).ToList() ?? new List<string>();
         }
 
         public void OnAfterDeserialize()
@@ -199,10 +209,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
                     (GraphModel as GraphModel)?.AddGuidToUpdate(this, m_Id);
                 }
             }
+
+            if (!m_SerializedCapabilities.Any())
+                // If we're reloading an older node
+                InitCapabilities();
+            else
+                m_Capabilities = m_SerializedCapabilities.Select(Overdrive.Capabilities.Get).ToList();
         }
 
         public void Rename(string newName)
         {
+            if (!this.IsRenamable())
+                return;
+
             SetNameFromUserName(newName);
             GraphModel.LastChanges.RequiresRebuild = true;
         }
@@ -222,7 +241,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             }
             if (GraphModel.Stencil.GetConstantNodeValueType(DataType) != null)
             {
-                InitializationModel = GraphModel.CreateConstantValue(DataType);
+                InitializationModel = GraphModel.Stencil.CreateConstantValue(DataType);
 
                 EditorUtility.SetDirty((Object)AssetModel);
             }
@@ -262,11 +281,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             else if (!spawnFlags.IsOrphan())
                 decl.CreateInitializationValue();
 
-            if (spawnFlags.IsSerializable())
-            {
-                graph.LastChanges.ChangedElements.Add(decl);
-                EditorUtility.SetDirty((Object)graph.AssetModel);
-            }
+            graph.LastChanges.ChangedElements.Add(decl);
+            EditorUtility.SetDirty((Object)graph.AssetModel);
 
             return decl;
         }
@@ -293,8 +309,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             string newName = userName.ToUnityNameFormat();
             if (string.IsNullOrWhiteSpace(newName))
                 return;
-
-            Undo.RegisterCompleteObjectUndo(AssetModel as ScriptableObject, "Rename Graph Variable");
             VariableName = newName;
         }
 
@@ -327,6 +341,21 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             }
         }
 
-        public bool IsCopiable => true;
+        protected virtual void InitCapabilities()
+        {
+            InternalInitCapabilities();
+        }
+
+        void InternalInitCapabilities()
+        {
+            m_Capabilities = new List<Capabilities>
+            {
+                Overdrive.Capabilities.Deletable,
+                Overdrive.Capabilities.Droppable,
+                Overdrive.Capabilities.Copiable,
+                Overdrive.Capabilities.Selectable,
+                Overdrive.Capabilities.Renamable,
+            };
+        }
     }
 }

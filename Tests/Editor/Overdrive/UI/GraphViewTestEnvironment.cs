@@ -1,10 +1,7 @@
 using System;
-using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Compilation;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
+using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -23,7 +20,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             SetDisableInputEventsOnAllWindows(true);
             MouseCaptureController.ReleaseMouse();
 
-            DataWatchServiceDisableThrottling(true);
+            GraphViewStaticBridge.SetDisableThrottling(true);
         }
 
         [OneTimeTearDown]
@@ -31,7 +28,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         {
             SetDisableInputEventsOnAllWindows(false);
 
-            DataWatchServiceDisableThrottling(false);
+            GraphViewStaticBridge.SetDisableThrottling(false);
         }
 
         static void SetDisableInputEventsOnAllWindows(bool value)
@@ -54,22 +51,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             catch
             {
                 Debug.LogWarning("Unable to disableInputEvents");
-            }
-        }
-
-        static void DataWatchServiceDisableThrottling(bool value)
-        {
-            try
-            {
-                var dataWatchServiceType = AssemblyCache.CachedAssemblies
-                    .SelectMany(a => a.GetTypesSafe(), (domainAssembly, assemblyType) => assemblyType)
-                    .First(x => x.Name == "DataWatchService");
-                var sharedInstance = dataWatchServiceType.GetProperty("sharedInstance", BindingFlags.NonPublic | BindingFlags.Static)?.GetValue(null);
-                dataWatchServiceType.GetProperty("disableThrottling", BindingFlags.NonPublic | BindingFlags.Static)?.SetValue(sharedInstance, value);
-            }
-            catch
-            {
-                Debug.LogWarning("DataWatchServiceDisableThrottling failed");
             }
         }
     }

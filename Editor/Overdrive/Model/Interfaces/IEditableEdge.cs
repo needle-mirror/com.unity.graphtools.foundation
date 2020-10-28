@@ -1,11 +1,9 @@
-using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using UnityEngine;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.Model
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public interface IEditableEdge : IGTFEdgeModel, IPositioned
+    public interface IEditableEdge : IEdgeModel, IMovable
     {
         IReadOnlyCollection<IEdgeControlPointModel> EdgeControlPoints { get; }
         void InsertEdgeControlPoint(int atIndex, Vector2 point, float tightness);

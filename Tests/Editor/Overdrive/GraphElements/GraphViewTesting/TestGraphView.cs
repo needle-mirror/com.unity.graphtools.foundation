@@ -1,19 +1,23 @@
 using System;
 using System.Collections.Generic;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utilities
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    public class TestGraphView : GraphView
+    class TestGraphView : GraphView
     {
         public readonly ContentDragger contentDragger;
         public readonly SelectionDragger selectionDragger;
         public readonly RectangleSelector rectangleSelector;
         public readonly FreehandSelector freehandSelector;
 
-        public TestGraphView(Store store) : base(store)
+        public TestGraphView(GraphViewEditorWindow window, Store store) : base(window, store)
         {
+            // This is needed for selection persistence.
+            viewDataKey = "TestGraphView";
+
+            name = "TestGraphView";
+
             SetupZoom(ContentZoomer.DefaultMinScale, ContentZoomer.DefaultMaxScale);
 
             contentDragger = new ContentDragger();
@@ -31,7 +35,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
             focusable = true;
         }
 
-        public void RebuildUI(BasicGraphModel graphModel, Store store)
+        public void RebuildUI(IGraphModel graphModel, Store store)
         {
             var nodeList = Nodes.ToList();
             foreach (var node in nodeList)
@@ -60,26 +64,26 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utiliti
 
             GraphElementFactory.RemoveAll(this);
 
-            foreach (var nodeModel in graphModel.Nodes)
+            foreach (var nodeModel in graphModel.NodeModels)
             {
                 var element = GraphElementFactory.CreateUI<GraphElement>(this, store, nodeModel);
                 AddElement(element);
             }
 
-            foreach (var edgeModel in graphModel.Edges)
+            foreach (var edgeModel in graphModel.EdgeModels)
             {
                 var element = GraphElementFactory.CreateUI<GraphElement>(this, store, edgeModel);
                 AddElement(element);
             }
 
-            foreach (var stickyNoteModel in graphModel.Stickies)
+            foreach (var stickyNoteModel in graphModel.StickyNoteModels)
             {
                 var element = GraphElementFactory.CreateUI<GraphElement>(this, store, stickyNoteModel);
                 AddElement(element);
             }
 
             List<IGraphElement> placemats = new List<IGraphElement>();
-            foreach (var placematModel in graphModel.Placemats)
+            foreach (var placematModel in graphModel.PlacematModels)
             {
                 placemats.Add(GraphElementFactory.CreateUI<GraphElement>(this, store, placematModel));
             }

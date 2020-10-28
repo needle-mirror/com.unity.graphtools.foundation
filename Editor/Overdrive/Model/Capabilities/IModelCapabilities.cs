@@ -1,8 +1,6 @@
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.Model
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public interface IHasTitle
     {
@@ -15,45 +13,28 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Model
         bool HasProgress { get; }
     }
 
-    public interface ISelectable
-    {
-    }
-
+    // TODO Consider moving this functionality to GraphElement since we have capabilities to gate the action.
     public interface ICollapsible
     {
-        bool Collapsed { get; set;  }
+        bool Collapsed { get; set; }
     }
 
+    // TODO Consider moving this functionality to GraphElement since we have capabilities to gate the action.
     public interface IResizable
     {
         Rect PositionAndSize { get; set; }
-        bool IsResizable { get; }
     }
 
-    public interface IPositioned
+    // TODO Consider moving this functionality to GraphElement since we have capabilities to gate the action.
+    public interface IMovable
     {
         Vector2 Position { get; set; }
         void Move(Vector2 delta);
     }
 
-    public interface ICopiable
-    {
-        bool IsCopiable { get; }
-    }
-
-    public interface IDeletable
-    {
-        bool IsDeletable { get; }
-    }
-
-    public interface IDroppable
-    {
-        bool IsDroppable { get; }
-    }
-
+    // TODO Consider moving this functionality to GraphElement since we have capabilities to gate the action.
     public interface IRenamable
     {
-        bool IsRenamable { get; }
         void Rename(string newName);
     }
 

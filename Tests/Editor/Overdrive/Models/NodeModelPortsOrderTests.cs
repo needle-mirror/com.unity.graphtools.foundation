@@ -4,8 +4,6 @@ using System.Linq;
 using JetBrains.Annotations;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 
 // ReSharper disable AccessToStaticMemberViaDerivedType
@@ -122,19 +120,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
                 {
                     var log1 = GraphModel.NodeModels[3] as Type0FakeNodeModel;
                     var log2 = GraphModel.NodeModels[4] as Type0FakeNodeModel;
-                    var myInt = GetAllNodes().OfType<VariableNodeModel>().Single(n => n.DataType == TypeHandle.Int);
+                    var myInt = GetAllNodes().OfType<VariableNodeModel>().Single(n => n.GetDataType() == TypeHandle.Int);
                     var getProperty = GetAllNodes().OfType<Type0FakeNodeModel>().First(n => n.Title == nodeName);
 
                     Assert.That(myInt.OutputPort.IsConnected, Is.False);
                     Assert.That(log1?.Input0, Is.ConnectedTo(getProperty.Output0));
                     Assert.That(log2?.Input0, Is.ConnectedTo(getProperty.Output1));
-                    return new CreateEdgeAction(log1?.Input0, myInt.OutputPort, new List<IGTFEdgeModel> { GraphModel.GetEdgesConnections(log1?.Input0).Single() });
+                    return new CreateEdgeAction(log1?.Input0, myInt.OutputPort, new List<IEdgeModel> { GraphModel.GetEdgesConnections(log1?.Input0).Single() });
                 },
                 () =>
                 {
                     var log1 = GraphModel.NodeModels[3] as Type0FakeNodeModel;
                     var log2 = GraphModel.NodeModels[4] as Type0FakeNodeModel;
-                    var myInt = GetAllNodes().OfType<VariableNodeModel>().Single(n => n.DataType == TypeHandle.Int);
+                    var myInt = GetAllNodes().OfType<VariableNodeModel>().Single(n => n.GetDataType() == TypeHandle.Int);
                     var getProperty = GetAllNodes().OfType<Type0FakeNodeModel>().First(n => n.Title == nodeName);
 
                     Assert.That(myInt.OutputPort.IsConnected, Is.True);

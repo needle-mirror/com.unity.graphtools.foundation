@@ -2,15 +2,13 @@ using System;
 using System.Collections;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utilities;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    public class GraphElementAttachTests : GraphViewTester
+    class GraphElementAttachTests : GraphViewTester
     {
         private static readonly Rect k_NodeRect = new Rect(SelectionDragger.k_PanAreaWidth * 2, SelectionDragger.k_PanAreaWidth * 3, 50, 50);
 

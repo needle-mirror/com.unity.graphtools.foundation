@@ -1,27 +1,22 @@
-using System;
 using System.Collections;
 using System.Linq;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-using UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utilities;
+using UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    public class GraphElementEdgeInteractionsTests : GraphViewTester
+    class GraphElementEdgeInteractionsTests : GraphViewTester
     {
-        BasicNodeModel firstNode { get; set; }
-        BasicNodeModel secondNode { get; set; }
-        BasicPortModel startPort { get; set; }
-        BasicPortModel endPort { get; set; }
-        BasicPortModel startPortTwo { get; set; }
-        BasicPortModel endPortTwo { get; set; }
+        IONodeModel firstNode { get; set; }
+        IONodeModel secondNode { get; set; }
+        IPortModel startPort { get; set; }
+        IPortModel endPort { get; set; }
+        IPortModel startPortTwo { get; set; }
+        IPortModel endPortTwo { get; set; }
 
-        static readonly Vector2 k_FirstNodePosition = new Vector2(0, 0);
-        static readonly Vector2 k_SecondNodePosition = new Vector2(400, 0);
         const float k_EdgeSelectionOffset = 20.0f;
 
         [SetUp]
@@ -30,24 +25,28 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             base.SetUp();
 
             firstNode = CreateNode("First Node", new Vector2(0, 0));
-            startPort = firstNode.AddPort(Orientation.Horizontal, Direction.Output, PortCapacity.Multi, typeof(float));
-            startPortTwo = firstNode.AddPort(Orientation.Horizontal, Direction.Output, PortCapacity.Multi, typeof(float));
+            firstNode.OuputCount = 2;
+            firstNode.DefineNode();
+            startPort = firstNode.OutputsByDisplayOrder[0];
+            startPortTwo = firstNode.OutputsByDisplayOrder[1];
 
             secondNode = CreateNode("Second Node", new Vector2(400, 0));
-            endPort = secondNode.AddPort(Orientation.Horizontal, Direction.Input, PortCapacity.Single, typeof(float));
-            endPortTwo = secondNode.AddPort(Orientation.Horizontal, Direction.Input, PortCapacity.Single, typeof(float));
+            secondNode.InputCount = 2;
+            secondNode.DefineNode();
+            endPort = secondNode.InputsByDisplayOrder[0];
+            endPortTwo = secondNode.InputsByDisplayOrder[1];
         }
 
         [UnityTest]
         public IEnumerator MixedOrientationEdges()
         {
-            BasicNodeModel horizontalNode = CreateNode("Horizontal Node", new Vector2(100, 200));
-            BasicPortModel hInPort = horizontalNode.AddPort(Orientation.Horizontal, Direction.Input, PortCapacity.Single, typeof(float));
-            BasicPortModel hOutPort = horizontalNode.AddPort(Orientation.Horizontal, Direction.Output, PortCapacity.Multi, typeof(float));
+            var horizontalNode = CreateNode("Horizontal Node", new Vector2(100, 200), 1, 1);
+            var hInPort = horizontalNode.InputsByDisplayOrder[0];
+            var hOutPort = horizontalNode.OutputsByDisplayOrder[0];
 
-            BasicNodeModel verticalNode = CreateNode("Horizontal Node", new Vector2(500, 100));
-            BasicPortModel vInPort = verticalNode.AddPort(Orientation.Vertical, Direction.Input, PortCapacity.Single, typeof(float));
-            BasicPortModel vOutPort = verticalNode.AddPort(Orientation.Vertical, Direction.Output, PortCapacity.Multi, typeof(float));
+            var verticalNode = CreateNode("Vertical Node", new Vector2(500, 100), 1, 1, orientation: Orientation.Vertical);
+            var vInPort = verticalNode.InputsByDisplayOrder[0];
+            var vOutPort = verticalNode.OutputsByDisplayOrder[0];
 
             graphView.RebuildUI(GraphModel, Store);
             yield return null;
@@ -58,7 +57,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 yield return null;
             }
 
-            BasicEdgeModel edgeModel = hOutPort.GetConnectedEdges().First() as BasicEdgeModel;
+            var edgeModel = hOutPort.GetConnectedEdges().First();
             Assert.IsNotNull(edgeModel);
 
             Port outputPort = hOutPort.GetUI<Port>(graphView);
@@ -79,7 +78,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 yield return null;
             }
 
-            edgeModel = vOutPort.GetConnectedEdges().First() as BasicEdgeModel;
+            edgeModel = vOutPort.GetConnectedEdges().First();
             Assert.IsNotNull(edgeModel);
 
             outputPort = vOutPort.GetUI<Port>(graphView);
@@ -160,6 +159,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator EdgeDisconnectInputWorks()
         {
+            bool searcherInvoked = false;
+            (GraphModel.Stencil as TestStencil)?.SetOnGetSearcherDatabaseProviderCallback(() => searcherInvoked = true);
+
             graphView.RebuildUI(GraphModel, Store);
             yield return null;
 
@@ -199,12 +201,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             helpers.MouseUpEvent(emptyAreaPos);
             yield return null;
 
-            Assert.IsEmpty(startPort.GetConnectedEdges());
+
+            Assert.IsTrue(searcherInvoked, "Searcher was not invoked.");
+            Assert.AreEqual(1, startPort.GetConnectedEdges().Count(), "Edge was unexpectedly deleted.");
         }
 
         [UnityTest]
         public IEnumerator EdgeDisconnectOutputWorks()
         {
+            bool searcherInvoked = false;
+            (GraphModel.Stencil as TestStencil)?.SetOnGetSearcherDatabaseProviderCallback(() => searcherInvoked = true);
+
             graphView.RebuildUI(GraphModel, Store);
             yield return null;
 
@@ -243,7 +250,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             helpers.MouseUpEvent(emptyAreaPos);
             yield return null;
 
-            Assert.IsEmpty(startPort.GetConnectedEdges());
+            Assert.IsTrue(searcherInvoked, "Searcher was not invoked.");
+            Assert.AreEqual(1, startPort.GetConnectedEdges().Count(), "Edge was unexpectedly deleted.");
         }
 
         [UnityTest]

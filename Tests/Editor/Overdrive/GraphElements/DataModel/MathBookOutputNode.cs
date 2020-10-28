@@ -1,44 +1,47 @@
 using System;
 using UnityEngine;
 
-public class MathBookOutputNode : MathResult, IMathBookFieldNode
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    [SerializeField]
-    private string m_FieldName;
-
-    public event Action<IMathBookFieldNode> changed;
-
-    public string fieldName
+    public class MathBookOutputNode : MathResult, IMathBookFieldNode
     {
-        get
-        {
-            return m_FieldName;
-        }
-        set
-        {
-            m_FieldName = value;
-        }
-    }
+        [SerializeField]
+        private string m_FieldName;
 
-    public MathBookField.Direction direction { get { return MathBookField.Direction.Output; } }
+        public event Action<IMathBookFieldNode> changed;
 
-    public MathBookField field
-    {
-        get
+        public string fieldName
         {
-            if (mathBook != null)
+            get
             {
-                return mathBook.inputOutputs.FindField(m_FieldName);
+                return m_FieldName;
             }
-            return null;
+            set
+            {
+                m_FieldName = value;
+            }
         }
-    }
 
-    public void NotifyChange()
-    {
-        if (changed != null)
+        public MathBookField.Direction direction { get { return MathBookField.Direction.Output; } }
+
+        public MathBookField field
         {
-            changed(this);
+            get
+            {
+                if (mathBook != null)
+                {
+                    return mathBook.inputOutputs.FindField(m_FieldName);
+                }
+                return null;
+            }
+        }
+
+        public void NotifyChange()
+        {
+            if (changed != null)
+            {
+                changed(this);
+            }
         }
     }
 }

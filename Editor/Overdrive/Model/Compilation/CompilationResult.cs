@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 
 namespace  UnityEditor.GraphToolsFoundation.Overdrive
@@ -22,7 +21,7 @@ namespace  UnityEditor.GraphToolsFoundation.Overdrive
     public class CompilerError
     {
         public string description;
-        public IGTFNodeModel sourceNode;
+        public INodeModel sourceNode;
         public GUID sourceNodeGuid;
         public CompilerQuickFix quickFix;
         public bool isWarning;
@@ -42,17 +41,17 @@ namespace  UnityEditor.GraphToolsFoundation.Overdrive
         public CompilationStatus status => errors.Any(e => e.isWarning == false) ?
         CompilationStatus.Failed : CompilationStatus.Succeeded;
 
-        public void AddError(string description, IGTFNodeModel node = null, CompilerQuickFix quickFix = null)
+        public void AddError(string description, INodeModel node = null, CompilerQuickFix quickFix = null)
         {
             AddError(description, node,  false, quickFix);
         }
 
-        public void AddWarning(string description, IGTFNodeModel node = null, CompilerQuickFix quickFix = null)
+        public void AddWarning(string description, INodeModel node = null, CompilerQuickFix quickFix = null)
         {
             AddError(description, node, true, quickFix);
         }
 
-        void AddError(string desc, IGTFNodeModel node, bool isWarning, CompilerQuickFix quickFix)
+        void AddError(string desc, INodeModel node, bool isWarning, CompilerQuickFix quickFix)
         {
             errors.Add(new CompilerError { description = desc, sourceNode = node, sourceNodeGuid = node.Guid, isWarning = isWarning, quickFix = quickFix });
         }

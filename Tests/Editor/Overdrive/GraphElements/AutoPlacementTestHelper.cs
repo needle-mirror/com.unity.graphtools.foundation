@@ -1,23 +1,18 @@
-using System;
 using System.Collections;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-using UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements.Utilities;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Node = UnityEditor.GraphToolsFoundation.Overdrive.GraphElements.Node;
 
-namespace GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    public class AutoPlacementTestHelper : GraphViewTester
+    class AutoPlacementTestHelper : GraphViewTester
     {
-        protected BasicNodeModel FirstNodeModel { get; set; }
-        protected BasicNodeModel SecondNodeModel { get; set; }
-        protected BasicNodeModel ThirdNodeModel { get; set; }
-        protected BasicNodeModel FourthNodeModel { get; set; }
-        protected BasicPlacematModel PlacematModel { get; private set; }
-        protected BasicStickyNoteModel StickyNoteModel { get; private set; }
+        protected IInOutPortsNode FirstNodeModel { get; set; }
+        protected IInOutPortsNode SecondNodeModel { get; set; }
+        protected IInOutPortsNode ThirdNodeModel { get; set; }
+        protected IInOutPortsNode FourthNodeModel { get; set; }
+        protected IPlacematModel PlacematModel { get; private set; }
+        protected IStickyNoteModel StickyNoteModel { get; private set; }
 
         protected Node m_FirstNode;
         protected Node m_SecondNode;
@@ -45,27 +40,27 @@ namespace GraphElements
 
         protected IEnumerator CreateConnectedNodes(Vector2 firstNodePos, Vector2 secondNodePos, Vector2 thirdNodePos, Vector2 fourthNodePos, bool isVerticalPort)
         {
-            FirstNodeModel = CreateNode("Node1", firstNodePos);
-            SecondNodeModel = CreateNode("Node2", secondNodePos);
-            ThirdNodeModel = CreateNode("Node3", thirdNodePos);
-            FourthNodeModel = CreateNode("Node4", fourthNodePos);
+            FirstNodeModel = CreateNode("Node1", firstNodePos, 0, 0, 0, 1);
+            SecondNodeModel = CreateNode("Node2", secondNodePos, 0, 0, 0, 1);
+            ThirdNodeModel = CreateNode("Node3", thirdNodePos, 0, 0, 1, 1);
+            FourthNodeModel = CreateNode("Node4", fourthNodePos, 0, 0, 1);
 
             graphView.RebuildUI(GraphModel, Store);
             yield return null;
 
             Orientation orientation = isVerticalPort ? Orientation.Vertical : Orientation.Horizontal;
 
-            BasicPortModel outputPortFirstNode = FirstNodeModel.AddPort(orientation, Direction.Output, PortCapacity.Single, typeof(float));
-            BasicPortModel outputPortSecondNode = SecondNodeModel.AddPort(orientation, Direction.Output, PortCapacity.Single, typeof(float));
+            IPortModel outputPortFirstNode = FirstNodeModel.OutputsByDisplayOrder[0];
+            IPortModel outputPortSecondNode = SecondNodeModel.OutputsByDisplayOrder[0];
             Assert.IsNotNull(outputPortFirstNode);
             Assert.IsNotNull(outputPortSecondNode);
 
-            BasicPortModel intputPortThirdNode = ThirdNodeModel.AddPort(orientation, Direction.Input, PortCapacity.Multi, typeof(float));
-            BasicPortModel outputPortThirdNode = ThirdNodeModel.AddPort(orientation, Direction.Output, PortCapacity.Single, typeof(float));
+            IPortModel intputPortThirdNode = ThirdNodeModel.InputsByDisplayOrder[0];
+            IPortModel outputPortThirdNode = ThirdNodeModel.OutputsByDisplayOrder[0];
             Assert.IsNotNull(intputPortThirdNode);
             Assert.IsNotNull(outputPortThirdNode);
 
-            BasicPortModel inputPortFourthNode = FourthNodeModel.AddPort(orientation, Direction.Input, PortCapacity.Single, typeof(float));
+            IPortModel inputPortFourthNode = FourthNodeModel.InputsByDisplayOrder[0];
             Assert.IsNotNull(inputPortFourthNode);
 
             graphView.RebuildUI(GraphModel, Store);

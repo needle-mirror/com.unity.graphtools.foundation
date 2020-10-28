@@ -1,0 +1,76 @@
+#vseMenu #errorIconLabel, #vseMenu #previousErrorButton {
+    border-left-width: 1px;
+}
+
+#vseMenu #newGraphButton .icon {
+    background-image: resource("Images/CreateNew");
+}
+
+#vseMenu #saveAllButton .icon {
+    background-image: resource("SaveActive");
+}
+
+#vseMenu #buildAllButton .icon {
+    background-image: resource("Images/BuildAll");
+    width: 14px;
+    height: 12px;
+}
+
+#vseMenu #refreshButton .icon {
+    background-image: resource("Images/Refresh");
+}
+
+#vseMenu #enableTracingButton {
+    width: 100px;
+}
+#vseMenu #enableTracingButton .icon {
+    background-image: resource("Animation.Record");
+    width: 16px;
+    height: 16px;
+    left:4px;
+}
+
+#vseMenu #enableTracingButton > .icon > .unity-label {
+    flex: 1;
+    margin-left: 16px;
+}
+
+#vseMenu #optionsButton .icon {
+    background-image: resource("Images/Options");
+    width: 15px;
+    height: 14px;
+}
+
+#vseMenu #showMiniMapButton .icon {
+    background-image: resource("Images/MiniMap");
+    width: 14px;
+    height: 12px;
+}
+
+#vseMenu #showBlackboardButton .icon {
+    background-image: resource("Images/Blackboard");
+    width: 14px;
+    height: 12px;
+}
+
+/* breadcrumb */
+
+#vseMenu #breadcrumbButton .popupIcon {
+    background-image: resource("IN pulldown");
+    width: 8px;
+    height: 13px;
+}
+
+#vseMenu #breadcrumbButton .icon {
+    background-image: resource("Images/ScriptSelector");
+    width: 14px;
+    height: 12px;
+}
+
+#vseMenu #breadcrumbButton {
+    flex-direction: row;
+    -unity-slice-left: 1;
+    -unity-slice-right: 1;
+    -unity-slice-top: 1;
+    -unity-slice-bottom: 1;
+}

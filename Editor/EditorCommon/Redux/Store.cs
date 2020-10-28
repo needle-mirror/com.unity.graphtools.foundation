@@ -103,7 +103,6 @@ namespace UnityEditor.EditorCommon.Redux
 
                 PreDispatchAction(action);
 
-
                 if (!m_Reducers.TryGetValue(action.GetType(), out var o))
                 {
                     Debug.LogError($"No reducer for action type {action.GetType()}");

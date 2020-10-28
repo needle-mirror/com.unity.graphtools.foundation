@@ -1,5 +1,3 @@
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     /// <summary>
@@ -9,15 +7,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     public struct TracingStep
     {
         public TracingStepType Type;
-        public IGTFNodeModel NodeModel;
-        public IGTFPortModel PortModel;
+        public INodeModel NodeModel;
+        public IPortModel PortModel;
 
         public byte Progress;
 
         public string ErrorMessage;
         public string ValueString;
 
-        public static TracingStep ExecutedNode(IGTFNodeModel nodeModel1, byte progress) =>
+        public static TracingStep ExecutedNode(INodeModel nodeModel1, byte progress) =>
             new TracingStep
         {
             Type = TracingStepType.ExecutedNode,
@@ -25,7 +23,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             Progress = progress,
         };
 
-        public static TracingStep TriggeredPort(IGTFPortModel portModel) =>
+        public static TracingStep TriggeredPort(IPortModel portModel) =>
             new TracingStep
         {
             Type = TracingStepType.TriggeredPort,
@@ -33,7 +31,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             PortModel = portModel,
         };
 
-        public static TracingStep WrittenValue(IGTFPortModel portModel, string valueString) =>
+        public static TracingStep WrittenValue(IPortModel portModel, string valueString) =>
             new TracingStep
         {
             Type = TracingStepType.WrittenValue,
@@ -42,7 +40,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             ValueString = valueString,
         };
 
-        public static TracingStep ReadValue(IGTFPortModel portModel, string valueString) =>
+        public static TracingStep ReadValue(IPortModel portModel, string valueString) =>
             new TracingStep
         {
             Type = TracingStepType.ReadValue,
@@ -51,7 +49,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             ValueString = valueString,
         };
 
-        public static TracingStep Error(IGTFNodeModel nodeModel, string error) =>
+        public static TracingStep Error(INodeModel nodeModel, string error) =>
             new TracingStep
         {
             Type = TracingStepType.Error,

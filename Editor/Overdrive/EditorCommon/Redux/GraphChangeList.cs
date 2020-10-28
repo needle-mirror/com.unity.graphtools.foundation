@@ -1,15 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class GraphChangeList
     {
-        public List<IGTFEdgeModel> DeletedEdges { get; set; } = new List<IGTFEdgeModel>();
-        public List<IGTFGraphElementModel> ChangedElements { get; } = new List<IGTFGraphElementModel>();
-        public List<IGTFGraphElementModel> ElementsToAutoAlign { get; } = new List<IGTFGraphElementModel>();
+        public List<IEdgeModel> DeletedEdges { get; set; } = new List<IEdgeModel>();
+        public List<IGraphElementModel> ChangedElements { get; } = new List<IGraphElementModel>();
+        public List<IGraphElementModel> ElementsToAutoAlign { get; } = new List<IGraphElementModel>();
         public int DeletedElements { get; set; }
         public bool BlackBoardChanged { get; set; }
         public bool RequiresRebuild { get; set; }

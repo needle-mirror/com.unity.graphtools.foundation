@@ -2,11 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.SmartSearch;
 using UnityEngine;
 
 // ReSharper disable AccessToStaticMemberViaDerivedType
@@ -32,12 +27,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                 () =>
                 {
                     Assert.That(GetNodeCount(), Is.EqualTo(0));
-                    return new CreateNodeFromSearcherAction(new Vector2(100, 200), item, null);
+                    return new CreateNodeFromSearcherAction(new Vector2(100, 200), item,
+                        new[] { new GUID("0123456789abcdef0123456789abcdef") });
                 },
                 () =>
                 {
                     Assert.That(GetNodeCount(), Is.EqualTo(1));
                     Assert.That(GraphModel.NodeModels.First(), Is.TypeOf<Type0FakeNodeModel>());
+                    Assert.AreEqual("0123456789abcdef0123456789abcdef",
+                        GraphModel.NodeModels.First().Guid.ToString());
                     Assert.That(GraphModel.NodeModels.First().Position,
                         Is.EqualTo(new Vector2(100, 200)));
                 }
@@ -60,7 +58,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                     info.Delta = Vector2.one;
 
                     var editorDataModel = m_Store.GetState().EditorDataModel;
-                    VseGraphView.CopyPasteData copyPasteData = VseGraphView.GatherCopiedElementsData(new List<IGTFGraphElementModel> { nodeModel });
+                    GtfoGraphView.CopyPasteData copyPasteData = GtfoGraphView.GatherCopiedElementsData(new List<IGraphElementModel> { nodeModel });
 
                     return new PasteSerializedDataAction(GraphModel, info, editorDataModel, copyPasteData);
                 },
@@ -80,7 +78,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                 {
                     Assert.That(GetNodeCount(), Is.EqualTo(1));
                     Assert.That(GetNode(0), Is.TypeOf<Type0FakeNodeModel>());
-                    return new DeleteElementsAction(GetNode(0));
+                    return new DeleteElementsAction(new[] { GetNode(0) });
                 },
                 () =>
                 {
@@ -100,7 +98,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                 {
                     Assert.That(GetNodeCount(), Is.EqualTo(3));
                     Assert.That(GetNode(0), Is.TypeOf<Type0FakeNodeModel>());
-                    return new DeleteElementsAction(GetNode(0));
+                    return new DeleteElementsAction(new[] { GetNode(0) });
                 },
                 () =>
                 {
@@ -112,7 +110,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                 {
                     Assert.That(GetNodeCount(), Is.EqualTo(2));
                     Assert.That(GetNode(0), Is.TypeOf<Type0FakeNodeModel>());
-                    return new DeleteElementsAction(GetNode(0));
+                    return new DeleteElementsAction(new[] { GetNode(0) });
                 },
                 () =>
                 {
@@ -124,7 +122,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                 {
                     Assert.That(GetNodeCount(), Is.EqualTo(1));
                     Assert.That(GetNode(0), Is.TypeOf<Type0FakeNodeModel>());
-                    return new DeleteElementsAction(GetNode(0));
+                    return new DeleteElementsAction(new[] { GetNode(0) });
                 },
                 () =>
                 {
@@ -144,7 +142,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                 {
                     Assert.That(GetNodeCount(), Is.EqualTo(3));
                     Assert.That(GetNode(0), Is.TypeOf<Type0FakeNodeModel>());
-                    return new DeleteElementsAction(GetNode(0), GetNode(1), GetNode(2));
+                    return new DeleteElementsAction(new[] { GetNode(0), GetNode(1), GetNode(2) });
                 },
                 () =>
                 {
@@ -207,9 +205,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
             var constantA = GraphModel.CreateConstantNode("constantA", typeof(int).GenerateTypeHandle(), Vector2.zero);
             var binary0 = GraphModel.CreateNode<Type0FakeNodeModel>("Node1", Vector2.zero);
             var binary1 = GraphModel.CreateNode<Type0FakeNodeModel>("Node2", Vector2.zero);
-            IGTFPortModel outputPort = constantA.OutputPort;
+            IPortModel outputPort = constantA.OutputPort;
             GraphModel.CreateEdge(binary0.Input0, outputPort);
-            IGTFPortModel outputPort1 = binary0.Output0;
+            IPortModel outputPort1 = binary0.Output0;
             GraphModel.CreateEdge(binary1.Input0, outputPort1);
 
             TestPrereqActionPostreq(mode,
@@ -222,7 +220,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                     Assert.That(GetEdgeCount(), Is.EqualTo(2));
                     Assert.That(nodeToDeleteAndBypass.Input0, Is.ConnectedTo(constantA.OutputPort));
                     Assert.That(binary1.Input0, Is.ConnectedTo(nodeToDeleteAndBypass.Output0));
-                    return new RemoveNodesAction(new IInOutPortsNode[] {nodeToDeleteAndBypass}, new IGTFNodeModel[] {nodeToDeleteAndBypass});
+                    return new BypassNodesAction(new IInOutPortsNode[] {nodeToDeleteAndBypass}, new INodeModel[] {nodeToDeleteAndBypass});
                 },
                 () =>
                 {
@@ -240,7 +238,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
             }
         }
 
-        T Get<T>(T prev) where T : IGTFNodeModel
+        T Get<T>(T prev) where T : INodeModel
         {
             return (T)GraphModel.NodesByGuid[prev.Guid];
         }

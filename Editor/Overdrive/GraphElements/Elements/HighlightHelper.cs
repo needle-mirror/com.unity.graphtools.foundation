@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
@@ -19,7 +17,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         }
 
         public static void ClearGraphElementsHighlight(this GraphView graphView,
-            Func<IGTFGraphElementModel, bool> predicate)
+            Func<IGraphElementModel, bool> predicate)
         {
             IEnumerable<IHighlightable> elements = graphView.Highlightables;
 

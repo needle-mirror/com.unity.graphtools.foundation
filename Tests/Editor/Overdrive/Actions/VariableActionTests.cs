@@ -1,14 +1,8 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
 using UnityEngine;
-using IRenamable = UnityEditor.GraphToolsFoundation.Overdrive.Model.IRenamable;
-using Object = UnityEngine.Object;
 
 // ReSharper disable AccessToStaticMemberViaDerivedType
 
@@ -80,69 +74,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
         }
 
         [Test]
-        public void Test_DuplicateGraphVariableDeclarationsAction([Values] TestingMode mode)
-        {
-            var declaration0 = GraphModel.CreateGraphVariableDeclaration("decl0", typeof(int).GenerateTypeHandle(), ModifierFlags.None, true);
-            var declaration1 = GraphModel.CreateGraphVariableDeclaration("decl1", typeof(int).GenerateTypeHandle(), ModifierFlags.None, true);
-
-            TestPrereqActionPostreq(mode,
-                () =>
-                {
-                    Assert.That(GetNodeCount(), Is.EqualTo(0));
-                    Assert.That(GetEdgeCount(), Is.EqualTo(0));
-                    Assert.That(GetVariableDeclarationCount(), Is.EqualTo(2));
-                    return new DuplicateGraphVariableDeclarationsAction(new List<IGTFVariableDeclarationModel> { declaration0, declaration1 });
-                },
-                () =>
-                {
-                    Assert.That(GetNodeCount(), Is.EqualTo(0));
-                    Assert.That(GetEdgeCount(), Is.EqualTo(0));
-                    Assert.That(GetVariableDeclarationCount(), Is.EqualTo(4));
-                });
-        }
-
-        [Test]
-        public void Test_CreateConstantNodeAction([Values] TestingMode mode)
-        {
-            Tuple<Type, Type>[] constants =
-            {
-                new Tuple<Type, Type>(typeof(bool),       typeof(BooleanConstant)),
-                new Tuple<Type, Type>(typeof(Color),      typeof(ColorConstant)),
-                new Tuple<Type, Type>(typeof(int),        typeof(IntConstant)),
-                new Tuple<Type, Type>(typeof(float),      typeof(FloatConstant)),
-                new Tuple<Type, Type>(typeof(double),     typeof(DoubleConstant)),
-                new Tuple<Type, Type>(typeof(InputName),  typeof(InputConstant)),
-                new Tuple<Type, Type>(typeof(Quaternion), typeof(QuaternionConstant)),
-                new Tuple<Type, Type>(typeof(string),     typeof(StringConstant)),
-                new Tuple<Type, Type>(typeof(Vector2),    typeof(Vector2Constant)),
-                new Tuple<Type, Type>(typeof(Vector3),    typeof(Vector3Constant)),
-                new Tuple<Type, Type>(typeof(Vector4),    typeof(Vector4Constant)),
-            };
-
-            for (var i = 0; i < constants.Length; i++)
-            {
-                var iCopy = i;
-                TestPrereqActionPostreq(mode,
-                    () =>
-                    {
-                        var constant = constants[iCopy];
-                        Assert.That(GetNodeCount(), Is.EqualTo(iCopy));
-                        Assert.That(GetEdgeCount(), Is.EqualTo(0));
-                        return new CreateConstantNodeAction("toto", constant.Item1.GenerateTypeHandle(), Vector2.zero);
-                    },
-                    () =>
-                    {
-                        var constant = constants[iCopy];
-                        Assert.That(GetNodeCount(), Is.EqualTo(iCopy + 1));
-                        Assert.That(GetEdgeCount(), Is.EqualTo(0));
-                        Assert.That(GetNode(iCopy), Is.TypeOf<ConstantNodeModel>());
-                        Assert.That(((ConstantNodeModel)GetNode(iCopy)).Value, Is.TypeOf(constant.Item2));
-                        Assert.That(((ConstantNodeModel)GetNode(iCopy)).Type, Is.EqualTo(constant.Item1));
-                    });
-            }
-        }
-
-        [Test]
         public void Test_CreateVariableNodeAction([Values] TestingMode mode)
         {
             var declaration = GraphModel.CreateGraphVariableDeclaration("decl0", typeof(int).GenerateTypeHandle(), ModifierFlags.None, true);
@@ -209,7 +140,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                     Assert.That(GetNodeCount(), Is.EqualTo(6), "GetNodeCount1");
                     Assert.That(GetEdgeCount(), Is.EqualTo(4));
                     Assert.That(GetVariableDeclarationCount(), Is.EqualTo(2), "GetVariableDeclarationCount");
-                    return new DeleteElementsAction(declaration0);
+                    return new DeleteElementsAction(new[] { declaration0 });
                 },
                 () =>
                 {
@@ -226,7 +157,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                     Assert.That(GetNodeCount(), Is.EqualTo(4), "GetNodeCount3");
                     Assert.That(GetEdgeCount(), Is.EqualTo(2), "EdgeCount");
                     Assert.That(GetVariableDeclarationCount(), Is.EqualTo(1), "GetVariableDeclarationCount");
-                    return new DeleteElementsAction(declaration1);
+                    return new DeleteElementsAction(new[] { declaration1 });
                 },
                 () =>
                 {
@@ -297,7 +228,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
             var declaration0 = GraphModel.CreateGraphVariableDeclaration("decl0", typeof(int).GenerateTypeHandle(), ModifierFlags.None, true);
             var node0 = GraphModel.CreateNode<Type0FakeNodeModel>("Node0", Vector2.zero);
             var node1 = GraphModel.CreateVariableNode(declaration0, Vector2.zero);
-            IGTFPortModel outputPort = node1.OutputPort;
+            IPortModel outputPort = node1.OutputPort;
             GraphModel.CreateEdge(node0.Input0, outputPort);
 
             TestPrereqActionPostreq(mode,
@@ -330,13 +261,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
         {
             var binary = GraphModel.CreateNode<Type0FakeNodeModel>("Node0", Vector2.zero);
             var constant = GraphModel.CreateConstantNode("const0", typeof(int).GenerateTypeHandle(), Vector2.zero);
-            IGTFPortModel outputPort = constant.OutputPort;
+            IPortModel outputPort = constant.OutputPort;
             GraphModel.CreateEdge(binary.Input0, outputPort);
 
             TestPrereqActionPostreq(mode,
                 () =>
                 {
-                    var c = GraphModel.NodeModels.OfType<IGTFConstantNodeModel>().First();
+                    var c = GraphModel.NodeModels.OfType<IConstantNodeModel>().First();
                     Assert.That(GetNodeCount(), Is.EqualTo(2));
                     Assert.That(GetEdgeCount(), Is.EqualTo(1));
                     Assert.That(GetVariableDeclarationCount(), Is.EqualTo(0));
@@ -357,7 +288,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                     var n0 = (Type0FakeNodeModel)GetNode(0);
                     var n1 = (VariableNodeModel)GetNode(1);
                     Assert.That(n0.Input0, Is.ConnectedTo(n1.OutputPort));
-                    Assert.That(n1.DataType, Is.EqualTo(typeof(int).GenerateTypeHandle()));
+                    Assert.That(n1.GetDataType(), Is.EqualTo(typeof(int).GenerateTypeHandle()));
                 });
         }
 
@@ -369,13 +300,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
             var binary0 = GraphModel.CreateNode<Type0FakeNodeModel>("Node0", Vector2.zero);
             var binary1 = GraphModel.CreateNode<Type0FakeNodeModel>("Node1", Vector2.zero);
 
-            IGTFPortModel outputPort = variable.OutputPort;
+            IPortModel outputPort = variable.OutputPort;
             GraphModel.CreateEdge(binary0.Input0, outputPort);
-            IGTFPortModel outputPort1 = variable.OutputPort;
+            IPortModel outputPort1 = variable.OutputPort;
             GraphModel.CreateEdge(binary0.Input1, outputPort1);
-            IGTFPortModel outputPort2 = variable.OutputPort;
+            IPortModel outputPort2 = variable.OutputPort;
             GraphModel.CreateEdge(binary1.Input0, outputPort2);
-            IGTFPortModel outputPort3 = variable.OutputPort;
+            IPortModel outputPort3 = variable.OutputPort;
             GraphModel.CreateEdge(binary1.Input1, outputPort3);
 
             TestPrereqActionPostreq(mode,
@@ -392,7 +323,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                     Assert.That(variable.OutputPort, Is.ConnectedTo(binary0.Input1));
                     Assert.That(variable.OutputPort, Is.ConnectedTo(binary0.Input0));
                     Assert.That(variable.OutputPort, Is.ConnectedTo(binary1.Input1));
-                    return new ItemizeVariableNodeAction(variable);
+                    return new ItemizeNodeAction(variable);
                 },
                 () =>
                 {
@@ -417,13 +348,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
             var binary0 = GraphModel.CreateNode<Type0FakeNodeModel>("Node0", Vector2.zero);
             var binary1 = GraphModel.CreateNode<Type0FakeNodeModel>("Node1", Vector2.zero);
 
-            IGTFPortModel outputPort = constant.OutputPort;
+            IPortModel outputPort = constant.OutputPort;
             GraphModel.CreateEdge(binary0.Input0, outputPort);
-            IGTFPortModel outputPort1 = constant.OutputPort;
+            IPortModel outputPort1 = constant.OutputPort;
             GraphModel.CreateEdge(binary0.Input1, outputPort1);
-            IGTFPortModel outputPort2 = constant.OutputPort;
+            IPortModel outputPort2 = constant.OutputPort;
             GraphModel.CreateEdge(binary1.Input0, outputPort2);
-            IGTFPortModel outputPort3 = constant.OutputPort;
+            IPortModel outputPort3 = constant.OutputPort;
             GraphModel.CreateEdge(binary1.Input1, outputPort3);
 
             TestPrereqActionPostreq(mode,
@@ -440,7 +371,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                     Assert.That(constant.OutputPort, Is.ConnectedTo(binary0.Input1));
                     Assert.That(constant.OutputPort, Is.ConnectedTo(binary0.Input0));
                     Assert.That(constant.OutputPort, Is.ConnectedTo(binary1.Input1));
-                    return new ItemizeConstantNodeAction(constant);
+                    return new ItemizeNodeAction(constant);
                 },
                 () =>
                 {
@@ -530,7 +461,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                     Assert.That(GetNodeCount(), Is.EqualTo(2));
                     Assert.That(GetEdgeCount(), Is.EqualTo(0));
                     Assert.That(declaration.DataType, Is.EqualTo(typeof(int).GenerateTypeHandle()));
-                    return new UpdateTypeAction(declaration, typeof(float).GenerateTypeHandle());
+                    return new ChangeVariableTypeAction(declaration, typeof(float).GenerateTypeHandle());
                 },
                 () =>
                 {
@@ -564,7 +495,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                     foreach (var variableNodeModel in GraphModel.NodeModels.OfType<VariableNodeModel>())
                         Assert.That(variableNodeModel.OutputPort?.DataTypeHandle, Is.EqualTo(intType));
 
-                    return new UpdateTypeAction(declaration, floatType);
+                    return new ChangeVariableTypeAction(declaration, floatType);
                 },
                 () =>
                 {

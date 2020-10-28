@@ -1,18 +1,17 @@
 using System;
 using System.Collections.Generic;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     class UndoRedoTraversal : GraphTraversal
     {
-        protected override void VisitEdge(IGTFEdgeModel edgeModel)
+        protected override void VisitEdge(IEdgeModel edgeModel)
         {
             base.VisitEdge(edgeModel);
             edgeModel.ResetPorts();
         }
 
-        protected override void VisitNode(IGTFNodeModel nodeModel, HashSet<IGTFNodeModel> visitedNodes)
+        protected override void VisitNode(INodeModel nodeModel, HashSet<INodeModel> visitedNodes)
         {
             nodeModel.DefineNode();
             base.VisitNode(nodeModel, visitedNodes);

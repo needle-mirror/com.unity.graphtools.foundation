@@ -3,34 +3,33 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using JetBrains.Annotations;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public static class GraphElementFactory
     {
-        static Dictionary<ValueTuple<GraphView, IGTFGraphElementModel>, IGraphElement> s_UIForModel = new Dictionary<ValueTuple<GraphView, IGTFGraphElementModel>, IGraphElement>();
+        static Dictionary<ValueTuple<GraphView, IGraphElementModel>, IGraphElement> s_UIForModel = new Dictionary<ValueTuple<GraphView, IGraphElementModel>, IGraphElement>();
 
         [CanBeNull]
-        public static T GetUI<T>(this IGTFGraphElementModel model, GraphView graphView) where T : class, IGraphElement
+        public static T GetUI<T>(this IGraphElementModel model, GraphView graphView) where T : class, IGraphElement
         {
-            return s_UIForModel.TryGetValue(new ValueTuple<GraphView, IGTFGraphElementModel>(graphView, model), out var ui) ? ui as T : null;
+            return s_UIForModel.TryGetValue(new ValueTuple<GraphView, IGraphElementModel>(graphView, model), out var ui) ? ui as T : null;
         }
 
         [CanBeNull]
-        internal static GraphElement GetUI(this IGTFGraphElementModel model, GraphView graphView)
+        internal static GraphElement GetUI(this IGraphElementModel model, GraphView graphView)
         {
-            return s_UIForModel.TryGetValue(new ValueTuple<GraphView, IGTFGraphElementModel>(graphView, model), out var ui) ? ui as GraphElement : null;
+            return s_UIForModel.TryGetValue(new ValueTuple<GraphView, IGraphElementModel>(graphView, model), out var ui) ? ui as GraphElement : null;
         }
 
         [CanBeNull]
-        public static T CreateUI<T>(this IGTFGraphElementModel model, GraphView graphView, Store store) where T : class, IGraphElement
+        public static T CreateUI<T>(this IGraphElementModel model, GraphView graphView, Store store) where T : class, IGraphElement
         {
             return CreateUI<T>(graphView, store, model);
         }
 
-        public static T CreateUI<T>(GraphView graphView, Store store, IGTFGraphElementModel model) where T : class, IGraphElement
+        public static T CreateUI<T>(GraphView graphView, Store store, IGraphElementModel model) where T : class, IGraphElement
         {
             if (model == null)
             {
@@ -57,7 +56,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
                 return null;
             }
 
-            s_UIForModel[new ValueTuple<GraphView, IGTFGraphElementModel>(graphView, model)] = newElem;
+            s_UIForModel[new ValueTuple<GraphView, IGraphElementModel>(graphView, model)] = newElem;
 
             return newElem;
         }

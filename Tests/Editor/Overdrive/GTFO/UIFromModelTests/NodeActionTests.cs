@@ -1,7 +1,6 @@
 using System.Collections;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.Helpers;
+using UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
 
@@ -17,8 +16,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         public new void SetUp()
         {
             m_GraphModel = new GraphModel();
-            m_Store = new Store(new Helpers.TestState(m_GraphModel), StoreHelper.RegisterReducers);
-            m_GraphView = new TestGraphView(m_Store);
+            m_Store = new Store(new TestState(m_GraphModel));
+            StoreHelper.RegisterDefaultReducers(m_Store);
+            m_GraphView = new TestGraphView(m_Window, m_Store);
 
             m_GraphView.name = "theView";
             m_GraphView.viewDataKey = "theView";
@@ -30,7 +30,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         [UnityTest]
         public IEnumerator CollapsibleNodeCollapsesOnValueChange()
         {
-            var nodeModel = new IONodeModel();
+            var nodeModel = m_GraphModel.CreateNode<IONodeModel>();
             var node = new CollapsibleInOutNode();
             node.SetupBuildAndUpdate(nodeModel, m_Store, m_GraphView);
             m_GraphView.AddElement(node);
@@ -50,7 +50,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         [UnityTest]
         public IEnumerator CollapsibleNodeCollapsesOnClick()
         {
-            var nodeModel = new IONodeModel();
+            var nodeModel = m_GraphModel.CreateNode<IONodeModel>();
             var node = new CollapsibleInOutNode();
             node.SetupBuildAndUpdate(nodeModel, m_Store, m_GraphView);
             m_GraphView.AddElement(node);
@@ -74,7 +74,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         {
             const string newName = "New Name";
 
-            var nodeModel = new NodeModel { Title = "Node" };
+            var nodeModel = m_GraphModel.CreateNode<NodeModel>("Node");
             var node = new Node();
             node.SetupBuildAndUpdate(nodeModel, m_Store, m_GraphView);
             m_GraphView.AddElement(node);

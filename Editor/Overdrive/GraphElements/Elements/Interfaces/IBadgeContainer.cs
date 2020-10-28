@@ -1,5 +1,4 @@
 using System;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive

@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.GraphElements
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     abstract class SnapStrategy
     {

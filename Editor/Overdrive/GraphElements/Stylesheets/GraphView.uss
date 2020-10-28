@@ -31,7 +31,14 @@ Layer {
     flex-direction: row;
 }
 
-.graphView {
+.ge-graph-view {
+    flex: 1 1 auto;
+    flex-direction: column;
+    height: 100%;
+    min-height: 300px;
+    min-width: 300px;
+    overflow: hidden;
+
     --dragndrop-highlight-color: rgb(37,89,145);
     --dragndrop-highlight-background-color: rgba(37,89,145, 0.33);
     --dragndrop-denied-color: rgb(145, 29, 19);
@@ -54,4 +61,27 @@ Layer {
 .resizer.resizeHorizontalDir {
     cursor: resize-horizontal;
     color: #ff0000;
+}
+
+#disabled-overlay {
+    display: none;
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+    top: 0px;
+    position: absolute;
+    border-radius: 8px;
+
+}
+
+.ge-graph-view #graph-view-container {
+    flex: 1 1 auto;
+}
+
+.ge-graph-view #contentViewContainer {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
 }

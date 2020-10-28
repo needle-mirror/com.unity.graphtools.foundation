@@ -1,5 +1,4 @@
 using System;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
 using UnityEngine;
 using UnityEngine.Scripting.APIUpdating;
 
@@ -7,7 +6,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 {
     [Serializable]
     [MovedFrom("UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting")]
-    public sealed class ConstantNodeModel : NodeModel, IGTFConstantNodeModel
+    public sealed class ConstantNodeModel : NodeModel, IConstantNodeModel
     {
         [SerializeField]
         bool m_IsLocked;
@@ -17,9 +16,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
         public override string Title => string.Empty;
 
-        public IGTFPortModel OutputPort => NodeModelDefaultImplementations.GetOutputPort(this);
+        public IPortModel OutputPort => NodeModelDefaultImplementations.GetOutputPort(this);
 
-        public IGTFPortModel MainOutputPort => OutputPort;
+        public IPortModel MainOutputPort => OutputPort;
 
         public IConstant Value
         {

@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.Model
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     // ReSharper disable once InconsistentNaming
     public static class ICloneableExtensions
@@ -10,10 +10,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Model
         class Holder : ScriptableObject
         {
             [SerializeReference]
-            public IGTFGraphElementModel model;
+            public IGraphElementModel model;
         }
 
-        public static T Clone<T>(this T element) where T : IGTFGraphElementModel
+        public static T Clone<T>(this T element) where T : IGraphElementModel
         {
             if (element is ICloneable cloneable)
             {
@@ -32,7 +32,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Model
             return copy;
         }
 
-        public static T CloneUsingScriptableObjectInstantiate<T>(T element) where T : IGTFGraphElementModel
+        public static T CloneUsingScriptableObjectInstantiate<T>(T element) where T : IGraphElementModel
         {
             Holder h = ScriptableObject.CreateInstance<Holder>();
             h.model = element;

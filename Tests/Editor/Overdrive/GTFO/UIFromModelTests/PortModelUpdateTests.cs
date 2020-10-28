@@ -1,10 +1,7 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.GraphElements;
-using UnityEditor.GraphToolsFoundation.Overdrive.Model;
-using UnityEngine;
+using UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
@@ -14,8 +11,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         [Test]
         public void ChangingPortNameChangesPortLabel()
         {
-            var nodeModel = new IONodeModel();
-            nodeModel.CreatePorts(0, 1);
+            var nodeModel = new SingleOutputNodeModel();
+            nodeModel.DefineNode();
             var node = new CollapsibleInOutNode();
             node.SetupBuildAndUpdate(nodeModel, null, null);
 
@@ -37,8 +34,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         [Test]
         public void ChangingTooltipChangesUITooltip()
         {
-            var nodeModel = new IONodeModel();
-            nodeModel.CreatePorts(0, 1);
+            var nodeModel = new SingleOutputNodeModel();
+            nodeModel.DefineNode();
             var node = new CollapsibleInOutNode();
             node.SetupBuildAndUpdate(nodeModel, null, null);
 
@@ -50,7 +47,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             Assert.AreEqual("", port.tooltip);
 
             const string newTooltip = "New Tooltip";
-            (portModel as PortModel).ToolTip = newTooltip;
+            (portModel as PortModel).SetTooltip(newTooltip);
             node.UpdateFromModel();
 
             Assert.AreEqual(newTooltip, port.tooltip);
@@ -60,49 +57,51 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         {
             public bool FakeIsConnected { get; set; }
 
-            public override IEnumerable<IGTFEdgeModel> GetConnectedEdges()
+            public override IEnumerable<IEdgeModel> GetConnectedEdges()
             {
                 if (FakeIsConnected)
                 {
                     return new[] { new BasicModel.EdgeModel() };
                 }
-                return Enumerable.Empty<IGTFEdgeModel>();
+                return Enumerable.Empty<IEdgeModel>();
+            }
+
+            public FakePortModel(IGraphModel graphModel) : base(graphModel)
+            {
             }
         }
 
         class FakeIONodeModel : IONodeModel
         {
-            public new void CreatePorts(int inputPorts, int outputPorts)
+            protected override IPortModel CreatePort(Direction direction, string portName, PortType portType,
+                TypeHandle dataType, string portId, PortModelOptions options)
             {
-                m_InputPorts.Clear();
-                for (var i = 0; i < inputPorts; i++)
+                return new FakePortModel(GraphModel)
                 {
-                    m_InputPorts.Add(new FakePortModel
-                    {
-                        Direction = Direction.Input,
-                        NodeModel = this,
-                        GraphModel = GraphModel
-                    });
-                }
+                    Direction = direction,
+                    Title = portName,
+                    PortType = portType,
+                    DataTypeHandle = dataType,
+                    NodeModel = this
+                };
+            }
 
-                m_OutputPorts.Clear();
-                for (var i = 0; i < outputPorts; i++)
-                {
-                    m_OutputPorts.Add(new FakePortModel
-                    {
-                        Direction = Direction.Output,
-                        NodeModel = this,
-                        GraphModel = GraphModel
-                    });
-                }
+            protected override void OnDefineNode()
+            {
+                for (var i = 0; i < InputCount; i++)
+                    AddDataInputPort<FakePortModel>("In " + i, TypeHandle.Unknown);
+
+                for (var i = 0; i < OuputCount; i++)
+                    AddDataOutputPort<FakePortModel>("Out " + i, TypeHandle.Unknown);
             }
         }
 
         [Test]
         public void ConnectingPortUpdateClasses()
         {
-            var nodeModel = new FakeIONodeModel();
-            nodeModel.CreatePorts(1, 1);
+            var nodeModel = new FakeIONodeModel {InputCount = 1, OuputCount = 1};
+            nodeModel.DefineNode();
+
             var node = new CollapsibleInOutNode();
             node.SetupBuildAndUpdate(nodeModel, null, null);
 
