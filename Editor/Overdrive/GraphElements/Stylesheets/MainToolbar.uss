@@ -3,7 +3,7 @@
 }
 
 #vseMenu #newGraphButton .icon {
-    background-image: resource("Images/CreateNew");
+    background-image: url("Icons/MainToolbar/CreateNew.png");
 }
 
 #vseMenu #saveAllButton .icon {
@@ -11,13 +11,13 @@
 }
 
 #vseMenu #buildAllButton .icon {
-    background-image: resource("Images/BuildAll");
+    background-image: url("Icons/MainToolbar/BuildAll.png");
     width: 14px;
     height: 12px;
 }
 
 #vseMenu #refreshButton .icon {
-    background-image: resource("Images/Refresh");
+    background-image: url("Icons/MainToolbar/Refresh.png");
 }
 
 #vseMenu #enableTracingButton {
@@ -36,19 +36,19 @@
 }
 
 #vseMenu #optionsButton .icon {
-    background-image: resource("Images/Options");
+    background-image: url("Icons/MainToolbar/Options.png");
     width: 15px;
     height: 14px;
 }
 
 #vseMenu #showMiniMapButton .icon {
-    background-image: resource("Images/MiniMap");
+    background-image: url("Icons/MainToolbar/MiniMap.png");
     width: 14px;
     height: 12px;
 }
 
 #vseMenu #showBlackboardButton .icon {
-    background-image: resource("Images/Blackboard");
+    background-image: url("Icons/MainToolbar/Blackboard.png");
     width: 14px;
     height: 12px;
 }
@@ -62,7 +62,7 @@
 }
 
 #vseMenu #breadcrumbButton .icon {
-    background-image: resource("Images/ScriptSelector");
+    background-image: url("Icons/MainToolbar/ScriptSelector.png");
     width: 14px;
     height: 12px;
 }

@@ -7,26 +7,29 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class CreatePlacematAction : BaseAction
     {
-        public string Title;
         public Rect Position;
+        public string Title;
 
         public CreatePlacematAction()
         {
             UndoString = "Create Placemat";
         }
 
-        public CreatePlacematAction(string title, Rect position) : this()
+        public CreatePlacematAction(Rect position, string title = null) : this()
         {
-            Title = title;
             Position = position;
+            Title = title;
         }
 
-        public static void DefaultReducer(State previousState, CreatePlacematAction action)
+        public static void DefaultReducer(State state, CreatePlacematAction action)
         {
-            previousState.PushUndo(action);
+            state.PushUndo(action);
 
-            previousState.CurrentGraphModel.CreatePlacemat(action.Title, action.Position);
-            previousState.MarkForUpdate(UpdateFlags.GraphTopology);
+            var placematModel = state.GraphModel.CreatePlacemat(action.Position);
+            if (action.Title != null)
+                placematModel.Title = action.Title;
+
+            state.MarkNew(placematModel);
         }
     }
 
@@ -53,20 +56,20 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        public static void DefaultReducer(State previousState, ChangePlacematZOrdersAction action)
+        public static void DefaultReducer(State state, ChangePlacematZOrdersAction action)
         {
             if (!action.Models.Any())
                 return;
 
-            previousState.PushUndo(action);
+            state.PushUndo(action);
 
             for (var index = 0; index < action.Models.Count; index++)
             {
                 var placematModel = action.Models[index];
                 var zOrder = action.Value[index];
                 placematModel.ZOrder = zOrder;
-                previousState.MarkForUpdate(UpdateFlags.UpdateView, placematModel);
             }
+            state.MarkChanged(action.Models);
         }
     }
 
@@ -86,7 +89,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             ResizeFlags = resizeWhat;
         }
 
-        public static void DefaultReducer(State previousState, ChangePlacematLayoutAction action)
+        public static void DefaultReducer(State state, ChangePlacematLayoutAction action)
         {
             if (!action.Models.Any())
                 return;
@@ -94,7 +97,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (action.ResizeFlags == ResizeFlags.None)
                 return;
 
-            previousState.PushUndo(action);
+            state.PushUndo(action);
 
             foreach (var placematModel in action.Models)
             {
@@ -116,8 +119,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     newRect.height = action.Value.height;
                 }
                 placematModel.PositionAndSize = newRect;
-                previousState.MarkForUpdate(UpdateFlags.UpdateView, placematModel);
             }
+            state.MarkChanged(action.Models);
         }
     }
 
@@ -142,14 +145,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             UndoString = Collapse ? "Collapse Placemat" : "Expand Placemat";
         }
 
-        public static void DefaultReducer(State previousState, SetPlacematCollapsedAction action)
+        public static void DefaultReducer(State state, SetPlacematCollapsedAction action)
         {
-            previousState.PushUndo(action);
+            state.PushUndo(action);
 
             action.PlacematModel.Collapsed = action.Collapse;
             action.PlacematModel.HiddenElements = action.PlacematModel.Collapsed ? action.CollapsedElements : null;
 
-            previousState.MarkForUpdate(UpdateFlags.UpdateView, action.PlacematModel);
+            state.MarkChanged(action.PlacematModel);
         }
     }
 }

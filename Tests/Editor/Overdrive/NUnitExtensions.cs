@@ -137,7 +137,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
             }
 
             var portModels = m_ExpectedPort.GraphModel.GetConnections(actualPort).ToList();
-            var isConnected = portModels.Any(x => PortModel.Equivalent(x, m_ExpectedPort));
+            var isConnected = portModels.Any(x => x.Equivalent(m_ExpectedPort));
 
             if (!isConnected)
                 Description = $"Actual port [{actualPort}] is not connected to expected port [{m_ExpectedPort}].";

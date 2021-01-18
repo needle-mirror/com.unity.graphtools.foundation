@@ -20,18 +20,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                    value ? k_CollapseUndoStringPlural : k_ExpandUndoStringPlural,
                    models, value) {}
 
-        public static void DefaultReducer(State previousState, SetNodeCollapsedAction action)
+        public static void DefaultReducer(State state, SetNodeCollapsedAction action)
         {
             if (!action.Models.Any())
                 return;
 
-            previousState.PushUndo(action);
+            state.PushUndo(action);
 
             foreach (var model in action.Models.OfType<ICollapsible>())
             {
                 model.Collapsed = action.Value;
-                previousState.MarkForUpdate(UpdateFlags.UpdateView, model as IGraphElementModel);
             }
+
+            state.MarkChanged(action.Models.OfType<ICollapsible>().OfType<IGraphElementModel>());
         }
     }
 
@@ -51,49 +52,48 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             ElementName = name;
         }
 
-        public static void DefaultReducer(State previousState, RenameElementAction action)
+        public static void DefaultReducer(State state, RenameElementAction action)
         {
-            previousState.PushUndo(action);
+            state.PushUndo(action);
 
             action.RenamableModel.Rename(action.ElementName);
 
-            GraphChangeList graphChangeList = previousState.CurrentGraphModel.LastChanges;
-
-            var graphModel = previousState.CurrentGraphModel;
+            var graphModel = state.GraphModel;
 
             if (action.RenamableModel is IVariableDeclarationModel variableDeclarationModel)
             {
-                graphChangeList.BlackBoardChanged = true;
+                var references = graphModel.FindReferencesInGraph<IVariableNodeModel>(variableDeclarationModel);
 
-                // update usage names
-                graphChangeList.ChangedElements.AddRange(graphModel.FindReferencesInGraph<IVariableNodeModel>(variableDeclarationModel));
+                state.MarkChanged(references);
+                state.MarkChanged(variableDeclarationModel);
             }
             else if (action.RenamableModel is IVariableNodeModel variableModel)
             {
-                graphChangeList.BlackBoardChanged = true;
-
                 variableDeclarationModel = variableModel.VariableDeclarationModel;
-                graphChangeList.ChangedElements.Add(variableModel.VariableDeclarationModel);
+                var references = graphModel.FindReferencesInGraph<IVariableNodeModel>(variableDeclarationModel);
 
-                graphChangeList.ChangedElements.AddRange(graphModel.FindReferencesInGraph<IVariableNodeModel>(variableDeclarationModel));
+                state.MarkChanged(references);
+                state.MarkChanged(variableDeclarationModel);
             }
             else if (action.RenamableModel is IEdgePortalModel edgePortalModel)
             {
                 var declarationModel = edgePortalModel.DeclarationModel as IGraphElementModel;
-                graphChangeList.ChangedElements.Add(declarationModel);
-                graphChangeList.ChangedElements.AddRange(graphModel.FindReferencesInGraph<IEdgePortalModel>(edgePortalModel.DeclarationModel));
+                var references = graphModel.FindReferencesInGraph<IEdgePortalModel>(edgePortalModel.DeclarationModel);
+
+                state.MarkChanged(references);
+                state.MarkChanged(declarationModel);
             }
             else
-                graphChangeList.ChangedElements.Add(action.RenamableModel as IGraphElementModel);
-
-            previousState.MarkForUpdate(UpdateFlags.RequestCompilation | UpdateFlags.RequestRebuild);
+            {
+                state.MarkChanged(action.RenamableModel as IGraphElementModel);
+            }
         }
     }
 
     public class UpdateConstantNodeValueAction : BaseAction
     {
         public IConstant Constant;
-        public IConstantNodeModel NodeModel;
+        public IGraphElementModel OwnerModel;
         public object Value;
 
         public UpdateConstantNodeValueAction()
@@ -101,23 +101,22 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             UndoString = "Update Node Value";
         }
 
-        public UpdateConstantNodeValueAction(IConstant constant, object value, IConstantNodeModel owner) : this()
+        public UpdateConstantNodeValueAction(IConstant constant, object value, IGraphElementModel owner) : this()
         {
             Constant = constant;
             Value = value;
-            NodeModel = owner;
+            OwnerModel = owner;
         }
 
-        public static void DefaultReducer(State previousState, UpdateConstantNodeValueAction action)
+        public static void DefaultReducer(State state, UpdateConstantNodeValueAction action)
         {
-            previousState.PushUndo(action);
-
-            if (action.NodeModel == null || action.NodeModel.OutputPort.IsConnected())
-            {
-                previousState.MarkForUpdate(UpdateFlags.RequestCompilation);
-            }
+            state.PushUndo(action);
 
             action.Constant.ObjectValue = action.Value;
+            if (action.OwnerModel != null)
+            {
+                state.MarkChanged(action.OwnerModel);
+            }
         }
     }
 
@@ -137,16 +136,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             NewValue = newValue;
         }
 
-        public static void DefaultReducer(State previousState, UpdatePortConstantAction action)
+        public static void DefaultReducer(State state, UpdatePortConstantAction action)
         {
-            previousState.PushUndo(action);
-
-            previousState.MarkForUpdate(UpdateFlags.RequestCompilation);
+            state.PushUndo(action);
 
             if (action.PortModel.EmbeddedValue is IStringWrapperConstantModel stringWrapperConstantModel)
                 stringWrapperConstantModel.StringValue = (string)action.NewValue;
             else
                 action.PortModel.EmbeddedValue.ObjectValue = action.NewValue;
+
+            state.MarkChanged(action.PortModel);
         }
     }
 
@@ -161,20 +160,20 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public DisconnectNodeAction(params INodeModel[] nodeModels)
             : base(k_UndoStringSingular, k_UndoStringPlural, nodeModels) {}
 
-        public static void DefaultReducer(State previousState, DisconnectNodeAction action)
+        public static void DefaultReducer(State state, DisconnectNodeAction action)
         {
             if (!action.Models.Any())
                 return;
 
-            previousState.PushUndo(action);
+            state.PushUndo(action);
 
-            var graphModel = previousState.CurrentGraphModel;
+            var graphModel = state.GraphModel;
 
-            foreach (INodeModel nodeModel in action.Models)
+            foreach (var nodeModel in action.Models)
             {
-                var edgeModels = graphModel.GetEdgesConnections(nodeModel);
-
+                var edgeModels = graphModel.GetEdgesConnections(nodeModel).ToList();
                 graphModel.DeleteEdges(edgeModels);
+                state.MarkDeleted(edgeModels);
             }
         }
     }
@@ -195,18 +194,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             NodesToBypass = nodesToBypass;
         }
 
-        public static void DefaultReducer(State previousState, BypassNodesAction action)
+        public static void DefaultReducer(State state, BypassNodesAction action)
         {
-            previousState.PushUndo(action);
+            state.PushUndo(action);
 
-            var graphModel = previousState.CurrentGraphModel;
-            BypassNodes(graphModel, action.NodesToBypass);
-            graphModel.DeleteNodes(action.Models, DeleteConnections.False);
-        }
+            var graphModel = state.GraphModel;
 
-        static void BypassNodes(IGraphModel graphModel, IInOutPortsNode[] actionNodeModels)
-        {
-            foreach (var model in actionNodeModels)
+            foreach (var model in action.NodesToBypass)
             {
                 var inputEdgeModels = new List<IEdgeModel>();
                 foreach (var portModel in model.InputsByDisplayOrder)
@@ -229,8 +223,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 graphModel.DeleteEdges(inputEdgeModels);
                 graphModel.DeleteEdges(outputEdgeModels);
 
-                graphModel.CreateEdge(outputEdgeModels[0].ToPort, inputEdgeModels[0].FromPort);
+                var edge = graphModel.CreateEdge(outputEdgeModels[0].ToPort, inputEdgeModels[0].FromPort);
+
+                state.MarkDeleted(inputEdgeModels);
+                state.MarkDeleted(outputEdgeModels);
+                state.MarkNew(edge);
             }
+
+            var deletedModels = graphModel.DeleteNodes(action.Models, deleteConnections: false);
+            state.MarkDeleted(deletedModels);
         }
     }
 
@@ -245,19 +246,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public SetNodeEnabledStateAction(INodeModel[] nodeModel, ModelState state)
             : base(k_UndoStringSingular, k_UndoStringPlural, nodeModel, state) {}
 
-        public static void DefaultReducer(State previousState, SetNodeEnabledStateAction action)
+        public static void DefaultReducer(State state, SetNodeEnabledStateAction action)
         {
             if (!action.Models.Any())
                 return;
 
-            previousState.PushUndo(action);
+            state.PushUndo(action);
 
             foreach (var nodeModel in action.Models)
             {
                 nodeModel.State = action.Value;
             }
-
-            previousState.MarkForUpdate(UpdateFlags.GraphTopology);
+            state.MarkChanged(action.Models);
         }
     }
 
@@ -279,9 +279,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             NewValue = newValue;
         }
 
-        public static void DefaultReducer(State previousState, UpdateModelPropertyValueAction action)
+        public static void DefaultReducer(State state, UpdateModelPropertyValueAction action)
         {
-            previousState.PushUndo(action);
+            state.PushUndo(action);
 
             if (action.GraphElementModel is IPropertyVisitorNodeTarget target)
             {
@@ -292,7 +292,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             else
                 PropertyContainer.SetValue(ref action.GraphElementModel,  new PropertyPath(action.Path), action.NewValue);
 
-            previousState.MarkForUpdate(UpdateFlags.RequestCompilation, action.GraphElementModel);
+            if (action.GraphElementModel is INodeModel nodeModel)
+                nodeModel.DefineNode();
+
+            state.MarkChanged(action.GraphElementModel);
         }
     }
 }

@@ -19,9 +19,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         static string SerializeGraphElementsImplementation(IEnumerable<GraphElement> elements)
         {
             // A real implementation would serialize all necessary GraphElement data.
-            if (elements.Any())
+            var count = elements.Count();
+            if (count > 0)
             {
-                return elements.Count() + " serialized elements";
+                return count + " serialized elements";
             }
 
             return string.Empty;
@@ -75,7 +76,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator CopyWithoutSelectedElementsLeavesCopyBufferUntouched()
         {
-            graphView.RebuildUI(GraphModel, Store);
+            Store.State.RequestUIRebuild();
             yield return null;
 
             graphView.Clipboard = "Unknown data";
@@ -88,12 +89,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             yield return null;
 
             helpers.ExecuteCommand("Copy");
-            graphView.RebuildUI(GraphModel, Store);
             yield return null;
 
             Assert.AreEqual("Unknown data", graphView.Clipboard);
-
-            yield return null;
         }
 
         //[Ignore("sometimes the graphView.clipboard is still Unknown data after the Copy execute")]
@@ -127,14 +125,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             yield return null;
 
             Assert.AreEqual(k_DefaultNodeCount + m_SelectedNodeCount, graphView.GraphElements.ToList().Count);
-
-            yield return null;
         }
 
         [UnityTest]
         public IEnumerator SelectedElementsCanBeCut()
         {
-            graphView.RebuildUI(GraphModel, Store);
+            Store.State.RequestUIRebuild();
             yield return null;
 
             graphView.Clipboard = "Unknown data";
@@ -148,13 +144,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             yield return null;
 
             helpers.ExecuteCommand("Cut");
-            graphView.RebuildUI(GraphModel, Store);
             yield return null;
 
             Assert.AreNotEqual("Unknown data", graphView.Clipboard);
             Assert.AreEqual(k_DefaultNodeCount - m_SelectedNodeCount, graphView.GraphElements.ToList().Count);
-
-            yield return null;
         }
 
         [UnityTest]
@@ -180,14 +173,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             // Duplicate does not change the copy buffer.
             Assert.AreEqual("Unknown data", graphView.Clipboard);
             Assert.AreEqual(k_DefaultNodeCount + m_SelectedNodeCount, graphView.GraphElements.ToList().Count);
-
-            yield return null;
         }
 
         [UnityTest]
         public IEnumerator SelectedElementsCanBeDeleted()
         {
-            graphView.RebuildUI(GraphModel, Store);
+            Store.State.RequestUIRebuild();
             yield return null;
 
             SelectThreeElements();
@@ -199,13 +190,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             yield return null;
 
             helpers.ExecuteCommand("Delete");
-            graphView.RebuildUI(GraphModel, Store);
             yield return null;
 
             List<GraphElement> list = graphView.GraphElements.ToList();
             Assert.AreEqual(k_DefaultNodeCount - m_SelectedNodeCount, list.Count);
-
-            yield return null;
         }
     }
 }

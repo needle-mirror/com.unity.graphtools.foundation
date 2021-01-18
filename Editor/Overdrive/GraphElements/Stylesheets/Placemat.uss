@@ -14,7 +14,7 @@
     overflow: visible;
 }
 
-.ge-placemat.collapsed {
+.ge-placemat--collapsed {
     min-height: 42px;
 }
 

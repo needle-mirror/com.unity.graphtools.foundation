@@ -10,7 +10,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
     class SnapToBordersTests : GraphViewSnappingTester
     {
-        static readonly Vector2 k_ReferenceNodePos = new Vector2(SelectionDragger.k_PanAreaWidth, SelectionDragger.k_PanAreaWidth);
+        static readonly Vector2 k_ReferenceNodePos = new Vector2(SelectionDragger.panAreaWidth, SelectionDragger.panAreaWidth);
         static readonly Vector2 k_SnappedNodeSize = new Vector2(100, 100);
         static readonly Vector2 k_ReferenceNodeSizeHorizontal = new Vector2(200, 100);
         static readonly Vector2 k_ReferenceNodeSizeVertical = new Vector2(100, 200);
@@ -863,7 +863,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             m_SnappingNodePos = new Vector2(k_ReferenceNodePos.x + 50, k_ReferenceNodePos.y + 100);
             var placematModel = CreatePlacemat(new Rect(m_SnappingNodePos, new Vector2(200, 200)), "Placemat");
 
-            graphView.RebuildUI(GraphModel, Store);
+            Store.State.RequestUIRebuild();
             yield return null;
 
             // Get the UI nodes
@@ -920,7 +920,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Vector2 secondSelectedElementPos = new Vector2(m_SnappingNodePos.x + 200, m_SnappingNodePos.y + 100);
             var placematModel = CreatePlacemat(new Rect(secondSelectedElementPos, new Vector2(200, 200)), "Placemat");
 
-            graphView.RebuildUI(GraphModel, Store);
+            Store.State.RequestUIRebuild();
             yield return null;
 
             Vector2 worldPosNode2 = graphView.contentViewContainer.LocalToWorld(m_SnappingNodePos);
@@ -930,18 +930,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Vector2 selectionPosNode3 = worldPosNode3 + m_SelectionOffset;
 
             // Select placemat by clicking on it and pressing Ctrl
-            helpers.MouseDownEvent(selectionPosNode3, MouseButton.LeftMouse, EventModifiers.Control);
+            helpers.MouseDownEvent(selectionPosNode3, MouseButton.LeftMouse, TestEventHelpers.multiSelectModifier);
             yield return null;
 
-            helpers.MouseUpEvent(selectionPosNode3, MouseButton.LeftMouse, EventModifiers.Control);
+            helpers.MouseUpEvent(selectionPosNode3, MouseButton.LeftMouse, TestEventHelpers.multiSelectModifier);
             yield return null;
 
             // Move mouse to Node2
-            helpers.MouseMoveEvent(selectionPosNode3, selectionPosNode2, MouseButton.LeftMouse, EventModifiers.Control);
+            helpers.MouseMoveEvent(selectionPosNode3, selectionPosNode2, MouseButton.LeftMouse, TestEventHelpers.multiSelectModifier);
             yield return null;
 
             // Select Node2 by clicking on it and pressing Ctrl
-            helpers.MouseDownEvent(selectionPosNode2, MouseButton.LeftMouse, EventModifiers.Control);
+            helpers.MouseDownEvent(selectionPosNode2, MouseButton.LeftMouse, TestEventHelpers.multiSelectModifier);
             yield return null;
 
             Node node1 = referenceNode1Model.GetUI<Node>(graphView);
@@ -956,13 +956,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             float offSetY = k_SnapDistance - topToTopDistance;
             Vector2 moveOffset = new Vector2(0, offSetY);
             Vector2 end = selectionPosNode2 + moveOffset;
-            helpers.MouseDragEvent(selectionPosNode2, end, MouseButton.LeftMouse, EventModifiers.Control);
+            helpers.MouseDragEvent(selectionPosNode2, end, MouseButton.LeftMouse, TestEventHelpers.multiSelectModifier);
             yield return null;
 
-            helpers.MouseUpEvent(end, MouseButton.LeftMouse, EventModifiers.Control);
-            yield return null;
-
-            graphView.RebuildUI(GraphModel, Store);
+            helpers.MouseUpEvent(end, MouseButton.LeftMouse, TestEventHelpers.multiSelectModifier);
             yield return null;
 
             // The snapping Node2 top border should snap to Node1's top border
@@ -997,7 +994,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             var nodeInsidePlacematPos = m_SnappingNodePos + new Vector2(60, 60);
             var nodeInsidePlacematModel = CreateNode("Node2", nodeInsidePlacematPos);
-            graphView.RebuildUI(GraphModel, Store);
+            Store.State.RequestUIRebuild();
             yield return null;
 
             // Get the UI nodes

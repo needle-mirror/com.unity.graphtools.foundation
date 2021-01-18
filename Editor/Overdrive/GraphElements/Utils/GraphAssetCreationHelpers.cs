@@ -45,9 +45,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     public static class GraphAssetCreationHelpers<TGraphAssetModelType>
         where TGraphAssetModelType : ScriptableObject, IGraphAssetModel
     {
-        public static IGraphAssetModel CreateInMemoryGraphAsset(Type stencilType, string name, string assetPath)
+        public static IGraphAssetModel CreateInMemoryGraphAsset(Type stencilType, string name, string assetPath,
+            IGraphTemplate graphTemplate = null)
         {
-            return CreateGraphAsset(stencilType, name, assetPath, null, false);
+            return CreateGraphAsset(stencilType, name, assetPath, graphTemplate, false);
         }
 
         public static IGraphAssetModel CreateGraphAsset(Type stencilType, string name, string assetPath,

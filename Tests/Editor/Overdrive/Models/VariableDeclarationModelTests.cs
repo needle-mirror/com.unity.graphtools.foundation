@@ -25,9 +25,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
         public void SetNameFromUserNameTest(string userInput, string expectedName, string expectedTitle)
         {
             var graphAssetModel = IGraphAssetModelHelper.Create("test", "", typeof(TestGraphAssetModel));
-            graphAssetModel.CreateGraph("test", typeof(ClassStencil));
+            graphAssetModel.CreateGraph("test");
 
-            var variable = graphAssetModel.GraphModel.CreateGraphVariableDeclaration("originalName", TypeHandle.Float, ModifierFlags.None, true);
+            var variable = graphAssetModel.GraphModel.CreateGraphVariableDeclaration(TypeHandle.Float, "originalName", ModifierFlags.None, true);
             (variable as IRenamable)?.Rename(userInput);
             Assert.That(variable.VariableName, Is.EqualTo(expectedName));
             Assert.That(variable.DisplayTitle, Is.EqualTo(expectedTitle));
@@ -37,9 +37,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
         public void CloningAVariableClonesFields()
         {
             var graphAssetModel = IGraphAssetModelHelper.Create("test", "", typeof(TestGraphAssetModel));
-            graphAssetModel.CreateGraph("test", typeof(ClassStencil));
+            graphAssetModel.CreateGraph("test");
 
-            var decl = graphAssetModel.GraphModel.CreateGraphVariableDeclaration("asd", TypeHandle.Float, ModifierFlags.None, true);
+            var decl = graphAssetModel.GraphModel.CreateGraphVariableDeclaration(TypeHandle.Float, "asd", ModifierFlags.None, true);
             decl.Tooltip = "asdasd";
             var clone = (decl as VariableDeclarationModel).Clone();
             Assert.IsFalse(ReferenceEquals(decl, clone));

@@ -17,7 +17,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         public IEnumerator LostEdgesAreDrawn()
         {
             var operatorModel = GraphModel.CreateNode<Type0FakeNodeModel>("Node0", new Vector2(-100, -100));
-            IConstantNodeModel intModel = GraphModel.CreateConstantNode("int", typeof(int).GenerateTypeHandle(), new Vector2(-150, -100));
+            IConstantNodeModel intModel = GraphModel.CreateConstantNode(typeof(int).GenerateTypeHandle(), "int", new Vector2(-150, -100));
             var edge = (EdgeModel)GraphModel.CreateEdge(operatorModel.Input0, intModel.OutputPort);
 
             // simulate a renamed port by changing the edge's port id
@@ -29,7 +29,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
 
             edge.ResetPorts(); // get rid of cached port models
 
-            Store.ForceRefreshUI(UpdateFlags.All);
+            Store.MarkStateDirty();
             yield return null;
 
             var lostPortsAdded = GraphView.Query(className: "ge-port--data-type-missing-port").Build().ToList().Count;

@@ -26,6 +26,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             public override void Invoke(State state, BaseAction action)
             {
+                if (state.Preferences?.GetBool(BoolPref.LogAllDispatchedActions) ?? false)
+                {
+                    Debug.Log(action.GetType().FullName + " => " + m_Callback.Method.DeclaringType + "." + m_Callback.Method.Name);
+                }
+
                 m_Callback(state as TState, action as TAction);
             }
         }
@@ -34,31 +39,29 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         readonly Dictionary<Type, ReducerFunctorBase> m_Reducers = new Dictionary<Type, ReducerFunctorBase>();
 
-        readonly List<Action<BaseAction>> m_Observers = new List<Action<BaseAction>>();
+        readonly List<Action<BaseAction>> m_PreObservers = new List<Action<BaseAction>>();
+        readonly List<Action<BaseAction>> m_PostObservers = new List<Action<BaseAction>>();
 
         UndoRedoTraversal m_UndoRedoTraversal;
 
-        State m_LastState;
-
-        Action m_StateChanged;
-
-        bool m_StateDirty;
-
+        bool m_ViewIsUpdating;
         StoreDispatchCheck m_StoreDispatchCheck;
 
-        public event Action StateChanged
-        {
-            add => m_StateChanged += value;
-            // ReSharper disable once DelegateSubtraction
-            remove => m_StateChanged -= value;
-        }
+        bool m_Disposed;
+
+        public State State { get; }
 
         public Store(State initialState)
         {
-            m_LastState = initialState;
+            State = initialState;
             m_StoreDispatchCheck = new StoreDispatchCheck();
 
             Undo.undoRedoPerformed += UndoRedoPerformed;
+        }
+
+        ~Store()
+        {
+            Dispose(false);
         }
 
         public void RegisterReducer<TAction>(Reducer<State, TAction> reducer)
@@ -86,46 +89,62 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        public void RegisterObserver(Action<BaseAction> observer)
+        public void RegisterObserver(Action<BaseAction> observer, bool asPostActionObserver = false)
         {
             lock (m_SyncRoot)
             {
-                if (m_Observers.Contains(observer))
-                    throw new InvalidOperationException("Redux: Cannot register the same observer twice.");
-                m_Observers.Add(observer);
+                if (asPostActionObserver)
+                {
+                    if (m_PostObservers.Contains(observer))
+                        throw new InvalidOperationException("Redux: Cannot register the same observer twice.");
+                    m_PostObservers.Add(observer);
+                }
+                else
+                {
+                    if (m_PreObservers.Contains(observer))
+                        throw new InvalidOperationException("Redux: Cannot register the same observer twice.");
+                    m_PreObservers.Add(observer);
+                }
             }
         }
 
-        public void UnregisterObserver(Action<BaseAction> observer)
+        public void UnregisterObserver(Action<BaseAction> observer, bool asPostActionObserver = false)
         {
             lock (m_SyncRoot)
             {
-                if (m_Observers.Contains(observer))
+                if (asPostActionObserver)
                 {
-                    m_Observers.Remove(observer);
+                    if (m_PostObservers.Contains(observer))
+                    {
+                        m_PostObservers.Remove(observer);
+                    }
+                }
+                else
+                {
+                    if (m_PreObservers.Contains(observer))
+                    {
+                        m_PreObservers.Remove(observer);
+                    }
                 }
             }
         }
 
         public void Dispatch<TAction>(TAction action) where TAction : BaseAction
         {
-            Preferences preferences = GetState().Preferences;
-
-            if (preferences != null && preferences.GetBool(BoolPref.LogAllDispatchedActions))
-                Debug.Log(action);
+            BeginStateChange();
 
             try
             {
                 lock (m_SyncRoot)
                 {
-                    m_StoreDispatchCheck.BeginDispatch(action, preferences);
+                    m_StoreDispatchCheck.BeginDispatch(action, State.Preferences);
 
-                    foreach (Action<BaseAction> observer in m_Observers)
+                    foreach (Action<BaseAction> observer in m_PreObservers)
                     {
                         observer(action);
                     }
 
-                    m_LastState.PreDispatchAction(action);
+                    State.PreDispatchAction(action);
 
                     if (!m_Reducers.TryGetValue(action.GetType(), out var o))
                     {
@@ -133,43 +152,60 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                         return;
                     }
 
-                    o.Invoke(m_LastState, action);
+                    o.Invoke(State, action);
+
+                    State.PostDispatchAction(action);
+
+                    foreach (Action<BaseAction> observer in m_PostObservers)
+                    {
+                        observer(action);
+                    }
                 }
             }
             finally
             {
                 m_StoreDispatchCheck.EndDispatch();
+                EndStateChange();
             }
-
-            m_StateDirty = true;
         }
 
-        public void ForceRefreshUI(UpdateFlags updateFlags)
+        public void MarkStateDirty()
         {
-            // Resetting the change list is required to trigger a full UI rebuild, which is necessary to
-            // update the position dependency manager.
-            // PF: wat???
-            m_LastState.CurrentGraphModel?.ResetChangeList();
-
-            m_LastState.MarkForUpdate(updateFlags);
-            m_StateDirty = true;
+            BeginStateChange();
+            State.RequestUIRebuild();
+            EndStateChange();
         }
 
-        // Called once per frame
-        public void Update()
+        public void BeginStateChange()
         {
+            Debug.Assert(!m_ViewIsUpdating);
+        }
+
+        public void EndStateChange()
+        {
+            State.IncrementVersion();
+        }
+
+        public void BeginViewUpdate()
+        {
+            Debug.Assert(!m_ViewIsUpdating);
+
+            m_ViewIsUpdating = true;
             m_StoreDispatchCheck.UpdateCounter++;
+        }
 
-            if (m_StateDirty)
-            {
-                m_StateDirty = false;
-                InvokeStateChanged();
-            }
+        public uint EndViewUpdate()
+        {
+            Debug.Assert(m_ViewIsUpdating);
+
+            m_ViewIsUpdating = false;
+            State.ResetChangeList();
+            return State.Version;
         }
 
         void UndoRedoPerformed()
         {
-            var graphModel = GetState().CurrentGraphModel;
+            var graphModel = State.GraphModel;
             if (graphModel != null)
             {
                 graphModel.UndoRedoPerformed();
@@ -181,23 +217,29 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public void Dispose()
         {
-            // ReSharper disable once DelegateSubtraction
-            Undo.undoRedoPerformed -= UndoRedoPerformed;
-
-            m_LastState?.Dispose();
-            m_StateChanged = null;
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
-        void InvokeStateChanged()
+        void Dispose(bool disposing)
         {
-            m_LastState.PreStateChanged();
-            m_StateChanged?.Invoke();
-            m_LastState.PostStateChanged();
-        }
+            if (m_Disposed)
+                return;
 
-        public State GetState()
-        {
-            return m_LastState;
+            // Dispose of unmanaged resources here
+
+            if (disposing)
+            {
+                // Dispose of managed resources here.
+                // Call members' Dispose()
+
+                // ReSharper disable once DelegateSubtraction
+                Undo.undoRedoPerformed -= UndoRedoPerformed;
+
+                State?.Dispose();
+            }
+
+            m_Disposed = true;
         }
     }
 }

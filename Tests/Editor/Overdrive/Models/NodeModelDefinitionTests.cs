@@ -24,8 +24,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
         public void CallingDefineTwiceCreatesPortsOnce()
         {
             var asset = ScriptableObject.CreateInstance<TestGraphAssetModel>();
-            asset.CreateGraph("asd", typeof(ClassStencil));
-            var g = asset.GraphModel as TestGraphModel;
+            asset.CreateGraph("asd");
+            var g = asset.GraphModel;
 
             m_Node = g.CreateNode<TestNodeModel>("test", Vector2.zero);
             Assert.That(m_Node.InputsById.Count, Is.EqualTo(1));
@@ -38,8 +38,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
         public void CallingDefineTwiceCreatesOneEmbeddedConstant()
         {
             var asset = ScriptableObject.CreateInstance<TestGraphAssetModel>();
-            asset.CreateGraph("asd", typeof(ClassStencil));
-            var g = asset.GraphModel as TestGraphModel;
+            asset.CreateGraph("asd");
+            var g = asset.GraphModel;
 
             m_Node = g.CreateNode<TestNodeModel>("test", Vector2.zero);
             Assert.That(m_Node.InputConstantsById.Count, Is.EqualTo(1));
@@ -85,7 +85,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
 
             public Func<IPortModel> CreatePort<T>(T value = default)
             {
-                return () => AddDataInputPort(typeof(T).Name, defaultValue: value);
+                return () => this.AddDataInputPort(typeof(T).Name, defaultValue: value);
             }
 
             protected override void OnDefineNode()
@@ -106,8 +106,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
         public void PortModelsCanHaveDefaultValues(object expectedValue, Func<TestNodeModelWithCustomPorts, Func<IPortModel>> createPort, Func<IConstant, object> getValue)
         {
             var asset = ScriptableObject.CreateInstance<TestGraphAssetModel>();
-            asset.CreateGraph("asd", typeof(ClassStencil));
-            var g = asset.GraphModel as TestGraphModel;
+            asset.CreateGraph("asd");
+            var g = asset.GraphModel;
 
             m_Node = g.CreateNode<TestNodeModelWithCustomPorts>("test", Vector2.zero, preDefineSetup: ports => ports.CreatePortFunc = createPort(ports));
             Assert.That(getValue(m_Node.InputsByDisplayOrder.Single().EmbeddedValue), Is.EqualTo(expectedValue));

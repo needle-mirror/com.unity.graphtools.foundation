@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
@@ -26,38 +28,66 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             ModifierFlags = modifierFlags;
         }
 
-        public static void DefaultReducer(State previousState, CreateGraphVariableDeclarationAction action)
+        public static void DefaultReducer(State state, CreateGraphVariableDeclarationAction action)
         {
-            previousState.PushUndo(action);
+            state.PushUndo(action);
 
-            var graphModel = previousState.CurrentGraphModel;
-            var variableDeclaration = graphModel.CreateGraphVariableDeclaration(action.VariableName, action.TypeHandle,
+            var graphModel = state.GraphModel;
+            var newVD = graphModel.CreateGraphVariableDeclaration(action.TypeHandle, action.VariableName,
                 action.ModifierFlags, action.IsExposed, null, action.Guid);
-            previousState.EditorDataModel.ElementModelToRename = variableDeclaration;
-            previousState.MarkForUpdate(UpdateFlags.RequestRebuild);
+
+            state.MarkNew(newVD);
         }
     }
 
     public class ReorderGraphVariableDeclarationAction : BaseAction
     {
-        public readonly IVariableDeclarationModel VariableDeclarationModel;
-        public readonly int Index;
+        public readonly IEnumerable<IVariableDeclarationModel> VariableDeclarationModelsToMove;
+        public readonly IVariableDeclarationModel InsertAfter;
 
         public ReorderGraphVariableDeclarationAction()
         {
             UndoString = "Reorder Variable";
         }
 
-        public ReorderGraphVariableDeclarationAction(IVariableDeclarationModel variableDeclarationModel, int index) : this()
+        public ReorderGraphVariableDeclarationAction(IEnumerable<IVariableDeclarationModel> modelsToMove,
+                                                     IVariableDeclarationModel insertAfter) : this()
         {
-            VariableDeclarationModel = variableDeclarationModel;
-            Index = index;
+            VariableDeclarationModelsToMove = modelsToMove;
+            InsertAfter = insertAfter;
         }
 
-        public static void DefaultReducer(State previousState, ReorderGraphVariableDeclarationAction action)
+        public static void DefaultReducer(State state, ReorderGraphVariableDeclarationAction action)
         {
-            previousState.PushUndo(action);
-            previousState.CurrentGraphModel.ReorderGraphVariableDeclaration(action.VariableDeclarationModel, action.Index);
+            state.PushUndo(action);
+            state.GraphModel.MoveAfter(action.VariableDeclarationModelsToMove.ToList(), action.InsertAfter);
+
+            // PF FIXME: this is like a complete rebuild of the blackboard.
+            state.MarkChanged(state.BlackboardGraphModel);
+        }
+    }
+
+    public class InitializeVariableAction : BaseAction
+    {
+        public IVariableDeclarationModel VariableDeclarationModel;
+
+        public InitializeVariableAction()
+        {
+            UndoString = "Initialize Variable";
+        }
+
+        public InitializeVariableAction(IVariableDeclarationModel variableDeclarationModel)
+            : this()
+        {
+            VariableDeclarationModel = variableDeclarationModel;
+        }
+
+        public static void DefaultReducer(State state, InitializeVariableAction action)
+        {
+            state.PushUndo(action);
+            action.VariableDeclarationModel.CreateInitializationValue();
+
+            state.MarkChanged(action.VariableDeclarationModel);
         }
     }
 
@@ -77,23 +107,27 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             Handle = handle;
         }
 
-        public static void DefaultReducer(State previousState, ChangeVariableTypeAction action)
+        public static void DefaultReducer(State state, ChangeVariableTypeAction action)
         {
-            var graphModel = previousState.CurrentGraphModel;
+            var graphModel = state.GraphModel;
 
             if (action.Handle.IsValid)
             {
-                previousState.PushUndo(action);
+                state.PushUndo(action);
 
                 if (action.VariableDeclarationModel.DataType != action.Handle)
                     action.VariableDeclarationModel.CreateInitializationValue();
 
                 action.VariableDeclarationModel.DataType = action.Handle;
 
-                foreach (var usage in graphModel.FindReferencesInGraph<IVariableNodeModel>(action.VariableDeclarationModel))
+                var variableReferences = graphModel.FindReferencesInGraph<IVariableNodeModel>(action.VariableDeclarationModel).ToList();
+                foreach (var usage in variableReferences)
+                {
                     usage.UpdateTypeFromDeclaration();
+                }
 
-                previousState.MarkForUpdate(UpdateFlags.RequestRebuild);
+                state.MarkChanged(variableReferences);
+                state.MarkChanged(action.VariableDeclarationModel);
             }
         }
     }
@@ -116,13 +150,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             UndoString = Exposed ? "Show Variable" : "Hide Variable";
         }
 
-        public static void DefaultReducer(State previousState, UpdateExposedAction action)
+        public static void DefaultReducer(State state, UpdateExposedAction action)
         {
-            previousState.PushUndo(action);
+            state.PushUndo(action);
 
             action.VariableDeclarationModel.IsExposed = action.Exposed;
 
-            previousState.MarkForUpdate(UpdateFlags.RequestRebuild);
+            state.MarkChanged(action.VariableDeclarationModel);
         }
     }
 
@@ -142,10 +176,43 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             Tooltip = tooltip;
         }
 
-        public static void DefaultReducer(State previousState, UpdateTooltipAction action)
+        public static void DefaultReducer(State state, UpdateTooltipAction action)
         {
-            previousState.PushUndo(action);
+            state.PushUndo(action);
             action.VariableDeclarationModel.Tooltip = action.Tooltip;
+
+            var graphModel = state.GraphModel;
+            var references = graphModel.FindReferencesInGraph<IVariableNodeModel>(action.VariableDeclarationModel);
+            state.MarkChanged(references);
+            state.MarkChanged(action.VariableDeclarationModel);
+        }
+    }
+
+    public class ExpandOrCollapseBlackboardRowAction : BaseAction
+    {
+        public readonly IVariableDeclarationModel Row;
+        public readonly bool Expand;
+
+        public ExpandOrCollapseBlackboardRowAction()
+        {
+            UndoString = "Expand Or Collapse Variable Declaration";
+        }
+
+        public ExpandOrCollapseBlackboardRowAction(bool expand, IVariableDeclarationModel row) : this()
+        {
+            this.Row = row;
+            Expand = expand;
+
+            UndoString = Expand ? "Collapse Variable Declaration" : "Expand Variable Declaration";
+        }
+
+        public static void DefaultReducer(State state, ExpandOrCollapseBlackboardRowAction action)
+        {
+            state.PushUndo(action);
+
+            state.BlackboardViewState.SetVariableDeclarationModelExpanded(action.Row, action.Expand);
+
+            state.MarkChanged(action.Row);
         }
     }
 }

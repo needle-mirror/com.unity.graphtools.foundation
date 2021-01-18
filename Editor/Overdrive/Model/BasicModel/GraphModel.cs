@@ -3,18 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Assertions;
-using UnityEngine.GraphToolsFoundation.Overdrive;
 using UnityEngine.Serialization;
 using Object = UnityEngine.Object;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 {
     [Serializable]
-    public abstract class GraphModel : IGraphModel
+    public abstract class GraphModel : IGraphModel, ISerializationCallbackReceiver
     {
-        const string k_DefaultPlacematName = "Placemat";
-        static readonly Vector2 k_PortalOffset = Vector2.right * 150;
-
         [SerializeReference]
         GraphAssetModel m_AssetModel;
 
@@ -24,6 +20,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         [SerializeField, Obsolete]
         // ReSharper disable once Unity.RedundantFormerlySerializedAsAttribute
         List<EdgeModel> m_EdgeModels;
+
+        [SerializeReference]
+        List<IBadgeModel> m_BadgeModels;
 
         [SerializeReference]
         protected List<IEdgeModel> m_GraphEdgeModels;
@@ -49,13 +48,36 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         [SerializeReference]
         protected List<IDeclarationModel> m_GraphPortalModels;
 
-        [SerializeReference]
-        Stencil m_Stencil;
+        [SerializeField]
+        private string m_StencilTypeName; // serialized as string, resolved as type by ISerializationCallbackReceiver
+
+        public virtual Type DefaultStencilType => null;
+
+        // kept for backward compatibility, Stencil won't be serializable in the future
+        [SerializeReference, FormerlySerializedAs("m_Stencil")]
+        Stencil m_SerializedStencil;
+
+        protected Stencil OldSerializedStencil => m_SerializedStencil;
+
+        Type m_StencilType;
+
+        public Type StencilType
+        {
+            get => m_StencilType;
+            set
+            {
+                if (value == null)
+                    value = DefaultStencilType;
+                Assert.IsTrue(typeof(Stencil).IsAssignableFrom(value));
+                m_StencilType = value;
+                Stencil = InstantiateStencil(StencilType);
+            }
+        }
+
+        public Stencil Stencil { get; private set; }
 
         [SerializeField, FormerlySerializedAs("name")]
         string m_Name;
-
-        GraphChangeList m_LastChanges;
 
         Dictionary<GUID, INodeModel> m_NodesByGuid;
 
@@ -65,21 +87,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             set => m_AssetModel = (GraphAssetModel)value;
         }
 
-        public Stencil Stencil
-        {
-            get => m_Stencil;
-            set => m_Stencil = value;
-        }
-
         public IReadOnlyList<INodeModel> NodeModels => m_GraphNodeModels;
 
         public IReadOnlyList<IEdgeModel> EdgeModels => m_GraphEdgeModels;
+
+        public IReadOnlyList<IBadgeModel> BadgeModels => m_BadgeModels;
 
         public IReadOnlyList<IStickyNoteModel> StickyNoteModels => m_GraphStickyNoteModels;
 
         public IReadOnlyList<IPlacematModel> PlacematModels => m_GraphPlacematModels;
 
-        public IList<IVariableDeclarationModel> VariableDeclarations => m_GraphVariableModels;
+        public IReadOnlyList<IVariableDeclarationModel> VariableDeclarations => m_GraphVariableModels;
 
         public IReadOnlyList<IDeclarationModel> PortalDeclarations => m_GraphPortalModels;
 
@@ -93,46 +111,48 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             set => m_Name = value;
         }
 
-        public string FriendlyScriptName => StringExtensions.CodifyString(AssetModel.Name);
-
-        public GraphChangeList LastChanges => m_LastChanges ?? (m_LastChanges = new GraphChangeList());
-
         protected GraphModel()
         {
             m_GraphNodeModels = new List<INodeModel>();
             m_GraphEdgeModels = new List<IEdgeModel>();
+            m_BadgeModels = new List<IBadgeModel>();
             m_GraphStickyNoteModels = new List<IStickyNoteModel>();
             m_GraphPlacematModels = new List<IPlacematModel>();
             m_GraphVariableModels = new List<IVariableDeclarationModel>();
             m_GraphPortalModels = new List<IDeclarationModel>();
         }
 
-        public virtual List<IPortModel> GetCompatiblePorts(IPortModel startPortModel)
+        protected virtual bool IsCompatiblePort(IPortModel startPortModel, IPortModel compatiblePortModel)
         {
             var startEdgePortalModel = startPortModel.NodeModel as IEdgePortalModel;
 
+            if (startPortModel.PortDataType == typeof(ExecutionFlow) && compatiblePortModel.PortDataType != typeof(ExecutionFlow))
+                return false;
+            if (compatiblePortModel.PortDataType == typeof(ExecutionFlow) && startPortModel.PortDataType != typeof(ExecutionFlow))
+                return false;
+
+            // No good if ports belong to same node that does not allow self connect
+            if (compatiblePortModel == startPortModel ||
+                (compatiblePortModel.NodeModel != null || startPortModel.NodeModel != null) &&
+                !startPortModel.NodeModel.AllowSelfConnect && compatiblePortModel.NodeModel == startPortModel.NodeModel)
+                return false;
+
+            // No good if it's on the same portal either.
+            if (compatiblePortModel.NodeModel is IEdgePortalModel edgePortalModel)
+            {
+                if (edgePortalModel.DeclarationModel.Guid == startEdgePortalModel?.DeclarationModel.Guid)
+                    return false;
+            }
+
+            // This is true for all ports
+            return compatiblePortModel.Direction != startPortModel.Direction;
+        }
+
+        public virtual List<IPortModel> GetCompatiblePorts(IPortModel startPortModel)
+        {
             return this.GetPortModels().ToList().Where(pModel =>
             {
-                if (startPortModel.PortDataType == typeof(ExecutionFlow) && pModel.PortDataType != typeof(ExecutionFlow))
-                    return false;
-                if (pModel.PortDataType == typeof(ExecutionFlow) && startPortModel.PortDataType != typeof(ExecutionFlow))
-                    return false;
-
-                // No good if ports belong to same node that does not allow self connect
-                if (pModel == startPortModel ||
-                    (pModel.NodeModel != null || startPortModel.NodeModel != null) &&
-                    !startPortModel.NodeModel.AllowSelfConnect && pModel.NodeModel == startPortModel.NodeModel)
-                    return false;
-
-                // No good if it's on the same portal either.
-                if (pModel.NodeModel is IEdgePortalModel edgePortalModel)
-                {
-                    if (edgePortalModel.DeclarationModel.Guid == startEdgePortalModel?.DeclarationModel.Guid)
-                        return false;
-                }
-
-                // This is true for all ports
-                return pModel.Direction != startPortModel.Direction;
+                return IsCompatiblePort(startPortModel, pModel);
             })
                 // deep in GraphView's EdgeDragHelper, this list is used to find the first port to use when dragging an
                 // edge. as ports are returned in hierarchy order (back to front), in case of a conflict, the one behind
@@ -141,28 +161,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
                 .ToList();
         }
 
-        public string GetAssetPath()
-        {
-            return AssetDatabase.GetAssetPath(m_AssetModel);
-        }
-
-        public abstract string GetSourceFilePath();
-
-        public TNodeType CreateNode<TNodeType>(string nodeName = "", Vector2 position = default,
-            SpawnFlags spawnFlags = SpawnFlags.Default, Action<TNodeType> preDefineSetup = null, GUID? guid = null)
-            where TNodeType : class, INodeModel
-        {
-            Action<INodeModel> setupWrapper = null;
-            if (preDefineSetup != null)
-            {
-                setupWrapper = n => preDefineSetup.Invoke(n as TNodeType);
-            }
-
-            return (TNodeType)CreateNodeInternal(typeof(TNodeType), nodeName, position, spawnFlags, setupWrapper, guid);
-        }
-
         public INodeModel CreateNode(Type nodeTypeToCreate, string nodeName, Vector2 position,
-            SpawnFlags spawnFlags = SpawnFlags.Default, Action<INodeModel> preDefineSetup = null, GUID? guid = null)
+            GUID? guid = null, Action<INodeModel> preDefineSetup = null, SpawnFlags spawnFlags = SpawnFlags.Default)
         {
             return CreateNodeInternal(nodeTypeToCreate, nodeName, position, spawnFlags, preDefineSetup, guid);
         }
@@ -197,15 +197,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             return nodeModel;
         }
 
-        public virtual IVariableNodeModel CreateVariableNode(IVariableDeclarationModel declarationModel, Vector2 position,
-            SpawnFlags spawnFlags = SpawnFlags.Default, GUID? guid = null)
+        public virtual IVariableNodeModel CreateVariableNode(IVariableDeclarationModel declarationModel,
+            Vector2 position, GUID? guid = null, SpawnFlags spawnFlags = SpawnFlags.Default)
         {
-            return CreateNode<VariableNodeModel>(declarationModel.DisplayTitle, position, spawnFlags,
-                v => v.DeclarationModel = declarationModel, guid);
+            return this.CreateNode<VariableNodeModel>(declarationModel.DisplayTitle, position, guid, v => v.DeclarationModel = declarationModel, spawnFlags);
         }
 
-        public virtual IConstantNodeModel CreateConstantNode(string constantName, TypeHandle constantTypeHandle, Vector2 position,
-            SpawnFlags spawnFlags = SpawnFlags.Default, GUID? guid = null, Action<IConstantNodeModel> preDefine = null)
+        public virtual IConstantNodeModel CreateConstantNode(TypeHandle constantTypeHandle, string constantName,
+            Vector2 position, GUID? guid = null, Action<IConstantNodeModel> preDefine = null, SpawnFlags spawnFlags = SpawnFlags.Default)
         {
             var nodeType = Stencil.GetConstantNodeValueType(constantTypeHandle);
 
@@ -218,13 +217,42 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
                 }
             }
 
-            return (IConstantNodeModel)CreateNode(nodeType, constantName, position, spawnFlags, PreDefineSetup, guid);
+            return (IConstantNodeModel)CreateNode(nodeType, constantName, position, guid, PreDefineSetup, spawnFlags);
+        }
+
+        public void AddBadge(IBadgeModel badgeModel)
+        {
+            m_BadgeModels.Add(badgeModel);
+        }
+
+        public void RemoveBadge(IBadgeModel badgeModel)
+        {
+            m_BadgeModels.Remove(badgeModel);
+        }
+
+        public IReadOnlyCollection<IGraphElementModel> DeleteBadges()
+        {
+            var deletedBadges = new List<IGraphElementModel>(m_BadgeModels);
+            m_BadgeModels.Clear();
+            return deletedBadges;
+        }
+
+        public IReadOnlyCollection<IGraphElementModel> DeleteBadgesOfType<T>() where T : IBadgeModel
+        {
+            var deletedBadges = m_BadgeModels
+                .Where(b => b is T)
+                .ToList();
+
+            m_BadgeModels = m_BadgeModels
+                .Where(b => !(b is T))
+                .ToList();
+
+            return deletedBadges;
         }
 
         public void AddNode(INodeModel nodeModel)
         {
             AddNodeInternal(nodeModel);
-            LastChanges?.ChangedElements.Add(nodeModel);
         }
 
         void AddNodeInternal(INodeModel nodeModel)
@@ -236,23 +264,54 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             m_NodesByGuid.Add(nodeModel.Guid, nodeModel);
         }
 
-        public INodeModel DuplicateNode(INodeModel copiedNode, Dictionary<INodeModel, INodeModel> mapping, Vector2 delta)
+        public INodeModel DuplicateNode(INodeModel sourceNode, Vector2 delta)
         {
-            // PF FIXME cast to NodeModel
-            var pastedNodeModel = (copiedNode as NodeModel).Clone();
+            var pastedNodeModel = sourceNode.Clone();
 
             // Set graphmodel BEFORE define node as it is commonly use during Define
             pastedNodeModel.AssetModel = AssetModel;
-            pastedNodeModel.Title = (copiedNode as IHasTitle)?.Title ?? "";
             pastedNodeModel.AssignNewGuid();
             pastedNodeModel.DefineNode();
-            pastedNodeModel.ReinstantiateInputConstants();
-            mapping.Add(copiedNode, pastedNodeModel);
+            pastedNodeModel.OnDuplicateNode(sourceNode);
 
             AddNode(pastedNodeModel);
             pastedNodeModel.Position += delta;
 
             return pastedNodeModel;
+        }
+
+        public virtual IEdgeModel DuplicateEdge(IEdgeModel sourceEdge, INodeModel targetInputNode, INodeModel targetOutputNode)
+        {
+            IPortModel inputPortModel = null;
+            IPortModel outputPortModel = null;
+            if (targetInputNode != null && targetOutputNode != null)
+            {
+                // Both node were duplicated; create a new edge between the duplicated nodes.
+                inputPortModel = (targetInputNode as IInOutPortsNode)?.InputsById[sourceEdge.ToPortId];
+                outputPortModel = (targetOutputNode as IInOutPortsNode)?.OutputsById[sourceEdge.FromPortId];
+            }
+            else if (targetInputNode != null)
+            {
+                inputPortModel = (targetInputNode as IInOutPortsNode)?.InputsById[sourceEdge.ToPortId];
+                outputPortModel = sourceEdge.FromPort;
+            }
+            else if (targetOutputNode != null)
+            {
+                inputPortModel = sourceEdge.ToPort;
+                outputPortModel = (targetOutputNode as IInOutPortsNode)?.OutputsById[sourceEdge.FromPortId];
+            }
+
+            if (inputPortModel != null && outputPortModel != null)
+            {
+                if (inputPortModel.Capacity == PortCapacity.Single && inputPortModel.GetConnectedEdges().Any())
+                    return null;
+                if (outputPortModel.Capacity == PortCapacity.Single && outputPortModel.GetConnectedEdges().Any())
+                    return null;
+
+                return CreateEdge(inputPortModel, outputPortModel);
+            }
+
+            return null;
         }
 
         public virtual void CreateItemizedNode(State state, int nodeOffset, ref IPortModel outputPortModel)
@@ -269,195 +328,151 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         protected void CreateItemizedNode(int nodeOffset, ref IPortModel outputPortModel)
         {
             Vector2 offset = Vector2.up * nodeOffset;
-            var nodeToConnect = DuplicateNode(outputPortModel.NodeModel,
-                new Dictionary<INodeModel, INodeModel>(), offset) as IInOutPortsNode;
+            var nodeToConnect = DuplicateNode(outputPortModel.NodeModel, offset) as IInOutPortsNode;
             outputPortModel = nodeToConnect?.OutputsById[outputPortModel.UniqueName];
         }
 
-        public void DeleteNodes(IReadOnlyCollection<INodeModel> nodesToDelete, DeleteConnections deleteConnections)
+        public IReadOnlyCollection<IGraphElementModel> DeleteNodes(IReadOnlyCollection<INodeModel> nodeModels, bool deleteConnections)
         {
-            foreach (var node in nodesToDelete)
-                DeleteNode(node, deleteConnections);
+            var deletedModels = new List<IGraphElementModel>();
+
+            foreach (var nodeModel in nodeModels.Where(n => n.IsDeletable()))
+            {
+                m_GraphNodeModels.Remove(nodeModel);
+                deletedModels.Add(nodeModel);
+
+                if (deleteConnections)
+                {
+                    var connectedEdges = nodeModel.GetConnectedEdges().ToList();
+                    deletedModels.AddRange(DeleteEdges(connectedEdges));
+                }
+                m_NodesByGuid?.Remove(nodeModel.Guid);
+
+                // If this is the last portal with the given declaration, delete the declaration.
+                if (nodeModel is EdgePortalModel edgePortalModel &&
+                    !this.FindReferencesInGraph<IEdgePortalModel>(edgePortalModel.DeclarationModel).Any())
+                {
+                    m_GraphPortalModels.Remove(edgePortalModel.DeclarationModel);
+                    deletedModels.Add(edgePortalModel.DeclarationModel);
+                }
+
+                nodeModel.Destroy();
+            }
+
+            return deletedModels;
         }
 
-        public void DeleteNode(INodeModel nodeModel, DeleteConnections deleteConnections)
+        public virtual IEdgeModel CreateEdge(IPortModel toPort, IPortModel fromPort)
         {
-            if (LastChanges != null)
-                LastChanges.DeletedElements += 1;
-            m_GraphNodeModels.Remove(nodeModel);
-
-            if (deleteConnections == DeleteConnections.True)
-            {
-                var connectedEdges = nodeModel.GetConnectedEdges().ToList();
-                DeleteEdges(connectedEdges);
-            }
-            m_NodesByGuid?.Remove(nodeModel.Guid);
-
-            // If this is the last portal with the given declaration, delete the declaration.
-            if (nodeModel is EdgePortalModel edgePortalModel &&
-                !this.FindReferencesInGraph<IEdgePortalModel>(edgePortalModel.DeclarationModel).Any())
-            {
-                m_GraphPortalModels.Remove(edgePortalModel.DeclarationModel);
-            }
-
-            nodeModel.Destroy();
+            return CreateEdge<EdgeModel>(toPort, fromPort);
         }
 
-        public virtual IEdgeModel CreateEdge(IPortModel inputPort, IPortModel outputPort)
+        public EdgeT CreateEdge<EdgeT>(IPortModel toPort, IPortModel fromPort) where EdgeT : IEdgeModel, new()
         {
-            var existing = GetEdgeConnectedToPorts(inputPort, outputPort);
+            var existing = this.GetEdgeConnectedToPorts(toPort, fromPort);
             if (existing != null)
-                return existing;
+                return (EdgeT)existing;
 
-            var edgeModel = CreateOrphanEdge<EdgeModel>(inputPort, outputPort);
+            var edgeModel = CreateOrphanEdge<EdgeT>(toPort, fromPort);
             if (edgeModel != null)
             {
                 m_GraphEdgeModels.Add(edgeModel);
-                LastChanges?.ChangedElements.Add(edgeModel);
-                LastChanges?.ChangedElements.Add(inputPort.NodeModel);
-                LastChanges?.ChangedElements.Add(outputPort.NodeModel);
             }
 
             return edgeModel;
         }
 
-        protected EdgeT CreateOrphanEdge<EdgeT>(IPortModel input, IPortModel output) where EdgeT : IEdgeModel, new()
+        protected EdgeT CreateOrphanEdge<EdgeT>(IPortModel toPort, IPortModel fromPort) where EdgeT : IEdgeModel, new()
         {
-            Assert.IsNotNull(input);
-            Assert.IsNotNull(input.NodeModel);
-            Assert.IsNotNull(output);
-            Assert.IsNotNull(output.NodeModel);
+            Assert.IsNotNull(toPort);
+            Assert.IsNotNull(toPort.NodeModel);
+            Assert.IsNotNull(fromPort);
+            Assert.IsNotNull(fromPort.NodeModel);
 
             var edgeModel = new EdgeT { AssetModel = AssetModel, EdgeLabel = "" };
-            edgeModel.SetPorts(input, output);
+            edgeModel.SetPorts(toPort, fromPort);
 
-            input.NodeModel.OnConnection(input, output);
-            output.NodeModel.OnConnection(output, input);
+            toPort.NodeModel.OnConnection(toPort, fromPort);
+            fromPort.NodeModel.OnConnection(fromPort, toPort);
 
             return edgeModel;
         }
 
-        public void DeleteEdge(IEdgeModel edgeModel)
+        public IReadOnlyCollection<IGraphElementModel> DeleteEdges(IReadOnlyCollection<IEdgeModel> edgeModels)
         {
-            edgeModel?.ToPort?.NodeModel?.OnDisconnection(edgeModel.ToPort, edgeModel.FromPort);
-            edgeModel?.FromPort?.NodeModel?.OnDisconnection(edgeModel.FromPort, edgeModel.ToPort);
+            var deletedModels = new List<IGraphElementModel>();
 
-            LastChanges?.ChangedElements.Add(edgeModel?.ToPort?.NodeModel);
-            LastChanges?.ChangedElements.Add(edgeModel?.FromPort?.NodeModel);
-
-            m_GraphEdgeModels.Remove(edgeModel as EdgeModel);
-            if (LastChanges != null)
+            foreach (var edgeModel in edgeModels.Where(e => e.IsDeletable()))
             {
-                LastChanges.DeletedEdges.Add(edgeModel);
-                LastChanges.DeletedElements += 1;
+                edgeModel?.ToPort?.NodeModel?.OnDisconnection(edgeModel.ToPort, edgeModel.FromPort);
+                edgeModel?.FromPort?.NodeModel?.OnDisconnection(edgeModel.FromPort, edgeModel.ToPort);
+
+                m_GraphEdgeModels.Remove(edgeModel);
+                deletedModels.Add(edgeModel);
             }
+
+            return deletedModels;
         }
 
-        public void DeleteEdges(IEnumerable<IEdgeModel> edgeModels)
-        {
-            var edgesCopy = edgeModels.ToList();
-            foreach (var edgeModel in edgesCopy)
-                DeleteEdge(edgeModel);
-        }
-
-        public void MoveEdgeBefore(IEdgeModel toMove, IEdgeModel reference)
-        {
-            m_GraphEdgeModels.Remove((EdgeModel)toMove);
-            m_GraphEdgeModels.Insert(m_GraphEdgeModels.IndexOf((EdgeModel)reference), (EdgeModel)toMove);
-        }
-
-        public void MoveEdgeAfter(IEdgeModel toMove, IEdgeModel reference)
-        {
-            m_GraphEdgeModels.Remove((EdgeModel)toMove);
-            m_GraphEdgeModels.Insert(m_GraphEdgeModels.IndexOf((EdgeModel)reference) + 1, (EdgeModel)toMove);
-        }
-
-        public void DeleteElements(IEnumerable<IGraphElementModel> graphElementModels)
-        {
-            foreach (var model in graphElementModels)
-            {
-                switch (model)
-                {
-                    case INodeModel nodeModel:
-                        m_GraphNodeModels.Remove(nodeModel);
-                        // If this is the last portal with the given declaration, delete the declaration.
-                        if (nodeModel is EdgePortalModel edgePortalModel &&
-                            !this.FindReferencesInGraph<IEdgePortalModel>(edgePortalModel.DeclarationModel).Any())
-                        {
-                            m_GraphPortalModels.Remove(edgePortalModel.DeclarationModel);
-                        }
-                        break;
-                    case EdgeModel edgeModel:
-                        m_GraphEdgeModels.Remove(edgeModel);
-                        break;
-                    case StickyNoteModel stickyNoteModel:
-                        m_GraphStickyNoteModels.Remove(stickyNoteModel);
-                        break;
-                    case PlacematModel placematModel:
-                        m_GraphPlacematModels.Remove(placematModel);
-                        break;
-                }
-            }
-        }
-
-        public virtual IStickyNoteModel CreateStickyNote(Rect position, SpawnFlags dataSpawnFlags = SpawnFlags.Default)
+        public virtual IStickyNoteModel CreateStickyNote(Rect position, SpawnFlags spawnFlags = SpawnFlags.Default)
         {
             var stickyNodeModel = CreateOrphanStickyNote<StickyNoteModel>(position);
-            if (!dataSpawnFlags.IsOrphan())
+            if (!spawnFlags.IsOrphan())
             {
                 m_GraphStickyNoteModels.Add(stickyNodeModel);
-                LastChanges?.ChangedElements.Add(stickyNodeModel);
             }
             return stickyNodeModel;
         }
 
         protected StickyNoteT CreateOrphanStickyNote<StickyNoteT>(Rect position) where StickyNoteT : IStickyNoteModel, new()
         {
-            var stickyNodeModel = new StickyNoteT();
-            stickyNodeModel.PositionAndSize = position;
-            stickyNodeModel.AssetModel = AssetModel;
+            var stickyNodeModel = new StickyNoteT
+            {
+                PositionAndSize = position,
+                AssetModel = AssetModel
+            };
 
             return stickyNodeModel;
         }
 
-        void DeleteStickyNote(StickyNoteModel stickyNoteModel)
+        public IReadOnlyCollection<IGraphElementModel> DeleteStickyNotes(IReadOnlyCollection<IStickyNoteModel> stickyNoteModels)
         {
-            m_GraphStickyNoteModels.Remove(stickyNoteModel);
-            if (LastChanges != null)
-                LastChanges.DeletedElements += 1;
+            var deletedModels = new List<IGraphElementModel>();
 
-            stickyNoteModel.Destroy();
+            foreach (var stickyNoteModel in stickyNoteModels.Where(s => s.IsDeletable()))
+            {
+                m_GraphStickyNoteModels.Remove(stickyNoteModel);
+                stickyNoteModel.Destroy();
+                deletedModels.Add(stickyNoteModel);
+            }
+
+            return deletedModels;
         }
 
-        public void DeleteStickyNotes(IStickyNoteModel[] stickyNotesToDelete)
+        public virtual IPlacematModel CreatePlacemat(Rect position, SpawnFlags spawnFlags = SpawnFlags.Default)
         {
-            foreach (IStickyNoteModel stickyNoteModel in stickyNotesToDelete)
-                DeleteStickyNote(stickyNoteModel as StickyNoteModel);
-        }
-
-        public virtual IPlacematModel CreatePlacemat(string title, Rect position, SpawnFlags dataSpawnFlags = SpawnFlags.Default)
-        {
-            var placematModel = CreateOrphanPlacemat<PlacematModel>(title ?? k_DefaultPlacematName, position);
-            if (!dataSpawnFlags.IsOrphan())
+            var placematModel = CreateOrphanPlacemat<PlacematModel>(position);
+            if (!spawnFlags.IsOrphan())
                 AddPlacemat(placematModel);
 
             return placematModel;
         }
 
-        PlacematT CreateOrphanPlacemat<PlacematT>(string title, Rect position) where PlacematT : IPlacematModel, new()
+        PlacematT CreateOrphanPlacemat<PlacematT>(Rect position) where PlacematT : IPlacematModel, new()
         {
-            var placematModel = new PlacematT();
-            placematModel.Title = title;
-            placematModel.PositionAndSize = position;
-            placematModel.AssetModel = AssetModel;
-            placematModel.ZOrder = GetPlacematTopZOrder();
+            var placematModel = new PlacematT
+            {
+                PositionAndSize = position,
+                AssetModel = AssetModel,
+                ZOrder = GetPlacematTopZOrder()
+            };
             return placematModel;
         }
 
         int GetPlacematTopZOrder()
         {
             int maxZ = Int32.MinValue;
-            foreach (var model in m_GraphPlacematModels)
+            foreach (var model in PlacematModels)
             {
                 maxZ = Math.Max(model.ZOrder, maxZ);
             }
@@ -467,126 +482,91 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         void AddPlacemat(PlacematModel placematModel)
         {
             m_GraphPlacematModels.Add(placematModel);
-            LastChanges?.ChangedElements.Add(placematModel);
         }
 
-        void DeletePlacemat(PlacematModel placematModel)
+        public IReadOnlyCollection<IGraphElementModel> DeletePlacemats(IReadOnlyCollection<IPlacematModel> placematModels)
         {
-            m_GraphPlacematModels.Remove(placematModel);
-            if (LastChanges != null)
+            var deletedModels = new List<IGraphElementModel>();
+
+            foreach (var placematModel in placematModels.Where(p => p.IsDeletable()))
             {
-                LastChanges.ChangedElements.AddRange(placematModel.HiddenElements);
-                LastChanges.DeletedElements += 1;
+                m_GraphPlacematModels.Remove(placematModel);
+                placematModel.Destroy();
+                deletedModels.Add(placematModel);
             }
 
-            placematModel.Destroy();
+            return deletedModels;
         }
 
-        public void DeletePlacemats(IPlacematModel[] placematsToDelete)
+        private Stencil InstantiateStencil(Type stencilType)
         {
-            foreach (var placematModel in placematsToDelete)
-                DeletePlacemat(placematModel as PlacematModel);
+            Debug.Assert(typeof(Stencil).IsAssignableFrom(stencilType));
+            var stencil = (Stencil)Activator.CreateInstance(stencilType);
+            Assert.IsNotNull(stencil);
+            stencil.GraphModel = this;
+            return stencil;
         }
 
-        public IVariableDeclarationModel CreateGraphVariableDeclaration(string variableName,
-            TypeHandle variableDataType, ModifierFlags modifierFlags, bool isExposed,
-            IConstant initializationModel = null, GUID? guid = null)
+        public IVariableDeclarationModel CreateGraphVariableDeclaration(TypeHandle variableDataType, string variableName,
+            ModifierFlags modifierFlags, bool isExposed, IConstant initializationModel = null, GUID? guid = null)
         {
-            var field = VariableDeclarationModel.Create(variableName, variableDataType, isExposed, this, VariableType.GraphVariable, modifierFlags, initializationModel, guid);
-            VariableDeclarations.Add(field);
+            var field = VariableDeclarationModel.Create(variableName, variableDataType, isExposed, this,
+                VariableType.GraphVariable, modifierFlags, initializationModel: initializationModel, guid: guid);
+            m_GraphVariableModels.Add(field);
             return field;
         }
 
-        public List<IVariableDeclarationModel> DuplicateGraphVariableDeclarations(List<IVariableDeclarationModel> variableDeclarationModels)
+        public virtual IVariableDeclarationModel DuplicateGraphVariableDeclaration(IVariableDeclarationModel sourceModel)
         {
-            List<IVariableDeclarationModel> duplicatedModels = new List<IVariableDeclarationModel>();
-            foreach (var original in variableDeclarationModels)
+            if (sourceModel.VariableType != VariableType.GraphVariable)
+                return null;
+            string uniqueName = sourceModel.Title;
+            VariableDeclarationModel copy = ((VariableDeclarationModel)sourceModel).Clone();
+            copy.Title = uniqueName;
+            if (copy.InitializationModel != null)
             {
-                if (original.VariableType != VariableType.GraphVariable)
-                    continue;
-                string uniqueName = original.Title;
-                VariableDeclarationModel copy = ((VariableDeclarationModel)original).Clone();
-                copy.Title = uniqueName;
-                if (copy.InitializationModel != null)
-                {
-                    copy.CreateInitializationValue();
-                    copy.InitializationModel.ObjectValue = original.InitializationModel.ObjectValue;
-                }
-
-                EditorUtility.SetDirty((Object)AssetModel);
-
-                duplicatedModels.Add(copy);
-                LastChanges.ChangedElements.Add(copy);
+                copy.CreateInitializationValue();
+                copy.InitializationModel.ObjectValue = sourceModel.InitializationModel.ObjectValue;
             }
 
-            m_GraphVariableModels.AddRange(duplicatedModels);
+            EditorUtility.SetDirty((Object)AssetModel);
 
-            return duplicatedModels;
+            m_GraphVariableModels.Add(copy);
+
+            return copy;
         }
 
-        public void ReorderGraphVariableDeclaration(IVariableDeclarationModel variableDeclarationModel, int index)
+        public IReadOnlyCollection<IGraphElementModel> DeleteVariableDeclarations(IReadOnlyCollection<IVariableDeclarationModel> variableModels, bool deleteUsages)
         {
-            Assert.IsTrue(index >= 0);
+            var deletedModels = new List<IGraphElementModel>();
 
-            if (variableDeclarationModel.VariableType == VariableType.GraphVariable)
+            foreach (var variableModel in variableModels.Where(v => v.IsDeletable()))
             {
-                var oldIndex = VariableDeclarations.IndexOf(variableDeclarationModel);
-                VariableDeclarations.RemoveAt(oldIndex);
-                if (index > oldIndex) index--;    // the actual index could have shifted due to the removal
-                if (index >= VariableDeclarations.Count)
-                    VariableDeclarations.Add(variableDeclarationModel);
-                else
-                    VariableDeclarations.Insert(index, variableDeclarationModel);
-                LastChanges.ChangedElements.Add(variableDeclarationModel);
-                LastChanges.DeletedElements++;
-            }
-        }
-
-        public void DeleteVariableDeclarations(IEnumerable<IVariableDeclarationModel> variableModels, bool deleteUsages)
-        {
-            foreach (var variableModel in variableModels)
-            {
-                if (LastChanges != null)
-                {
-                    LastChanges.BlackBoardChanged = true;
-                }
                 if (variableModel.VariableType == VariableType.GraphVariable)
                 {
-                    VariableDeclarations.Remove(variableModel);
+                    m_GraphVariableModels.Remove(variableModel);
+                    deletedModels.Add(variableModel);
                 }
+
                 if (deleteUsages)
                 {
                     var nodesToDelete = this.FindReferencesInGraph(variableModel).Cast<INodeModel>().ToList();
-                    DeleteNodes(nodesToDelete, DeleteConnections.True);
+                    deletedModels.AddRange(DeleteNodes(nodesToDelete, deleteConnections: true));
                 }
             }
+
+            return deletedModels;
         }
 
-        public IVariableDeclarationModel CreateGraphPortalDeclaration(string portalName, SpawnFlags spawnFlags = SpawnFlags.Default)
+        public IDeclarationModel CreateGraphPortalDeclaration(string portalName, SpawnFlags spawnFlags = SpawnFlags.Default)
         {
-            // TODO JOCE: We should use something lighter than a variable declaration for portals. We don't need all that's in there
-            var field = VariableDeclarationModel.Create(portalName, TypeHandle.Unknown, false, this, VariableType.EdgePortal, ModifierFlags.ReadWrite);
+            var field = new DeclarationModel {Title = portalName};
+            field.AssignNewGuid();
 
             if (!spawnFlags.IsOrphan())
                 m_GraphPortalModels.Add(field);
 
             return field;
-        }
-
-        public IEdgePortalModel CreateOppositePortal(IEdgePortalModel edgePortalModel, SpawnFlags spawnFlags = SpawnFlags.Default)
-        {
-            var offset = Vector2.zero;
-            switch (edgePortalModel)
-            {
-                case IEdgePortalEntryModel _:
-                    offset = k_PortalOffset;
-                    break;
-                case IEdgePortalExitModel _:
-                    offset = -k_PortalOffset;
-                    break;
-            }
-            var currentPos = edgePortalModel.Position;
-            return CreateOppositePortal(edgePortalModel, currentPos + offset, spawnFlags);
         }
 
         public IEdgePortalModel CreateOppositePortal(IEdgePortalModel edgePortalModel, Vector2 position, SpawnFlags spawnFlags = SpawnFlags.Default)
@@ -610,12 +590,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             }
 
             if (oppositeType != null)
-                createdPortal = (EdgePortalModel)CreateNode(oppositeType, edgePortalModel.Title, position, spawnFlags);
+                createdPortal = (EdgePortalModel)CreateNode(oppositeType, edgePortalModel.Title, position, spawnFlags: spawnFlags);
 
             if (createdPortal != null)
-            {
                 createdPortal.DeclarationModel = edgePortalModel.DeclarationModel;
-            }
 
             return createdPortal;
         }
@@ -624,18 +602,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         {
             var outputPortModel = edgeModel.FromPort;
             if (outputPortModel.PortType == PortType.Execution)
-                return CreateNode<ExecutionEdgePortalEntryModel>();
+                return this.CreateNode<ExecutionEdgePortalEntryModel>();
 
-            return CreateNode<DataEdgePortalEntryModel>();
+            return this.CreateNode<DataEdgePortalEntryModel>();
         }
 
         public IEdgePortalExitModel CreateExitPortalFromEdge(IEdgeModel edgeModel)
         {
             var inputPortModel = edgeModel.ToPort;
             if (inputPortModel?.PortType == PortType.Execution)
-                return CreateNode<ExecutionEdgePortalExitModel>();
+                return this.CreateNode<ExecutionEdgePortalExitModel>();
 
-            return CreateNode<DataEdgePortalExitModel>();
+            return this.CreateNode<DataEdgePortalExitModel>();
         }
 
         internal void AddGuidToUpdate(IGuidUpdate element, string oldGuid)
@@ -727,6 +705,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
                 Debug.Assert(!model.Guid.Empty());
                 m_NodesByGuid.Add(model.Guid, model);
             }
+
+            MigrateNodes();
+
+            // needed now that nodemodels are not in separate node assets that got OnEnable() before the graph itself would
+            foreach (var nodeModel in NodeModels)
+            {
+                (nodeModel as NodeModel)?.DefineNode();
+            }
+        }
+
+        protected virtual void MigrateNodes()
+        {
         }
 
         public void OnDisable()
@@ -735,143 +725,168 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
         public void Dispose() {}
 
-        public IEnumerable<IEdgeModel> GetEdgesConnections(IPortModel portModel)
-        {
-            return EdgeModels.Where(e => portModel.Direction == Direction.Input ? PortModel.Equivalent(e.ToPort, portModel) : PortModel.Equivalent(e.FromPort, portModel));
-        }
-
-        public IEnumerable<IEdgeModel> GetEdgesConnections(INodeModel nodeModel)
-        {
-            return EdgeModels.Where(e => e.ToPort?.NodeModel.Guid == nodeModel.Guid
-                || e.FromPort?.NodeModel.Guid == nodeModel.Guid);
-        }
-
-        public IEnumerable<IPortModel> GetConnections(IPortModel portModel)
-        {
-            return GetEdgesConnections(portModel)
-                .Select(e => portModel.Direction == Direction.Input ? e.FromPort : e.ToPort)
-                .Where(p => p != null);
-        }
-
-        public IEdgeModel GetEdgeConnectedToPorts(IPortModel input, IPortModel output)
-        {
-            return EdgeModels.FirstOrDefault(e => e.ToPort == input && e.FromPort == output);
-        }
-
-        public void ResetChangeList()
-        {
-            m_LastChanges = new GraphChangeList();
-        }
-
         public void UndoRedoPerformed()
         {
             OnEnable();
         }
 
-        public void Repair()
+        public virtual void OnAfterDeserializeAssetModel()
         {
-            m_GraphNodeModels.RemoveAll(n => n == null);
-            m_GraphStickyNoteModels.RemoveAll(s => s == null);
-            m_GraphPlacematModels.RemoveAll(p => p == null);
-            DeleteEdges(m_GraphEdgeModels.Where(e => e.ToPort == null || e.FromPort == null));
-            m_GraphEdgeModels.RemoveAll(e => e == null);
+            if (OldSerializedStencil != null)
+            {
+                StencilType = OldSerializedStencil.GetType();
+            }
+            UpgradePortalModels();
         }
 
-        public bool CheckIntegrity(Verbosity errors)
+        // TODO: JOCE Remove before the GTF goes public. Should no longer en needed at that point.
+        void UpgradePortalModels()
         {
-            Assert.IsTrue((Object)AssetModel, "graph asset is invalid");
-            bool failed = false;
-            for (var i = 0; i < m_GraphEdgeModels.Count; i++)
+            var oldPortalDeclarations = PortalDeclarations.OfType<VariableDeclarationModel>().ToList();
+            foreach (var oldPortalDeclaration in oldPortalDeclarations)
             {
-                var edge = m_GraphEdgeModels[i];
-                if (edge.ToPort == null)
+                var newPortalDeclaration = new DeclarationModel
                 {
-                    failed = true;
-                    Debug.Log($"Edge {i} input is null, output: {edge.FromPort}");
+                    Title = oldPortalDeclaration.Title,
+                    Guid = oldPortalDeclaration.Guid
+                };
+
+                var portalModels = NodeModels
+                    .OfType<EdgePortalModel>()
+                    .Where(v => v.DeclarationModel != null &&
+                        v.DeclarationModel.GetType() == typeof(VariableDeclarationModel) &&
+                        oldPortalDeclaration.Guid == v.DeclarationModel.Guid);
+                foreach (var portalModel in portalModels)
+                {
+                    portalModel.DeclarationModel = newPortalDeclaration;
                 }
 
-                if (edge.FromPort == null)
+                m_GraphPortalModels.Remove(oldPortalDeclaration);
+                m_GraphPortalModels.Add(newPortalDeclaration);
+            }
+        }
+
+        public virtual bool CheckIntegrity(Verbosity errors)
+        {
+            return GraphModelExtensions.CheckIntegrity(this, errors);
+        }
+
+        public void OnBeforeSerialize()
+        {
+            // Stencil shouldn't be serialized in graphmodels, this is only kept for backward compatibility with older graphs
+            m_SerializedStencil = null;
+
+            if (StencilType != null)
+                m_StencilTypeName = StencilType.AssemblyQualifiedName;
+        }
+
+        public void OnAfterDeserialize()
+        {
+            if (!string.IsNullOrEmpty(m_StencilTypeName))
+            {
+                StencilType = Type.GetType(m_StencilTypeName) ?? DefaultStencilType;
+            }
+        }
+
+        public virtual void CloneGraph(IGraphModel sourceGraphModel)
+        {
+            m_GraphNodeModels = new List<INodeModel>();
+            m_GraphEdgeModels = new List<IEdgeModel>();
+            m_GraphStickyNoteModels = new List<IStickyNoteModel>();
+            m_GraphPlacematModels = new List<IPlacematModel>();
+            m_GraphVariableModels = new List<IVariableDeclarationModel>();
+            m_GraphPortalModels = new List<IDeclarationModel>();
+
+            var elementMapping = new Dictionary<string, IGraphElementModel>();
+            var nodeMapping = new Dictionary<INodeModel, INodeModel>();
+            var variableMapping = new Dictionary<IVariableDeclarationModel, IVariableDeclarationModel>();
+
+            if (sourceGraphModel.VariableDeclarations.Any())
+            {
+                List<IVariableDeclarationModel> variableDeclarationModels =
+                    sourceGraphModel.VariableDeclarations.ToList();
+
+                foreach (var sourceModel in variableDeclarationModels)
                 {
-                    failed = true;
-                    Debug.Log($"Edge {i} output is null, input: {edge.ToPort}");
+                    var copy = DuplicateGraphVariableDeclaration(sourceModel);
+                    variableMapping.Add(sourceModel, copy);
                 }
             }
 
-            CheckNodeList(m_GraphNodeModels);
-            if (!failed && errors == Verbosity.Verbose)
-                Debug.Log("Integrity check succeeded");
-            return !failed;
-        }
-
-        void CheckNodeList(IList<INodeModel> nodeModels, Dictionary<GUID, int> existingGuids = null)
-        {
-            if (existingGuids == null)
-                existingGuids = new Dictionary<GUID, int>(nodeModels.Count * 4); // wild guess of total number of nodes, including stacked nodes
-            for (var i = 0; i < nodeModels.Count; i++)
+            foreach (var sourceNode in sourceGraphModel.NodeModels)
             {
-                INodeModel node = nodeModels[i];
+                var pastedNode = DuplicateNode(sourceNode, Vector2.zero);
+                nodeMapping[sourceNode] = pastedNode;
+            }
 
-                Assert.IsTrue(node.GraphModel != null, $"Node {i} {node} graph is null");
-                Assert.IsTrue(node.AssetModel != null, $"Node {i} {node} asset is null");
-                Assert.IsNotNull(node, $"Node {i} is null");
-                Assert.IsTrue(AssetModel.GetHashCode() == node.AssetModel?.GetHashCode(), $"Node {i} asset is not matching its actual asset");
-                Assert.IsFalse(node.Guid.Empty(), $"Node {i} ({node.GetType()}) has an empty Guid");
-                Assert.IsFalse(existingGuids.TryGetValue(node.Guid, out var oldIndex), $"duplicate GUIDs: Node {i} ({node.GetType()}) and Node {oldIndex} have the same guid {node.Guid}");
-                existingGuids.Add(node.Guid, i);
+            foreach (var nodeModel in nodeMapping)
+            {
+                elementMapping.Add(nodeModel.Key.Guid.ToString(), nodeModel.Value);
+            }
 
-                if (node.Destroyed)
-                    continue;
+            foreach (var sourceEdge in sourceGraphModel.EdgeModels)
+            {
+                elementMapping.TryGetValue(sourceEdge.ToNodeGuid.ToString(), out var newInput);
+                elementMapping.TryGetValue(sourceEdge.FromNodeGuid.ToString(), out var newOutput);
 
-                if (node is IInOutPortsNode portHolder)
+                DuplicateEdge(sourceEdge, newInput as INodeModel, newOutput as INodeModel);
+                if (sourceEdge != null)
                 {
-                    CheckNodePorts(portHolder.InputsById);
-                    CheckNodePorts(portHolder.OutputsById);
+                    elementMapping.Add(sourceEdge.Guid.ToString(), sourceEdge);
                 }
+            }
 
-                if (node is VariableNodeModel variableNode && variableNode.DeclarationModel != null)
+            foreach (var sourceVariableNode in sourceGraphModel.NodeModels.Where(model => model is VariableNodeModel))
+            {
+                elementMapping.TryGetValue(sourceVariableNode.Guid.ToString(), out var newNode);
+
+                ((VariableNodeModel)newNode).DeclarationModel =
+                    variableMapping[((VariableNodeModel)sourceVariableNode).VariableDeclarationModel];
+            }
+
+            foreach (var stickyNote in sourceGraphModel.StickyNoteModels)
+            {
+                var newPosition = new Rect(stickyNote.PositionAndSize.position, stickyNote.PositionAndSize.size);
+                var pastedStickyNote = (StickyNoteModel)CreateStickyNote(newPosition);
+                pastedStickyNote.Title = stickyNote.Title;
+                pastedStickyNote.Contents = stickyNote.Contents;
+                pastedStickyNote.Theme = stickyNote.Theme;
+                pastedStickyNote.TextSize = stickyNote.TextSize;
+                elementMapping.Add(stickyNote.Guid.ToString(), pastedStickyNote);
+            }
+
+            List<PlacematModel> pastedPlacemats = new List<PlacematModel>();
+            // Keep placemats relative order
+            foreach (var placemat in sourceGraphModel.PlacematModels.OrderBy(p => p.ZOrder))
+            {
+                var newPosition = new Rect(placemat.PositionAndSize.position, placemat.PositionAndSize.size);
+                var pastedPlacemat = (PlacematModel)CreatePlacemat(newPosition);
+                pastedPlacemat.Title = placemat.Title;
+                pastedPlacemat.Color = placemat.Color;
+                pastedPlacemat.Collapsed = placemat.Collapsed;
+                pastedPlacemat.HiddenElementsGuid = ((PlacematModel)placemat).HiddenElementsGuid;
+                pastedPlacemats.Add(pastedPlacemat);
+                elementMapping.Add(placemat.Guid.ToString(), pastedPlacemat);
+            }
+
+            // Update hidden content to new node ids.
+            foreach (var pastedPlacemat in pastedPlacemats)
+            {
+                if (pastedPlacemat.Collapsed)
                 {
-                    if (variableNode.VariableDeclarationModel.VariableType == VariableType.GraphVariable)
+                    List<string> pastedHiddenContent = new List<string>();
+                    foreach (var guid in pastedPlacemat.HiddenElementsGuid)
                     {
-                        var originalDeclarations = VariableDeclarations.Where(d => d.Guid == variableNode.DeclarationModel.Guid);
-                        Assert.IsTrue(originalDeclarations.Count() <= 1);
-                        var originalDeclaration = originalDeclarations.SingleOrDefault();
-                        Assert.IsNotNull(originalDeclaration, $"Variable Node {i} {variableNode.Title} has a declaration model, but it was not present in the graph's variable declaration list");
-                        Assert.IsTrue(ReferenceEquals(originalDeclaration, variableNode.DeclarationModel), $"Variable Node {i} {variableNode.Title} has a declaration model that was not ReferenceEquals() to the matching one in the graph");
+                        IGraphElementModel pastedElement;
+                        if (elementMapping.TryGetValue(guid, out pastedElement))
+                        {
+                            pastedHiddenContent.Add(pastedElement.Guid.ToString());
+                        }
                     }
+
+                    pastedPlacemat.HiddenElementsGuid = pastedHiddenContent;
                 }
             }
         }
-
-        static void CheckNodePorts(IReadOnlyDictionary<string, IPortModel> portsById)
-        {
-            foreach (var kv in portsById)
-            {
-                string portId = portsById[kv.Key].UniqueName;
-                Assert.AreEqual(kv.Key, portId, $"Node {kv.Key} port and its actual id {portId} mismatch");
-            }
-        }
-
-        public void QuickCleanup()
-        {
-            for (var i = m_GraphEdgeModels.Count - 1; i >= 0; i--)
-            {
-                var edge = m_GraphEdgeModels[i];
-                if (edge?.ToPort == null || edge.FromPort == null)
-                    m_GraphEdgeModels.RemoveAt(i);
-            }
-
-            CleanupNodes(m_GraphNodeModels);
-        }
-
-        static void CleanupNodes(IList<INodeModel> models)
-        {
-            for (var i = models.Count - 1; i >= 0; i--)
-            {
-                if (models[i].Destroyed)
-                    models.RemoveAt(i);
-            }
-        }
-
-        public abstract CompilationResult Compile(ITranslator translator);
     }
 }

@@ -1,10 +1,10 @@
-.gtf-toolbar .unity-toolbar-toggle, .gtf-toolbar .unity-toolbar-button, .gtf-toolbar .menuItem, .gtf-toolbar #breadcrumbButton {
+.ge-toolbar .unity-toolbar-toggle, .ge-toolbar .unity-toolbar-button, .ge-toolbar .menuItem, .ge-toolbar #breadcrumbButton {
     width: 36px;
     justify-content: center;
     align-items: center;
 }
 
-.gtf-toolbar .unity-toolbar-button {
+.ge-toolbar .unity-toolbar-button {
     padding-top: 2px;
     border-left-width: 0;
     min-width: 20px;
@@ -20,15 +20,15 @@ BreadcrumbItem {
     -unity-overflow-clip-box: content-box;
 }
 
-.gtf-toolbar .unity-toolbar-button .icon {
+.ge-toolbar .unity-toolbar-button .icon {
     width: 16px;
     height: 16px;
 }
 
-.gtf-toolbar .unity-toolbar-toggle .icon {
+.ge-toolbar .unity-toolbar-toggle .icon {
     position: absolute; /* otherwise icon hides the toggle */
 }
 
-.gtf-toolbar .unity-toolbar-toggle .unity-base-field__input {
+.ge-toolbar .unity-toolbar-toggle .unity-base-field__input {
     height: 18px; /* since icon is absolute, force inner toggle height */
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
@@ -27,22 +28,26 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             UndoString = (NodeModels?.Count ?? 0) + (PlacematModels?.Count ?? 0) <= 1 ? k_UndoStringSingular : k_UndoStringPlural;
         }
 
-        public static void DefaultReducer(State previousState, ResetElementColorAction action)
+        public static void DefaultReducer(State state, ResetElementColorAction action)
         {
-            previousState.PushUndo(action);
+            state.PushUndo(action);
 
             if (action.NodeModels != null)
+            {
                 foreach (var model in action.NodeModels)
                 {
                     model.HasUserColor = false;
-                    previousState.MarkForUpdate(UpdateFlags.UpdateView, model);
                 }
+                state.MarkChanged(action.NodeModels);
+            }
             if (action.PlacematModels != null)
+            {
                 foreach (var model in action.PlacematModels)
                 {
                     model.ResetColor();
-                    previousState.MarkForUpdate(UpdateFlags.UpdateView, model);
                 }
+                state.MarkChanged(action.PlacematModels);
+            }
         }
     }
 
@@ -71,23 +76,27 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             UndoString = (NodeModels?.Count ?? 0) + (PlacematModels?.Count ?? 0) <= 1 ? k_UndoStringSingular : k_UndoStringPlural;
         }
 
-        public static void DefaultReducer(State previousState, ChangeElementColorAction action)
+        public static void DefaultReducer(State state, ChangeElementColorAction action)
         {
-            previousState.PushUndo(action);
+            state.PushUndo(action);
 
             if (action.NodeModels != null)
+            {
                 foreach (var model in action.NodeModels)
                 {
                     model.Color = action.Color;
-                    previousState.MarkForUpdate(UpdateFlags.UpdateView, model);
                 }
+                state.MarkChanged(action.NodeModels);
+            }
 
             if (action.PlacematModels != null)
+            {
                 foreach (var model in action.PlacematModels)
                 {
                     model.Color = action.Color;
-                    previousState.MarkForUpdate(UpdateFlags.UpdateView, model);
                 }
+                state.MarkChanged(action.PlacematModels);
+            }
         }
     }
 
@@ -105,12 +114,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             GraphView = graphView;
             Follow = follow;
+
+            if (follow)
+            {
+                UndoString = "Align Hierarchies";
+            }
         }
 
-        public static void DefaultReducer(State previousState, AlignNodesAction action)
+        public static void DefaultReducer(State state, AlignNodesAction action)
         {
-            previousState.PushUndo(action);
-            action.GraphView.PositionDependenciesManagers.AlignNodes(action.GraphView, action.Follow, action.GraphView.Selection);
+            state.PushUndo(action);
+            action.GraphView.PositionDependenciesManager.AlignNodes(action.Follow,
+                action.GraphView.Selection.OfType<IGraphElement>().Select(ge => ge.Model).ToList());
+            state.RequestUIRebuild();
         }
     }
 }

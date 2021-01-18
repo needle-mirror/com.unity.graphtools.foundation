@@ -63,7 +63,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 Assert.IsNotNull(m_OutputPort);
                 Assert.IsNotNull(m_InputPort);
 
-                graphView.RebuildUI(GraphModel, Store);
+                Store.State.RequestUIRebuild();
                 yield return null;
 
                 // Connect the ports together
@@ -73,7 +73,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                     yield return null;
                 }
             }
-            graphView.RebuildUI(GraphModel, Store);
+
+            Store.State.RequestUIRebuild();
             yield return null;
 
             // Get the UI nodes

@@ -7,7 +7,6 @@ using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Object = UnityEngine.Object;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
 {
@@ -55,10 +54,23 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
 
     class GtfoWindowTest : GtfoWindow
     {
+        public GtfoWindowTest()
+        {
+            WithSidePanel = false;
+        }
+
+        protected override bool CanHandleAssetType(GraphAssetModel asset)
+        {
+            return true;
+        }
+
         protected override State CreateInitialState()
         {
-            DataModel = new TestEditorDataModel();
-            return new State(DataModel);
+            var prefs = TestPreferences.CreatePreferences();
+            prefs.SetBoolNoEditorUpdate(BoolPref.ErrorOnRecursiveDispatch, false);
+            prefs.SetBoolNoEditorUpdate(BoolPref.ErrorOnMultipleDispatchesPerFrame, false);
+
+            return new State(GUID, prefs);
         }
 
         protected override BlankPage CreateBlankPage()
@@ -98,28 +110,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         protected GtfoGraphView GraphView { get; private set; }
         protected TestEventHelpers Helpers { get; set; }
         protected Store Store => Window.Store;
-        protected GraphModel GraphModel => (GraphModel)Store.GetState().CurrentGraphModel;
+        protected GraphModel GraphModel => (GraphModel)Store.State.GraphModel;
 
         protected abstract bool CreateGraphOnStartup { get; }
         protected virtual Type CreatedGraphType => typeof(ClassStencil);
-
-        protected class TestContext
-        {
-            public List<Type0FakeNodeModel> Type0FakeNodeModel = new List<Type0FakeNodeModel>();
-            public List<VariableDeclarationModel> VariableDeclModels = new List<VariableDeclarationModel>();
-            public List<PortModel> InputPorts = new List<PortModel>();
-            public List<PortModel> OutputPorts = new List<PortModel>();
-
-            public void Reset()
-            {
-                Type0FakeNodeModel.Clear();
-                VariableDeclModels.Clear();
-                InputPorts.Clear();
-                OutputPorts.Clear();
-            }
-
-            public static TestContext Instance { get; } = new TestContext();
-        }
 
         [SetUp]
         public virtual void SetUp()
@@ -134,18 +128,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                 var graphAsset = GraphAssetCreationHelpers<TestGraphAssetModel>.CreateInMemoryGraphAsset(CreatedGraphType, "Test", k_GraphPath);
                 Store.Dispatch(new LoadGraphAssetAction(graphAsset));
             }
-            TestContext.Instance.Reset();
         }
 
         [TearDown]
-        public virtual void TearDown()
+        public void TearDown()
         {
             // See case: https://fogbugz.unity3d.com/f/cases/998343/
             // Clearing the capture needs to happen before closing the window
             MouseCaptureController.ReleaseMouse();
             if (Window != null)
             {
-                TestContext.Instance.Reset();
                 GraphModel.QuickCleanup();
                 Window.Close();
             }

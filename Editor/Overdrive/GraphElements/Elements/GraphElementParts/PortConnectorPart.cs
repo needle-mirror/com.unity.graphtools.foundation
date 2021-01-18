@@ -6,10 +6,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class PortConnectorPart : BaseGraphElementPart
     {
-        public static readonly string k_UssClassName = "ge-port-connector-part";
-        public static readonly string k_ConnectorUssName = "connector";
-        public static readonly string k_ConnectorCapUssName = "cap";
-        public static readonly string k_LabelName = "label";
+        public static readonly string ussClassName = "ge-port-connector-part";
+        public static readonly string connectorUssName = "connector";
+        public static readonly string connectorCapUssName = "cap";
+        public static readonly string labelName = "label";
 
         public static PortConnectorPart Create(string name, IGraphElementModel model, IGraphElement graphElement, string parentClassName)
         {
@@ -39,24 +39,24 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         protected override void BuildPartUI(VisualElement container)
         {
             m_Root = new VisualElement { name = PartName };
-            m_Root.AddToClassList(k_UssClassName);
+            m_Root.AddToClassList(ussClassName);
             m_Root.AddToClassList(m_ParentClassName.WithUssElement(PartName));
 
-            m_ConnectorBox = new VisualElement { name = k_ConnectorUssName };
-            m_ConnectorBox.AddToClassList(k_UssClassName.WithUssElement(k_ConnectorUssName));
-            m_ConnectorBox.AddToClassList(m_ParentClassName.WithUssElement(k_ConnectorUssName));
+            m_ConnectorBox = new VisualElement { name = connectorUssName };
+            m_ConnectorBox.AddToClassList(ussClassName.WithUssElement(connectorUssName));
+            m_ConnectorBox.AddToClassList(m_ParentClassName.WithUssElement(connectorUssName));
             m_Root.Add(m_ConnectorBox);
 
-            m_ConnectorBoxCap = new VisualElement { name = k_ConnectorCapUssName };
-            m_ConnectorBoxCap.AddToClassList(k_UssClassName.WithUssElement(k_ConnectorCapUssName));
-            m_ConnectorBoxCap.AddToClassList(m_ParentClassName.WithUssElement(k_ConnectorCapUssName));
+            m_ConnectorBoxCap = new VisualElement { name = connectorCapUssName };
+            m_ConnectorBoxCap.AddToClassList(ussClassName.WithUssElement(connectorCapUssName));
+            m_ConnectorBoxCap.AddToClassList(m_ParentClassName.WithUssElement(connectorCapUssName));
             m_ConnectorBox.Add(m_ConnectorBoxCap);
 
             if (m_Model is IHasTitle)
             {
-                m_ConnectorLabel = new Label { name = k_LabelName };
-                m_ConnectorLabel.AddToClassList(k_UssClassName.WithUssElement(k_LabelName));
-                m_ConnectorLabel.AddToClassList(m_ParentClassName.WithUssElement(k_LabelName));
+                m_ConnectorLabel = new Label { name = labelName };
+                m_ConnectorLabel.AddToClassList(ussClassName.WithUssElement(labelName));
+                m_ConnectorLabel.AddToClassList(m_ParentClassName.WithUssElement(labelName));
                 m_Root.Add(m_ConnectorLabel);
             }
 
@@ -101,7 +101,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             if (m_ConnectorBoxCap != null)
             {
-                bool showCap = m_Hovering || ((m_OwnerElement as VisualElement)?.ClassListContains(Port.k_WillConnectModifierUssClassName) ?? false);
+                bool showCap = m_Hovering || ((m_OwnerElement as VisualElement)?.ClassListContains(Port.willConnectModifierUssClassName) ?? false);
 
                 if ((m_Model is IPortModel portModel && portModel.IsConnected()) || showCap)
                 {

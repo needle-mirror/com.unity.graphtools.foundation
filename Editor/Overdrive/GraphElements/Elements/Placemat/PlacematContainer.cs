@@ -8,6 +8,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class PlacematContainer : GraphView.Layer
     {
+        public static readonly string ussClassName = "ge-placemat-container";
+
         public enum CycleDirection
         {
             Up,
@@ -28,45 +30,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             m_GraphView = graphView;
 
             this.AddStylesheet("PlacematContainer.uss");
-            AddToClassList("placematContainer");
+            AddToClassList(ussClassName);
             pickingMode = PickingMode.Ignore;
-
-            RegisterCallback<AttachToPanelEvent>(OnAttachToPanel);
-            RegisterCallback<DetachFromPanelEvent>(OnDetachFromPanel);
-        }
-
-        void OnAttachToPanel(AttachToPanelEvent evt)
-        {
-            m_GraphView.GraphViewChangedCallback += OnGraphViewChange;
-        }
-
-        void OnDetachFromPanel(DetachFromPanelEvent evt)
-        {
-            // ReSharper disable once DelegateSubtraction
-            m_GraphView.GraphViewChangedCallback -= OnGraphViewChange;
-        }
-
-        GraphViewChange OnGraphViewChange(GraphViewChange graphViewChange)
-        {
-            if (graphViewChange.elementsToRemove != null)
-                foreach (Placemat placemat in graphViewChange.elementsToRemove.OfType<Placemat>())
-                    RemovePlacemat(placemat);
-
-            return graphViewChange;
         }
 
         public void AddPlacemat(Placemat placemat)
         {
-            bool updateOrders = placemat.ZOrder == 0 || (m_Placemats.Count > 0 && placemat.ZOrder <= m_Placemats.Last.Value.ZOrder);
-
             m_Placemats.AddLast(placemat);
             Add(placemat);
-
-            if (updateOrders)
-                UpdateElementsOrder();
+            placemat.PlacematModel.ZOrder = m_Placemats.Count;
         }
 
-        void RemovePlacemat(Placemat placemat)
+        public void RemovePlacemat(Placemat placemat)
         {
             placemat.RemoveFromHierarchy();
             m_Placemats.Remove(placemat);

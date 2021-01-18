@@ -58,10 +58,33 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
+        public void OwnerAddedToGraphView()
+        {
+            PartOwnerAddedToGraphView();
+
+            foreach (var component in PartList)
+            {
+                component.OwnerAddedToGraphView();
+            }
+        }
+
+        public void OwnerRemovedFromGraphView()
+        {
+            PartOwnerRemovedFromGraphView();
+
+            foreach (var component in PartList)
+            {
+                component.OwnerRemovedFromGraphView();
+            }
+        }
+
         protected abstract void BuildPartUI(VisualElement parent);
 
         protected virtual void PostBuildPartUI() {}
 
         protected abstract void UpdatePartFromModel();
+
+        protected virtual void PartOwnerAddedToGraphView() {}
+        protected virtual void PartOwnerRemovedFromGraphView() {}
     }
 }

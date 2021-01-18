@@ -45,20 +45,32 @@ Layer {
     --dragndrop-denied-background-color: rgba(145, 29, 19, 0.33);
 }
 
-.resizer-icon {
+.ge-resizer {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 20px;
+    height: 20px;
+    padding-left: 10px;
+    padding-top: 14px;
+    -unity-background-scale-mode: scale-and-crop;
+}
+
+.ge-resizer__icon {
     background-image: resource("Builtin Skins/DarkSkin/Images/WindowBottomResize.png");
+    -unity-background-scale-mode: scale-and-crop;
     flex: 1 0 0;
 }
 
-.resizer.resizeAllDir {
+.ge-resizer--both-directions {
     cursor: resize-up-left;
 }
 
-.resizer.resizeVerticalDir {
+.ge-resizer--vertical {
     cursor: resize-vertical;
 }
 
-.resizer.resizeHorizontalDir {
+.ge-resizer--horizontal {
     cursor: resize-horizontal;
     color: #ff0000;
 }
@@ -84,4 +96,8 @@ Layer {
     right: 0;
     top: 0;
     bottom: 0;
+}
+
+.ge-graph-view #iconsParent {
+    overflow: visible;
 }

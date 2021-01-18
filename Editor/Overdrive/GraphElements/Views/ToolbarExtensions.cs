@@ -38,9 +38,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public static void ChangeClickEvent(this ToolbarButton button, Action newClickEvent)
         {
-            button.RemoveManipulator(button.clickable);
-            button.clickable = new Clickable(newClickEvent);
-            button.AddManipulator(button.clickable);
+            if (button.clickable != null)
+                button.RemoveManipulator(button.clickable);
+
+            if (newClickEvent != null)
+            {
+                button.clickable = new Clickable(newClickEvent);
+                button.AddManipulator(button.clickable);
+            }
+            else
+            {
+                button.clickable = null;
+            }
         }
     }
 }

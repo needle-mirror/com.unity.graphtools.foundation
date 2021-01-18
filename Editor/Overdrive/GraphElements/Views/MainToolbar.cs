@@ -3,6 +3,7 @@ using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
@@ -16,12 +17,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         protected ToolbarButton m_BuildAllButton;
         protected ToolbarButton m_ShowMiniMapButton;
         protected ToolbarButton m_ShowBlackboardButton;
+        protected ToolbarToggle m_EnableTracingButton;
+        protected ToolbarButton m_OptionsButton;
 
         public static readonly string NewGraphButton = "newGraphButton";
         public static readonly string SaveAllButton = "saveAllButton";
         public static readonly string BuildAllButton = "buildAllButton";
         public static readonly string ShowMiniMapButton = "showMiniMapButton";
         public static readonly string ShowBlackboardButton = "showBlackboardButton";
+        public static readonly string EnableTracingButton = "enableTracingButton";
+        public static readonly string OptionsButton = "optionsButton";
+
 
         public MainToolbar(Store store, GraphView graphView) : base(store, graphView)
         {
@@ -53,20 +59,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             m_Breadcrumb = this.MandatoryQ<ToolbarBreadcrumbs>("breadcrumb");
 
-            var enableTracingButton = this.MandatoryQ<ToolbarToggle>("enableTracingButton");
-            enableTracingButton.tooltip = "Toggle Tracing For Current Instance";
-            enableTracingButton.SetValueWithoutNotify(m_Store.GetState().EditorDataModel.TracingEnabled);
-            enableTracingButton.RegisterValueChangedCallback(e => OnToggleTracing?.Invoke(e));
+            m_EnableTracingButton = this.MandatoryQ<ToolbarToggle>(EnableTracingButton);
+            m_EnableTracingButton.tooltip = "Toggle Tracing For Current Instance";
+            m_EnableTracingButton.SetValueWithoutNotify(m_Store.State.TracingState.TracingEnabled);
+            m_EnableTracingButton.RegisterValueChangedCallback(e => OnToggleTracing?.Invoke(e));
 
-            var optionsButton = this.MandatoryQ<ToolbarButton>("optionsButton");
-            optionsButton.tooltip = "Options";
-            optionsButton.RemoveManipulator(optionsButton.clickable);
-            optionsButton.AddManipulator(new Clickable(OnOptionsButton));
+            m_OptionsButton = this.MandatoryQ<ToolbarButton>(OptionsButton);
+            m_OptionsButton.tooltip = "Options";
+            m_OptionsButton.ChangeClickEvent(OnOptionsButton);
         }
 
         public virtual void UpdateUI()
         {
-            bool isEnabled = m_Store.GetState().CurrentGraphModel != null;
+            bool isEnabled = m_Store.State.GraphModel != null;
             UpdateCommonMenu(isEnabled);
             UpdateBreadcrumbMenu(isEnabled);
         }
@@ -75,18 +80,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             m_Breadcrumb.SetEnabled(isEnabled);
 
-            var state = m_Store.GetState();
-            var graphModel = state.CurrentGraphModel;
-
-            int i = 0;
-            for (; i < state.EditorDataModel.PreviousGraphModels.Count; i++)
+            var i = 0;
+            var graphModels = m_Store.State.WindowState.SubGraphStack;
+            for (; i < graphModels.Count; i++)
             {
-                var graphToLoad = state.EditorDataModel.PreviousGraphModels[i];
-                string label = GetBreadcrumbLabel(graphToLoad.GraphAssetModel?.GraphModel, i, false);
+                var label = GetBreadcrumbLabel(i);
                 m_Breadcrumb.CreateOrUpdateItem(i, label, BreadcrumbClickedEvent);
             }
 
-            string newCurrentGraph = GetBreadcrumbLabel(graphModel, i, true);
+            var newCurrentGraph = GetBreadcrumbLabel(-1);
             if (newCurrentGraph != null)
             {
                 m_Breadcrumb.CreateOrUpdateItem(i, newCurrentGraph, BreadcrumbClickedEvent);
@@ -96,25 +98,35 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             m_Breadcrumb.TrimItems(i);
         }
 
-        protected virtual string GetBreadcrumbLabel(IGraphModel graph, int index, bool isLastItem)
+        protected virtual string GetBreadcrumbLabel(int index)
         {
-            return graph != null ? graph.FriendlyScriptName : "<Unknown>";
+            var graphModels = m_Store.State.WindowState.SubGraphStack;
+            string graphName = null;
+            if (index == -1)
+            {
+                graphName = m_Store.State.WindowState.CurrentGraph.GraphName;
+            }
+            else if (index >= 0 && index < graphModels.Count)
+            {
+                graphName = graphModels[index].GraphName;
+            }
+
+            return string.IsNullOrEmpty(graphName) ? "<Unknown>" : graphName;
         }
 
         protected void BreadcrumbClickedEvent(int i)
         {
-            var state = m_Store.GetState();
+            var state = m_Store.State;
             OpenedGraph graphToLoad = default;
-            if (i < state.EditorDataModel.PreviousGraphModels.Count)
-                graphToLoad = state.EditorDataModel.PreviousGraphModels[i];
+            var graphModels = state.WindowState.SubGraphStack;
+            if (i < graphModels.Count)
+                graphToLoad = graphModels[i];
 
-            while (state.EditorDataModel.PreviousGraphModels.Count > i)
-                state.EditorDataModel.PreviousGraphModels.RemoveAt(
-                    state.EditorDataModel.PreviousGraphModels.Count - 1);
+            state.WindowState.TruncateHistory(i);
 
-            if (graphToLoad.GraphAssetModel != null)
-                m_Store.Dispatch(new LoadGraphAssetAction(graphToLoad.GraphAssetModel,
-                    graphToLoad.BoundObject, loadType: LoadGraphAssetAction.Type.KeepHistory));
+            if (graphToLoad.GraphName != null)
+                m_Store.Dispatch(new LoadGraphAssetAction(graphToLoad.GraphAssetModelPath,
+                    graphToLoad.BoundObject, LoadGraphAssetAction.Type.KeepHistory));
         }
 
         void ShowGraphViewToolWindow<T>() where T : GraphViewToolWindow
@@ -132,7 +144,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             m_SaveAllButton.SetEnabled(enabled);
             m_BuildAllButton.SetEnabled(enabled);
 
-            var stencil = m_Store.GetState()?.CurrentGraphModel?.Stencil;
+            var stencil = m_Store.State?.GraphModel?.Stencil;
             var toolbarProvider = stencil?.GetToolbarProvider();
 
             if (!(toolbarProvider?.ShowButton(NewGraphButton) ?? true))
@@ -184,12 +196,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         void OnNewGraphButton()
         {
             var minimap = ConsoleWindowBridge.FindBoundGraphViewToolWindow<GraphViewMinimapWindow>(m_GraphView);
-            if (minimap != null)
-                minimap.Close();
-
-            var bb = ConsoleWindowBridge.FindBoundGraphViewToolWindow<GraphViewBlackboardWindow>(m_GraphView);
-            if (bb != null)
-                bb.Close();
+            minimap?.Repaint();
 
             m_GraphView?.Window.UnloadGraph();
         }
@@ -213,18 +220,41 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         protected virtual void BuildOptionMenu(GenericMenu menu)
         {
-            var prefs = m_Store.GetState().Preferences;
+            var prefs = m_Store.State.Preferences;
 
             if (prefs != null)
             {
                 if (Unsupported.IsDeveloperMode())
                 {
-                    menu.AddItem(new GUIContent("Display Searcher in regular window"),
+                    menu.AddItem(new GUIContent("Show Searcher in Regular Window"),
                         prefs.GetBool(BoolPref.SearcherInRegularWindow),
                         () =>
                         {
                             prefs.ToggleBool(BoolPref.SearcherInRegularWindow);
                         });
+
+                    menu.AddSeparator("");
+
+                    menu.AddItem(new GUIContent("Reload Graph"), false, () =>
+                    {
+                        if (m_Store.State?.GraphModel != null)
+                        {
+                            var path = m_Store.State.AssetModel.GetPath();
+                            Selection.activeObject = null;
+                            Resources.UnloadAsset((Object)m_Store.State.AssetModel);
+                            m_Store.Dispatch(new LoadGraphAssetAction(path));
+                        }
+                    });
+
+                    menu.AddItem(new GUIContent("Rebuild GraphView"), false, () =>
+                    {
+                        m_Store.MarkStateDirty();
+                    });
+                    menu.AddItem(new GUIContent("Rebuild Blackboard"), false, () =>
+                    {
+                        m_GraphView.Blackboard?.BuildUI();
+                        m_GraphView.Blackboard?.UpdateFromModel();
+                    });
                 }
             }
         }

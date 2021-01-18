@@ -201,6 +201,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         {
         }
 
+        public virtual void OnDuplicateNode(INodeModel sourceNode)
+        {
+            Title = (sourceNode as IHasTitle)?.Title ?? "";
+            ReinstantiateInputConstants();
+        }
+
         void RemoveUnusedPorts()
         {
             foreach (var kv in m_PreviousInputs
@@ -254,24 +260,27 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             return Stencil?.GetPortCapacity(portModel, out cap) ?? false ? cap : portModel?.GetDefaultCapacity() ?? PortCapacity.Multi;
         }
 
-        // TODO JOCE: This probably need to be a generic interface method that works similar to the CreateNode from GraphModel
-        protected virtual IPortModel CreatePort(Direction direction, string portName, PortType portType, TypeHandle dataType, string portId, PortModelOptions options)
+        public virtual IPortModel CreatePort(Direction direction, string portName, PortType portType,
+            TypeHandle dataType, string portId, PortModelOptions options)
         {
-            return new PortModel(portName ?? "", portId, options)
+            return new PortModel
             {
                 Direction = direction,
                 PortType = portType,
                 DataTypeHandle = dataType,
+                Title = portName ?? "",
+                UniqueName = portId,
+                Options = options,
                 NodeModel = this
             };
         }
 
-        protected void DeletePort(IPortModel portModel, bool removeFromOrderedPorts = false)
+        public void DeletePort(IPortModel portModel, bool removeFromOrderedPorts = false)
         {
             if (GraphModel != null)
             {
                 var edgeModels = GraphModel.GetEdgesConnections(portModel);
-                GraphModel.DeleteEdges(edgeModels);
+                GraphModel.DeleteEdges(edgeModels.ToList());
             }
 
             if (removeFromOrderedPorts)
@@ -287,77 +296,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             }
         }
 
-        public void AddPlaceHolderPort(Direction direction, string uniqueId)
-        {
-            if (direction == Direction.Input)
-                AddInputPort(uniqueId, PortType.MissingPort, TypeHandle.MissingPort, uniqueId,
-                    PortModelOptions.NoEmbeddedConstant);
-            else
-                AddOutputPort(uniqueId, PortType.MissingPort, TypeHandle.MissingPort, uniqueId,
-                    PortModelOptions.NoEmbeddedConstant);
-        }
-
-        protected TPortType AddDataInputPort<TPortType>(string portName, TypeHandle typeHandle, string portId = null,
-            PortModelOptions options = PortModelOptions.Default, Action<IConstant> preDefine = null) where TPortType : IPortModel
-        {
-            return (TPortType)AddInputPort(portName, PortType.Data, typeHandle, portId, options, preDefine);
-        }
-
-        protected PortModel AddDataInputPort(string portName, TypeHandle typeHandle, string portId = null,
-            PortModelOptions options = PortModelOptions.Default, Action<IConstant> preDefine = null)
-        {
-            return AddDataInputPort<PortModel>(portName, typeHandle, portId, options, preDefine);
-        }
-
-        protected PortModel AddDataInputPort<TDataType>(string portName, string portId = null,
-            PortModelOptions options = PortModelOptions.Default, TDataType defaultValue = default)
-        {
-            Action<IConstant> preDefine = null;
-
-            if (defaultValue is Enum || !EqualityComparer<TDataType>.Default.Equals(defaultValue, default))
-                preDefine = constantModel => constantModel.ObjectValue = defaultValue;
-
-            return AddDataInputPort(portName, typeof(TDataType).GenerateTypeHandle(), portId, options, preDefine);
-        }
-
-        protected TPortType AddDataOutputPort<TPortType>(string portName, TypeHandle typeHandle, string portId = null,
-            PortModelOptions options = PortModelOptions.Default) where TPortType : IPortModel
-        {
-            return (TPortType)AddOutputPort(portName, PortType.Data, typeHandle, portId, options);
-        }
-
-        protected PortModel AddDataOutputPort(string portName, TypeHandle typeHandle, string portId = null,
-            PortModelOptions options = PortModelOptions.Default)
-        {
-            return AddDataOutputPort<PortModel>(portName, typeHandle, portId, options);
-        }
-
-        protected PortModel AddDataOutputPort<TDataType>(string portName, string portId = null)
-        {
-            return AddDataOutputPort(portName, typeof(TDataType).GenerateTypeHandle(), portId);
-        }
-
-        protected TPortTYpe AddExecutionInputPort<TPortTYpe>(string portName, string portId = null) where TPortTYpe : IPortModel
-        {
-            return (TPortTYpe)AddInputPort(portName, PortType.Execution, TypeHandle.ExecutionFlow, portId);
-        }
-
-        protected PortModel AddExecutionInputPort(string portName, string portId = null)
-        {
-            return AddExecutionInputPort<PortModel>(portName, portId);
-        }
-
-        protected TPortType AddExecutionOutputPort<TPortType>(string portName, string portId = null) where TPortType : IPortModel
-        {
-            return (TPortType)AddOutputPort(portName, PortType.Execution, TypeHandle.ExecutionFlow, portId);
-        }
-
-        protected PortModel AddExecutionOutputPort(string portName, string portId = null)
-        {
-            return AddExecutionOutputPort<PortModel>(portName, portId);
-        }
-
-        protected virtual IPortModel AddInputPort(string portName, PortType portType, TypeHandle dataType, string portId = null, PortModelOptions options = PortModelOptions.Default, Action<IConstant> preDefine = null)
+        public virtual IPortModel AddInputPort(string portName, PortType portType, TypeHandle dataType, string portId = null, PortModelOptions options = PortModelOptions.Default, Action<IConstant> preDefine = null)
         {
             var portModel = CreatePort(Direction.Input, portName, portType, dataType, portId, options);
             portModel = ReuseOrCreatePortModel(portModel, m_PreviousInputs, m_InputsById);
@@ -365,7 +304,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             return portModel;
         }
 
-        protected virtual IPortModel AddOutputPort(string portName, PortType portType, TypeHandle dataType, string portId = null, PortModelOptions options = PortModelOptions.Default)
+        public virtual IPortModel AddOutputPort(string portName, PortType portType, TypeHandle dataType, string portId = null, PortModelOptions options = PortModelOptions.Default)
         {
             var portModel = CreatePort(Direction.Output, portName, portType, dataType, portId, options);
             return ReuseOrCreatePortModel(portModel, m_PreviousOutputs, m_OutputsById);
@@ -389,8 +328,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             if (m_InputConstantsById.TryGetValue(id, out var constant))
             {
                 // Destroy existing constant if not compatible
-                Type type = inputPort.DataTypeHandle.Resolve();
-                if (!constant.Type.IsAssignableFrom(type))
+                var embeddedConstantType = Stencil.GetConstantNodeValueType(inputPort.DataTypeHandle);
+                Type portDefinitionType = null;
+                if (embeddedConstantType != null)
+                {
+                    var instance = (IConstant)Activator.CreateInstance(embeddedConstantType);
+                    portDefinitionType = instance.Type;
+                }
+                else
+                {
+                    portDefinitionType = inputPort.DataTypeHandle.Resolve();
+                }
+
+                if (!constant.Type.IsAssignableFrom(portDefinitionType))
                 {
                     m_InputConstantsById.Remove(id);
                 }

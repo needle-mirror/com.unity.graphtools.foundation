@@ -1,53 +1,52 @@
 using System;
-using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class TokenNode : Node
     {
-        public static readonly string k_TokenModifierUssClassName = k_UssClassName.WithUssModifier("token");
-        public static readonly string k_ConstantModifierUssClassName = k_UssClassName.WithUssModifier("constant-token");
-        public static readonly string k_VariableModifierUssClassName = k_UssClassName.WithUssModifier("variable-token");
-        public static readonly string k_PortalModifierUssClassName = k_UssClassName.WithUssModifier("portal");
-        public static readonly string k_PortalEntryModifierUssClassName = k_UssClassName.WithUssModifier("portal-entry");
-        public static readonly string k_PortalExitModifierUssClassName = k_UssClassName.WithUssModifier("portal-exit");
+        public static readonly string tokenModifierUssClassName = ussClassName.WithUssModifier("token");
+        public static readonly string constantModifierUssClassName = ussClassName.WithUssModifier("constant-token");
+        public static readonly string variableModifierUssClassName = ussClassName.WithUssModifier("variable-token");
+        public static readonly string portalModifierUssClassName = ussClassName.WithUssModifier("portal");
+        public static readonly string portalEntryModifierUssClassName = ussClassName.WithUssModifier("portal-entry");
+        public static readonly string portalExitModifierUssClassName = ussClassName.WithUssModifier("portal-exit");
 
-        public static readonly string k_TitleIconContainerPartName = "title-icon-container";
-        public static readonly string k_ConstantEditorPartName = "constant-editor";
-        public static readonly string k_InputPortContainerPartName = "inputs";
-        public static readonly string k_OutputPortContainerPartName = "outputs";
+        public static readonly string titleIconContainerPartName = "title-icon-container";
+        public static readonly string constantEditorPartName = "constant-editor";
+        public static readonly string inputPortContainerPartName = "inputs";
+        public static readonly string outputPortContainerPartName = "outputs";
 
         protected override void BuildPartList()
         {
-            PartList.AppendPart(SinglePortContainerPart.Create(k_InputPortContainerPartName, ExtractInputPortModel(Model), this, k_UssClassName));
-            PartList.AppendPart(IconTitleProgressPart.Create(k_TitleIconContainerPartName, Model, this, k_UssClassName));
-            PartList.AppendPart(ConstantNodeEditorPart.Create(k_ConstantEditorPartName, Model, this, k_UssClassName, Store?.GetState().EditorDataModel));
-            PartList.AppendPart(SinglePortContainerPart.Create(k_OutputPortContainerPartName, ExtractOutputPortModel(Model), this, k_UssClassName));
+            PartList.AppendPart(SinglePortContainerPart.Create(inputPortContainerPartName, ExtractInputPortModel(Model), this, ussClassName));
+            PartList.AppendPart(IconTitleProgressPart.Create(titleIconContainerPartName, Model, this, ussClassName));
+            PartList.AppendPart(ConstantNodeEditorPart.Create(constantEditorPartName, Model, this, ussClassName));
+            PartList.AppendPart(SinglePortContainerPart.Create(outputPortContainerPartName, ExtractOutputPortModel(Model), this, ussClassName));
         }
 
         protected override void PostBuildUI()
         {
             base.PostBuildUI();
 
-            AddToClassList(k_TokenModifierUssClassName);
+            AddToClassList(tokenModifierUssClassName);
             this.AddStylesheet("TokenNode.uss");
 
             switch (Model)
             {
                 case IEdgePortalEntryModel _:
-                    AddToClassList(k_PortalModifierUssClassName);
-                    AddToClassList(k_PortalEntryModifierUssClassName);
+                    AddToClassList(portalModifierUssClassName);
+                    AddToClassList(portalEntryModifierUssClassName);
                     break;
                 case IEdgePortalExitModel _:
-                    AddToClassList(k_PortalModifierUssClassName);
-                    AddToClassList(k_PortalExitModifierUssClassName);
+                    AddToClassList(portalModifierUssClassName);
+                    AddToClassList(portalExitModifierUssClassName);
                     break;
-                case ConstantNodeModel _:
-                    AddToClassList(k_ConstantModifierUssClassName);
+                case IConstantNodeModel _:
+                    AddToClassList(constantModifierUssClassName);
                     break;
-                case VariableNodeModel _:
-                    AddToClassList(k_VariableModifierUssClassName);
+                case IVariableNodeModel _:
+                    AddToClassList(variableModifierUssClassName);
                     break;
             }
         }

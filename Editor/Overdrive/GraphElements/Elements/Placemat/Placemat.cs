@@ -14,17 +14,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             DoNotEnsureMinSize
         }
 
-        internal static readonly Vector2 k_DefaultCollapsedSize = new Vector2(200, 42);
+        internal static readonly Vector2 defaultCollapsedSize = new Vector2(200, 42);
         static readonly int k_SelectRectOffset = 3;
 
-        public new static readonly string k_UssClassName = "ge-placemat";
-        public static readonly string k_SelectionBorderElementName = "selection-border";
-        public static readonly string k_TitleContainerPartName = "title-container";
-        public static readonly string k_CollapseButtonPartName = "collapse-button";
-        public static readonly string k_ResizerPartName = "resizer";
+        public new static readonly string ussClassName = "ge-placemat";
+        public static readonly string collapsedModifierUssClassName = ussClassName.WithUssModifier("collapsed");
+        public static readonly string selectionBorderElementName = "selection-border";
+        public static readonly string titleContainerPartName = "title-container";
+        public static readonly string collapseButtonPartName = "collapse-button";
+        public static readonly string resizerPartName = "resizer";
 
-        internal static readonly float k_Bounds = 9.0f;
-        internal static readonly float k_BoundTop = 29.0f; // Current height of Title
+        internal static readonly float bounds = 9.0f;
+        internal static readonly float boundTop = 29.0f; // Current height of Title
 
         // The next two values need to be the same as USS... however, we can't get the values from there as we need them in a static
         // methods used to create new placemats
@@ -51,8 +52,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             get
             {
-                var actualCollapsedSize = k_DefaultCollapsedSize;
-                if (UncollapsedSize.x < k_DefaultCollapsedSize.x)
+                var actualCollapsedSize = defaultCollapsedSize;
+                if (UncollapsedSize.x < defaultCollapsedSize.x)
                     actualCollapsedSize.x = UncollapsedSize.x;
 
                 return actualCollapsedSize;
@@ -74,11 +75,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     collapsedElement.style.visibility = StyleKeyword.Null;
                 }
 
-                foreach (var node in AllCollapsedElements(m_CollapsedElements).OfType<Node>())
-                {
-                    node.UpdateEdges();
-                }
-
                 m_CollapsedElements.Clear();
 
                 if (value == null)
@@ -88,11 +84,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 {
                     collapsedElement.style.visibility = Visibility.Hidden;
                     m_CollapsedElements.Add(collapsedElement);
-                }
-
-                foreach (var node in AllCollapsedElements(m_CollapsedElements).OfType<Node>())
-                {
-                    node.UpdateEdges();
                 }
             }
         }
@@ -106,24 +97,24 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         protected override void BuildPartList()
         {
-            var editableTitlePart = EditableTitlePart.Create(k_TitleContainerPartName, Model, this, k_UssClassName);
+            var editableTitlePart = EditableTitlePart.Create(titleContainerPartName, Model, this, ussClassName);
             PartList.AppendPart(editableTitlePart);
-            var collapseButtonPart = CollapseButtonPart.Create(k_CollapseButtonPartName, Model, this, k_UssClassName);
+            var collapseButtonPart = CollapseButtonPart.Create(collapseButtonPartName, Model, this, ussClassName);
             editableTitlePart.PartList.AppendPart(collapseButtonPart);
-            PartList.AppendPart(FourWayResizerPart.Create(k_ResizerPartName, Model, this, k_UssClassName));
+            PartList.AppendPart(FourWayResizerPart.Create(resizerPartName, Model, this, ussClassName));
         }
 
         protected override void BuildElementUI()
         {
-            var selectionBorder = new SelectionBorder { name = k_SelectionBorderElementName };
-            selectionBorder.AddToClassList(k_UssClassName.WithUssElement(k_SelectionBorderElementName));
+            var selectionBorder = new SelectionBorder { name = selectionBorderElementName };
+            selectionBorder.AddToClassList(ussClassName.WithUssElement(selectionBorderElementName));
             Add(selectionBorder);
             m_ContentContainer = selectionBorder.ContentContainer;
 
             base.BuildElementUI();
 
             usageHints = UsageHints.DynamicTransform;
-            AddToClassList(k_UssClassName);
+            AddToClassList(ussClassName);
 
             // PF: Fix this: Placemats are automatically added whereas other elements need to be added manually
             // with GraphView.AddElement. Furthermore, calling GraphView.AddElement(placemat) will remove it
@@ -135,7 +126,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             base.PostBuildUI();
 
-            var collapseButton = this.Q(k_CollapseButtonPartName);
+            var collapseButton = this.Q(collapseButtonPartName);
             collapseButton?.RegisterCallback<ChangeEvent<bool>>(OnCollapseChangeEvent);
 
             this.AddStylesheet("Placemat.uss");
@@ -175,7 +166,69 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        protected void OnCollapseChangeEvent(ChangeEvent<bool> evt)
+        // PF FIXME: we can probably improve the performance of this.
+        // Idea: build a bounding box of placemats affected by currentPlacemat and use this BB to intersect with nodes.
+        // PF TODO: also revisit Placemat other recursive functions for perf improvements.
+        static void GatherDependencies(Placemat currentPlacemat, IList<GraphElement> graphElements, ICollection<GraphElement> dependencies)
+        {
+            if (currentPlacemat.PlacematModel.Collapsed)
+            {
+                foreach (var cge in currentPlacemat.CollapsedElements)
+                {
+                    dependencies.Add(cge);
+                    if (cge is Placemat placemat)
+                        GatherDependencies(placemat, graphElements, dependencies);
+                }
+
+                return;
+            }
+
+            // We want gathering dependencies to work even if the placemat layout is not up to date, so we use the
+            // currentPlacemat.PlacematModel.PositionAndSize to do our overlap test.
+            var currRect = currentPlacemat.PlacematModel.PositionAndSize;
+            var currentActivePlacematRect = new Rect(
+                currRect.x + k_SelectRectOffset,
+                currRect.y + k_SelectRectOffset,
+                currRect.width - 2 * k_SelectRectOffset,
+                currRect.height - 2 * k_SelectRectOffset);
+
+            foreach (var elem in graphElements)
+            {
+                if (elem.layout.Overlaps(currentActivePlacematRect))
+                {
+                    var placemat = elem as Placemat;
+                    if (placemat != null && placemat.ZOrder > currentPlacemat.ZOrder)
+                    {
+                        GatherDependencies(placemat, graphElements, dependencies);
+                    }
+
+                    if (placemat == null || placemat.ZOrder > currentPlacemat.ZOrder)
+                        dependencies.Add(elem);
+                }
+            }
+        }
+
+        public override void AddForwardDependencies()
+        {
+            var graphElements = GraphView.GraphElements.ToList()
+                .Where(e => !(e is Edge) && (e.parent is GraphView.Layer) && e.IsSelectable())
+                .ToList();
+
+            var dependencies = new List<GraphElement>();
+            GatherDependencies(this, graphElements, dependencies);
+            var nodeModels = dependencies.Select(e => e.Model).OfType<INodeModel>();
+            foreach (var edgeModel in nodeModels.SelectMany(n => n.GetConnectedEdges()))
+            {
+                var ui = edgeModel.GetUI(GraphView);
+                if (ui != null)
+                {
+                    // Edge models endpoints need to be updated.
+                    Dependencies.AddForwardDependency(ui, DependencyType.Geometry | DependencyType.Removal);
+                }
+            }
+        }
+
+        void OnCollapseChangeEvent(ChangeEvent<bool> evt)
         {
             SetCollapsed(evt.newValue);
         }
@@ -202,7 +255,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 style.width = UncollapsedSize.x;
                 style.height = UncollapsedSize.y;
             }
-            EnableInClassList("collapsed", Collapsed);
+            EnableInClassList(collapsedModifierUssClassName, Collapsed);
         }
 
         static IEnumerable<GraphElement> AllCollapsedElements(IEnumerable<GraphElement> collapsedElements)
@@ -232,16 +285,26 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        void GatherCollapsedEdges(List<GraphElement> collapsedElements)
+        void GatherCollapsedEdges(ICollection<GraphElement> collapsedElements)
         {
-            var allCollapsedNodes = AllCollapsedElements(collapsedElements).OfType<Node>().Select(e => e.NodeModel).ToList();
-            foreach (var edge in GraphView.Edges.ToList())
-                if (AnyNodeIsConnectedToPort(allCollapsedNodes, edge.Input) && AnyNodeIsConnectedToPort(allCollapsedNodes, edge.Output))
-                    if (!collapsedElements.Contains(edge))
-                        collapsedElements.Add(edge);
+            var allCollapsedNodes = AllCollapsedElements(collapsedElements)
+                .Select(e => e.Model)
+                .OfType<INodeModel>()
+                .ToList();
+            foreach (var edge in PlacematModel.GraphModel.EdgeModels)
+            {
+                if (AnyNodeIsConnectedToPort(allCollapsedNodes, edge.ToPort) && AnyNodeIsConnectedToPort(allCollapsedNodes, edge.FromPort))
+                {
+                    var edgeUI = edge.GetUI<GraphElement>(GraphView);
+                    if (!collapsedElements.Contains(edgeUI))
+                    {
+                        collapsedElements.Add(edgeUI);
+                    }
+                }
+            }
         }
 
-        internal List<IGraphElementModel> GatherCollapsedElements()
+        List<IGraphElementModel> GatherCollapsedElements()
         {
             List<GraphElement> collapsedElements = new List<GraphElement>();
 
@@ -605,12 +668,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     maxY = r.yMax;
             }
 
-            var width = maxX - minX + k_Bounds * 2.0f;
-            var height = maxY - minY + k_Bounds * 2.0f + k_BoundTop;
+            var width = maxX - minX + bounds * 2.0f;
+            var height = maxY - minY + bounds * 2.0f + boundTop;
 
             pos = new Rect(
-                minX - k_Bounds,
-                minY - (k_BoundTop + k_Bounds),
+                minX - bounds,
+                minY - (boundTop + bounds),
                 width,
                 height);
 

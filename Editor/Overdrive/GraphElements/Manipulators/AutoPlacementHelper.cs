@@ -84,7 +84,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             foreach (IGraphElementModel element in m_LeftOverElementModels)
             {
-                GraphElement elementUI = element.GetUI(m_GraphView);
+                GraphElement elementUI = element.GetUI<GraphElement>(m_GraphView);
                 if (elementUI != null)
                 {
                     boundingRects.Add(new Tuple<Rect, List<IGraphElementModel>>(elementUI.GetPosition(), new List<IGraphElementModel> { element }));
@@ -265,7 +265,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             {
                 Rect otherBoundingRect = otherRect.Item1;
                 List<IGraphElementModel> otherBoundingRectElements = otherRect.Item2;
-                if (otherBoundingRectElements.Any(element => IsOnPlacemats(element.GetUI(m_GraphView), placematsOnBoundingRect)))
+                if (otherBoundingRectElements.Any(element => IsOnPlacemats(element.GetUI<GraphElement>(m_GraphView), placematsOnBoundingRect)))
                 {
                     AdjustBoundingRect(ref boundingRect, otherBoundingRect);
                     elementsOnBoundingRect.AddRange(otherBoundingRectElements);

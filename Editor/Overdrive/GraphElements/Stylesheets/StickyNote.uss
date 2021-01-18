@@ -30,7 +30,7 @@
     white-space: normal;
 }
 
-.ge-sticky-note .resizer {
+.ge-sticky-note .ge-resizer {
     margin-bottom: 6px;
     margin-right: 6px;
 }

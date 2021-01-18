@@ -7,8 +7,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     public interface IGraphAssetModel : IDisposable
     {
         string Name { get; set; }
+        string FriendlyScriptName { get; }
+        string SourceFilePath { get; }
         IGraphModel GraphModel { get; }
-        void CreateGraph(string graphName, Type stencilType, bool writeOnDisk = true);
+        IBlackboardGraphModel BlackboardGraphModel { get; }
+        void CreateGraph(string graphName, Type stencilType = null, bool writeOnDisk = true);
     }
 
     // ReSharper disable once InconsistentNaming

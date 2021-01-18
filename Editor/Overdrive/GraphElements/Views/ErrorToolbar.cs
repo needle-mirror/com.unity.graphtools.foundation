@@ -23,13 +23,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             m_PreviousErrorButton = this.MandatoryQ<ToolbarButton>("previousErrorButton");
             m_PreviousErrorButton.tooltip = "Go To Previous Error";
-            m_PreviousErrorButton.RemoveManipulator(m_PreviousErrorButton.clickable);
-            m_PreviousErrorButton.AddManipulator(new Clickable(OnPreviousErrorButton));
+            m_PreviousErrorButton.ChangeClickEvent(OnPreviousErrorButton);
 
             m_NextErrorButton = this.MandatoryQ<ToolbarButton>("nextErrorButton");
             m_NextErrorButton.tooltip = "Go To Next Error";
-            m_NextErrorButton.RemoveManipulator(m_NextErrorButton.clickable);
-            m_NextErrorButton.AddManipulator(new Clickable(OnNextErrorButton));
+            m_NextErrorButton.ChangeClickEvent(OnNextErrorButton);
 
             m_ErrorCounterLabel = this.MandatoryQ<Label>("errorCounterLabel");
         }
@@ -46,22 +44,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         static bool HasErrorBadge(GraphElement element)
         {
-            return element.ClassListContains("hasErrorIconBadge");
+            return element.ClassListContains(ErrorBadge.hasErrorUssClassName);
         }
 
-        public void Update()
+        public void UpdateUI()
         {
-            bool enabled = m_Store.GetState().CurrentGraphModel != null;
+            bool enabled = m_Store.State.GraphModel != null;
 
             int errorCount = 0;
 
-            IGraphModel graphModel = m_Store.GetState().CurrentGraphModel;
+            IGraphModel graphModel = m_Store.State.GraphModel;
             if (graphModel != null)
             {
-                if (m_Store.GetState().CompilationResultModel != null)
-                {
-                    errorCount = (m_Store.GetState().CompilationResultModel?.GetLastResult()?.errors?.Count).GetValueOrDefault(0);
-                }
+                errorCount = (m_Store.State.CompilationStateComponent.GetLastResult()?.errors?.Count).GetValueOrDefault(0);
             }
 
             enabled &= errorCount > 0;

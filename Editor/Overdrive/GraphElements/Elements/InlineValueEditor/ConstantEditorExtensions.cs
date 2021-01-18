@@ -2,37 +2,33 @@ using System;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Object = UnityEngine.Object;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    [GraphElementsExtensionMethodsCache]
+    [GraphElementsExtensionMethodsCache(GraphElementsExtensionMethodsCacheAttribute.lowestPriority)]
     public static class ConstantEditorExtensions
     {
-        public static readonly string k_UssClassName = "ge-inline-value-editor";
+        public static readonly string ussClassName = "ge-inline-value-editor";
 
-        public static void TriggerOnValueChanged<T>(this IConstantEditorBuilder builder, T oldValue, T newValue)
-        {
-            using (ChangeEvent<T> other = ChangeEvent<T>.GetPooled(oldValue, newValue))
-                builder.OnValueChanged(other);
-        }
-
-        static VisualElement BuildInlineValueEditor<T>(this IConstantEditorBuilder builder, T oldValue, BaseField<T> field)
+        public static VisualElement BuildInlineValueEditor<T>(object oldValue, BaseField<T> field, Action<IChangeEvent> valueChangedCallback)
         {
             var root = new VisualElement();
 
             root.AddStylesheet("InlineValueEditor.uss");
-            root.AddToClassList(k_UssClassName);
+            root.AddToClassList(ussClassName);
             //Mimic UIElement property fields style
-            root.AddToClassList("unity-property-field");
+            root.AddToClassList(PropertyField.ussClassName);
 
-            field.value = oldValue;
+            field.value = (T)oldValue;
             root.Add(field);
-            field.RegisterValueChangedCallback(evt => builder.OnValueChanged(evt));
+            field.RegisterValueChangedCallback(evt => valueChangedCallback(evt));
             return root;
         }
 
-        static VisualElement BuildSearcherEnumEditor(Enum value, Type enumType, Action<Enum> onNewEnumValue)
+        static VisualElement BuildSearcherEnumEditor(EnumValueReference enumConstant, Type enumType, Action<Enum> onNewEnumValue)
         {
+            var value = enumConstant.ValueAsEnum();
             var enumEditor = new Button { text = value.ToString() };
             enumEditor.clickable.clickedWithEventInfo += e =>
             {
@@ -55,73 +51,71 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             return enumEditor;
         }
 
-        public static VisualElement BuildColorEditor(this IConstantEditorBuilder builder, Color c)
-        {
-            return builder.BuildInlineValueEditor(c, new ColorField());
-        }
-
-        public static VisualElement BuildFloatEditor(this IConstantEditorBuilder builder, float f)
-        {
-            return builder.BuildInlineValueEditor(f, new FloatField());
-        }
-
-        public static VisualElement BuildDoubleEditor(this IConstantEditorBuilder builder, double d)
-        {
-            return builder.BuildInlineValueEditor(d, new DoubleField());
-        }
-
-        public static VisualElement BuildIntEditor(this IConstantEditorBuilder builder, int i)
-        {
-            return builder.BuildInlineValueEditor(i, new IntegerField());
-        }
-
-        public static VisualElement BuildBoolEditor(this IConstantEditorBuilder builder, bool b)
-        {
-            return builder.BuildInlineValueEditor(b, new Toggle());
-        }
-
-        public static VisualElement BuildStringEditor(this IConstantEditorBuilder builder, string s)
-        {
-            return builder.BuildInlineValueEditor(s, new TextField());
-        }
-
-        public static VisualElement BuildFloatEditor(this IConstantEditorBuilder builder, Vector2 f)
-        {
-            return builder.BuildInlineValueEditor(f, new Vector2Field());
-        }
-
-        public static VisualElement BuildFloatEditor(this IConstantEditorBuilder builder, Vector3 f)
-        {
-            return builder.BuildInlineValueEditor(f, new Vector3Field());
-        }
-
-        public static VisualElement BuildFloatEditor(this IConstantEditorBuilder builder, Vector4 f)
-        {
-            return builder.BuildInlineValueEditor(f, new Vector4Field());
-        }
-
-        public static VisualElement BuildFloatEditor(this IConstantEditorBuilder builder, Quaternion f)
-        {
-            return null;
-        }
-
-        public static VisualElement BuildEnumEditor(this IConstantEditorBuilder builder, EnumValueReference enumConstant)
+        static VisualElement BuildEnumEditor(IConstantEditorBuilder builder, EnumValueReference enumConstant)
         {
             void TriggerOnValueChange(Enum newEnumValue)
             {
                 var oldValue = enumConstant;
                 var newValue = new EnumValueReference(newEnumValue);
-                using (ChangeEvent<EnumValueReference> other = ChangeEvent<EnumValueReference>.GetPooled(oldValue, newValue))
-                    builder.OnValueChanged(other);
+                using (var evt = ChangeEvent<EnumValueReference>.GetPooled(oldValue, newValue))
+                    builder.OnValueChanged(evt);
             }
 
             Type enumType = enumConstant.EnumType.Resolve();
             VisualElement editor = enumType == typeof(KeyCode)
-                ? BuildSearcherEnumEditor(enumConstant.ValueAsEnum(), enumType, TriggerOnValueChange)
+                ? BuildSearcherEnumEditor(enumConstant, enumType, TriggerOnValueChange)
                 : BuildEnumFieldEditor(enumConstant, TriggerOnValueChange);
 
-            editor.SetEnabled(!builder.ConstantIsLocked);
+            editor?.SetEnabled(!builder.ConstantIsLocked);
             return editor;
+        }
+
+        public static VisualElement BuildDefaultConstantEditor(this IConstantEditorBuilder builder, IConstant constant)
+        {
+            if (constant.Type == typeof(float))
+                return BuildInlineValueEditor(constant.ObjectValue, new FloatField(), builder.OnValueChanged);
+
+            if (constant.Type == typeof(double))
+                return BuildInlineValueEditor(constant.ObjectValue, new DoubleField(), builder.OnValueChanged);
+
+            if (constant.Type == typeof(int))
+                return BuildInlineValueEditor(constant.ObjectValue, new IntegerField(), builder.OnValueChanged);
+
+            if (constant.Type == typeof(long))
+                return BuildInlineValueEditor(constant.ObjectValue, new LongField(), builder.OnValueChanged);
+
+            if (constant.Type == typeof(bool))
+                return BuildInlineValueEditor(constant.ObjectValue, new Toggle(), builder.OnValueChanged);
+
+            if (constant.Type == typeof(string))
+                return BuildInlineValueEditor(constant.ObjectValue, new TextField(), builder.OnValueChanged);
+
+            if (constant.Type == typeof(Color))
+                return BuildInlineValueEditor(constant.ObjectValue, new ColorField(), builder.OnValueChanged);
+
+            if (constant.Type == typeof(Vector2))
+                return BuildInlineValueEditor(constant.ObjectValue, new Vector2Field(), builder.OnValueChanged);
+
+            if (constant.Type == typeof(Vector3))
+                return BuildInlineValueEditor(constant.ObjectValue, new Vector3Field(), builder.OnValueChanged);
+
+            if (constant.Type == typeof(Vector4))
+                return BuildInlineValueEditor(constant.ObjectValue, new Vector4Field(), builder.OnValueChanged);
+
+            if (constant.Type == typeof(GameObject))
+                return BuildInlineValueEditor(constant.ObjectValue,
+                    new ObjectField { allowSceneObjects = true, objectType = constant.Type },
+                    builder.OnValueChanged);
+
+            if (typeof(Object).IsAssignableFrom(constant.Type))
+                return BuildInlineValueEditor(constant.ObjectValue,
+                    new ObjectField { allowSceneObjects = false, objectType = constant.Type },
+                    builder.OnValueChanged);
+
+            if (constant.Type == typeof(EnumValueReference))
+                return BuildEnumEditor(builder, (EnumValueReference)constant.ObjectValue);
+
+            return null;
         }
     }
 }

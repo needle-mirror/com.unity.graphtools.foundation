@@ -16,10 +16,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     {
         public new class UxmlFactory : UxmlFactory<ResizableElement> {}
 
+        public static readonly string ussClassName = "ge-resizable-element";
+
         public ResizableElement() : this("Resizable.uxml")
         {
             pickingMode = PickingMode.Ignore;
-            AddToClassList("resizableElement");
+            AddToClassList(ussClassName);
         }
 
         public ResizableElement(string uiFile)

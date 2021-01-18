@@ -1,41 +1,104 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
 using Object = UnityEngine.Object;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    // PF FIXME: some VS specific flags here.
-    [Flags]
-    public enum UpdateFlags
+    public enum UIRebuildType
     {
-        None               = 0,
-        Selection          = 1 << 0,
-        GraphGeometry      = 1 << 1,
-        GraphTopology      = 1 << 2,
-        CompilationResult  = 1 << 3,
-        RequestCompilation = 1 << 4,
-        RequestRebuild     = 1 << 5,
-        UpdateView         = 1 << 6,
-
-        All = Selection | GraphGeometry | GraphTopology | RequestCompilation | RequestRebuild,
+        None,
+        Partial,
+        Complete,
     }
 
     public class State : IDisposable
     {
         bool m_Disposed;
 
-        public IGraphAssetModel AssetModel { get; set; }
-        public virtual IGraphModel CurrentGraphModel => AssetModel?.GraphModel;
-        public IEditorDataModel EditorDataModel { get; }
-        public Preferences Preferences => EditorDataModel?.Preferences;
+        protected readonly GUID m_GraphViewEditorWindowGUID;
 
-        public TracingDataModel TracingDataModel { get; }
-        public ICompilationResultModel CompilationResultModel { get; private set; }
+        UIRebuildType m_UIRebuildType;
+        uint m_ChangeListVersion;
+        HashSet<IGraphElementModel> m_NewModels = new HashSet<IGraphElementModel>();
+        HashSet<IGraphElementModel> m_ChangedModels = new HashSet<IGraphElementModel>();
+        HashSet<IGraphElementModel> m_DeletedModels = new HashSet<IGraphElementModel>();
+        HashSet<IGraphElementModel> m_ModelsToAutoAlign = new HashSet<IGraphElementModel>();
 
-        public State(IEditorDataModel editorDataModel)
+        PersistedEditorState m_EditorState;
+        BlackboardViewStateComponent m_BlackboardViewStateComponent;
+        WindowStateComponent m_WindowStateComponent;
+        SelectionStateComponent m_SelectionStateComponent;
+        TracingStateComponent m_TracingStateComponent;
+        CompilationStateComponent m_CompilationStateComponent;
+
+        public uint Version { get; private set; }
+        public IEnumerable<IGraphElementModel> NewModels => m_NewModels;
+        public IEnumerable<IGraphElementModel> ChangedModels => m_ChangedModels;
+        public IEnumerable<IGraphElementModel> DeletedModels => m_DeletedModels;
+        public IEnumerable<IGraphElementModel> ModelsToAutoAlign => m_ModelsToAutoAlign;
+
+        internal UIRebuildType LastActionUIRebuildType { get; private set; }
+        internal string LastDispatchedActionName { get; private set; }
+
+        public IGraphAssetModel AssetModel => WindowState.CurrentGraph.GraphAssetModel;
+        // Virtual for asset-less tests only
+        public virtual IGraphModel GraphModel => AssetModel?.GraphModel;
+        // Virtual for asset-less tests only
+        public virtual IBlackboardGraphModel BlackboardGraphModel => AssetModel?.BlackboardGraphModel;
+
+        protected PersistedEditorState EditorState
         {
-            EditorDataModel = editorDataModel;
-            TracingDataModel = new TracingDataModel(-1);
-            CompilationResultModel = new CompilationResultModel();
+            get => m_EditorState;
+            private set
+            {
+                // Reset local caches
+                m_BlackboardViewStateComponent = null;
+                m_WindowStateComponent = null;
+                m_SelectionStateComponent = null;
+                m_TracingStateComponent = null;
+                m_CompilationStateComponent = null;
+
+                m_EditorState = value;
+            }
+        }
+
+        public BlackboardViewStateComponent BlackboardViewState =>
+            m_BlackboardViewStateComponent ??
+            (m_BlackboardViewStateComponent = EditorState.GetOrCreateAssetStateComponent<BlackboardViewStateComponent>());
+
+        public WindowStateComponent WindowState =>
+            m_WindowStateComponent ??
+            (m_WindowStateComponent = EditorState.GetOrCreateViewStateComponent<WindowStateComponent>(m_GraphViewEditorWindowGUID));
+
+        public SelectionStateComponent SelectionStateComponent =>
+            m_SelectionStateComponent ??
+            (m_SelectionStateComponent = EditorState.GetOrCreateAssetViewStateComponent<SelectionStateComponent>(m_GraphViewEditorWindowGUID));
+
+        public TracingStateComponent TracingState =>
+            m_TracingStateComponent ??
+            (m_TracingStateComponent = EditorState.GetOrCreateAssetViewStateComponent<TracingStateComponent>(m_GraphViewEditorWindowGUID));
+
+        public CompilationStateComponent CompilationStateComponent =>
+            m_CompilationStateComponent ??
+            (m_CompilationStateComponent = EditorState.GetOrCreateAssetViewStateComponent<CompilationStateComponent>(m_GraphViewEditorWindowGUID));
+
+        public Preferences Preferences { get; }
+
+        public PluginRepository PluginRepository { get; }
+
+        public State(GUID graphViewEditorWindowGUID, Preferences preferences)
+        {
+            m_GraphViewEditorWindowGUID = graphViewEditorWindowGUID;
+            Preferences = preferences;
+            PluginRepository = new PluginRepository();
+
+            Version = 1;
+            m_ChangeListVersion = 0;
+            m_UIRebuildType = UIRebuildType.None;
+
+            LoadGraphAsset(null, null);
         }
 
         public void Dispose()
@@ -58,8 +121,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
                 UnloadCurrentGraphAsset();
 
-                TracingDataModel.DebuggingData = null;
-                CompilationResultModel = null;
+                PluginRepository?.Dispose();
+
+                TracingState.DebuggingData = null;
             }
 
             m_Disposed = true;
@@ -70,25 +134,99 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             Dispose(false);
         }
 
-        public virtual void PreStateChanged()
+        public void MarkNew(IEnumerable<IGraphElementModel> models)
         {
-            if (EditorDataModel != null && CurrentGraphModel.HasAnyTopologyChange())
-                EditorDataModel.SetUpdateFlag(EditorDataModel.UpdateFlags | UpdateFlags.GraphTopology);
+            foreach (var model in models ?? Enumerable.Empty<IGraphElementModel>())
+            {
+                if (model == null || m_DeletedModels.Contains(model))
+                    continue;
 
-            if (EditorDataModel != null && CurrentGraphModel?.LastChanges?.RequiresRebuild == true)
-                EditorDataModel.SetUpdateFlag(EditorDataModel.UpdateFlags | UpdateFlags.RequestRebuild);
+                m_ChangedModels.Remove(model);
+                m_NewModels.Add(model);
+
+                if (m_UIRebuildType == UIRebuildType.None)
+                    m_UIRebuildType = UIRebuildType.Partial;
+            }
         }
 
-        public virtual void PostStateChanged()
+        public void MarkChanged(IEnumerable<IGraphElementModel> models)
         {
-            EditorDataModel?.SetUpdateFlag(UpdateFlags.None);
+            foreach (var model in models ?? Enumerable.Empty<IGraphElementModel>())
+            {
+                if (model == null || m_NewModels.Contains(model) || m_DeletedModels.Contains(model))
+                    continue;
+
+                m_ChangedModels.Add(model);
+
+                if (m_UIRebuildType == UIRebuildType.None)
+                    m_UIRebuildType = UIRebuildType.Partial;
+            }
+        }
+
+        public void MarkDeleted(IEnumerable<IGraphElementModel> models)
+        {
+            foreach (var model in models ?? Enumerable.Empty<IGraphElementModel>())
+            {
+                if (model == null)
+                    continue;
+
+                m_NewModels.Remove(model);
+                m_ChangedModels.Remove(model);
+
+                m_DeletedModels.Add(model);
+                if (m_UIRebuildType == UIRebuildType.None)
+                    m_UIRebuildType = UIRebuildType.Partial;
+            }
+        }
+
+        public void MarkModelToAutoAlign(IGraphElementModel model)
+        {
+            m_ModelsToAutoAlign.Add(model);
+        }
+
+        internal void ResetChangeList()
+        {
+            m_NewModels.Clear();
+            m_ChangedModels.Clear();
+            m_DeletedModels.Clear();
+            m_ModelsToAutoAlign.Clear();
+            m_UIRebuildType = UIRebuildType.None;
+            m_ChangeListVersion = Version;
+        }
+
+        internal void IncrementVersion()
+        {
+            // unchecked: wrap around on overflow without exception.
+            unchecked
+            {
+                Version++;
+            }
+        }
+
+        public virtual UIRebuildType GetUpdateType(uint viewVersion)
+        {
+            // If view is new or too old, tell it to rebuild itself completely.
+            if (viewVersion == 0 || viewVersion < m_ChangeListVersion)
+            {
+                LastActionUIRebuildType = UIRebuildType.Complete;
+            }
+            else
+            {
+                // This is safe even if Version wraps around after an overflow.
+                LastActionUIRebuildType = viewVersion == Version ? UIRebuildType.None : m_UIRebuildType;
+            }
+
+            return LastActionUIRebuildType;
         }
 
         public virtual void PreDispatchAction(BaseAction action)
         {
             LastDispatchedActionName = action.GetType().Name;
-            CurrentGraphModel?.ResetChangeList();
             LastActionUIRebuildType = UIRebuildType.None;
+        }
+
+        public virtual void PostDispatchAction(BaseAction action)
+        {
         }
 
         public virtual void PushUndo(BaseAction action)
@@ -101,31 +239,26 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        public void MarkForUpdate(UpdateFlags flag, IGraphElementModel model = null)
+        public void RequestUIRebuild()
         {
-            EditorDataModel?.SetUpdateFlag(flag);
-            if (model != null)
-            {
-                EditorDataModel?.AddModelToUpdate(model);
-            }
+            m_UIRebuildType = UIRebuildType.Complete;
         }
 
-        // For performance debugging purposes
-        internal enum UIRebuildType
+        public void LoadGraphAsset(IGraphAssetModel assetModel, GameObject boundObject)
         {
-            None,
-            Partial,
-            Full
+            PersistedEditorState.Flush();
+
+            var assetPath = assetModel == null ? "" : AssetDatabase.GetAssetPath(assetModel as Object);
+            EditorState = new PersistedEditorState(assetPath);
+            WindowState.CurrentGraph = new OpenedGraph(assetModel, boundObject);
         }
-        internal UIRebuildType LastActionUIRebuildType { get; set; }
-        internal string LastDispatchedActionName { get; set; }
 
         public void UnloadCurrentGraphAsset()
         {
-            AssetModel?.Dispose();
-            AssetModel = null;
-
-            EditorDataModel?.PluginRepository?.UnregisterPlugins();
+            var currentAssetModel = AssetModel;
+            LoadGraphAsset(null, null);
+            currentAssetModel?.Dispose();
+            PluginRepository?.UnregisterPlugins();
         }
     }
 }

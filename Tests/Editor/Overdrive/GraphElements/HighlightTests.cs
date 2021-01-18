@@ -17,11 +17,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             where M : IGraphElementModel
             where E : GraphElement
         {
-            var declarationModel = GraphModel.CreateGraphVariableDeclaration("Foo", typeHandle, ModifierFlags.None, true);
+            var declarationModel = GraphModel.CreateGraphVariableDeclaration(typeHandle, "Foo", ModifierFlags.None, true);
             var model1 = creator(declarationModel, Vector2.zero);
             var model2 = creator(declarationModel, Vector2.one * 50);
 
-            Store.ForceRefreshUI(UpdateFlags.All);;
+            Store.MarkStateDirty();
             yield return null;
 
             var token1 = model1.GetUI<E>(GraphView);
@@ -42,7 +42,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             GraphView.AddToSelection(token1);
 
-            Store.ForceRefreshUI(UpdateFlags.All);;
+            Store.MarkStateDirty();
             yield return null;
 
             token1 = model1.GetUI<E>(GraphView);

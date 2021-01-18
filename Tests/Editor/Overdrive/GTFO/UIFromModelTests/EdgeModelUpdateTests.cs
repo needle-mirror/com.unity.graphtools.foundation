@@ -13,11 +13,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             var edge = new Edge();
             edge.SetupBuildAndUpdate(model, null, null);
 
-            Assert.IsFalse(edge.ClassListContains(Edge.k_EditModeModifierUssClassName));
+            Assert.IsFalse(edge.ClassListContains(Edge.editModeModifierUssClassName));
 
             model.EditMode = true;
             edge.UpdateFromModel();
-            Assert.IsTrue(edge.ClassListContains(Edge.k_EditModeModifierUssClassName));
+            Assert.IsTrue(edge.ClassListContains(Edge.editModeModifierUssClassName));
         }
     }
 }

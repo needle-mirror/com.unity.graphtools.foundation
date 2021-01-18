@@ -20,9 +20,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         [Test]
         public void DeleteNodeDoesRemoveTheDependency()
         {
-            var mgr = new PositionDependenciesManager(GraphView, GraphView.Window.DataModel.Preferences);
+            var mgr = new PositionDependenciesManager(GraphView, Store.State.Preferences);
             var operatorModel = GraphModel.CreateNode<Type0FakeNodeModel>("Node0", new Vector2(-100, -100));
-            var intModel = GraphModel.CreateConstantNode("int", typeof(int).GenerateTypeHandle(), new Vector2(-150, -100));
+            var intModel = GraphModel.CreateConstantNode(typeof(int).GenerateTypeHandle(), "int", new Vector2(-150, -100));
             var edge = GraphModel.CreateEdge(operatorModel.Input0, intModel.OutputPort);
             mgr.AddPositionDependency(edge);
             mgr.Remove(operatorModel.Guid, intModel.Guid);
@@ -36,7 +36,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             var node1 = GraphModel.CreateNode<Type0FakeNodeModel>(string.Empty, new Vector2(100, 100));
             GraphModel.CreateEdge(node1.Input0, node0.Output0);
 
-            Store.ForceRefreshUI(UpdateFlags.All);;
+            Store.MarkStateDirty();
             yield return null;
             GraphView.FrameAll();
             yield return null;
@@ -46,7 +46,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             {
                 using (var scheduler = GraphView.CreateTimerEventSchedulerWrapper())
                 {
-                    GraphElement stackNode = node0.GetUI(GraphView);
+                    GraphElement stackNode = node0.GetUI<GraphElement>(GraphView);
                     Vector2 startPos = stackNode.GetPosition().position;
                     Vector2 otherStartPos = node1.Position;
                     Vector2 nodeRect = stackNode.hierarchy.parent.ChangeCoordinatesTo(Window.rootVisualElement, stackNode.layout.center);
@@ -89,7 +89,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         public IEnumerator MovingAFloatingNodeMovesConnectedToken([Values] TestingMode mode)
         {
             var operatorModel = GraphModel.CreateNode<Type0FakeNodeModel>("Node0", new Vector2(-100, -100));
-            IConstantNodeModel intModel = GraphModel.CreateConstantNode("int", typeof(int).GenerateTypeHandle(), new Vector2(-150, -100));
+            IConstantNodeModel intModel = GraphModel.CreateConstantNode(typeof(int).GenerateTypeHandle(), "int", new Vector2(-150, -100));
             GraphModel.CreateEdge(operatorModel.Input0, intModel.OutputPort);
 
             yield return TestMove(mode,
@@ -115,7 +115,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                     for (int i = 0; i < expectedMovedDependencies.Length; i++)
                     {
                         INodeModel model = GraphModel.NodesByGuid[expectedMovedDependencies[i].Guid];
-                        GraphElement element = model.GetUI(GraphView);
+                        GraphElement element = model.GetUI<GraphElement>(GraphView);
 
                         Assert.IsNotNull(element);
                         Assert.That(model.Position.x, Is.EqualTo(initPositions[i].x).Within(epsilon));
@@ -130,12 +130,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                     {
                         case 0:
                             List<ISelectableGraphElement> selectables = movedNodes.Select(x => x.GetUI(GraphView)).Cast<ISelectableGraphElement>().ToList();
-                            GraphView.PositionDependenciesManagers.StartNotifyMove(selectables, startMousePos);
-                            GraphView.PositionDependenciesManagers.ProcessMovedNodes(startMousePos + mouseDelta);
+                            GraphView.PositionDependenciesManager.StartNotifyMove(selectables, startMousePos);
+                            GraphView.PositionDependenciesManager.ProcessMovedNodes(startMousePos + mouseDelta);
                             for (int i = 0; i < expectedMovedDependencies.Length; i++)
                             {
                                 INodeModel model = expectedMovedDependencies[i];
-                                GraphElement element = model.GetUI(GraphView);
+                                GraphElement element = model.GetUI<GraphElement>(GraphView);
                                 Assert.That(model.Position.x, Is.EqualTo(initPositions[i].x).Within(epsilon));
                                 Assert.That(model.Position.y, Is.EqualTo(initPositions[i].y).Within(epsilon));
                                 Assert.That(element.GetPosition().position.x, Is.EqualTo(initPositions[i].x).Within(epsilon));
@@ -143,7 +143,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                             }
                             return TestPhase.WaitForNextFrame;
                         default:
-                            GraphView.PositionDependenciesManagers.StopNotifyMove();
+                            GraphView.PositionDependenciesManager.StopNotifyMove();
                             return TestPhase.Done;
                     }
                 },
@@ -152,7 +152,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                     for (int i = 0; i < expectedMovedDependencies.Length; i++)
                     {
                         INodeModel model = GraphModel.NodesByGuid[expectedMovedDependencies[i].Guid];
-                        GraphElement element = model.GetUI(GraphView);
+                        GraphElement element = model.GetUI<GraphElement>(GraphView);
                         Assert.IsNotNull(element);
                         Assert.That(model.Position.x, Is.EqualTo(initPositions[i].x + mouseDelta.x).Within(epsilon), () => $"Model {model} was expected to have moved");
                         Assert.That(model.Position.y, Is.EqualTo(initPositions[i].y + mouseDelta.y).Within(epsilon), () => $"Model {model} was expected to have moved");
@@ -165,7 +165,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                         for (int i = 0; i < expectedUnmovedDependencies.Length; i++)
                         {
                             INodeModel model = GraphModel.NodesByGuid[expectedUnmovedDependencies[i].Guid];
-                            GraphElement element = model.GetUI(GraphView);
+                            GraphElement element = model.GetUI<GraphElement>(GraphView);
                             Assert.IsNotNull(element);
                             Assert.That(model.Position.x, Is.EqualTo(initUnmovedPositions[i].x).Within(epsilon));
                             Assert.That(model.Position.y, Is.EqualTo(initUnmovedPositions[i].y).Within(epsilon));

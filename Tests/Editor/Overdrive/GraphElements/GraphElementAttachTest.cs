@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using NUnit.Framework;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -10,7 +11,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
     class GraphElementAttachTests : GraphViewTester
     {
-        private static readonly Rect k_NodeRect = new Rect(SelectionDragger.k_PanAreaWidth * 2, SelectionDragger.k_PanAreaWidth * 3, 50, 50);
+        private static readonly Rect k_NodeRect = new Rect(SelectionDragger.panAreaWidth * 2, SelectionDragger.panAreaWidth * 3, 50, 50);
 
         Attacher CreateAttachedElement<T>(TestGraphViewWindow window) where T : VisualElement
         {
@@ -19,9 +20,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Attacher attacher = null;
             if (target != null)
             {
-                VisualElement attached = new VisualElement();
-                attached.SetLayout(new Rect(0, 0, 10, 10));
-                attached.style.backgroundColor = Color.blue;
+                VisualElement attached = new VisualElement
+                {
+                    style =
+                    {
+                        position = Position.Absolute,
+                        bottom = 10,
+                        right = 10,
+                        backgroundColor = Color.blue
+                    }
+                };
 
                 target.parent.Add(attached);
                 attacher = new Attacher(attached, target, SpriteAlignment.LeftCenter);
@@ -56,8 +64,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             helpers.MouseUpEvent(new Vector2(k_NodeRect.x + 15, k_NodeRect.y + 15));
             yield return null;
 
-            Assert.AreEqual(attacher.target.layout.center.y, attacher.element.layout.center.y);
-            Assert.AreNotEqual(attacher.target.layout.center.x, attacher.element.layout.center.x);
+            Assert.AreEqual(attacher.Target.layout.center.y, attacher.Element.layout.center.y);
+            Assert.AreNotEqual(attacher.Target.layout.center.x, attacher.Element.layout.center.x);
 
             yield return null;
         }

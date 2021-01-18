@@ -9,7 +9,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (!self.HasReorderableEdges)
                 return;
 
-            self.GraphModel.MoveEdgeBefore(edge, self.GetConnectedEdges().First());
+            self.GraphModel.MoveAfter(new[] { edge }, null);
         }
 
         public static void MoveEdgeUp(IReorderableEdgesPort self, IEdgeModel edge)
@@ -20,7 +20,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             var edges = self.GetConnectedEdges().ToList();
             var idx = edges.IndexOf(edge);
             if (idx >= 1)
-                self.GraphModel.MoveEdgeBefore(edge, edges[idx - 1]);
+                self.GraphModel.MoveBefore(new[] { edge }, edges[idx - 1]);
         }
 
         public static void MoveEdgeDown(IReorderableEdgesPort self, IEdgeModel edge)
@@ -31,7 +31,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             var edges = self.GetConnectedEdges().ToList();
             var idx = edges.IndexOf(edge);
             if (idx < edges.Count - 1)
-                self.GraphModel.MoveEdgeAfter(edge, edges[idx + 1]);
+                self.GraphModel.MoveAfter(new[] { edge }, edges[idx + 1]);
         }
 
         public static void MoveEdgeLast(IReorderableEdgesPort self, IEdgeModel edge)
@@ -39,7 +39,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (!self.HasReorderableEdges)
                 return;
 
-            self.GraphModel.MoveEdgeAfter(edge, self.GetConnectedEdges().Last());
+            self.GraphModel.MoveBefore(new[] { edge }, null);
         }
     }
 }

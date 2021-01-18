@@ -26,7 +26,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                     Assert.That(GetNodeCount(), Is.EqualTo(0));
                     Assert.That(GetEdgeCount(), Is.EqualTo(0));
                     Assert.That(GetStickyNoteCount(), Is.EqualTo(0));
-                    return new CreateStickyNoteAction("stickyNote", k_StickyNoteRect);
+                    return new CreateStickyNoteAction(k_StickyNoteRect);
                 },
                 () =>
                 {
@@ -43,7 +43,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                     Assert.That(GetNodeCount(), Is.EqualTo(0));
                     Assert.That(GetEdgeCount(), Is.EqualTo(0));
                     Assert.That(GetStickyNoteCount(), Is.EqualTo(1));
-                    return new CreateStickyNoteAction("stickyNote2", k_StickyNote2Rect);
+                    return new CreateStickyNoteAction(k_StickyNote2Rect);
                 },
                 () =>
                 {

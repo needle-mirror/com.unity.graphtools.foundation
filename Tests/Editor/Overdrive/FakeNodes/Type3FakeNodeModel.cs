@@ -23,8 +23,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
 
         protected override void OnDefineNode()
         {
-            Input = AddDataInputPort<float>("input0");
-            Output = AddDataOutputPort<float>("output0");
+            Input = this.AddDataInputPort<float>("input0");
+            Output = this.AddDataOutputPort<float>("output0");
         }
     }
 }

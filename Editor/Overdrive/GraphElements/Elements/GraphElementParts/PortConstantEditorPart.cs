@@ -5,20 +5,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class PortConstantEditorPart : BaseGraphElementPart
     {
-        public static readonly string k_ConstantEditorUssName = "constant-editor";
+        public static readonly string constantEditorUssName = "constant-editor";
 
         public static PortConstantEditorPart Create(string name, IGraphElementModel model,
-            IGraphElement graphElement, string parentClassName, IEditorDataModel editorDataModel)
+            IGraphElement graphElement, string parentClassName)
         {
             if (model is IPortModel)
             {
-                return new PortConstantEditorPart(name, model, graphElement, parentClassName, editorDataModel);
+                return new PortConstantEditorPart(name, model, graphElement, parentClassName);
             }
 
             return null;
         }
-
-        readonly IEditorDataModel m_EditorDataModel;
 
         VisualElement m_Editor;
 
@@ -29,10 +27,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public override VisualElement Root => m_Root;
 
         protected PortConstantEditorPart(string name, IGraphElementModel model, IGraphElement ownerElement,
-                                         string parentClassName, IEditorDataModel editorDataModel)
+                                         string parentClassName)
             : base(name, model, ownerElement, parentClassName)
         {
-            m_EditorDataModel = editorDataModel;
         }
 
         protected override void BuildPartUI(VisualElement container)
@@ -79,10 +76,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     if (portModel.Direction == Direction.Input && portModel.EmbeddedValue != null)
                     {
                         m_EditorDataType = portModel.EmbeddedValue.Type;
-                        m_Editor = InlineValueEditor.CreateEditorForConstant(m_Model.GraphModel.AssetModel, portModel.EmbeddedValue, OnValueChanged, m_EditorDataModel, false);
+                        m_Editor = InlineValueEditor.CreateEditorForConstant(m_Model.AssetModel, portModel, portModel.EmbeddedValue, OnValueChanged, m_OwnerElement.Store, false);
                         if (m_Editor != null)
                         {
-                            m_Editor.AddToClassList(m_ParentClassName.WithUssElement(k_ConstantEditorUssName));
+                            m_Editor.AddToClassList(m_ParentClassName.WithUssElement(constantEditorUssName));
                             m_Root.Add(m_Editor);
                         }
                     }

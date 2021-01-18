@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEngine;
 using UnityEngine.Scripting.APIUpdating;
 
@@ -29,6 +30,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
             "visualscripting"
         };
 
+        public override Type GetConstantNodeValueType(TypeHandle typeHandle)
+        {
+            return TypeToConstantMapper.GetConstantNodeType(typeHandle);
+        }
+
         public override void PreProcessGraph(IGraphModel graphModel)
         {
             new PortInitializationTraversal().VisitGraph(graphModel);
@@ -42,11 +48,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
         public override ISearcherDatabaseProvider GetSearcherDatabaseProvider()
         {
             return m_SearcherDatabaseProvider ?? (m_SearcherDatabaseProvider = new ClassSearcherDatabaseProvider(this));
-        }
-
-        public override Blackboard CreateBlackboard(Store store, GraphView graphView)
-        {
-            return new Blackboard(store, graphView);
         }
 
         public override List<ITypeMetadata> GetAssembliesTypesMetadata()

@@ -73,7 +73,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
 
         class FakeIONodeModel : IONodeModel
         {
-            protected override IPortModel CreatePort(Direction direction, string portName, PortType portType,
+            public override IPortModel CreatePort(Direction direction, string portName, PortType portType,
                 TypeHandle dataType, string portId, PortModelOptions options)
             {
                 return new FakePortModel(GraphModel)
@@ -89,10 +89,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             protected override void OnDefineNode()
             {
                 for (var i = 0; i < InputCount; i++)
-                    AddDataInputPort<FakePortModel>("In " + i, TypeHandle.Unknown);
+                    this.AddDataInputPort("In " + i, TypeHandle.Unknown);
 
                 for (var i = 0; i < OuputCount; i++)
-                    AddDataOutputPort<FakePortModel>("Out " + i, TypeHandle.Unknown);
+                    this.AddDataOutputPort("Out " + i, TypeHandle.Unknown);
             }
         }
 
@@ -110,14 +110,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             var port = portModel.GetUI<Port>(null);
             Assert.IsNotNull(port);
 
-            Assert.IsTrue(port.ClassListContains(Port.k_NotConnectedModifierUssClassName));
-            Assert.IsFalse(port.ClassListContains(Port.k_ConnectedModifierUssClassName));
+            Assert.IsTrue(port.ClassListContains(Port.notConnectedModifierUssClassName));
+            Assert.IsFalse(port.ClassListContains(Port.connectedModifierUssClassName));
 
             portModel.FakeIsConnected = true;
             port.UpdateFromModel();
 
-            Assert.IsFalse(port.ClassListContains(Port.k_NotConnectedModifierUssClassName));
-            Assert.IsTrue(port.ClassListContains(Port.k_ConnectedModifierUssClassName));
+            Assert.IsFalse(port.ClassListContains(Port.notConnectedModifierUssClassName));
+            Assert.IsTrue(port.ClassListContains(Port.connectedModifierUssClassName));
         }
     }
 }

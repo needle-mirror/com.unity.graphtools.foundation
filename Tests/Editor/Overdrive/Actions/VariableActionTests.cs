@@ -76,7 +76,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
         [Test]
         public void Test_CreateVariableNodeAction([Values] TestingMode mode)
         {
-            var declaration = GraphModel.CreateGraphVariableDeclaration("decl0", typeof(int).GenerateTypeHandle(), ModifierFlags.None, true);
+            var declaration = GraphModel.CreateGraphVariableDeclaration(typeof(int).GenerateTypeHandle(), "decl0", ModifierFlags.None, true);
 
             TestPrereqActionPostreq(mode,
                 () =>
@@ -118,8 +118,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
         [Test]
         public void Test_DeleteElementsAction_VariableUsage([Values] TestingMode mode)
         {
-            var declaration0 = GraphModel.CreateGraphVariableDeclaration("decl0", typeof(int).GenerateTypeHandle(), ModifierFlags.None, true);
-            var declaration1 = GraphModel.CreateGraphVariableDeclaration("decl1", typeof(int).GenerateTypeHandle(), ModifierFlags.None, true);
+            var declaration0 = GraphModel.CreateGraphVariableDeclaration(typeof(int).GenerateTypeHandle(), "decl0", ModifierFlags.None, true);
+            var declaration1 = GraphModel.CreateGraphVariableDeclaration(typeof(int).GenerateTypeHandle(), "decl1", ModifierFlags.None, true);
 
             var node0 = GraphModel.CreateVariableNode(declaration0, Vector2.zero);
             var node1 = GraphModel.CreateVariableNode(declaration0, Vector2.zero);
@@ -170,7 +170,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
         [Test]
         public void Test_RenameGraphVariableDeclarationAction([Values] TestingMode mode)
         {
-            var variable = GraphModel.CreateGraphVariableDeclaration("toto", typeof(int).GenerateTypeHandle(), ModifierFlags.None, true);
+            var variable = GraphModel.CreateGraphVariableDeclaration(typeof(int).GenerateTypeHandle(), "toto", ModifierFlags.None, true);
 
             TestPrereqActionPostreq(mode,
                 () =>
@@ -191,12 +191,23 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
         }
 
         [Test]
-        public void Test_ReorderGraphVariableDeclarationAction([Values] TestingMode mode)
+        [TestCase(TestingMode.Action, 0, 2, new[] {1, 2, 0, 3})]
+        [TestCase(TestingMode.UndoRedo, 0, 2, new[] {1, 2, 0, 3})]
+        [TestCase(TestingMode.Action, 0, 0, new[] {0, 1, 2, 3})]
+        [TestCase(TestingMode.Action, 0, 0, new[] {0, 1, 2, 3})]
+        [TestCase(TestingMode.Action, 3, 3, new[] {0, 1, 2, 3})]
+        [TestCase(TestingMode.Action, 0, 3, new[] {1, 2, 3, 0})]
+        [TestCase(TestingMode.Action, 3, 0, new[] {0, 3, 1, 2})]
+        [TestCase(TestingMode.Action, 1, 1, new[] {0, 1, 2, 3})]
+        [TestCase(TestingMode.Action, 1, 2, new[] {0, 2, 1, 3})]
+        public void Test_ReorderGraphVariableDeclarationAction(TestingMode mode, int indexToMove, int afterWhich, int[] expectedOrder)
         {
-            var declaration0 = GraphModel.CreateGraphVariableDeclaration("decl0", typeof(int).GenerateTypeHandle(), ModifierFlags.None, true);
-            var declaration1 = GraphModel.CreateGraphVariableDeclaration("decl1", typeof(int).GenerateTypeHandle(), ModifierFlags.None, true);
-            var declaration2 = GraphModel.CreateGraphVariableDeclaration("decl2", typeof(int).GenerateTypeHandle(), ModifierFlags.None, true);
-            var declaration3 = GraphModel.CreateGraphVariableDeclaration("decl3", typeof(int).GenerateTypeHandle(), ModifierFlags.None, true);
+            var declaration0 = GraphModel.CreateGraphVariableDeclaration(typeof(int).GenerateTypeHandle(), "decl0", ModifierFlags.None, true);
+            var declaration1 = GraphModel.CreateGraphVariableDeclaration(typeof(int).GenerateTypeHandle(), "decl1", ModifierFlags.None, true);
+            var declaration2 = GraphModel.CreateGraphVariableDeclaration(typeof(int).GenerateTypeHandle(), "decl2", ModifierFlags.None, true);
+            var declaration3 = GraphModel.CreateGraphVariableDeclaration(typeof(int).GenerateTypeHandle(), "decl3", ModifierFlags.None, true);
+
+            var declarations = new[] { declaration0, declaration1, declaration2, declaration3 };
 
             TestPrereqActionPostreq(mode,
                 () =>
@@ -208,27 +219,29 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                     Assert.That(GetVariableDeclaration(1).Guid, Is.EqualTo(declaration1.Guid));
                     Assert.That(GetVariableDeclaration(2).Guid, Is.EqualTo(declaration2.Guid));
                     Assert.That(GetVariableDeclaration(3).Guid, Is.EqualTo(declaration3.Guid));
-                    return new ReorderGraphVariableDeclarationAction(declaration0, 3);
+                    return new ReorderGraphVariableDeclarationAction(new[] { declarations[indexToMove] }, declarations[afterWhich]);
                 },
                 () =>
                 {
                     Assert.That(GetNodeCount(), Is.EqualTo(0));
                     Assert.That(GetEdgeCount(), Is.EqualTo(0));
                     Assert.That(GetVariableDeclarationCount(), Is.EqualTo(4));
-                    Assert.That(GetVariableDeclaration(0).Guid, Is.EqualTo(declaration1.Guid));
-                    Assert.That(GetVariableDeclaration(1).Guid, Is.EqualTo(declaration2.Guid));
-                    Assert.That(GetVariableDeclaration(2).Guid, Is.EqualTo(declaration0.Guid));
-                    Assert.That(GetVariableDeclaration(3).Guid, Is.EqualTo(declaration3.Guid));
+                    Assert.That(GetVariableDeclaration(0).Guid, Is.EqualTo(declarations[expectedOrder[0]].Guid));
+                    Assert.That(GetVariableDeclaration(1).Guid, Is.EqualTo(declarations[expectedOrder[1]].Guid));
+                    Assert.That(GetVariableDeclaration(2).Guid, Is.EqualTo(declarations[expectedOrder[2]].Guid));
+                    Assert.That(GetVariableDeclaration(3).Guid, Is.EqualTo(declarations[expectedOrder[3]].Guid));
                 });
         }
 
         [Test]
         public void Test_ConvertVariableNodeToConstantNodeAction([Values] TestingMode mode)
         {
-            var declaration0 = GraphModel.CreateGraphVariableDeclaration("decl0", typeof(int).GenerateTypeHandle(), ModifierFlags.None, true);
+            var declaration0 = GraphModel.CreateGraphVariableDeclaration(typeof(int).GenerateTypeHandle(), "decl0", ModifierFlags.None, true);
             var node0 = GraphModel.CreateNode<Type0FakeNodeModel>("Node0", Vector2.zero);
             var node1 = GraphModel.CreateVariableNode(declaration0, Vector2.zero);
             IPortModel outputPort = node1.OutputPort;
+            Color modelColor = Color.red;
+            ModelState modelState = ModelState.Disabled;
             GraphModel.CreateEdge(node0.Input0, outputPort);
 
             TestPrereqActionPostreq(mode,
@@ -240,6 +253,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                     Assert.That(GetNode(1), Is.TypeOf<VariableNodeModel>());
                     var n0 = (Type0FakeNodeModel)GetNode(0);
                     var n1 = (VariableNodeModel)GetNode(1);
+                    n1.Color = modelColor;
+                    n1.State = modelState;
                     Assert.That(n0.Input0, Is.ConnectedTo(n1.OutputPort));
                     return new ConvertVariableNodesToConstantNodesAction(node1);
                 },
@@ -253,6 +268,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                     var n0 = (Type0FakeNodeModel)GetNode(0);
                     var n1 = (ConstantNodeModel)GetNode(1);
                     Assert.That(n0.Input0, Is.ConnectedTo(n1.OutputPort));
+                    Assert.That(n1.Color, Is.EqualTo(modelColor));
+                    Assert.That(n1.State, Is.EqualTo(modelState));
                 });
         }
 
@@ -260,14 +277,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
         public void Test_ConvertConstantNodeToVariableNodeAction([Values] TestingMode mode)
         {
             var binary = GraphModel.CreateNode<Type0FakeNodeModel>("Node0", Vector2.zero);
-            var constant = GraphModel.CreateConstantNode("const0", typeof(int).GenerateTypeHandle(), Vector2.zero);
+            var constant = GraphModel.CreateConstantNode(typeof(int).GenerateTypeHandle(), "const0", Vector2.zero);
             IPortModel outputPort = constant.OutputPort;
+            Color modelColor = Color.red;
+            ModelState modelState = ModelState.Disabled;
             GraphModel.CreateEdge(binary.Input0, outputPort);
 
             TestPrereqActionPostreq(mode,
                 () =>
                 {
                     var c = GraphModel.NodeModels.OfType<IConstantNodeModel>().First();
+                    c.Color = modelColor;
+                    c.State = modelState;
+
                     Assert.That(GetNodeCount(), Is.EqualTo(2));
                     Assert.That(GetEdgeCount(), Is.EqualTo(1));
                     Assert.That(GetVariableDeclarationCount(), Is.EqualTo(0));
@@ -289,13 +311,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                     var n1 = (VariableNodeModel)GetNode(1);
                     Assert.That(n0.Input0, Is.ConnectedTo(n1.OutputPort));
                     Assert.That(n1.GetDataType(), Is.EqualTo(typeof(int).GenerateTypeHandle()));
+                    Assert.That(n1.Color, Is.EqualTo(modelColor));
+                    Assert.That(n1.State, Is.EqualTo(modelState));
                 });
         }
 
         [Test]
         public void Test_ItemizeVariableNodeAction([Values] TestingMode mode)
         {
-            var declaration = GraphModel.CreateGraphVariableDeclaration("decl0", typeof(int).GenerateTypeHandle(), ModifierFlags.None, true);
+            var declaration = GraphModel.CreateGraphVariableDeclaration(typeof(int).GenerateTypeHandle(), "decl0", ModifierFlags.None, true);
             var variable = GraphModel.CreateVariableNode(declaration, Vector2.zero);
             var binary0 = GraphModel.CreateNode<Type0FakeNodeModel>("Node0", Vector2.zero);
             var binary1 = GraphModel.CreateNode<Type0FakeNodeModel>("Node1", Vector2.zero);
@@ -344,7 +368,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
         [Test]
         public void Test_ItemizeConstantNodeAction([Values] TestingMode mode)
         {
-            var constant = GraphModel.CreateConstantNode("Constant", typeof(int).GenerateTypeHandle(), Vector2.zero);
+            var constant = GraphModel.CreateConstantNode(typeof(int).GenerateTypeHandle(), "Constant", Vector2.zero);
             var binary0 = GraphModel.CreateNode<Type0FakeNodeModel>("Node0", Vector2.zero);
             var binary1 = GraphModel.CreateNode<Type0FakeNodeModel>("Node1", Vector2.zero);
 
@@ -392,9 +416,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
         [Test]
         public void Test_ToggleLockConstantNodeAction([Values] TestingMode mode)
         {
-            var constant0 = GraphModel.CreateConstantNode("Constant0", typeof(int).GenerateTypeHandle(), Vector2.zero);
-            var constant1 = GraphModel.CreateConstantNode("Constant1", typeof(int).GenerateTypeHandle(), Vector2.zero);
-            var constant2 = GraphModel.CreateConstantNode("Constant2", typeof(int).GenerateTypeHandle(), Vector2.zero);
+            var constant0 = GraphModel.CreateConstantNode(typeof(int).GenerateTypeHandle(), "Constant0", Vector2.zero);
+            var constant1 = GraphModel.CreateConstantNode(typeof(int).GenerateTypeHandle(), "Constant1", Vector2.zero);
+            var constant2 = GraphModel.CreateConstantNode(typeof(int).GenerateTypeHandle(), "Constant2", Vector2.zero);
 
             TestPrereqActionPostreq(mode,
                 () =>
@@ -450,7 +474,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
         [Test]
         public void Test_UpdateTypeAction([Values] TestingMode mode)
         {
-            var declaration = GraphModel.CreateGraphVariableDeclaration("decl0", typeof(int).GenerateTypeHandle(), ModifierFlags.None, true);
+            var declaration = GraphModel.CreateGraphVariableDeclaration(typeof(int).GenerateTypeHandle(), "decl0", ModifierFlags.None, true);
             GraphModel.CreateVariableNode(declaration, Vector2.zero);
             GraphModel.CreateVariableNode(declaration, Vector2.zero);
 
@@ -478,7 +502,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
             TypeHandle intType = typeof(int).GenerateTypeHandle();
             TypeHandle floatType = typeof(float).GenerateTypeHandle();
 
-            var declaration = GraphModel.CreateGraphVariableDeclaration("decl0", intType, ModifierFlags.None, true);
+            var declaration = GraphModel.CreateGraphVariableDeclaration(intType, "decl0", ModifierFlags.None, true);
             GraphModel.CreateVariableNode(declaration, Vector2.zero);
             GraphModel.CreateVariableNode(declaration, Vector2.zero);
 
@@ -514,7 +538,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
         [Test]
         public void Test_UpdateExposedAction([Values] TestingMode mode)
         {
-            var declaration = GraphModel.CreateGraphVariableDeclaration("decl0", typeof(int).GenerateTypeHandle(), ModifierFlags.None, true);
+            var declaration = GraphModel.CreateGraphVariableDeclaration(typeof(int).GenerateTypeHandle(), "decl0", ModifierFlags.None, true);
             GraphModel.CreateVariableNode(declaration, Vector2.zero);
             GraphModel.CreateVariableNode(declaration, Vector2.zero);
 
@@ -556,7 +580,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
         [Test]
         public void Test_UpdateTooltipAction([Values] TestingMode mode)
         {
-            var declaration = GraphModel.CreateGraphVariableDeclaration("decl0", typeof(int).GenerateTypeHandle(), ModifierFlags.None, true) as VariableDeclarationModel;
+            var declaration = GraphModel.CreateGraphVariableDeclaration(typeof(int).GenerateTypeHandle(), "decl0", ModifierFlags.None, true) as VariableDeclarationModel;
             declaration.Tooltip = "asd";
             GraphModel.CreateVariableNode(declaration, Vector2.zero);
             GraphModel.CreateVariableNode(declaration, Vector2.zero);

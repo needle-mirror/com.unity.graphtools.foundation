@@ -70,7 +70,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
             node.MakePortsFromNames(new List<string> { "A", "B", "C" });
             node.DefineNode();
 
-            var decl = GraphModel.CreateGraphVariableDeclaration("myInt", TypeHandle.Int, ModifierFlags.None, true);
+            var decl = GraphModel.CreateGraphVariableDeclaration(TypeHandle.Int, "myInt", ModifierFlags.None, true);
             var nodeA = GraphModel.CreateVariableNode(decl, Vector2.up);
             var nodeB = GraphModel.CreateVariableNode(decl, Vector2.zero);
             var nodeC = GraphModel.CreateVariableNode(decl, Vector2.down);
@@ -100,10 +100,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
             const string nodeName = "Node0";
 
             {
-                var iDecl = GraphModel.CreateGraphVariableDeclaration("myInt", TypeHandle.Int, ModifierFlags.None, true);
+                var iDecl = GraphModel.CreateGraphVariableDeclaration(TypeHandle.Int, "myInt", ModifierFlags.None, true);
                 GraphModel.CreateVariableNode(iDecl, Vector2.up);
 
-                var vDecl = GraphModel.CreateGraphVariableDeclaration("myVec", typeof(Vector3).GenerateTypeHandle(), ModifierFlags.None, true);
+                var vDecl = GraphModel.CreateGraphVariableDeclaration(typeof(Vector3).GenerateTypeHandle(), "myVec", ModifierFlags.None, true);
                 var myVec = GraphModel.CreateVariableNode(vDecl, Vector2.left);
                 var getProperty = GraphModel.CreateNode<Type0FakeNodeModel>(nodeName, Vector2.zero);
                 GraphModel.CreateEdge(getProperty.Input0, myVec.OutputPort);

@@ -18,6 +18,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             m_Window = window;
         }
 
+        public const EventModifiers multiSelectModifier =
+#if UNITY_EDITOR_OSX
+            EventModifiers.Command;
+#else
+            EventModifiers.Control;
+#endif
+
         //-----------------------------------------------------------
         // MouseDown Event Helpers
         //-----------------------------------------------------------

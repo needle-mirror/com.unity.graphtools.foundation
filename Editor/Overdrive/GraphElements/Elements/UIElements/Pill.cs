@@ -21,22 +21,21 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             public override void Init(VisualElement ve, IUxmlAttributes bag, CreationContext cc)
             {
                 base.Init(ve, bag, cc);
-                ((Pill)ve).highlighted = m_Highlighted.GetValueFromBag(bag, cc);
-                ((Pill)ve).text = m_Text.GetValueFromBag(bag, cc);
+                ((Pill)ve).Highlighted = m_Highlighted.GetValueFromBag(bag, cc);
+                ((Pill)ve).Text = m_Text.GetValueFromBag(bag, cc);
             }
         }
 
+        public static readonly string ussClassName = "ge-pill";
+        public static readonly string highlightedModifierClassName = ussClassName.WithUssModifier("highlighted");
+        public static readonly string hasIconModifierClassName = ussClassName.WithUssModifier("has-icon");
+
         readonly Label m_TitleLabel;
         readonly Image m_Icon;
-        VisualElement m_Left;
-        readonly VisualElement m_LeftContainer;
-        VisualElement m_Right;
-        readonly VisualElement m_RightContainer;
         bool m_Highlighted;
 
-        public bool highlighted
+        public bool Highlighted
         {
-            get { return m_Highlighted; }
             set
             {
                 if (m_Highlighted == value)
@@ -47,21 +46,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 m_Highlighted = value;
 
                 if (m_Highlighted)
-                    AddToClassList("highlighted");
+                    AddToClassList(highlightedModifierClassName);
                 else
-                    RemoveFromClassList("highlighted");
+                    RemoveFromClassList(highlightedModifierClassName);
             }
         }
 
-        public string text
+        public string Text
         {
-            get { return m_TitleLabel.text; }
-            set { m_TitleLabel.text = value; }
+            set => m_TitleLabel.text = value;
         }
 
-        public Texture icon
+        public Texture Icon
         {
-            get { return m_Icon != null ? m_Icon.image : null; }
             set
             {
                 if (m_Icon == null || m_Icon.image == value)
@@ -73,82 +70,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        public VisualElement left
-        {
-            get { return m_Left; }
-            set
-            {
-                if (m_Left == value)
-                    return;
-
-                if (m_Left != null)
-                    m_LeftContainer.Remove(m_Left);
-
-                m_Left = value;
-
-                if (m_Left != null)
-                    m_LeftContainer.Add(m_Left);
-
-                UpdateVisibility();
-            }
-        }
-
-        public VisualElement right
-        {
-            get { return m_Right; }
-            set
-            {
-                if (m_Right == value)
-                    return;
-
-                if (m_Right != null)
-                    m_RightContainer.Remove(m_Right);
-
-                m_Right = value;
-
-                if (m_Right != null)
-                    m_RightContainer.Add(m_Right);
-
-                UpdateVisibility();
-            }
-        }
-
         void UpdateIconVisibility()
         {
-            if (icon == null)
+            if (m_Icon.image == null)
             {
-                RemoveFromClassList("has-icon");
+                RemoveFromClassList(hasIconModifierClassName);
                 m_Icon.style.visibility = Visibility.Hidden;
             }
             else
             {
-                AddToClassList("has-icon");
+                AddToClassList(hasIconModifierClassName);
                 m_Icon.style.visibility = StyleKeyword.Null;
-            }
-        }
-
-        void UpdateVisibility()
-        {
-            if (m_Left != null)
-            {
-                AddToClassList("has-left");
-                if (m_LeftContainer != null) m_LeftContainer.style.visibility = StyleKeyword.Null;
-            }
-            else
-            {
-                RemoveFromClassList("has-left");
-                if (m_LeftContainer != null) m_LeftContainer.style.visibility = Visibility.Hidden;
-            }
-
-            if (m_Right != null)
-            {
-                AddToClassList("has-right");
-                if (m_RightContainer != null) m_RightContainer.style.visibility = StyleKeyword.Null;
-            }
-            else
-            {
-                RemoveFromClassList("has-right");
-                if (m_RightContainer != null) m_RightContainer.style.visibility = Visibility.Hidden;
             }
         }
 
@@ -161,23 +93,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             m_TitleLabel = mainContainer.Q<Label>("title-label");
             m_Icon = mainContainer.Q<Image>("icon");
-            m_LeftContainer = mainContainer.Q("input");
-            m_RightContainer = mainContainer.Q("output");
 
             Add(mainContainer);
 
-            AddToClassList("pill");
+            AddToClassList(ussClassName);
 
-            UpdateVisibility();
-            UpdateIconVisibility();
-        }
-
-        public Pill(VisualElement left, VisualElement right) : this()
-        {
-            this.left = left;
-            this.right = right;
-
-            UpdateVisibility();
             UpdateIconVisibility();
         }
     }

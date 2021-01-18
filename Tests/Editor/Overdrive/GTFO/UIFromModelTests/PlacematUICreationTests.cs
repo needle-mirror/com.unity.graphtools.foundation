@@ -14,9 +14,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         public void SetUp()
         {
             m_GraphModel = new GraphModel();
-            m_Store = new Store(new TestState(m_GraphModel));
+            m_Store = new Store(new TestState(default, m_GraphModel));
             StoreHelper.RegisterDefaultReducers(m_Store);
             m_GraphView = new TestGraphView(null, m_Store);
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            m_GraphModel = null;
+            m_Store = null;
+            m_GraphView = null;
         }
 
         [Test]
@@ -26,9 +34,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             var placemat = new Placemat();
             placemat.SetupBuildAndUpdate(placematModel, m_Store, m_GraphView);
 
-            Assert.IsNotNull(placemat.Q<VisualElement>(Placemat.k_TitleContainerPartName));
-            Assert.IsNotNull(placemat.Q<VisualElement>(Placemat.k_CollapseButtonPartName));
-            Assert.IsNotNull(placemat.Q<VisualElement>(Placemat.k_ResizerPartName));
+            Assert.IsNotNull(placemat.Q<VisualElement>(Placemat.titleContainerPartName));
+            Assert.IsNotNull(placemat.Q<VisualElement>(Placemat.collapseButtonPartName));
+            Assert.IsNotNull(placemat.Q<VisualElement>(Placemat.resizerPartName));
         }
     }
 }

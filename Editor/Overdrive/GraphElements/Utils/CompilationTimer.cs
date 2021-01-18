@@ -15,16 +15,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public long ElapsedMilliseconds => m_IdleTimer.IsRunning ? m_IdleTimer.ElapsedMilliseconds : 0;
         public bool IsRunning => m_IdleTimer.IsRunning;
 
-        public void Restart(IEditorDataModel editorDataModel)
+        public void Restart(CompilationStateComponent stateComponent)
         {
             m_IdleTimer.Restart();
-            editorDataModel.CompilationPending = true;
+            stateComponent.CompilationPending = true;
         }
 
-        public void Stop(IEditorDataModel editorDataModel)
+        public void Stop(CompilationStateComponent stateComponent)
         {
             m_IdleTimer.Stop();
-            editorDataModel.CompilationPending = false;
+            stateComponent.CompilationPending = false;
         }
     }
 }

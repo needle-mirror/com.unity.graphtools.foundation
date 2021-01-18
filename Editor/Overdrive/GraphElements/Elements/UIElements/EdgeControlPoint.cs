@@ -7,9 +7,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class EdgeControlPoint : VisualElement
     {
-        public static readonly string k_ClassName = "ge-edge-control-point";
+        public static readonly string ussClassName = "ge-edge-control-point";
 
-        public static readonly string k_RemoveControlPointMenuItem = "Remove control point";
+        public static readonly string removeControlPointMenuItem = "Remove control point";
 
         EdgeControl m_EdgeControl;
 
@@ -27,7 +27,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         Vector2 m_OriginalPointerPosition;
 
-        protected ContextualMenuManipulator m_ContextualMenuManipulator;
+        ContextualMenuManipulator m_ContextualMenuManipulator;
+
+        protected ContextualMenuManipulator ContextualMenuManipulator
+        {
+            get => m_ContextualMenuManipulator;
+            set => this.ReplaceManipulator(ref m_ContextualMenuManipulator, value);
+        }
 
         public EdgeControlPoint(EdgeControl edgeControl, IEditableEdge edgeModel, int controlPointIndex)
         {
@@ -35,7 +41,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             m_EdgeModel = edgeModel;
             m_ControlPointIndex = controlPointIndex;
 
-            AddToClassList(k_ClassName);
+            AddToClassList(ussClassName);
 
             RegisterCallback<PointerDownEvent>(OnPointerDown);
             RegisterCallback<PointerMoveEvent>(OnPointerMove);
@@ -43,8 +49,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             style.position = Position.Absolute;
 
-            m_ContextualMenuManipulator = new ContextualMenuManipulator(BuildContextualMenu);
-            this.AddManipulator(m_ContextualMenuManipulator);
+            ContextualMenuManipulator = new ContextualMenuManipulator(BuildContextualMenu);
         }
 
         void OnPointerDown(PointerDownEvent e)
@@ -78,7 +83,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             Vector2 pointerDelta = Vector2.zero;
             if (m_DraggingControlPoint || m_DraggingTightness)
             {
-                graphView = GetFirstAncestorOfType<GraphView>();
+                graphView = m_EdgeControl.GraphView;
                 var pointerPosition = this.ChangeCoordinatesTo(parent, e.localPosition);
                 pointerDelta = new Vector2(pointerPosition.x, pointerPosition.y) - m_OriginalPointerPosition;
             }
@@ -141,7 +146,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (evt.menu.MenuItems().Count > 0)
                 evt.menu.AppendSeparator();
 
-            evt.menu.AppendAction(k_RemoveControlPointMenuItem, menuAction =>
+            evt.menu.AppendAction(removeControlPointMenuItem, menuAction =>
             {
                 var graphView = GetFirstAncestorOfType<GraphView>();
                 if (graphView == null)

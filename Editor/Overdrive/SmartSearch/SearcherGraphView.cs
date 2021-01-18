@@ -5,12 +5,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class SearcherGraphView : GraphView
     {
+        public new static readonly string ussClassName = "ge-searcher-graph-view";
+
         public SearcherGraphView(GraphViewEditorWindow window, Store store) : base(window, store)
         {
-            styleSheets.Add(AssetDatabase.LoadAssetAtPath<StyleSheet>(PackageTransitionHelper.AssetPath +
+            styleSheets.Add(AssetDatabase.LoadAssetAtPath<StyleSheet>(AssetHelper.AssetPath +
                 "SmartSearch/Stylesheets/SearcherGraphView.uss"));
 
-            AddToClassList("searcher-graph-view");
+            AddToClassList(ussClassName);
 
             UnregisterCallback<ValidateCommandEvent>(OnValidateCommand);
             UnregisterCallback<ExecuteCommandEvent>(OnExecuteCommand);

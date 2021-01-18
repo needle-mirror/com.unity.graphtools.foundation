@@ -1,12 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor;
+using JetBrains.Annotations;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.UIElements.UIR;
-using UnityEngine.Yoga;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
 {
@@ -57,21 +56,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
         }
 
         /* For tests */
-        public static Texture2D LoadIconRequired(string path)
-        {
-            return EditorGUIUtility.LoadIconRequired(path);
-        }
-
-        /* For tests */
         public static void SetDisableInputEvents(this EditorWindow window, bool value)
         {
-            //window.disableInputEvents = value;
-        }
-
-        /* For tests */
-        public static void RepaintImmediately(this EditorWindow window)
-        {
-            window.RepaintImmediately();
+            window.disableInputEvents = value;
         }
 
         /* For tests */
@@ -84,13 +71,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
         public static void DisableViewDataPersistence(this EditorWindow window)
         {
             window.DisableViewDataPersistence();
-        }
-
-        /* For tests */
-        public static bool HasGUIView(this VisualElement ve)
-        {
-            GUIView guiView = ve.elementPanel.ownerObject as GUIView;
-            return guiView != null;
         }
 
         /* For tests */
@@ -109,9 +89,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
         }
 
         /* For tests */
-        public static bool GetDisableThrottling()
+        public static void UpdateScheduledEvents(this VisualElement ve)
         {
-            return DataWatchService.sharedInstance.disableThrottling;
+            var scheduler = (TimerEventScheduler)((BaseVisualElementPanel)ve.panel).scheduler;
+            scheduler.UpdateScheduledEvents();
         }
 
         public static List<EditorWindow> ShowGraphViewWindowWithTools(Type blackboardType, Type minimapType, Type graphViewType)
@@ -188,12 +169,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
             }
         }
 
-        public static void UpdateScheduledEvents(this VisualElement ve)
-        {
-            var scheduler = (TimerEventScheduler)((BaseVisualElementPanel)ve.panel).scheduler;
-            scheduler.UpdateScheduledEvents();
-        }
-
         public static bool IsLayoutManual(this VisualElement ve)
         {
             return ve.isLayoutManual;
@@ -201,14 +176,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
 
         // Do not use this function in new code. It is here to support old code.
         // Set element dimensions using styles, with position: absolute.
+        // When removing this function, also remove IsLayoutManual above, as it will always return false.
         public static void SetLayout(this VisualElement ve, Rect layout)
         {
             ve.layout = layout;
-        }
-
-        public static Rect GetRect(this VisualElement ve)
-        {
-            return new Rect(0.0f, 0.0f, ve.layout.width, ve.layout.height);
         }
 
         public static void SetCheckedPseudoState(this VisualElement ve, bool set)
@@ -238,16 +209,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
         public static bool GetDisabledPseudoState(this VisualElement ve)
         {
             return (ve.pseudoStates & PseudoStates.Disabled) == PseudoStates.Disabled;
-        }
-
-        public static object GetProperty(this VisualElement ve, PropertyName key)
-        {
-            return ve.GetProperty(key);
-        }
-
-        public static void SetProperty(this VisualElement ve, PropertyName key, object value)
-        {
-            ve.SetProperty(key, value);
         }
 
         public static void ResetPositionProperties(this VisualElement ve)
@@ -281,53 +242,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
 
         public static void SetNextVertex(this MeshWriteData md, Vector3 pos, Vector2 uv, Color32 tint)
         {
+#if UNITY_2021_1_OR_NEWER
+            Color32 ids = new Color32(0, 0, 0, 0);
+            Color32 flags = new Color32((byte)VertexFlags.IsGraphViewEdge, 0, 0, 0);
+            md.SetNextVertex(new Vertex() { position = pos, uv = uv, tint = tint, ids = ids, flags = flags });
+#else
             Color32 flags = new Color32(0, 0, 0, (byte)VertexFlags.LastType);
             md.SetNextVertex(new Vertex() { position = pos, uv = uv, tint = tint, idsFlags = flags });
-        }
-
-        static void MarkYogaNodeSeen(YogaNode node)
-        {
-            node.MarkLayoutSeen();
-
-            for (int i = 0; i < node.Count; i++)
-            {
-                MarkYogaNodeSeen(node[i]);
-            }
-        }
-
-        public static void MarkYogaNodeSeen(this VisualElement ve)
-        {
-            MarkYogaNodeSeen(ve.yogaNode);
-        }
-
-        public static void MarkYogaNodeDirty(this VisualElement ve)
-        {
-            ve.yogaNode.MarkDirty();
-        }
-
-        public static void ForceComputeYogaNodeLayout(this VisualElement ve)
-        {
-            ve.yogaNode.CalculateLayout();
+#endif
         }
 
         public static Vector2 DoMeasure(this VisualElement ve, float desiredWidth, VisualElement.MeasureMode widthMode, float desiredHeight, VisualElement.MeasureMode heightMode)
         {
             return ve.DoMeasure(desiredWidth, widthMode, desiredHeight, heightMode);
-        }
-
-        public static bool IsBoundingBoxDirty(this VisualElement ve)
-        {
-            return ve.isBoundingBoxDirty;
-        }
-
-        public static void SetBoundingBoxDirty(this VisualElement ve)
-        {
-            ve.isBoundingBoxDirty = true;
-        }
-
-        public static void SetRequireMeasureFunction(this VisualElement ve)
-        {
-            ve.requireMeasureFunction = true;
         }
 
         public static StyleLength GetComputedStyleWidth(this VisualElement ve)
@@ -338,15 +265,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
         public static void SetRenderHintsForGraphView(this VisualElement ve)
         {
             ve.renderHints = RenderHints.ClipWithScissors;
-        }
-
-        public static Vector2 GetWindowScreenPoint(this VisualElement ve)
-        {
-            GUIView guiView = ve.elementPanel.ownerObject as GUIView;
-            if (guiView == null)
-                return Vector2.zero;
-
-            return guiView.screenPosition.position;
         }
 
         public static T MandatoryQ<T>(this VisualElement e, string name = null, string className = null) where T : VisualElement
@@ -362,12 +280,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
 
     public abstract class VisualElementBridge : VisualElement
     {
-        protected virtual void OnGraphElementDataReady() {}
-
+        [UsedImplicitly]
         internal override void OnViewDataReady()
         {
             base.OnViewDataReady();
-            OnGraphElementDataReady();
         }
 
         protected new string GetFullHierarchicalViewDataKey()
@@ -427,6 +343,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
         // This should also get ripped once the minimap is re-written.
         public Action redrawn { get; set; }
 
+        [UsedImplicitly]
 #if UNITY_2020_1_OR_NEWER
         void OnBeforeDrawChain(RenderChain renderChain)
 #else
@@ -494,7 +411,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
         }
 
 #if UNITY_2020_1_OR_NEWER
-        void OnBeforeUpdate(IPanel panel)
+        void OnBeforeUpdate(IPanel p)
         {
             redrawn?.Invoke();
         }
@@ -534,8 +451,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
 
     public abstract class GraphViewToolWindowBridge : EditorWindow
     {
-        public abstract void SelectGraphViewFromWindow(GraphViewEditorWindowBridge window, GraphViewBridge graphView, int graphViewIndexInWindow = 0);
+        public abstract void SelectGraphViewFromWindow(EditorWindow window, GraphViewBridge graphView, int graphViewIndexInWindow = 0);
     }
-
-    public abstract class GraphViewEditorWindowBridge : EditorWindow {}
 }

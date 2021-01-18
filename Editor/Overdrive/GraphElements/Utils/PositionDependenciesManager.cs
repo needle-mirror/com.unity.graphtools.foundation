@@ -182,10 +182,43 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             Profiler.EndSample();
         }
 
+        void ProcessDependencyModel(INodeModel nodeModel, Action<IDependency, INodeModel> dependencyCallback)
+        {
+            Log($"ProcessDependencyModel {nodeModel}");
+
+            if (!m_DependenciesByNode.TryGetValue(nodeModel.Guid, out Dictionary<GUID, IDependency> link))
+                return;
+
+            foreach (KeyValuePair<GUID, IDependency> dependency in link)
+            {
+                if (m_ModelsToMove.Contains(dependency.Value.DependentNode))
+                    continue;
+                if (!m_TempMovedModels.Add(dependency.Value.DependentNode))
+                {
+                    Log($"Skip ProcessDependency {dependency.Value.DependentNode}");
+                    continue;
+                }
+
+                dependencyCallback(dependency.Value, nodeModel);
+                ProcessDependencyModel(dependency.Value.DependentNode, dependencyCallback);
+            }
+        }
+
+        void ProcessMovedNodeModels(Action<IDependency, INodeModel> dependencyCallback)
+        {
+            Profiler.BeginSample("VS.ProcessMovedNodeModel");
+
+            m_TempMovedModels.Clear();
+            foreach (INodeModel nodeModel in m_ModelsToMove)
+                ProcessDependencyModel(nodeModel, dependencyCallback);
+
+            Profiler.EndSample();
+        }
+
         public void UpdateNodeState()
         {
             HashSet<GUID> processed = new HashSet<GUID>();
-            void ProcessDependency(INodeModel nodeModel, ModelState state)
+            void SetNodeState(INodeModel nodeModel, ModelState state)
             {
                 if (nodeModel.State == ModelState.Disabled)
                     state = ModelState.Disabled;
@@ -193,8 +226,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 var nodeUI = nodeModel.GetUI<Node>(m_GraphView);
                 if (nodeUI != null && state == ModelState.Enabled)
                 {
-                    nodeUI.EnableInClassList(Node.k_DisabledModifierUssClassName, false);
-                    nodeUI.EnableInClassList(Node.k_UnusedModifierUssClassName, false);
+                    nodeUI.EnableInClassList(Node.disabledModifierUssClassName, false);
+                    nodeUI.EnableInClassList(Node.unusedModifierUssClassName, false);
                 }
 
                 Dictionary<GUID, IDependency> dependencies = null;
@@ -209,7 +242,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 foreach (var dependency in dependencies)
                 {
                     if (processed.Add(dependency.Key))
-                        ProcessDependency(dependency.Value.DependentNode, state);
+                        SetNodeState(dependency.Value.DependentNode, state);
                 }
             }
 
@@ -218,20 +251,20 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 var nodeModel = node.NodeModel;
                 if (nodeModel.State == ModelState.Disabled)
                 {
-                    node.EnableInClassList(Node.k_DisabledModifierUssClassName, true);
-                    node.EnableInClassList(Node.k_UnusedModifierUssClassName, false);
+                    node.EnableInClassList(Node.disabledModifierUssClassName, true);
+                    node.EnableInClassList(Node.unusedModifierUssClassName, false);
                 }
                 else
                 {
-                    node.EnableInClassList(Node.k_DisabledModifierUssClassName, false);
-                    node.EnableInClassList(Node.k_UnusedModifierUssClassName, true);
+                    node.EnableInClassList(Node.disabledModifierUssClassName, false);
+                    node.EnableInClassList(Node.unusedModifierUssClassName, true);
                 }
             });
 
-            var graphModel = m_GraphView.Store.GetState().CurrentGraphModel;
+            var graphModel = m_GraphView.Store.State.GraphModel;
             foreach (var root in graphModel.Stencil.GetEntryPoints(graphModel))
             {
-                ProcessDependency(root, ModelState.Enabled);
+                SetNodeState(root, ModelState.Enabled);
             }
         }
 
@@ -284,17 +317,21 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (m_GraphModel == null)
                 return;
 
-            Undo.RegisterCompleteObjectUndo((Object)m_GraphModel.AssetModel, "Move dependency");
+            if (m_GraphModel?.AssetModel != null)
+            {
+                Undo.RegisterCompleteObjectUndo((Object)m_GraphModel.AssetModel, "Move dependency");
+                EditorUtility.SetDirty((Object)m_GraphModel.AssetModel);
+            }
 
             ProcessMovedNodes(Vector2.zero, (element, model, _, __) =>
             {
                 model.DependentNode.Position = element.GetPosition().position;
             });
-            EditorUtility.SetDirty((Object)m_GraphModel.AssetModel);
+
             m_ModelsToMove.Clear();
         }
 
-        void AlignDependency(GraphElement element, IDependency dependency, Vector2 _, INodeModel prev)
+        void AlignDependency(IDependency dependency, INodeModel prev)
         {
             // Warning: Don't try to use the VisualElement.layout Rect as it is not up to date yet.
             // Use Node.GetPosition() when possible
@@ -328,29 +365,27 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                         );
                         Log($"  pos {position} parent NOT stackNode");
 
-                        Undo.RegisterCompleteObjectUndo((Object)linked.DependentNode.GraphModel.AssetModel, "Align node");
                         linked.DependentNode.Position = position;
-                        element.SetPosition(new Rect(position, element.layout.size));
+                        m_GraphView.Store.State.MarkChanged(linked.DependentNode);
                     }
                     break;
             }
         }
 
-        public void AlignNodes(GraphView graphView, bool follow, List<ISelectableGraphElement> selection)
+        public void AlignNodes(bool follow, IReadOnlyList<IGraphElementModel> entryPoints)
         {
             HashSet<INodeModel> topMostModels = new HashSet<INodeModel>();
 
             topMostModels.Clear();
 
             bool anyEdge = false;
-            foreach (Edge edge in selection.OfType<Edge>())
+            foreach (var edgeModel in entryPoints.OfType<IEdgeModel>())
             {
-                if (!edge.EdgeModel.GraphModel.Stencil.CreateDependencyFromEdge(edge.EdgeModel, out LinkedNodesDependency dependency, out INodeModel parent))
+                if (!edgeModel.GraphModel.Stencil.CreateDependencyFromEdge(edgeModel, out LinkedNodesDependency dependency, out INodeModel parent))
                     continue;
                 anyEdge = true;
 
-                GraphElement element = dependency.DependentNode.GetUI<Node>(graphView);
-                AlignDependency(element, dependency, Vector2.zero, parent);
+                AlignDependency(dependency, parent);
                 topMostModels.Add(dependency.DependentNode);
             }
 
@@ -359,12 +394,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             if (!topMostModels.Any())
             {
-                foreach (GraphElement element in selection.OfType<GraphElement>())
+                foreach (var nodeModel in entryPoints.OfType<INodeModel>())
                 {
-                    if (element.Model is INodeModel nodeModel)
-                    {
-                        topMostModels.Add(nodeModel);
-                    }
+                    topMostModels.Add(nodeModel);
                 }
             }
 
@@ -377,14 +409,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                         continue;
                     foreach (KeyValuePair<GUID, IDependency> dependency in dependencies)
                     {
-                        INodeModel dependentNode = dependency.Value.DependentNode;
-                        GraphElement element = dependentNode.GetUI<Node>(graphView);
-                        Vector2 startPos = dependentNode.Position;
-                        AlignDependency(element, dependency.Value, Vector2.zero, model);
-                        Vector2 endPos = dependentNode.Position;
-                        Vector2 delta = endPos - startPos;
-
-                        OffsetNodeDependencies(dependentNode, delta);
+                        AlignDependency(dependency.Value, model);
                     }
                 }
             }
@@ -392,21 +417,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             {
                 // Align recursively
                 m_ModelsToMove.AddRange(topMostModels);
-                ProcessMovedNodes(Vector2.zero, AlignDependency);
+                ProcessMovedNodeModels(AlignDependency);
             }
 
             m_ModelsToMove.Clear();
             m_TempMovedModels.Clear();
-        }
-
-        void OffsetNodeDependencies(INodeModel dependentNode, Vector2 delta)
-        {
-            Log($"Moving all dependencies of {dependentNode.GetType().Name} by {delta}");
-
-            m_TempMovedModels.Clear();
-            m_ModelsToMove.Clear();
-            m_ModelsToMove.Add(dependentNode);
-            ProcessDependency(dependentNode, delta, OffsetDependency);
         }
 
         public void AddPositionDependency(IEdgeModel model)

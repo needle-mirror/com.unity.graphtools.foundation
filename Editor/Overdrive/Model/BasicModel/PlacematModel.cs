@@ -11,7 +11,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
     [MovedFrom("UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel")]
     public class PlacematModel : IPlacematModel, ISerializationCallbackReceiver, IGuidUpdate
     {
-        public static readonly Color k_DefaultColor = new Color(0.15f, 0.19f, 0.19f);
+        const string k_DefaultPlacematName = "Placemat";
+
+        public static readonly Color defaultColor = new Color(0.15f, 0.19f, 0.19f);
 
         [SerializeField]
         string m_Title;
@@ -142,7 +144,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         public PlacematModel()
         {
             InternalInitCapabilities();
-            Color = k_DefaultColor;
+            Color = defaultColor;
+            Title = k_DefaultPlacematName;
         }
 
         public void Destroy() => Destroyed = true;
@@ -165,7 +168,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
         public void ResetColor()
         {
-            Color = k_DefaultColor;
+            Color = defaultColor;
         }
 
         public void AssignNewGuid()

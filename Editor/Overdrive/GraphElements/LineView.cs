@@ -8,27 +8,29 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     class LineView : VisualElement
     {
-        public LineView()
+        GraphView m_GraphView;
+
+        public LineView(GraphView graphView)
         {
             this.AddStylesheet("LineView.uss");
             this.StretchToParentSize();
             generateVisualContent += OnGenerateVisualContent;
+            m_GraphView = graphView;
         }
 
         public List<Line> lines { get; } = new List<Line>();
 
         void OnGenerateVisualContent(MeshGenerationContext mgc)
         {
-            var gView = GetFirstAncestorOfType<GraphView>();
-            if (gView == null)
+            if (m_GraphView == null)
             {
                 return;
             }
-            var container = gView.contentViewContainer;
+            var container = m_GraphView.contentViewContainer;
             foreach (var line in lines)
             {
-                var start = container.ChangeCoordinatesTo(gView, line.Start);
-                var end = container.ChangeCoordinatesTo(gView, line.End);
+                var start = container.ChangeCoordinatesTo(m_GraphView, line.Start);
+                var end = container.ChangeCoordinatesTo(m_GraphView, line.End);
                 var x = Math.Min(start.x, end.x);
                 var y = Math.Min(start.y, end.y);
                 var width = Math.Max(1, Math.Abs(start.x - end.x));

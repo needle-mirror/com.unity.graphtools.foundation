@@ -14,8 +14,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             var edge = new Edge();
             edge.SetupBuildAndUpdate(model, null, null);
 
-            Assert.IsNotNull(edge.Q<EdgeControl>(Edge.k_EdgeControlPartName));
-            Assert.IsFalse(edge.ClassListContains(Edge.k_EditModeModifierUssClassName));
+            Assert.IsNotNull(edge.Q<EdgeControl>(Edge.edgeControlPartName));
+            Assert.IsFalse(edge.ClassListContains(Edge.editModeModifierUssClassName));
         }
 
         [Test]
@@ -25,7 +25,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             var edge = new Edge();
             edge.SetupBuildAndUpdate(model, null, null);
 
-            Assert.IsTrue(edge.ClassListContains(Edge.k_GhostModifierUssClassName));
+            Assert.IsTrue(edge.ClassListContains(Edge.ghostModifierUssClassName));
         }
 
         [Test]
@@ -35,7 +35,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             var edge = new Edge();
             edge.SetupBuildAndUpdate(model, null, null);
 
-            Assert.IsFalse(edge.ClassListContains(Edge.k_GhostModifierUssClassName));
+            Assert.IsFalse(edge.ClassListContains(Edge.ghostModifierUssClassName));
         }
     }
 }

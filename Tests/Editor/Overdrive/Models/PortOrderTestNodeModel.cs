@@ -25,7 +25,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
 
             for (int i = 0; i < m_PortOrdering.Count; i++)
             {
-                AddDataInputPort<int>(m_InputNames[i], m_InputIds[i]);
+                this.AddDataInputPort<int>(m_InputNames[i], m_InputIds[i]);
             }
         }
 

@@ -8,7 +8,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
     {
         protected override void OnDefineNode()
         {
-            AddDataInputPort<float>("one");
+            this.AddDataInputPort<float>("one");
         }
     }
 }

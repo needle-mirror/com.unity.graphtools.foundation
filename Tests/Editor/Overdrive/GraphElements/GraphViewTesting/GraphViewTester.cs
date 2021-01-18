@@ -10,18 +10,29 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
     class State : Overdrive.State
     {
-        IGraphModel m_GraphModel;
-        public override IGraphModel CurrentGraphModel => m_GraphModel;
+        static Preferences CreatePreferences()
+        {
+            var prefs = TestPreferences.CreatePreferences();
+            prefs.SetBoolNoEditorUpdate(BoolPref.ErrorOnRecursiveDispatch, false);
+            prefs.SetBoolNoEditorUpdate(BoolPref.ErrorOnMultipleDispatchesPerFrame, false);
+            return prefs;
+        }
 
-        public State(IGraphModel graphModel) : base(null)
+        IGraphModel m_GraphModel;
+        public override IGraphModel GraphModel => m_GraphModel;
+
+        public State(GUID graphViewEditorWindowGUID, IGraphModel graphModel)
+            : base(graphViewEditorWindowGUID, CreatePreferences())
         {
             m_GraphModel = graphModel;
         }
+
+        ~State() => Dispose(false);
     }
 
     class GraphViewTester
     {
-        static readonly Rect k_WindowRect = new Rect(Vector2.zero, new Vector2(SelectionDragger.k_PanAreaWidth * 8, SelectionDragger.k_PanAreaWidth * 6));
+        static readonly Rect k_WindowRect = new Rect(Vector2.zero, new Vector2(SelectionDragger.panAreaWidth * 8, SelectionDragger.panAreaWidth * 6));
 
         bool m_SnapToPortEnabled;
         bool m_SnapToBorderEnabled;
@@ -68,7 +79,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 window.ClearPersistentViewData();
 
             graphView = window.GraphView as TestGraphView;
-            StylesheetsHelper.AddTestStylesheet(graphView, "Tests.uss");
+            graphView.AddTestStylesheet("Tests.uss");
 
             helpers = new TestEventHelpers(window);
         }
@@ -77,7 +88,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         public virtual void TearDown()
         {
             GraphElementHelper.UseNewStylesheets = m_SavedUseNewStylesheets;
-            GraphElementFactory.RemoveAll(graphView);
+            UIForModel.Reset();
 
             if (m_EnablePersistence)
                 window.ClearPersistentViewData();
@@ -91,7 +102,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             GraphViewSettings.UserSettings.SpacingMarginValue = m_SpacingMarginValue;
         }
 
-        protected void Clear()
+        void Clear()
         {
             // See case: https://fogbugz.unity3d.com/f/cases/998343/
             // Clearing the capture needs to happen before closing the window
@@ -139,15 +150,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             helpers.DragTo(fromPortUI.GetGlobalCenter(), toPortUI.GetGlobalCenter());
             yield return null;
 
-            graphView.RebuildUI(GraphModel, Store);
-            yield return null;
-
             Assert.AreEqual(originalEdgeCount + 1, GraphModel.EdgeModels.Count, "Edge has not been created");
         }
 
         protected IPlacematModel CreatePlacemat(Rect posAndDim, string title = "", int zOrder = 0)
         {
-            var pm = GraphModel.CreatePlacemat(title, posAndDim);
+            var pm = GraphModel.CreatePlacemat(posAndDim);
+            pm.Title = title;
             pm.ZOrder = zOrder;
             return pm;
         }

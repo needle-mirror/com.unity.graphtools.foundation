@@ -7,10 +7,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Redux
         public int Foo { get; set; }
         public int Bar { get; set; }
 
-        public MockState(int init) : base(null)
+        public MockState(int init) : base(default, null)
         {
             Foo = init;
             Bar = init;
         }
+
+        ~MockState() => Dispose(false);
     }
 }

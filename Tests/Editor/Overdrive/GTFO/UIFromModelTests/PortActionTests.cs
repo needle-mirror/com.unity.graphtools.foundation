@@ -5,6 +5,7 @@ using UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
+using GraphModel = UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels.GraphModel;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
 {
@@ -18,7 +19,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         public new void SetUp()
         {
             m_GraphModel = new GraphModel();
-            m_Store = new Store(new TestState(m_GraphModel));
+            m_Store = new Store(new TestState(m_Window.GUID, m_GraphModel));
             StoreHelper.RegisterDefaultReducers(m_Store);
             m_GraphView = new TestGraphView(m_Window, m_Store);
 
@@ -27,6 +28,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             m_GraphView.StretchToParentSize();
 
             m_Window.rootVisualElement.Add(m_GraphView);
+        }
+
+        [TearDown]
+        public new void TearDown()
+        {
+            m_Window.rootVisualElement.Remove(m_GraphView);
+            m_GraphModel = null;
+            m_Store = null;
+            m_GraphView = null;
         }
 
         [UnityTest]
@@ -43,7 +53,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             Assert.IsNotNull(port);
             Assert.IsNull(port.EdgeConnector.edgeDragHelper.edgeCandidateModel);
 
-            var portConnector = port.Q(PortConnectorPart.k_ConnectorUssName);
+            var portConnector = port.Q(PortConnectorPart.connectorUssName);
             var clickPosition = portConnector.parent.LocalToWorld(portConnector.layout.center);
             Vector2 move = new Vector2(0, 100);
             ClickDragNoRelease(portConnector, clickPosition, move);
@@ -90,8 +100,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             inPort.EdgeConnector.SetDropDelegate((s, e) => insideInputPortDelegateCalled = true);
             inPort.EdgeConnector.SetDropOutsideDelegate((s, e, v) => outsideInputPortDelegateCalled = true);
 
-            var outPortConnector = outPort.Q(PortConnectorPart.k_ConnectorUssName);
-            var inPortConnector = inPort.Q(PortConnectorPart.k_ConnectorUssName);
+            var outPortConnector = outPort.Q(PortConnectorPart.connectorUssName);
+            var inPortConnector = inPort.Q(PortConnectorPart.connectorUssName);
             var clickPosition = outPortConnector.parent.LocalToWorld(outPortConnector.layout.center);
             var releasePosition = inPortConnector.parent.LocalToWorld(inPortConnector.layout.center);
             Vector2 move = releasePosition - clickPosition;
@@ -138,8 +148,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             inPort.EdgeConnector.SetDropDelegate((s, e) => insideInputPortDelegateCalled = true);
             inPort.EdgeConnector.SetDropOutsideDelegate((s, e, v) => outsideInputPortDelegateCalled = true);
 
-            var outPortConnector = outPort.Q(PortConnectorPart.k_ConnectorUssName);
-            var inPortConnector = inPort.Q(PortConnectorPart.k_ConnectorUssName);
+            var outPortConnector = outPort.Q(PortConnectorPart.connectorUssName);
+            var inPortConnector = inPort.Q(PortConnectorPart.connectorUssName);
             var clickPosition = outPortConnector.parent.LocalToWorld(outPortConnector.layout.center);
             var releasePosition = inPortConnector.parent.LocalToWorld(inPortConnector.layout.center);
             Vector2 move = releasePosition - clickPosition + 400 * Vector2.down;

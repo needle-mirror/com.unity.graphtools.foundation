@@ -1,6 +1,6 @@
 using UnityEngine.Scripting.APIUpdating;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
 {
     static class MovedFromAttributeExtensions
     {

@@ -51,6 +51,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         int m_LineWidth = 2;
 
+        public GraphView GraphView => m_Edge?.GraphView;
+
         int DefaultLineWidth { get; set; } = k_DefaultLineWidth;
 
         Color DefaultColor { get; set; } = k_DefaultColor;
@@ -313,11 +315,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         protected virtual void UpdateRenderPoints()
         {
-            // TODO
-            // Dirty system
-
-            ComputeLayout();
-
             RenderPoints.Clear();
             m_LineSegmentIndex.Clear();
 
@@ -440,9 +437,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 return;
 
             var edgeModel = EdgeParent?.EdgeModel;
-            var graphView = GetFirstAncestorOfType<GraphView>();
 
-            if (graphView == null)
+            if (GraphView == null)
                 return;
 
             var fromOrientation = EdgeParent.Output?.Orientation ?? EdgeParent.Input?.Orientation ?? Orientation.Horizontal;
@@ -464,7 +460,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
                     var splitPoint = editableEdgeModel.EdgeControlPoints.ElementAt(i).Position;
                     splitPoint += ControlPointOffset;
-                    var localSplitPoint = graphView.contentViewContainer.ChangeCoordinatesTo(parent, splitPoint);
+                    var localSplitPoint = GraphView.contentViewContainer.ChangeCoordinatesTo(parent, splitPoint);
                     length = ControlPointDistance(previous, localSplitPoint, fromOrientation);
 
                     Vector2 next;
@@ -476,12 +472,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     {
                         next = editableEdgeModel.EdgeControlPoints.ElementAt(i + 1).Position;
                         next += ControlPointOffset;
-                        next = graphView.contentViewContainer.ChangeCoordinatesTo(parent, next);
+                        next = GraphView.contentViewContainer.ChangeCoordinatesTo(parent, next);
                     }
 
                     directionTo = (previous - next).normalized;
 
-                    var segment = new BezierSegment()
+                    var segment = new BezierSegment
                     {
                         p1 = previous + directionFrom * (length * previousTightness),
                         p2 = localSplitPoint + directionTo * (length * tightness),

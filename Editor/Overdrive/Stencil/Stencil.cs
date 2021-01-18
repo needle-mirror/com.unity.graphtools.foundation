@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
-using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins;
 using UnityEngine;
 using UnityEditor.Searcher;
@@ -11,6 +10,7 @@ using UnityEngine.GraphToolsFoundation.Overdrive;
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     [PublicAPI]
+    // Warning: Stencil is only serializable for backward compatibility purposes. It will stop being unserializable in the future
     [Serializable]
     public abstract class Stencil
     {
@@ -18,8 +18,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         List<ITypeMetadata> m_AssembliesTypes;
 
-        protected IBlackboardProvider m_BlackboardProvider;
         protected IToolbarProvider m_ToolbarProvider;
+
+        [SerializeReference]
+        public IGraphModel GraphModel;
 
         GraphContext m_GraphContext;
 
@@ -39,13 +41,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public virtual TypeHandle GetThisType()
         {
             return TypeHandle.Object;
-        }
-
-        public abstract Blackboard CreateBlackboard(Store store, GraphView graphView);
-
-        public virtual IBlackboardProvider GetBlackboardProvider()
-        {
-            return m_BlackboardProvider ?? (m_BlackboardProvider = new BlackboardProvider(this));
         }
 
         public virtual IToolbarProvider GetToolbarProvider()
@@ -98,37 +93,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         // PF: To preference
         public virtual bool MoveNodeDependenciesByDefault => true;
 
-        static Dictionary<TypeHandle, Type> s_TypeToConstantNodeModelTypeCache;
         public virtual IDebugger Debugger => null;
 
-        public virtual Type GetConstantNodeValueType(TypeHandle typeHandle)
-        {
-            if (s_TypeToConstantNodeModelTypeCache == null)
-            {
-                s_TypeToConstantNodeModelTypeCache = new Dictionary<TypeHandle, Type>
-                {
-                    { typeof(Boolean).GenerateTypeHandle(), typeof(BooleanConstant) },
-                    { typeof(Color).GenerateTypeHandle(), typeof(ColorConstant) },
-                    { typeof(Double).GenerateTypeHandle(), typeof(DoubleConstant) },
-                    { typeof(Single).GenerateTypeHandle(), typeof(FloatConstant) },
-                    { typeof(Int32).GenerateTypeHandle(), typeof(IntConstant) },
-                    { typeof(Quaternion).GenerateTypeHandle(), typeof(QuaternionConstant) },
-                    { typeof(String).GenerateTypeHandle(), typeof(StringConstant) },
-                    { typeof(Vector2).GenerateTypeHandle(), typeof(Vector2Constant) },
-                    { typeof(Vector3).GenerateTypeHandle(), typeof(Vector3Constant) },
-                    { typeof(Vector4).GenerateTypeHandle(), typeof(Vector4Constant) },
-                };
-            }
-
-            if (s_TypeToConstantNodeModelTypeCache.TryGetValue(typeHandle, out var result))
-                return result;
-
-            Type t = typeHandle.Resolve();
-            if (t.IsEnum || t == typeof(Enum))
-                return typeof(EnumConstant);
-
-            return null;
-        }
+        public abstract Type GetConstantNodeValueType(TypeHandle typeHandle);
 
         public virtual IConstant CreateConstantValue(TypeHandle constantTypeHandle)
         {
@@ -144,12 +111,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             switch (portModel.Direction)
             {
                 case Direction.Output:
-                    SearcherService.ShowOutputToGraphNodes(store.GetState(), portModel, worldPosition, item =>
+                    SearcherService.ShowOutputToGraphNodes(store.State, portModel, worldPosition, item =>
                         store.Dispatch(new CreateNodeFromPortAction(portModel, localPosition, item, edgesToDelete)));
                     break;
 
                 case Direction.Input:
-                    SearcherService.ShowInputToGraphNodes(store.GetState(), portModel, worldPosition, item =>
+                    SearcherService.ShowInputToGraphNodes(store.State, portModel, worldPosition, item =>
                         store.Dispatch(new CreateNodeFromPortAction(portModel, localPosition, item, edgesToDelete)));
                     break;
             }

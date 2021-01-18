@@ -32,7 +32,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         protected override void UpdateReferencePosition(ref float referencePosition, Rect currentElementRect)
         {
-            referencePosition += (m_Orientation == Orientation.Horizontal ? currentElementRect.width : currentElementRect.height) + GraphViewSettings.UserSettings.SpacingMarginValue;;
+            referencePosition += (m_Orientation == Orientation.Horizontal ? currentElementRect.width : currentElementRect.height) + GraphViewSettings.UserSettings.SpacingMarginValue;
         }
 
         protected override Vector2 GetDelta(Rect elementPosition, float referencePosition)

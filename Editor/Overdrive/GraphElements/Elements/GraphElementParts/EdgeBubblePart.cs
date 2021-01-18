@@ -6,7 +6,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class EdgeBubblePart : BaseGraphElementPart
     {
-        public static readonly string k_UssClassName = "ge-edge-bubble-part";
+        public static readonly string ussClassName = "ge-edge-bubble-part";
 
         public static EdgeBubblePart Create(string name, IGraphElementModel model, IGraphElement graphElement, string parentClassName)
         {
@@ -28,7 +28,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         protected override void BuildPartUI(VisualElement container)
         {
             m_EdgeBubble = new EdgeBubble { name = PartName };
-            m_EdgeBubble.AddToClassList(k_UssClassName);
+            m_EdgeBubble.AddToClassList(ussClassName);
             m_EdgeBubble.AddToClassList(m_ParentClassName.WithUssElement(PartName));
             container.Add(m_EdgeBubble);
         }

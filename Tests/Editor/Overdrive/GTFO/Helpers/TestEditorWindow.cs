@@ -13,7 +13,27 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO
 
         protected override State CreateInitialState()
         {
-            return new TestState(null);
+            return new TestState(GUID, null);
+        }
+
+        protected override BlankPage CreateBlankPage()
+        {
+            return null;
+        }
+
+        protected override MainToolbar CreateMainToolbar()
+        {
+            return null;
+        }
+
+        protected override ErrorToolbar CreateErrorToolbar()
+        {
+            return null;
+        }
+
+        protected override GtfoGraphView CreateGraphView()
+        {
+            return null;
         }
     }
 }

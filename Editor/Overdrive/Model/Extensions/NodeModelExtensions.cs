@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -43,12 +44,61 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     var edge = edges[i];
                     // Only show when we have more than one edge (i.e. when it's meaningful)
                     edge.EdgeLabel = show && edges.Count > 1 ? (i + 1).ToString() : "";
-
-                    // TODO JOCE: We need a dirty system to do the equivalent of this
-                    // edge.GetUI<Edge>(GraphView)?.UpdateFromModel();
-                    // Until we have one, we'll need to manually update all the outgoing edges. at every callsite.
                 }
             }
+        }
+
+        public static IPortModel AddPlaceHolderPort(this IInOutPortsNode self, Direction direction, string uniqueId)
+        {
+            if (direction == Direction.Input)
+                return self.AddInputPort(uniqueId, PortType.MissingPort, TypeHandle.MissingPort, uniqueId,
+                    PortModelOptions.NoEmbeddedConstant);
+
+            return self.AddOutputPort(uniqueId, PortType.MissingPort, TypeHandle.MissingPort, uniqueId,
+                PortModelOptions.NoEmbeddedConstant);
+        }
+
+        public static IPortModel AddDataInputPort(this IInOutPortsNode self, string portName, TypeHandle typeHandle, string portId = null,
+            PortModelOptions options = PortModelOptions.Default, Action<IConstant> preDefine = null)
+        {
+            return self.AddInputPort(portName, PortType.Data, typeHandle, portId, options, preDefine);
+        }
+
+        public static IPortModel AddDataInputPort<TDataType>(this IInOutPortsNode self, string portName, string portId = null,
+            PortModelOptions options = PortModelOptions.Default, TDataType defaultValue = default)
+        {
+            Action<IConstant> preDefine = null;
+
+            if (defaultValue is Enum || !EqualityComparer<TDataType>.Default.Equals(defaultValue, default))
+                preDefine = constantModel => constantModel.ObjectValue = defaultValue;
+
+            return self.AddDataInputPort(portName, typeof(TDataType).GenerateTypeHandle(), portId, options, preDefine);
+        }
+
+        public static IPortModel AddDataOutputPort(this IInOutPortsNode self, string portName, TypeHandle typeHandle, string portId = null,
+            PortModelOptions options = PortModelOptions.Default)
+        {
+            return self.AddOutputPort(portName, PortType.Data, typeHandle, portId, options);
+        }
+
+        public static IPortModel AddDataOutputPort<TDataType>(this IInOutPortsNode self, string portName, string portId = null)
+        {
+            return self.AddDataOutputPort(portName, typeof(TDataType).GenerateTypeHandle(), portId);
+        }
+
+        public static IPortModel AddExecutionInputPort(this IInOutPortsNode self, string portName, string portId = null)
+        {
+            return self.AddInputPort(portName, PortType.Execution, TypeHandle.ExecutionFlow, portId);
+        }
+
+        public static IPortModel AddExecutionOutputPort(this IInOutPortsNode self, string portName, string portId = null)
+        {
+            return self.AddOutputPort(portName, PortType.Execution, TypeHandle.ExecutionFlow, portId);
+        }
+
+        public static IEnumerable<IPortModel> GetPorts(this IPortNode self, Direction direction, PortType portType)
+        {
+            return self.Ports.Where(p => (p.Direction & direction) == direction && p.PortType == portType);
         }
     }
 }

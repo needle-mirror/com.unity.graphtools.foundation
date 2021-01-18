@@ -29,8 +29,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             var node = new Node();
             node.SetupBuildAndUpdate(nodeModel, null, null);
 
-            Assert.IsNotNull(node.Q<VisualElement>(Node.k_TitleContainerPartName), "Title part was expected but not found");
-            Assert.IsNotNull(node.Q<VisualElement>(Node.k_PortContainerPartName), "Port Container part was expected but not found");
+            Assert.IsNotNull(node.Q<VisualElement>(Node.titleContainerPartName), "Title part was expected but not found");
+            Assert.IsNotNull(node.Q<VisualElement>(Node.portContainerPartName), "Port Container part was expected but not found");
             if (nodeModel.GetType() == typeof(NodeModel))
             {
                 Assert.IsNull(node.Q<Port>(), "No Port were expected but at least one was found");
@@ -50,9 +50,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             var node = new CollapsibleInOutNode();
             node.SetupBuildAndUpdate(nodeModel, null, null);
 
-            Assert.IsNotNull(node.Q<VisualElement>(CollapsibleInOutNode.k_TitleIconContainerPartName), "Title part was expected but not found");
-            Assert.IsNotNull(node.Q<VisualElement>(Node.k_PortContainerPartName), "Port Container part was expected but not found");
-            Assert.IsNotNull(node.Q<VisualElement>(CollapsibleInOutNode.k_CollapseButtonPartName), "Collapsible Button part was expected but not found");
+            Assert.IsNotNull(node.Q<VisualElement>(CollapsibleInOutNode.titleIconContainerPartName), "Title part was expected but not found");
+            Assert.IsNotNull(node.Q<VisualElement>(Node.portContainerPartName), "Port Container part was expected but not found");
+            Assert.IsNotNull(node.Q<VisualElement>(CollapsibleInOutNode.collapseButtonPartName), "Collapsible Button part was expected but not found");
 
             if (nodeModel.GetType() == typeof(NodeModel))
             {
@@ -60,8 +60,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             }
             else if (nodeModel.GetType() == typeof(IONodeModel))
             {
-                var inputs = node.Q<VisualElement>(InOutPortContainerPart.k_InputPortsUssName);
-                var outputs = node.Q<VisualElement>(InOutPortContainerPart.k_OutputPortsUssName);
+                var inputs = node.Q<VisualElement>(InOutPortContainerPart.inputPortsUssName);
+                var outputs = node.Q<VisualElement>(InOutPortContainerPart.outputPortsUssName);
                 Assert.IsNotNull(inputs, "Input Port Container part was expected but not found");
                 Assert.IsNotNull(outputs, "Output Port Container part was expected but not found");
                 Assert.IsNotNull(inputs.Q<Port>(), "At least one Input Port was expected but none were found");
@@ -82,10 +82,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             var node = new TokenNode();
             node.SetupBuildAndUpdate(nodeModel, null, null);
 
-            var inputs = node.Q<VisualElement>(TokenNode.k_InputPortContainerPartName);
-            var outputs = node.Q<VisualElement>(TokenNode.k_OutputPortContainerPartName);
+            var inputs = node.Q<VisualElement>(TokenNode.inputPortContainerPartName);
+            var outputs = node.Q<VisualElement>(TokenNode.outputPortContainerPartName);
 
-            Assert.IsNotNull(node.Q<VisualElement>(TokenNode.k_TitleIconContainerPartName), "Title part was expected but not found");
+            Assert.IsNotNull(node.Q<VisualElement>(TokenNode.titleIconContainerPartName), "Title part was expected but not found");
 
             if (nodeModel.GetType() == typeof(SingleInputNodeModel))
             {

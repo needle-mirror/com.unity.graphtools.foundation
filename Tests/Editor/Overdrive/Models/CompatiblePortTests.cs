@@ -10,44 +10,44 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
         [Serializable]
         class NodeType1 : NodeModel
         {
-            public PortModel DataOut0 { get; private set; }
+            public IPortModel DataOut0 { get; private set; }
 
             protected override void OnDefineNode()
             {
-                DataOut0 = AddDataOutputPort<int>("dataOut0");
+                DataOut0 = this.AddDataOutputPort<int>("dataOut0");
             }
         }
 
         [Serializable]
         class NodeType2 : NodeModel
         {
-            public PortModel DataIn0 { get; private set; }
+            public IPortModel DataIn0 { get; private set; }
 
             protected override void OnDefineNode()
             {
-                DataIn0 = AddDataInputPort<string>("dataIn0");
+                DataIn0 = this.AddDataInputPort<string>("dataIn0");
             }
         }
 
         [Serializable]
         class NodeType3 : NodeModel
         {
-            public PortModel ExecOut0 { get; private set; }
+            public IPortModel ExecOut0 { get; private set; }
 
             protected override void OnDefineNode()
             {
-                ExecOut0 = AddExecutionOutputPort("execOut0");
+                ExecOut0 = this.AddExecutionOutputPort("execOut0");
             }
         }
 
         [Serializable]
         class NodeType4 : NodeModel
         {
-            public PortModel ExecIn0 { get; private set; }
+            public IPortModel ExecIn0 { get; private set; }
 
             protected override void OnDefineNode()
             {
-                ExecIn0 = AddExecutionInputPort("execIn0");
+                ExecIn0 = this.AddExecutionInputPort("execIn0");
             }
         }
 

@@ -30,9 +30,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        static string StylesheetPath = PackageTransitionHelper.AssetPath + "GraphElements/Stylesheets/";
-        static string NewLookStylesheetPath = PackageTransitionHelper.AssetPath + "GraphElements/Stylesheets/NewLook/";
-        static string TemplatePath = PackageTransitionHelper.AssetPath + "GraphElements/Templates/";
+        static string StylesheetPath = AssetHelper.AssetPath + "GraphElements/Stylesheets/";
+        static string NewLookStylesheetPath = AssetHelper.AssetPath + "GraphElements/Stylesheets/NewLook/";
+        static string TemplatePath = AssetHelper.AssetPath + "GraphElements/Templates/";
         internal static bool UseNewStylesheets { get; set; }
 
         internal static void AddStylesheet(this VisualElement ve, string stylesheetName)

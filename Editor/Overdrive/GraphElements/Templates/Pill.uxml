@@ -1,13 +1,11 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
-  <ui:VisualElement name="node-border" picking-mode="Ignore" >
-    <ui:VisualElement name="contents" picking-mode="Ignore">
-      <ui:VisualElement name="top" picking-mode="Ignore">
-        <ui:VisualElement name="input" picking-mode="Ignore" />
-        <ui:Image name="icon" picking-mode="Ignore" />
+  <ui:VisualElement name="node-border">
+    <ui:VisualElement name="contents">
+      <ui:VisualElement name="top">
+        <ui:Image name="icon" />
         <ui:Label name="title-label" text="" />
-        <ui:VisualElement name="output" picking-mode="Ignore" />
       </ui:VisualElement>
     </ui:VisualElement>
   </ui:VisualElement>
-  <ui:VisualElement name="selection-border" picking-mode="Ignore" />
+  <ui:VisualElement name="selection-border" />
 </ui:UXML>

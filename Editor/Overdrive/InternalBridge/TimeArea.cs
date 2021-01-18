@@ -4,7 +4,7 @@ using UnityEngine;
 
 [assembly: InternalsVisibleTo("Unity.GraphTools.Foundation.Overdrive.Editor")]
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
 {
     [Serializable]
     class TimeArea : UnityEditor.TimeArea

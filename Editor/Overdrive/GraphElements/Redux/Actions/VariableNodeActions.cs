@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -17,11 +16,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             UndoString = "Create Variable Node";
         }
 
-        public CreateVariableNodesAction(List<(IVariableDeclarationModel, SerializableGUID, Vector2)> variablesToCreate,
-                                         bool autoAlign = false) : this()
+        public CreateVariableNodesAction(List<(IVariableDeclarationModel, SerializableGUID, Vector2)> variablesToCreate) : this()
         {
             VariablesToCreate = variablesToCreate;
-            AutoAlign = autoAlign;
         }
 
         public CreateVariableNodesAction(IVariableDeclarationModel graphElementModel, Vector2 mousePosition,
@@ -35,33 +32,36 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             AutoAlign = autoAlign;
         }
 
-        public static void DefaultReducer(State previousState, CreateVariableNodesAction action)
+        public static void DefaultReducer(State state, CreateVariableNodesAction action)
         {
             if (action.VariablesToCreate.Count > 0)
             {
-                previousState.PushUndo(action);
+                state.PushUndo(action);
 
                 if (action.ConnectAfterCreation != null)
                 {
                     // Delete previous connections
                     if (action.EdgeModelsToDelete.Any())
                     {
-                        previousState.CurrentGraphModel.DeleteEdges(action.EdgeModelsToDelete);
+                        state.GraphModel.DeleteEdges(action.EdgeModelsToDelete);
+                        state.MarkDeleted(action.EdgeModelsToDelete);
                     }
                 }
 
-                foreach ((IVariableDeclarationModel, SerializableGUID, Vector2)tuple in action.VariablesToCreate)
+                foreach (var(variableDeclarationModel, guid, position) in action.VariablesToCreate)
                 {
-                    var vsGraphModel = previousState.CurrentGraphModel;
+                    var vsGraphModel = state.GraphModel;
 
-                    IVariableNodeModel newVariable = vsGraphModel.CreateVariableNode(tuple.Item1, tuple.Item3, guid: tuple.Item2);
+                    var newVariable = vsGraphModel.CreateVariableNode(variableDeclarationModel, position, guid: guid);
+                    state.MarkNew(newVariable);
 
                     if (action.ConnectAfterCreation != null)
                     {
-                        var newEdge = previousState.CurrentGraphModel.CreateEdge(action.ConnectAfterCreation, newVariable.OutputPort);
+                        var newEdge = state.GraphModel.CreateEdge(action.ConnectAfterCreation, newVariable.OutputPort);
+                        state.MarkNew(newEdge);
                         if (action.AutoAlign)
                         {
-                            vsGraphModel.LastChanges.ElementsToAutoAlign.Add(newEdge);
+                            state.MarkModelToAutoAlign(newEdge);
                         }
                     }
                 }
@@ -80,33 +80,37 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public ConvertVariableNodesToConstantNodesAction(params IVariableNodeModel[] variableModels)
             : base(k_UndoStringSingular, k_UndoStringPlural, variableModels) {}
 
-        public static void DefaultReducer(State previousState, ConvertVariableNodesToConstantNodesAction action)
+        public static void DefaultReducer(State state, ConvertVariableNodesToConstantNodesAction action)
         {
             if (!action.Models.Any())
                 return;
 
-            previousState.PushUndo(action);
+            state.PushUndo(action);
 
-            var graphModel = previousState.CurrentGraphModel;
-            int variableModelsCount = action.Models.Count;
-            previousState.EditorDataModel.ElementModelToRename = null;
+            var graphModel = state.GraphModel;
             foreach (var variableModel in action.Models)
             {
                 if (graphModel.Stencil.GetConstantNodeValueType(variableModel.GetDataType()) == null)
                     continue;
-                var constantNode = graphModel.CreateConstantNode(variableModel.Title, variableModel.GetDataType(), variableModel.Position);
-                // Rename converted item only if there are no other items to be converted
-                if (variableModelsCount == 1)
-                    previousState.EditorDataModel.ElementModelToRename = constantNode;
-                constantNode.ObjectValue = variableModel.VariableDeclarationModel?.InitializationModel?.ObjectValue;
+                var constantModel = graphModel.CreateConstantNode(variableModel.GetDataType(), variableModel.Title, variableModel.Position);
+                constantModel.ObjectValue = variableModel.VariableDeclarationModel?.InitializationModel?.ObjectValue;
+                constantModel.State = variableModel.State;
+                constantModel.HasUserColor = variableModel.HasUserColor;
+                if (variableModel.HasUserColor)
+                    constantModel.Color = variableModel.Color;
+                state.MarkNew(constantModel);
 
-                foreach (var edge in graphModel.GetEdgesConnections(variableModel.OutputPort).ToList())
+                var edgeModels = graphModel.GetEdgesConnections(variableModel.OutputPort).ToList();
+                foreach (var edge in edgeModels)
                 {
-                    graphModel.CreateEdge(edge.ToPort, constantNode.OutputPort);
-                    graphModel.DeleteEdge(edge);
+                    var newEdge = graphModel.CreateEdge(edge.ToPort, constantModel.OutputPort);
+                    var deletedModels = graphModel.DeleteEdge(edge);
+                    state.MarkNew(newEdge);
+                    state.MarkDeleted(deletedModels);
                 }
 
-                graphModel.DeleteNode(variableModel, DeleteConnections.False);
+                var deletedElements = graphModel.DeleteNode(variableModel, deleteConnections: false);
+                state.MarkDeleted(deletedElements);
             }
         }
     }
@@ -122,27 +126,42 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public ConvertConstantNodesToVariableNodesAction(params IConstantNodeModel[] constantModels)
             : base(k_UndoStringSingular, k_UndoStringPlural, constantModels) {}
 
-        public static void DefaultReducer(State previousState, ConvertConstantNodesToVariableNodesAction action)
+        public static void DefaultReducer(State state, ConvertConstantNodesToVariableNodesAction action)
         {
             if (!action.Models.Any())
                 return;
 
-            previousState.PushUndo(action);
+            state.PushUndo(action);
 
-            var graphModel = previousState.CurrentGraphModel;
+            var graphModel = state.GraphModel;
             foreach (var constantModel in action.Models)
             {
-                var declarationModel = graphModel.CreateGraphVariableDeclaration(StringExtensions.CodifyString(constantModel.Type.FriendlyName()), constantModel.Type.GenerateTypeHandle(), ModifierFlags.None, true, constantModel.Value.CloneConstant());
+                var declarationModel = graphModel.CreateGraphVariableDeclaration(
+                    constantModel.Type.GenerateTypeHandle(),
+                    StringExtensions.CodifyString(constantModel.Type.FriendlyName()), ModifierFlags.None, true,
+                    constantModel.Value.CloneConstant());
+                state.MarkNew(declarationModel);
+
                 if (graphModel.CreateVariableNode(declarationModel, constantModel.Position) is IVariableNodeModel variableModel)
                 {
+                    state.MarkNew(variableModel);
+
+                    variableModel.State = constantModel.State;
+                    variableModel.HasUserColor = constantModel.HasUserColor;
+                    if (constantModel.HasUserColor)
+                        variableModel.Color = constantModel.Color;
                     foreach (var edge in graphModel.GetEdgesConnections(constantModel.OutputPort).ToList())
                     {
-                        graphModel.CreateEdge(edge.ToPort, variableModel.OutputPort);
-                        graphModel.DeleteEdge(edge);
+                        var newEdge = graphModel.CreateEdge(edge.ToPort, variableModel.OutputPort);
+                        var deleteModels = graphModel.DeleteEdge(edge);
+
+                        state.MarkNew(newEdge);
+                        state.MarkDeleted(deleteModels);
                     }
                 }
 
-                graphModel.DeleteNode(constantModel, DeleteConnections.False);
+                var deletedElements  = graphModel.DeleteNode(constantModel, deleteConnections: false);
+                state.MarkDeleted(deletedElements);
             }
         }
     }
@@ -159,44 +178,30 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public ItemizeNodeAction(params ISingleOutputPortNode[] models)
             : base(k_UndoStringSingular, k_UndoStringPlural, models) {}
 
-        public static void DefaultReducer(State previousState, ItemizeNodeAction action)
+        public static void DefaultReducer(State state, ItemizeNodeAction action)
         {
             bool undoPushed = false;
 
-            var graphModel = previousState.CurrentGraphModel;
-            foreach (var model in action.Models)
+            var graphModel = state.GraphModel;
+            foreach (var model in action.Models.Where(m => m is IVariableNodeModel || m is IConstantNodeModel))
             {
                 var edges = graphModel.GetEdgesConnections(model.OutputPort).ToList();
-
-                if (!(model is IVariableNodeModel) && !(model is IConstantNodeModel))
-                    continue;
 
                 for (var i = 1; i < edges.Count; i++)
                 {
                     if (!undoPushed)
                     {
                         undoPushed = true;
-                        previousState.PushUndo(action);
+                        state.PushUndo(action);
                     }
 
-                    ISingleOutputPortNode newModel = null;
-                    if (model is IVariableNodeModel variableNodeModel)
-                    {
-                        newModel = graphModel.CreateVariableNode(variableNodeModel.VariableDeclarationModel,
-                            model.Position + i * 50 * Vector2.up);
-                    }
-                    else if (model is IConstantNodeModel constantNodeModel)
-                    {
-                        var currentName = (constantNodeModel as IHasTitle)?.Title;
-                        var newName = (string.IsNullOrEmpty(currentName) ? "Temporary" : currentName) + i;
-
-                        newModel = graphModel.CreateConstantNode(newName, constantNodeModel.Type.GenerateTypeHandle(),
-                            constantNodeModel.Position + i * 50 * Vector2.up);
-                    }
-
+                    var newModel = (ISingleOutputPortNode)graphModel.DuplicateNode(model, i * 50 * Vector2.up);
+                    state.MarkNew(newModel);
                     var edge = edges[i];
-                    graphModel.CreateEdge(edge.ToPort, newModel.OutputPort);
-                    graphModel.DeleteEdge(edge);
+                    var newEdge = graphModel.CreateEdge(edge.ToPort, newModel.OutputPort);
+                    var deletedModels = graphModel.DeleteEdge(edge);
+                    state.MarkNew(newEdge);
+                    state.MarkDeleted(deletedModels);
                 }
             }
         }
@@ -213,19 +218,52 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public ToggleLockConstantNodeAction(params IConstantNodeModel[] constantNodeModels)
             : base(k_UndoStringSingular, k_UndoStringPlural, constantNodeModels) {}
 
-        public static void DefaultReducer(State previousState, ToggleLockConstantNodeAction action)
+        public static void DefaultReducer(State state, ToggleLockConstantNodeAction action)
         {
             if (!action.Models.Any())
                 return;
 
-            previousState.PushUndo(action);
+            state.PushUndo(action);
 
             foreach (var constantNodeModel in action.Models)
             {
                 constantNodeModel.IsLocked = !constantNodeModel.IsLocked;
             }
+            state.MarkChanged(action.Models);
+        }
+    }
 
-            previousState.CurrentGraphModel.LastChanges.ChangedElements.AddRange(action.Models);
+    public class ChangeVariableDeclarationAction : ModelAction<IVariableNodeModel>
+    {
+        const string k_UndoStringSingular = "Change Variable";
+
+        public readonly IVariableDeclarationModel Variable;
+
+        public ChangeVariableDeclarationAction()
+            : base(k_UndoStringSingular) {}
+
+        public ChangeVariableDeclarationAction(IReadOnlyList<IVariableNodeModel> models, IVariableDeclarationModel variable)
+            : base(k_UndoStringSingular, k_UndoStringSingular, models)
+        {
+            Variable = variable;
+        }
+
+        public static void DefaultReducer(State state, ChangeVariableDeclarationAction action)
+        {
+            if (!action.Models.Any())
+                return;
+
+            state.PushUndo(action);
+
+            foreach (var model in action.Models)
+            {
+                model.DeclarationModel = action.Variable;
+                model.DefineNode();
+
+                var references = state.GraphModel.FindReferencesInGraph<IVariableNodeModel>(action.Variable);
+                state.MarkChanged(references);
+            }
+            state.MarkChanged(action.Models);
         }
     }
 }

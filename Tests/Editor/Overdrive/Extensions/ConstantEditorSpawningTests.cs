@@ -1,5 +1,6 @@
 using System;
 using NUnit.Framework;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Extensions
@@ -9,7 +10,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Extensions
         [Test]
         public void TestConstantEditorExtensionMethodsExistForBasicTypes()
         {
-            var expectedTypes = new[] { typeof(string), typeof(Boolean), typeof(Int32), typeof(Double), typeof(Single), typeof(Vector2), typeof(Vector3), typeof(Vector4), typeof(Quaternion), typeof(Color) };
+            var expectedTypes = new[]
+            {
+                typeof(StringConstant), typeof(BooleanConstant), typeof(IntConstant),
+                typeof(DoubleConstant), typeof(FloatConstant),
+                typeof(Vector2Constant), typeof(Vector3Constant), typeof(Vector4Constant), typeof(QuaternionConstant),
+                typeof(EnumConstant), typeof(ColorConstant),
+                typeof(AnimationClipConstant), typeof(MeshConstant), typeof(Texture2DConstant), typeof(Texture3DConstant)
+            };
             for (var i = 0; i < expectedTypes.Length; i++)
             {
                 var type = expectedTypes[i];

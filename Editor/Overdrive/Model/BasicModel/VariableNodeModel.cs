@@ -14,7 +14,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         [SerializeReference]
         VariableDeclarationModel m_DeclarationModel;
 
-        protected PortModel m_MainPortModel;
+        protected IPortModel m_MainPortModel;
 
         // PF: remove base implementation
         public override string DataTypeString => VariableDeclarationModel?.DataType.GetMetadata(Stencil).FriendlyName ?? string.Empty;
@@ -60,16 +60,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             if (m_DeclarationModel != null /* this node */ && m_DeclarationModel.Modifiers.HasFlag(ModifierFlags.WriteOnly))
             {
                 if (this.GetDataType() == TypeHandle.ExecutionFlow)
-                    m_MainPortModel = AddExecutionInputPort(null);
+                    m_MainPortModel = this.AddExecutionInputPort(null);
                 else
-                    m_MainPortModel = AddDataInputPort(null, this.GetDataType(), k_MainPortName);
+                    m_MainPortModel = this.AddDataInputPort(null, this.GetDataType(), k_MainPortName);
             }
             else
             {
                 if (this.GetDataType() == TypeHandle.ExecutionFlow)
-                    m_MainPortModel = AddExecutionOutputPort(null);
+                    m_MainPortModel = this.AddExecutionOutputPort(null);
                 else
-                    m_MainPortModel = AddDataOutputPort(null, this.GetDataType(), k_MainPortName);
+                    m_MainPortModel = this.AddDataOutputPort(null, this.GetDataType(), k_MainPortName);
             }
         }
 

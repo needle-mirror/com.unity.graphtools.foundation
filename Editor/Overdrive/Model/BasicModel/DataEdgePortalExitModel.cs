@@ -16,7 +16,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         protected override void OnDefineNode()
         {
             base.OnDefineNode();
-            AddDataOutputPort("", TypeHandle.Unknown);
+            this.AddDataOutputPort("", TypeHandle.Unknown);
         }
 
         public override bool CanCreateOppositePortal()

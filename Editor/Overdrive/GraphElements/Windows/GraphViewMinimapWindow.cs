@@ -29,8 +29,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             m_ToolbarContainer.Add(m_ZoomLabel);
         }
 
-        void OnDestroy()
+        protected override void OnDestroy()
         {
+            base.OnDestroy();
+
             if (m_SelectedGraphView != null)
                 // ReSharper disable once DelegateSubtraction
                 m_SelectedGraphView.redrawn -= GraphViewRedrawn;
@@ -53,7 +55,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (m_MiniMap == null) // Probably called from base.OnEnable(). We're not ready just yet.
                 return;
 
-            m_MiniMap.GraphView = m_SelectedGraphView;
+            m_MiniMap.AddToGraphView(m_SelectedGraphView);
             m_MiniMap.MarkDirtyRepaint();
         }
 

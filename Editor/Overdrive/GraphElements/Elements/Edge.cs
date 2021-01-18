@@ -7,16 +7,22 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class Edge : GraphElement
     {
-        public new static readonly string k_UssClassName = "ge-edge";
-        public static readonly string k_EditModeModifierUssClassName = k_UssClassName.WithUssModifier("edit-mode");
-        public static readonly string k_GhostModifierUssClassName = k_UssClassName.WithUssModifier("ghost");
+        public new static readonly string ussClassName = "ge-edge";
+        public static readonly string editModeModifierUssClassName = ussClassName.WithUssModifier("edit-mode");
+        public static readonly string ghostModifierUssClassName = ussClassName.WithUssModifier("ghost");
 
-        public static readonly string k_EdgeControlPartName = "edge-control";
-        public static readonly string k_EdgeBubblePartName = "edge-bubble";
+        public static readonly string edgeControlPartName = "edge-control";
+        public static readonly string edgeBubblePartName = "edge-bubble";
 
-        protected EdgeManipulator m_EdgeManipulator;
+        EdgeManipulator m_EdgeManipulator;
 
         EdgeControl m_EdgeControl;
+
+        protected EdgeManipulator EdgeManipulator
+        {
+            get => m_EdgeManipulator;
+            set => this.ReplaceManipulator(ref m_EdgeManipulator, value);
+        }
 
         public IEdgeModel EdgeModel => Model as IEdgeModel;
 
@@ -82,7 +88,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             {
                 if (m_EdgeControl == null)
                 {
-                    var edgeControlPart = PartList.GetPart(k_EdgeControlPartName);
+                    var edgeControlPart = PartList.GetPart(edgeControlPartName);
                     m_EdgeControl = edgeControlPart?.Root as EdgeControl;
                 }
 
@@ -100,24 +106,21 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             Layer = -1;
 
-            m_EdgeManipulator = new EdgeManipulator();
-            this.AddManipulator(m_EdgeManipulator);
+            EdgeManipulator = new EdgeManipulator();
         }
 
         protected override void BuildPartList()
         {
-            PartList.AppendPart(EdgeControlPart.Create(k_EdgeControlPartName, Model, this, k_UssClassName));
-            PartList.AppendPart(EdgeBubblePart.Create(k_EdgeBubblePartName, Model, this, k_UssClassName));
+            PartList.AppendPart(EdgeControlPart.Create(edgeControlPartName, Model, this, ussClassName));
+            PartList.AppendPart(EdgeBubblePart.Create(edgeBubblePartName, Model, this, ussClassName));
         }
 
         protected override void PostBuildUI()
         {
             base.PostBuildUI();
 
-            EdgeControl?.RegisterCallback<GeometryChangedEvent>(OnEdgeGeometryChanged);
-
-            AddToClassList(k_UssClassName);
-            EnableInClassList(k_GhostModifierUssClassName, IsGhostEdge);
+            AddToClassList(ussClassName);
+            EnableInClassList(ghostModifierUssClassName, IsGhostEdge);
             this.AddStylesheet("Edge.uss");
         }
 
@@ -126,7 +129,35 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             base.UpdateElementFromModel();
 
             if (EdgeModel is IEditableEdge editableEdge)
-                EnableInClassList(k_EditModeModifierUssClassName, editableEdge.EditMode);
+                EnableInClassList(editModeModifierUssClassName, editableEdge.EditMode);
+        }
+
+        public override void AddBackwardDependencies()
+        {
+            base.AddBackwardDependencies();
+
+            AddBackwardDependencies(EdgeModel.FromPort);
+            AddBackwardDependencies(EdgeModel.ToPort);
+
+            void AddBackwardDependencies(IPortModel portModel)
+            {
+                if (portModel == null)
+                    return;
+
+                var ui = portModel.GetUI(GraphView);
+                if (ui != null)
+                {
+                    // Edge color changes with port color.
+                    Dependencies.AddBackwardDependency(ui, DependencyType.Style);
+                }
+
+                ui = portModel.NodeModel.GetUI(GraphView);
+                if (ui != null)
+                {
+                    // Edge position changes with node position.
+                    Dependencies.AddBackwardDependency(ui, DependencyType.Geometry);
+                }
+            }
         }
 
         public override bool Overlaps(Rect rectangle)
@@ -141,36 +172,40 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public override void OnSelected()
         {
+            // PF FIXME: model modification should occur as part of a SelectElementAction.
+            // Then the UpdateFromModel at the end would not be necessary.
+
             base.OnSelected();
 
-            var edgeControlPart = PartList.GetPart(k_EdgeControlPartName);
+            var edgeControlPart = PartList.GetPart(edgeControlPartName);
             edgeControlPart?.UpdateFromModel();
 
-            EdgeModel.FromPort.NodeModel.RevealReorderableEdgesOrder(true, EdgeModel);
+            if (EdgeModel.FromPort == null)
+                return;
 
-            // TODO JOCE: This is required until we have a dirtying mechanism (see ShowConnectedExecutionEdgesOrder in NodeModel.cs)
-            EdgeModel.FromPort.NodeModel.GetUI<Node>(GraphView)?.UpdateOutgoingExecutionEdges();
+            EdgeModel.FromPort.NodeModel.RevealReorderableEdgesOrder(true, EdgeModel);
+            var nodeModel = EdgeModel.FromPort.NodeModel;
+            foreach (var edge in nodeModel.ConnectedPortsWithReorderableEdges().SelectMany(p => p.GetConnectedEdges()))
+                edge.GetUI<Edge>(GraphView)?.UpdateFromModel();
         }
 
         public override void OnUnselected()
         {
+            // PF FIXME: model modification should occur as part of a SelectElementAction
+            // Then the UpdateFromModel at the end would not be necessary.
+
             base.OnUnselected();
 
-            var edgeControlPart = PartList.GetPart(k_EdgeControlPartName);
+            var edgeControlPart = PartList.GetPart(edgeControlPartName);
             edgeControlPart?.UpdateFromModel();
 
-            if (EdgeModel.FromPort != null)
-            {
-                EdgeModel.FromPort.NodeModel.RevealReorderableEdgesOrder(false);
+            if (EdgeModel.FromPort == null)
+                return;
 
-                // TODO JOCE: This is required until we have a dirtying mechanism (see ShowConnectedExecutionEdgesOrder in NodeModel.cs)
-                EdgeModel.FromPort.NodeModel.GetUI<Node>(GraphView)?.UpdateOutgoingExecutionEdges();
-            }
-        }
-
-        void OnEdgeGeometryChanged(GeometryChangedEvent evt)
-        {
-            UpdateFromModel();
+            EdgeModel.FromPort.NodeModel.RevealReorderableEdgesOrder(false);
+            var nodeModel = EdgeModel.FromPort.NodeModel;
+            foreach (var edge in nodeModel.ConnectedPortsWithReorderableEdges().SelectMany(p => p.GetConnectedEdges()))
+                edge.GetUI<Edge>(GraphView)?.UpdateFromModel();
         }
 
         protected override void BuildContextualMenu(ContextualMenuPopulateEvent evt)
@@ -248,10 +283,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     void ReorderEdges(ReorderEdgeAction.ReorderType reorderType)
                     {
                         Store.Dispatch(new ReorderEdgeAction(edge.EdgeModel, reorderType));
-
-                        // Refresh the edge bubbles
-                        edge.EdgeModel.FromPort.NodeModel.RevealReorderableEdgesOrder(true, edge.EdgeModel);
-                        edge.EdgeModel.FromPort.NodeModel.GetUI<Node>(GraphView)?.UpdateOutgoingExecutionEdges();
                     }
                 }
             }

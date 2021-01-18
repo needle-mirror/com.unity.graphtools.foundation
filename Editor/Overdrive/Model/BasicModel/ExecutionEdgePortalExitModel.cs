@@ -15,7 +15,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         protected override void OnDefineNode()
         {
             base.OnDefineNode();
-            AddExecutionOutputPort("");
+            this.AddExecutionOutputPort("");
         }
     }
 }

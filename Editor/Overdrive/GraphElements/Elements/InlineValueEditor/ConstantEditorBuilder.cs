@@ -8,15 +8,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     public class ConstantEditorBuilder : IConstantEditorBuilder
     {
         public Action<IChangeEvent> OnValueChanged { get; }
-        public IEditorDataModel EditorDataModel { get; }
+        public Store Store { get; }
         public bool ConstantIsLocked { get; }
+        public IPortModel PortModel { get; }
 
-        public ConstantEditorBuilder(Action<IChangeEvent> onValueChanged, IEditorDataModel editorDataModel,
-                                     bool constantIsLocked)
+        public ConstantEditorBuilder(Action<IChangeEvent> onValueChanged,
+                                     Store store,
+                                     bool constantIsLocked, IPortModel portModel)
         {
             OnValueChanged = onValueChanged;
-            EditorDataModel = editorDataModel;
+            Store = store;
             ConstantIsLocked = constantIsLocked;
+            PortModel = portModel;
         }
 
         // Looking for methods like : VisualElement MyFunctionName(IConstantEditorBuilder builder, <NodeTypeToBuild> node)

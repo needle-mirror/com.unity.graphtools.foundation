@@ -7,18 +7,23 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class Attacher
     {
-        public VisualElement target { get; private set; }
-        public VisualElement element { get; private set; }
+        List<VisualElement> m_WatchedObjects;
+        Vector2 m_Offset;
+        SpriteAlignment m_Alignment;
+        float m_Distance;
 
-        public SpriteAlignment alignment
+        public VisualElement Target { get; }
+        public VisualElement Element { get; }
+
+        public SpriteAlignment Alignment
         {
-            get { return m_Alignment; }
+            get => m_Alignment;
             set
             {
                 if (m_Alignment != value)
                 {
                     m_Alignment = value;
-                    if (isAttached)
+                    if (IsAttached)
                     {
                         AlignOnTarget();
                     }
@@ -26,15 +31,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        public Vector2 offset
+        public Vector2 Offset
         {
-            get { return m_Offset; }
+            get => m_Offset;
             set
             {
                 if (m_Offset != value)
                 {
                     m_Offset = value;
-                    if (isAttached)
+                    if (IsAttached)
                     {
                         AlignOnTarget();
                     }
@@ -42,15 +47,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        public float distance
+        public float Distance
         {
-            get { return m_Distance; }
+            get => m_Distance;
             set
             {
                 if (m_Distance != value)
                 {
                     m_Distance = value;
-                    if (isAttached)
+                    if (IsAttached)
                     {
                         AlignOnTarget();
                     }
@@ -58,22 +63,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        private bool isAttached
-        {
-            get { return target != null && element != null && m_WatchedObjects != null && m_WatchedObjects.Count > 0; }
-        }
-
-        private List<VisualElement> m_WatchedObjects;
-        private Vector2 m_Offset;
-        private SpriteAlignment m_Alignment;
-        private float m_Distance;
+        bool IsAttached => Target != null && Element != null && m_WatchedObjects != null && m_WatchedObjects.Count > 0;
 
         public Attacher(VisualElement anchored, VisualElement target, SpriteAlignment alignment)
         {
-            distance = 6.0f;
-            this.target = target;
-            element = anchored;
-            this.alignment = alignment;
+            Distance = 6.0f;
+            Target = target;
+            Element = anchored;
+            Alignment = alignment;
 
             Reattach();
         }
@@ -89,17 +86,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             AlignOnTarget();
         }
 
-        private void RegisterCallbacks()
+        void RegisterCallbacks()
         {
             UnregisterCallbacks();
 
-            VisualElement commonAncestor = target.FindCommonAncestor(element);
+            VisualElement commonAncestor = Target.FindCommonAncestor(Element);
 
-            if (commonAncestor == target)
+            if (commonAncestor == Target)
             {
                 Debug.Log("Attacher: Target is already parent of anchored element.");
             }
-            else if (commonAncestor == element)
+            else if (commonAncestor == Element)
             {
                 Debug.Log("Attacher: An element can't be anchored to one of its descendants");
             }
@@ -112,7 +109,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 if (m_WatchedObjects == null)
                     m_WatchedObjects = new List<VisualElement>();
 
-                VisualElement v = target;
+                VisualElement v = Target;
 
                 while (v != commonAncestor)
                 {
@@ -121,7 +118,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     v = v.hierarchy.parent;
                 }
 
-                v = element;
+                v = Element;
 
                 while (v != commonAncestor)
                 {
@@ -132,7 +129,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        private void UnregisterCallbacks()
+        void UnregisterCallbacks()
         {
             if (m_WatchedObjects == null || m_WatchedObjects.Count == 0)
                 return;
@@ -145,25 +142,25 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             m_WatchedObjects.Clear();
         }
 
-        private void OnTargetLayout(GeometryChangedEvent evt)
+        void OnTargetLayout(GeometryChangedEvent evt)
         {
             AlignOnTarget();
         }
 
-        private void AlignOnTarget()
+        void AlignOnTarget()
         {
-            Rect currentRect = new Rect(element.resolvedStyle.left, element.resolvedStyle.top, element.resolvedStyle.width, element.resolvedStyle.height);
-            Rect targetRect = target.GetRect();
-            targetRect = target.ChangeCoordinatesTo(element.hierarchy.parent, targetRect);
+            Rect currentRect = new Rect(Element.resolvedStyle.left, Element.resolvedStyle.top, Element.resolvedStyle.width, Element.resolvedStyle.height);
+            Rect targetRect = Target.GetRect();
+            targetRect = Target.ChangeCoordinatesTo(Element.hierarchy.parent, targetRect);
 
             float centerY = 0;
             //align Vertically
-            switch (alignment)
+            switch (Alignment)
             {
                 case SpriteAlignment.TopLeft:
                 case SpriteAlignment.TopCenter:
                 case SpriteAlignment.TopRight:
-                    centerY = targetRect.y - currentRect.height * 0.5f - distance;
+                    centerY = targetRect.y - currentRect.height * 0.5f - Distance;
                     break;
                 case SpriteAlignment.LeftCenter:
                 case SpriteAlignment.RightCenter:
@@ -173,18 +170,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 case SpriteAlignment.BottomLeft:
                 case SpriteAlignment.BottomCenter:
                 case SpriteAlignment.BottomRight:
-                    centerY = targetRect.yMax + currentRect.height * 0.5f + distance;
+                    centerY = targetRect.yMax + currentRect.height * 0.5f + Distance;
                     break;
             }
 
             float centerX = 0;
             //alignHorizontally
-            switch (alignment)
+            switch (Alignment)
             {
                 case SpriteAlignment.TopLeft:
                 case SpriteAlignment.LeftCenter:
                 case SpriteAlignment.BottomLeft:
-                    centerX = targetRect.x - currentRect.width * 0.5f - distance;
+                    centerX = targetRect.x - currentRect.width * 0.5f - Distance;
                     break;
                 case SpriteAlignment.TopCenter:
                 case SpriteAlignment.Center:
@@ -194,21 +191,21 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 case SpriteAlignment.TopRight:
                 case SpriteAlignment.RightCenter:
                 case SpriteAlignment.BottomRight:
-                    centerX = targetRect.xMax + currentRect.width * 0.5f + distance;
+                    centerX = targetRect.xMax + currentRect.width * 0.5f + Distance;
                     break;
             }
 
-            currentRect.center = new Vector2(centerX, centerY) + offset;
+            currentRect.center = new Vector2(centerX, centerY) + Offset;
 
             //we don't want the layout to be overwritten before styling has been applied
             if (currentRect.width > 0)
             {
-                element.SetLayout(currentRect);
+                Element.SetLayout(currentRect);
             }
             else
             {
-                element.style.left = currentRect.xMin;
-                element.style.top = currentRect.yMin;
+                Element.style.left = currentRect.xMin;
+                Element.style.top = currentRect.yMin;
             }
         }
     }

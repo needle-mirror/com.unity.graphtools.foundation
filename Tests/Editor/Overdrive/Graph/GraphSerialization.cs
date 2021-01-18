@@ -29,16 +29,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Graph
             AssumeIntegrity();
 
             AssetDatabase.SaveAssets();
-            Resources.UnloadAsset((Object)m_Store.GetState().AssetModel);
+            Resources.UnloadAsset(m_Store.State.AssetModel as Object);
             m_Store.Dispatch(new LoadGraphAssetAction(k_GraphPath));
             Assert.AreEqual(k_GraphPath, AssetDatabase.GetAssetPath((Object)GraphModel.AssetModel));
             AssertIntegrity();
+
+            AssetDatabase.DeleteAsset(k_GraphPath);
         }
 
         [Test]
         public void CreateGraphAssetBuildsValidGraphModel()
         {
-            GraphAssetCreationHelpers<TestGraphAssetModel>.CreateGraphAsset(typeof(ClassStencil), "test", k_GraphPath);
+            GraphAssetCreationHelpers<TestGraphAssetModel>.CreateInMemoryGraphAsset(typeof(ClassStencil), "test", k_GraphPath);
             AssumeIntegrity();
         }
 
@@ -46,20 +48,23 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Graph
         public void CreateGraphAssetWithTemplateBuildsValidGraphModel()
         {
             var graphTemplate = new TestGraph();
-            GraphAssetCreationHelpers<TestGraphAssetModel>.CreateGraphAsset(typeof(ClassStencil), graphTemplate.DefaultAssetName, k_GraphPath, graphTemplate);
+            GraphAssetCreationHelpers<TestGraphAssetModel>.CreateInMemoryGraphAsset(typeof(ClassStencil), graphTemplate.DefaultAssetName, k_GraphPath, graphTemplate);
             AssertIntegrity();
         }
 
         [Test]
         public void CreateTestGraphCanBeReloaded()
         {
-            CreateGraphAssetWithTemplateBuildsValidGraphModel();
+            var graphTemplate = new TestGraph();
+            GraphAssetCreationHelpers<TestGraphAssetModel>.CreateGraphAsset(typeof(ClassStencil), graphTemplate.DefaultAssetName, k_GraphPath, graphTemplate);
 
             GraphModel graph = AssetDatabase.LoadAssetAtPath<GraphAssetModel>(k_GraphPath)?.GraphModel as GraphModel;
             Resources.UnloadAsset((Object)graph?.AssetModel);
             m_Store.Dispatch(new LoadGraphAssetAction(k_GraphPath));
 
             AssertIntegrity();
+
+            AssetDatabase.DeleteAsset(k_GraphPath);
         }
 
         [Test]

@@ -12,7 +12,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         bool m_Active;
         Vector2 m_MouseDownPosition;
 
-        internal const float k_ConnectionDistanceThreshold = 10f;
+        internal const float connectionDistanceThreshold = 10f;
 
         public EdgeConnector(Store store, GraphView graphView, EdgeConnectorListener listener, Func<IGraphModel, GhostEdgeModel> ghostEdgeViewModelCreator = null)
         {
@@ -140,7 +140,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         bool CanPerformConnection(Vector2 mousePosition)
         {
-            return Vector2.Distance(m_MouseDownPosition, mousePosition) > k_ConnectionDistanceThreshold;
+            return Vector2.Distance(m_MouseDownPosition, mousePosition) > connectionDistanceThreshold;
         }
     }
 }

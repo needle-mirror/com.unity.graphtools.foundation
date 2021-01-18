@@ -17,7 +17,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         public new void SetUp()
         {
             m_GraphModel = new GraphModel();
-            m_Store = new Store(new TestState(m_GraphModel));
+            m_Store = new Store(new TestState(m_Window.GUID, m_GraphModel));
             StoreHelper.RegisterDefaultReducers(m_Store);
             m_GraphView = new TestGraphView(m_Window, m_Store);
 
@@ -26,6 +26,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             m_GraphView.StretchToParentSize();
 
             m_Window.rootVisualElement.Add(m_GraphView);
+        }
+
+        [TearDown]
+        public new void TearDown()
+        {
+            m_Window.rootVisualElement.Remove(m_GraphView);
+            m_GraphModel = null;
+            m_Store = null;
+            m_GraphView = null;
         }
 
         [UnityTest]
@@ -40,7 +49,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             m_GraphView.AddElement(stickyNote);
             yield return null;
 
-            var label = stickyNote.Q(StickyNote.k_TitleContainerPartName).Q(EditableLabel.k_LabelName);
+            var label = stickyNote.Q(StickyNote.titleContainerPartName).Q(EditableLabel.labelName);
             var clickPosition = label.parent.LocalToWorld(label.layout.center);
             DoubleClick(label, clickPosition);
 
@@ -65,7 +74,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             m_GraphView.AddElement(stickyNote);
             yield return null;
 
-            var label = stickyNote.Q(StickyNote.k_ContentContainerPartName).Q(EditableLabel.k_LabelName);
+            var label = stickyNote.Q(StickyNote.contentContainerPartName).Q(EditableLabel.labelName);
             var clickPosition = label.parent.LocalToWorld(label.layout.center);
             DoubleClick(label, clickPosition);
 
@@ -91,7 +100,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             m_GraphView.AddElement(stickyNote);
             yield return null;
 
-            var rightResizer = stickyNote.Q(Placemat.k_ResizerPartName).Q("right-resize");
+            var rightResizer = stickyNote.Q(Placemat.resizerPartName).Q("right-resize");
             var clickPosition = rightResizer.parent.LocalToWorld(rightResizer.layout.center);
             ClickDragRelease(rightResizer, clickPosition, move);
             yield return null;

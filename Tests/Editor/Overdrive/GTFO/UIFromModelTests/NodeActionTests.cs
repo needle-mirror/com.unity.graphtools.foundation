@@ -1,8 +1,11 @@
 using System.Collections;
 using NUnit.Framework;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
+using GraphModel = UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels.GraphModel;
+using NodeModel = UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels.NodeModel;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
 {
@@ -16,7 +19,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         public new void SetUp()
         {
             m_GraphModel = new GraphModel();
-            m_Store = new Store(new TestState(m_GraphModel));
+            m_Store = new Store(new TestState(m_Window.GUID, m_GraphModel));
             StoreHelper.RegisterDefaultReducers(m_Store);
             m_GraphView = new TestGraphView(m_Window, m_Store);
 
@@ -25,6 +28,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             m_GraphView.StretchToParentSize();
 
             m_Window.rootVisualElement.Add(m_GraphView);
+        }
+
+        [TearDown]
+        public new void TearDown()
+        {
+            m_Window.rootVisualElement.Remove(m_GraphView);
+            m_GraphModel = null;
+            m_Store = null;
+            m_GraphView = null;
         }
 
         [UnityTest]
@@ -36,7 +48,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             m_GraphView.AddElement(node);
             yield return null;
 
-            var collapseButton = node.Q<CollapseButton>(CollapsibleInOutNode.k_CollapseButtonPartName);
+            var collapseButton = node.Q<CollapseButton>(CollapsibleInOutNode.collapseButtonPartName);
             Assert.IsNotNull(collapseButton);
             Assert.IsFalse(collapseButton.value);
             Assert.IsFalse(nodeModel.Collapsed);
@@ -56,12 +68,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             m_GraphView.AddElement(node);
             yield return null;
 
-            var collapseButton = node.Q<CollapseButton>(CollapsibleInOutNode.k_CollapseButtonPartName);
+            var collapseButton = node.Q<CollapseButton>(CollapsibleInOutNode.collapseButtonPartName);
             Assert.IsNotNull(collapseButton);
             Assert.IsFalse(collapseButton.value);
             Assert.IsFalse(nodeModel.Collapsed);
 
-            var collapseButtonIcon = node.Q<CollapseButton>(CollapsibleInOutNode.k_CollapseButtonPartName).Q(CollapseButton.k_IconElementName);
+            var collapseButtonIcon = node.Q<CollapseButton>(CollapsibleInOutNode.collapseButtonPartName).Q(CollapseButton.iconElementName);
             var clickPosition = collapseButton.parent.LocalToWorld(collapseButton.layout.center);
             Click(collapseButton, clickPosition);
             yield return null;
@@ -80,7 +92,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             m_GraphView.AddElement(node);
             yield return null;
 
-            var label = node.Q(Node.k_TitleContainerPartName).Q(EditableLabel.k_LabelName);
+            var label = node.Q(Node.titleContainerPartName).Q(EditableLabel.labelName);
             var clickPosition = label.parent.LocalToWorld(label.layout.center);
             DoubleClick(label, clickPosition);
 

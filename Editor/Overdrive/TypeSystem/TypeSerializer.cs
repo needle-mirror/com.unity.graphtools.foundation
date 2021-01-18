@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEngine;
 using UnityEngine.Scripting.APIUpdating;
 
@@ -33,13 +34,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                             var currentNamespace = t.Namespace;
                             var currentAssembly = t.Assembly.GetName().Name;
 
-                            var newNamespace = string.IsNullOrEmpty(nameSpace) ? currentNamespace : nameSpace;
-                            var newClassName = string.IsNullOrEmpty(className) ? currentClassName : className;
-                            var newAssembly = string.IsNullOrEmpty(assembly) ? currentAssembly : assembly;
+                            var oldNamespace = string.IsNullOrEmpty(nameSpace) ? currentNamespace : nameSpace;
+                            var oldClassName = string.IsNullOrEmpty(className) ? currentClassName : className;
+                            var oldAssembly = string.IsNullOrEmpty(assembly) ? currentAssembly : assembly;
 
-                            var str = $"{newNamespace}.{newClassName}, {newAssembly}";
-
-                            s_MovedFromTypes.Add(str, t);
+                            var oldAssemblyQualifiedName =
+                                oldNamespace != null ? $"{oldNamespace}.{oldClassName}, {oldAssembly}" : $"{oldClassName}, {oldAssembly}";
+                            s_MovedFromTypes.Add(oldAssemblyQualifiedName, t);
                         }
                     }
                 }
@@ -62,11 +63,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         /// <returns>Returns a string.</returns>
         static string GetFullNameNoNamespace(string typeName, string nameSpace)
         {
-            if (typeName.Contains(nameSpace))
+            if (typeName != null && nameSpace != null && typeName.Contains(nameSpace))
             {
                 return typeName.Substring(nameSpace.Length + 1).Replace("+", "/");
             }
-
             return typeName;
         }
 
@@ -101,7 +101,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 if (type == null)
                 {
                     // Check if the type has moved
-
                     assemblyQualifiedName = ExtractAssemblyQualifiedName(assemblyQualifiedName, out var isList);
                     if (MovedFromTypes.ContainsKey(assemblyQualifiedName))
                     {

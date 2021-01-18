@@ -53,7 +53,7 @@ namespace  UnityEditor.GraphToolsFoundation.Overdrive
 
         void AddError(string desc, INodeModel node, bool isWarning, CompilerQuickFix quickFix)
         {
-            errors.Add(new CompilerError { description = desc, sourceNode = node, sourceNodeGuid = node.Guid, isWarning = isWarning, quickFix = quickFix });
+            errors.Add(new CompilerError { description = desc, sourceNode = node, sourceNodeGuid = node == null ? default : node.Guid, isWarning = isWarning, quickFix = quickFix });
         }
     }
 

@@ -30,7 +30,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             var startPort = firstNodeModel.GetOutputPorts().First();
             var endPort = secondNodeModel.GetInputPorts().First();
 
-            graphView.RebuildUI(GraphModel, Store);
+            Store.State.RequestUIRebuild();
             yield return null;
 
             var actions = ConnectPorts(startPort, endPort);
@@ -127,7 +127,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [Test]
         public void FrameNextPrevPredicateTest()
         {
-            CreateNode<FooNode>("F0", Vector2.zero);
+            var f0 = CreateNode<FooNode>("F0", Vector2.zero);
             CreateNode<FooNode>("F1", Vector2.zero);
             CreateNode<BarNode>("B0", Vector2.zero);
             CreateNode<BarNode>("B1", Vector2.zero);
@@ -137,7 +137,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             graphView.RebuildUI(GraphModel, Store);
 
             graphView.ClearSelection();
-            graphView.AddToSelection(graphView.GraphElements.First());
+            graphView.AddToSelection(f0.GetUI<GraphElement>(graphView));
 
             graphView.FrameNext(x => x.Model is FooNode);
             AssertSingleSelectedElementTypeAndName(typeof(FooNode), "F1");
@@ -152,7 +152,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             AssertSingleSelectedElementTypeAndName(typeof(FooNode), "F2");
 
             graphView.ClearSelection();
-            graphView.AddToSelection(graphView.GraphElements.First());
+            graphView.AddToSelection(f0.GetUI<GraphElement>(graphView));
 
             graphView.FrameNext(x => (x.Model as IHasTitle)?.Title.Contains("0") ?? false);
             AssertSingleSelectedElementTypeAndName(typeof(NodeModel), "B0");

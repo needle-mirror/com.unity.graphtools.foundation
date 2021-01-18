@@ -89,7 +89,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     return;
                 }
 
-                var graphView = m_Edge.GetFirstAncestorOfType<GraphView>();
+                var graphView = m_Edge.GraphView;
                 var outputPortUI = m_Edge.Output.GetUI<Port>(graphView);
                 var inputPortUI = m_Edge.Input.GetUI<Port>(graphView);
 

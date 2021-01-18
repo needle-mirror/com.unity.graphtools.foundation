@@ -5,16 +5,23 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels
         bool m_IsReorderable;
         string m_Tooltip = "";
 
-        public override IGraphModel GraphModel { get; }
+        IGraphModel m_GraphModel;
+
+        public override IGraphModel GraphModel => m_GraphModel;
 
         public override bool HasReorderableEdges => m_IsReorderable && this.IsConnected();
 
         public override string ToolTip => m_Tooltip;
 
-        public PortModel(IGraphModel graphModel)
+        public PortModel()
         {
-            GraphModel = graphModel;
             m_IsReorderable = true;
+        }
+
+        protected PortModel(IGraphModel graphModel)
+            : this()
+        {
+            m_GraphModel = graphModel;
         }
 
         public void SetReorderable(bool reorderable)
@@ -25,6 +32,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels
         public void SetTooltip(string tooltip)
         {
             m_Tooltip = tooltip;
+        }
+
+        public void SetGraphModel(IGraphModel graphModel)
+        {
+            m_GraphModel = graphModel;
         }
     }
 }

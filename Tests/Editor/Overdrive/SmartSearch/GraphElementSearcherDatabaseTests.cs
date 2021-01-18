@@ -74,8 +74,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.SmartSearch
         public void TestGraphVariables(SpawnFlags mode)
         {
             const string name = "int";
-            var var1 = GraphModel.CreateGraphVariableDeclaration(name,
-                typeof(int).GenerateTypeHandle(), ModifierFlags.None, false);
+            var var1 = GraphModel.CreateGraphVariableDeclaration(typeof(int).GenerateTypeHandle(), name, ModifierFlags.None, false);
 
             var db = new GraphElementSearcherDatabase(Stencil, GraphModel)
                 .AddGraphVariables(GraphModel)

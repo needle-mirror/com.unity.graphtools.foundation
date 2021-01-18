@@ -42,6 +42,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         internal static Dictionary<Type, List<MethodInfo>> GetExtensionMethods<TAttribute>(IEnumerable<Assembly> assemblies) where TAttribute : Attribute
         {
             Type GetMethodFirstParameterType(MethodInfo m) => m.GetParameters()[0].ParameterType.IsArray ? m.GetParameters()[0].ParameterType.GetElementType() : m.GetParameters()[0].ParameterType;
+
             return TypeCache.GetTypesWithAttribute<TAttribute>()
                 .Where(t => assemblies.Contains(t.Assembly) && t.IsClass)
                 .SelectMany(t => t.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.DeclaredOnly))

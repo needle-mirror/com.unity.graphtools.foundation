@@ -5,8 +5,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class PortContainerPart : BaseGraphElementPart
     {
-        public static readonly string k_UssClassName = "ge-port-container-part";
-        public static readonly string k_PortsUssName = "ports";
+        public static readonly string ussClassName = "ge-port-container-part";
+        public static readonly string portsUssName = "ports";
 
         public static PortContainerPart Create(string name, IGraphElementModel model, IGraphElement graphElement, string parentClassName)
         {
@@ -32,11 +32,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (m_Model is IPortNode)
             {
                 m_Root = new VisualElement { name = PartName };
-                m_Root.AddToClassList(k_UssClassName);
+                m_Root.AddToClassList(ussClassName);
                 m_Root.AddToClassList(m_ParentClassName.WithUssElement(PartName));
 
-                PortContainer = new PortContainer { name = k_PortsUssName };
-                PortContainer.AddToClassList(m_ParentClassName.WithUssElement(k_PortsUssName));
+                PortContainer = new PortContainer { name = portsUssName };
+                PortContainer.AddToClassList(m_ParentClassName.WithUssElement(portsUssName));
                 m_Root.Add(PortContainer);
 
                 container.Add(m_Root);

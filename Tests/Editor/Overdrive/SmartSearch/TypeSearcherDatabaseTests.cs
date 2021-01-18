@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using NUnit.Framework;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.Searcher;
 using UnityEngine;
 
@@ -11,9 +12,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.SmartSearch
     {
         sealed class TestStencil : Stencil
         {
-            public override Blackboard CreateBlackboard(Store store, GraphView graphView)
+            public override Type GetConstantNodeValueType(TypeHandle typeHandle)
             {
-                return null;
+                return TypeToConstantMapper.GetConstantNodeType(typeHandle);
             }
 
             public override ISearcherDatabaseProvider GetSearcherDatabaseProvider()

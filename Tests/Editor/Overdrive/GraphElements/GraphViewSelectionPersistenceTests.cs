@@ -60,7 +60,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest, Ignore("FIXME EnterPlayMode")]
         public IEnumerator SelectionIsRestoredWhenEnteringPlaymode_AddNodesAfterPersistence()
         {
-            graphView.RebuildUI(GraphModel, Store);
+            Store.State.RequestUIRebuild();
             yield return null;
             GetNodesAndSetViewDataKey(out Node node1, out Node node2, out Node node3);
 
@@ -81,7 +81,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             // Allow 1 frame to let the persistence be restored
             yield return null;
 
-            graphView.RebuildUI(GraphModel, Store);
+            Store.State.RequestUIRebuild();
             yield return null;
             GetNodesAndSetViewDataKey(out node1, out node2, out node3);
 
@@ -97,7 +97,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest, Ignore("FIXME EnterPlayMode")]
         public IEnumerator SelectionIsRestoredWhenEnteringPlaymode_AddNodesBeforePersistence()
         {
-            graphView.RebuildUI(GraphModel, Store);
+            Store.State.RequestUIRebuild();
             yield return null;
             GetNodesAndSetViewDataKey(out Node node1, out Node node2, out Node node3);
 
@@ -114,7 +114,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             node2Model = CreateNode(key2, new Vector2(400, 400));
             node3Model = CreateNode(key3, new Vector2(600, 600));
 
-            graphView.RebuildUI(GraphModel, Store);
+            Store.State.RequestUIRebuild();
             yield return null;
             GetNodesAndSetViewDataKey(out node1, out node2, out node3);
 
@@ -129,7 +129,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator CanUndoSelection()
         {
-            graphView.RebuildUI(GraphModel, Store);
+            Store.State.RequestUIRebuild();
             yield return null;
             GetNodesAndSetViewDataKey(out Node node1, out Node node2, out Node node3);
 
@@ -141,14 +141,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Assert.False(node1.Selected);
             Assert.False(node2.Selected);
             Assert.False(node3.Selected);
-
-            yield return null;
         }
 
         [UnityTest]
         public IEnumerator CanRedoSelection()
         {
-            graphView.RebuildUI(GraphModel, Store);
+            Store.State.RequestUIRebuild();
             yield return null;
             GetNodesAndSetViewDataKey(out Node node1, out Node node2, out Node node3);
 
@@ -161,8 +159,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Assert.True(node1.Selected);
             Assert.False(node2.Selected);
             Assert.True(node3.Selected);
-
-            yield return null;
         }
 
         [UnityTest, Ignore("FIXME EnterPlayMode")]
@@ -170,7 +166,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         {
             // Note: this somewhat complex use case ensure that selection for redo
             // and persisted selection are kep in sync
-            graphView.RebuildUI(GraphModel, Store);
+            Store.State.RequestUIRebuild();
             yield return null;
             GetNodesAndSetViewDataKey(out Node node1, out Node node2, out Node node3);
 
@@ -194,7 +190,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             node2Model = CreateNode(key2, new Vector2(400, 400));
             node3Model = CreateNode(key3, new Vector2(600, 600));
 
-            graphView.RebuildUI(GraphModel, Store);
+            Store.State.RequestUIRebuild();
             yield return null;
             GetNodesAndSetViewDataKey(out node1, out node2, out node3);
 
@@ -210,20 +206,23 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         public IEnumerator BlackboardSelectionIsRestoredWhenEnteringPlaymode_AddFieldsBeforeAddingBBToGV()
         {
             { // Create initial blackboard.
-                var blackboard = new Blackboard(Store, graphView);
+                var blackboard = new Blackboard();
+                blackboard.SetupBuildAndUpdate(null, Store, graphView);
 
-                var inSection = new BlackboardSection();
+                var inSection = new BlackboardSection(blackboard, "Section 1");
                 blackboard.Add(inSection);
 
                 var field = new BlackboardField { viewDataKey = "bfield" };
                 var propertyView = new Label("Prop");
-                var row = new BlackboardRow(field, propertyView);
+                var row = new BlackboardRow();
+                row.Add(field);
+                row.Add(propertyView);
                 inSection.Add(row);
 
                 graphView.AddElement(blackboard);
 
-                graphView.AddToSelection(field);
-                Assert.True(field.Selected);
+                graphView.AddToSelection(row);
+                Assert.True(row.Selected);
             }
 
             // Allow 1 frame to let the persistent data get saved
@@ -236,19 +235,22 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             yield return null;
 
             { // Add field to blackboard first then add blackboard to graphview.
-                var blackboard = new Blackboard(Store, graphView);
+                var blackboard = new Blackboard();
+                blackboard.SetupBuildAndUpdate(null, Store, graphView);
 
-                var inSection = new BlackboardSection();
+                var inSection = new BlackboardSection(blackboard, "Section 1");
                 blackboard.Add(inSection);
 
                 var field = new BlackboardField { viewDataKey = "bfield" };
                 var propertyView = new Label("Prop");
-                var row = new BlackboardRow(field, propertyView);
+                var row = new BlackboardRow();
+                row.Add(field);
+                row.Add(propertyView);
                 inSection.Add(row);
 
                 graphView.AddElement(blackboard);
 
-                Assert.True(field.Selected);
+                Assert.True(row.Selected);
             }
         }
 
@@ -256,20 +258,23 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         public IEnumerator BlackboardSelectionIsRestoredWhenEnteringPlaymode_AddFieldsAfterAddingBBToGV()
         {
             { // Create initial blackboard.
-                var blackboard = new Blackboard(Store, graphView);
+                var blackboard = new Blackboard();
+                blackboard.SetupBuildAndUpdate(null, Store, graphView);
 
-                var inSection = new BlackboardSection();
+                var inSection = new BlackboardSection(blackboard, "Section 1");
                 blackboard.Add(inSection);
 
                 var field = new BlackboardField { viewDataKey = "bfield" };
                 var propertyView = new Label("Prop");
-                var row = new BlackboardRow(field, propertyView);
+                var row = new BlackboardRow();
+                row.Add(field);
+                row.Add(propertyView);
                 inSection.Add(row);
 
                 graphView.AddElement(blackboard);
 
-                graphView.AddToSelection(field);
-                Assert.True(field.Selected);
+                graphView.AddToSelection(row);
+                Assert.True(row.Selected);
             }
 
             // Allow 1 frame to let the persistent data get saved
@@ -282,18 +287,22 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             yield return null;
 
             { // Add blackboard to graphview first then add field to blackboard.
-                var blackboard = new Blackboard(Store, graphView);
+                var blackboard = new Blackboard();
+                blackboard.SetupBuildAndUpdate(null, Store, graphView);
+
                 graphView.AddElement(blackboard);
 
-                var inSection = new BlackboardSection();
+                var inSection = new BlackboardSection(blackboard, "Section 1");
                 blackboard.Add(inSection);
 
                 var field = new BlackboardField { viewDataKey = "bfield" };
                 var propertyView = new Label("Prop");
-                var row = new BlackboardRow(field, propertyView);
+                var row = new BlackboardRow();
+                row.Add(field);
+                row.Add(propertyView);
                 inSection.Add(row);
 
-                Assert.True(field.Selected);
+                Assert.True(row.Selected);
             }
         }
     }

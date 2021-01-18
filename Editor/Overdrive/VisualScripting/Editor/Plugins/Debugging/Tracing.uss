@@ -18,7 +18,7 @@
 }
 
 #tracingToolbar #pickTargetButton .icon {
-    background-image: resource("Images/ScriptSelector");
+    background-image: url("Icons/ScriptSelector.png");
 }
 
 #tracingToolbar #previousFrameTracingButton .icon {

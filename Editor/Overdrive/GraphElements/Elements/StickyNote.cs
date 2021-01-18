@@ -32,15 +32,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public static readonly Vector2 defaultSize = new Vector2(200, 160);
 
-        public new static readonly string k_UssClassName = "ge-sticky-note";
-        static readonly string k_ThemeClassNamePrefix = k_UssClassName.WithUssModifier("theme-");
-        static readonly string k_SizeClassNamePrefix = k_UssClassName.WithUssModifier("size-");
+        public new static readonly string ussClassName = "ge-sticky-note";
+        static readonly string themeClassNamePrefix = ussClassName.WithUssModifier("theme-");
+        static readonly string sizeClassNamePrefix = ussClassName.WithUssModifier("size-");
 
-        public static readonly string k_SelectionBorderElementName = "selection-border";
-        public static readonly string k_DisabledOverlayElementName = "disabled-overlay";
-        public static readonly string k_TitleContainerPartName = "title-container";
-        public static readonly string k_ContentContainerPartName = "text-container";
-        public static readonly string k_ResizerPartName = "resizer";
+        public static readonly string selectionBorderElementName = "selection-border";
+        public static readonly string disabledOverlayElementName = "disabled-overlay";
+        public static readonly string titleContainerPartName = "title-container";
+        public static readonly string contentContainerPartName = "text-container";
+        public static readonly string resizerPartName = "resizer";
 
         VisualElement m_ContentContainer;
 
@@ -55,21 +55,21 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         protected override void BuildPartList()
         {
-            PartList.AppendPart(EditableTitlePart.Create(k_TitleContainerPartName, Model, this, k_UssClassName, true));
-            PartList.AppendPart(StickyNoteContentPart.Create(k_ContentContainerPartName, Model, this, k_UssClassName));
-            PartList.AppendPart(FourWayResizerPart.Create(k_ResizerPartName, Model, this, k_UssClassName));
+            PartList.AppendPart(EditableTitlePart.Create(titleContainerPartName, Model, this, ussClassName, true));
+            PartList.AppendPart(StickyNoteContentPart.Create(contentContainerPartName, Model, this, ussClassName));
+            PartList.AppendPart(FourWayResizerPart.Create(resizerPartName, Model, this, ussClassName));
         }
 
         protected override void BuildElementUI()
         {
-            var selectionBorder = new SelectionBorder { name = k_SelectionBorderElementName };
-            selectionBorder.AddToClassList(k_UssClassName.WithUssElement(k_SelectionBorderElementName));
+            var selectionBorder = new SelectionBorder { name = selectionBorderElementName };
+            selectionBorder.AddToClassList(ussClassName.WithUssElement(selectionBorderElementName));
             Add(selectionBorder);
             m_ContentContainer = selectionBorder.ContentContainer;
 
             base.BuildElementUI();
 
-            var disabledOverlay = new VisualElement { name = k_DisabledOverlayElementName, pickingMode = PickingMode.Ignore };
+            var disabledOverlay = new VisualElement { name = disabledOverlayElementName, pickingMode = PickingMode.Ignore };
             hierarchy.Add(disabledOverlay);
         }
 
@@ -78,7 +78,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             base.PostBuildUI();
 
             usageHints = UsageHints.DynamicTransform;
-            AddToClassList(k_UssClassName);
+            AddToClassList(ussClassName);
             this.AddStylesheet("StickyNote.uss");
         }
 
@@ -92,11 +92,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             style.width = newPos.width;
             style.height = newPos.height;
 
-            this.PrefixRemoveFromClassList(k_ThemeClassNamePrefix);
-            AddToClassList(k_ThemeClassNamePrefix + StickyNoteModel.Theme.ToKebabCase());
+            this.PrefixRemoveFromClassList(themeClassNamePrefix);
+            AddToClassList(themeClassNamePrefix + StickyNoteModel.Theme.ToKebabCase());
 
-            this.PrefixRemoveFromClassList(k_SizeClassNamePrefix);
-            AddToClassList(k_SizeClassNamePrefix + StickyNoteModel.TextSize.ToKebabCase());
+            this.PrefixRemoveFromClassList(sizeClassNamePrefix);
+            AddToClassList(sizeClassNamePrefix + StickyNoteModel.TextSize.ToKebabCase());
         }
 
         public static IEnumerable<string> GetThemes()
@@ -122,8 +122,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         void FitText(bool onlyIfSmaller)
         {
-            var titleField = this.Q(k_TitleContainerPartName).Q<Label>();
-            var contentField = this.Q(k_ContentContainerPartName).Q<Label>();
+            var titleField = this.Q(titleContainerPartName).Q<Label>();
+            var contentField = this.Q(contentContainerPartName).Q<Label>();
 
             Vector2 preferredTitleSize = Vector2.zero;
             if (!string.IsNullOrEmpty(StickyNoteModel.DisplayTitle))

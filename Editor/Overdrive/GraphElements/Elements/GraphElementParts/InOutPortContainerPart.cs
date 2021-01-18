@@ -5,9 +5,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class InOutPortContainerPart : BaseGraphElementPart
     {
-        public static readonly string k_UssClassName = "ge-in-out-port-container-part";
-        public static readonly string k_InputPortsUssName = "inputs";
-        public static readonly string k_OutputPortsUssName = "outputs";
+        public static readonly string ussClassName = "ge-in-out-port-container-part";
+        public static readonly string inputPortsUssName = "inputs";
+        public static readonly string outputPortsUssName = "outputs";
 
         public static InOutPortContainerPart Create(string name, IGraphElementModel model, IGraphElement graphElement, string parentClassName)
         {
@@ -19,9 +19,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             return null;
         }
 
-        PortContainer m_InputPortContainer;
+        protected PortContainer m_InputPortContainer;
 
-        PortContainer m_OutputPortContainer;
+        protected PortContainer m_OutputPortContainer;
 
         VisualElement m_Root;
 
@@ -35,15 +35,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (m_Model is IPortNode)
             {
                 m_Root = new VisualElement { name = PartName };
-                m_Root.AddToClassList(k_UssClassName);
+                m_Root.AddToClassList(ussClassName);
                 m_Root.AddToClassList(m_ParentClassName.WithUssElement(PartName));
 
-                m_InputPortContainer = new PortContainer { name = k_InputPortsUssName };
-                m_InputPortContainer.AddToClassList(m_ParentClassName.WithUssElement(k_InputPortsUssName));
+                m_InputPortContainer = new PortContainer { name = inputPortsUssName };
+                m_InputPortContainer.AddToClassList(m_ParentClassName.WithUssElement(inputPortsUssName));
                 m_Root.Add(m_InputPortContainer);
 
-                m_OutputPortContainer = new PortContainer { name = k_OutputPortsUssName };
-                m_OutputPortContainer.AddToClassList(m_ParentClassName.WithUssElement(k_OutputPortsUssName));
+                m_OutputPortContainer = new PortContainer { name = outputPortsUssName };
+                m_OutputPortContainer.AddToClassList(m_ParentClassName.WithUssElement(outputPortsUssName));
                 m_Root.Add(m_OutputPortContainer);
 
                 container.Add(m_Root);

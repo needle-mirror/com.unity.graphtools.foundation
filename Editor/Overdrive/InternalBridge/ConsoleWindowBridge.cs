@@ -2,12 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
 {
     public static class ConsoleWindowBridge
     {
@@ -137,7 +136,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             return null;
         }
 
-        public static void SpawnAttachedViewToolWindow<T>(GraphViewEditorWindowBridge window, GraphViewBridge gv) where T : GraphViewToolWindowBridge
+        public static void SpawnAttachedViewToolWindow<T>(EditorWindow window, GraphViewBridge gv) where T : GraphViewToolWindowBridge
         {
             const int newToolWidth = 200;
 

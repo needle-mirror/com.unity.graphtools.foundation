@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.GraphToolsFoundation.Overdrive;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
@@ -29,100 +28,70 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public static bool IsOrphan(this SpawnFlags f) => (f & SpawnFlags.Orphan) != 0;
     }
 
-    public class NodeCreationParameters
-    {
-        public IVariableDeclarationModel VariableDeclarationModel;
-        SpawnFlags SpawnFlags;
-    }
-
-    public enum DeleteConnections
-    {
-        False,
-        True
-    }
-
-    public enum Verbosity
-    {
-        Errors,
-        Verbose
-    }
-
     public interface IGraphModel : IDisposable
     {
-        Stencil Stencil { get; set; }
+        Stencil Stencil { get; }
+        Type DefaultStencilType { get; }
+        Type StencilType { get; set; }
         IGraphAssetModel AssetModel { get; set; }
 
         void OnEnable();
         void OnDisable();
+        void OnAfterDeserializeAssetModel();
 
         string Name { get; set; }
-        string FriendlyScriptName { get; }
-        string GetSourceFilePath();
 
         IReadOnlyList<INodeModel> NodeModels { get; }
         IReadOnlyList<IEdgeModel> EdgeModels { get; }
+        IReadOnlyList<IBadgeModel> BadgeModels { get; }
         IReadOnlyList<IStickyNoteModel> StickyNoteModels { get; }
         IReadOnlyList<IPlacematModel> PlacematModels { get; }
-        IList<IVariableDeclarationModel> VariableDeclarations { get; }
+        IReadOnlyList<IVariableDeclarationModel> VariableDeclarations { get; }
         IReadOnlyList<IDeclarationModel> PortalDeclarations { get; }
-        string GetAssetPath();
 
-        void MoveEdgeBefore(IEdgeModel toMove, IEdgeModel reference);
-        void MoveEdgeAfter(IEdgeModel toMove, IEdgeModel reference);
 
-        IVariableDeclarationModel CreateGraphVariableDeclaration(string variableName, TypeHandle variableDataType,
-            ModifierFlags modifierFlags, bool isExposed, IConstant initializationModel = null, GUID? guid = null);
-        void DeleteVariableDeclarations(IEnumerable<IVariableDeclarationModel> variableModels, bool deleteUsages);
-        List<IVariableDeclarationModel> DuplicateGraphVariableDeclarations(List<IVariableDeclarationModel> variableDeclarationModels);
-        void ReorderGraphVariableDeclaration(IVariableDeclarationModel variableDeclarationModel, int index);
+        IVariableDeclarationModel CreateGraphVariableDeclaration(TypeHandle variableDataType,
+            string variableName, ModifierFlags modifierFlags, bool isExposed, IConstant initializationModel = null, GUID? guid = null);
+        IReadOnlyCollection<IGraphElementModel> DeleteVariableDeclarations(IReadOnlyCollection<IVariableDeclarationModel> variableModels, bool deleteUsages);
+        IVariableDeclarationModel DuplicateGraphVariableDeclaration(IVariableDeclarationModel sourceModel);
 
-        IVariableDeclarationModel CreateGraphPortalDeclaration(string portalName, SpawnFlags spawnFlags = SpawnFlags.Default);
-        IEdgePortalModel CreateOppositePortal(IEdgePortalModel edgePortalModel, Vector2 position, SpawnFlags spawnFlags);
+        IDeclarationModel CreateGraphPortalDeclaration(string portalName, SpawnFlags spawnFlags = SpawnFlags.Default);
+        IEdgePortalModel CreateOppositePortal(IEdgePortalModel edgePortalModel, Vector2 position, SpawnFlags spawnFlags = SpawnFlags.Default);
         IEdgePortalEntryModel CreateEntryPortalFromEdge(IEdgeModel edgeModel);
         IEdgePortalExitModel CreateExitPortalFromEdge(IEdgeModel edgeModel);
-
-        IVariableNodeModel CreateVariableNode(IVariableDeclarationModel declarationModel, Vector2 position, SpawnFlags spawnFlags = SpawnFlags.Default, GUID? guid = null);
-
-        IConstantNodeModel CreateConstantNode(string constantName,
-            TypeHandle constantTypeHandle, Vector2 position, SpawnFlags spawnFlags = SpawnFlags.Default, GUID? guid = null, Action<IConstantNodeModel> preDefine = null);
-
-        TNodeType CreateNode<TNodeType>(string nodeName = "", Vector2 position = default, SpawnFlags spawnFlags = SpawnFlags.Default, Action<TNodeType> preDefine = null, GUID? guid = null) where TNodeType : class, INodeModel;
-        INodeModel CreateNode(Type nodeTypeToCreate, string nodeName, Vector2 position, SpawnFlags spawnFlags = SpawnFlags.Default, Action<INodeModel> preDefine = null, GUID? guid = null);
-        void DeleteNode(INodeModel nodeModel, DeleteConnections deleteConnections);
-        void DeleteNodes(IReadOnlyCollection<INodeModel> nodesToDelete, DeleteConnections deleteConnections);
-        INodeModel DuplicateNode(INodeModel copiedNode, Dictionary<INodeModel, INodeModel> mapping, Vector2 delta);
-
+        IVariableNodeModel CreateVariableNode(IVariableDeclarationModel declarationModel, Vector2 position,
+            GUID? guid = null, SpawnFlags spawnFlags = SpawnFlags.Default);
+        IConstantNodeModel CreateConstantNode(TypeHandle constantTypeHandle, string constantName, Vector2 position,
+            GUID? guid = null, Action<IConstantNodeModel> preDefine = null, SpawnFlags spawnFlags = SpawnFlags.Default);
+        INodeModel CreateNode(Type nodeTypeToCreate, string nodeName, Vector2 position,
+            GUID? guid = null, Action<INodeModel> preDefine = null, SpawnFlags spawnFlags = SpawnFlags.Default);
+        INodeModel DuplicateNode(INodeModel sourceNode, Vector2 delta);
+        IReadOnlyCollection<IGraphElementModel> DeleteNodes(IReadOnlyCollection<INodeModel> nodeModels, bool deleteConnections);
+        // TODO JOCE: Would be worth attempting to extract this from VS.
         void CreateItemizedNode(State state, int nodeOffset, ref IPortModel outputPortModel);
 
-        IEdgeModel CreateEdge(IPortModel inputPort, IPortModel outputPort);
-        void DeleteEdge(IEdgeModel edgeModel);
-        void DeleteEdges(IEnumerable<IEdgeModel> edgeModels);
+        IEdgeModel CreateEdge(IPortModel toPort, IPortModel fromPort);
+        IEdgeModel DuplicateEdge(IEdgeModel sourceEdge, INodeModel targetInputNode, INodeModel targetOutputNode);
+        IReadOnlyCollection<IGraphElementModel> DeleteEdges(IReadOnlyCollection<IEdgeModel> edgeModels);
 
-        IStickyNoteModel CreateStickyNote(Rect position, SpawnFlags dataSpawnFlags = SpawnFlags.Default);
-        void DeleteStickyNotes(IStickyNoteModel[] stickyNotesToDelete);
+        void AddBadge(IBadgeModel badgeModel);
+        IReadOnlyCollection<IGraphElementModel> DeleteBadges();
+        IReadOnlyCollection<IGraphElementModel> DeleteBadgesOfType<T>() where T : IBadgeModel;
 
-        IPlacematModel CreatePlacemat(string title, Rect position, SpawnFlags dataSpawnFlags = SpawnFlags.Default);
-        void DeletePlacemats(IPlacematModel[] placematsToDelete);
+        IStickyNoteModel CreateStickyNote(Rect position, SpawnFlags spawnFlags = SpawnFlags.Default);
+        IReadOnlyCollection<IGraphElementModel> DeleteStickyNotes(IReadOnlyCollection<IStickyNoteModel> stickyNotesModels);
 
-        void DeleteElements(IEnumerable<IGraphElementModel> graphElementModels);
+        IPlacematModel CreatePlacemat(Rect position, SpawnFlags spawnFlags = SpawnFlags.Default);
+        IReadOnlyCollection<IGraphElementModel> DeletePlacemats(IReadOnlyCollection<IPlacematModel> placematModels);
 
         List<IPortModel> GetCompatiblePorts(IPortModel startPortModel);
+
+        bool CheckIntegrity(Verbosity errors);
 
         // PF FIXME: this looks like to be a hack support for PanToNode.
         IReadOnlyDictionary<GUID, INodeModel> NodesByGuid { get; }
 
-        // PF FIXME: Do we really need this? Change tracking should be handled by Redux.
-        GraphChangeList LastChanges { get; }
-        IEnumerable<IPortModel> GetConnections(IPortModel portModel);
-        IEnumerable<IEdgeModel> GetEdgesConnections(IPortModel portModel);
-        IEnumerable<IEdgeModel> GetEdgesConnections(INodeModel nodeModel);
-
-        // Developer tools
-        void QuickCleanup();
-        bool CheckIntegrity(Verbosity errors);
-        CompilationResult Compile(ITranslator translator);
-        void ResetChangeList();
-        void Repair();
         void UndoRedoPerformed();
+        void CloneGraph(IGraphModel sourceGraphModel);
     }
 }

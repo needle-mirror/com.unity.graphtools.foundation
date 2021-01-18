@@ -47,12 +47,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
             IsActive = true;
 
+            m_GraphView = selectedElement.GraphView;
             if (m_LineView == null)
             {
-                m_LineView = new LineView();
+                m_LineView = new LineView(m_GraphView);
             }
 
-            m_GraphView = selectedElement.GraphView;
             m_GraphView.Add(m_LineView);
             m_SnappableRects = GetNotSelectedElementRectsInView(selectedElement);
         }

@@ -19,8 +19,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        public static readonly string k_LabelName = "label";
-        public static readonly string k_TextFieldName = "text-field";
+        public static readonly string labelName = "label";
+        public static readonly string textFieldName = "text-field";
 
         Label m_Label;
 
@@ -28,7 +28,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         string m_CurrentValue;
 
-        protected ContextualMenuManipulator m_ContextualMenuManipulator;
+        ContextualMenuManipulator m_ContextualMenuManipulator;
+
+        protected ContextualMenuManipulator ContextualMenuManipulator
+        {
+            get => m_ContextualMenuManipulator;
+            set => this.ReplaceManipulator(ref m_ContextualMenuManipulator, value);
+        }
 
         public bool multiline
         {
@@ -42,8 +48,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             GraphElementHelper.LoadTemplateAndStylesheet(this, "EditableLabel", "ge-editable-label");
 
-            m_Label = this.Q<Label>(name: k_LabelName);
-            m_TextField = this.Q<TextField>(name: k_TextFieldName);
+            m_Label = this.Q<Label>(name: labelName);
+            m_TextField = this.Q<TextField>(name: textFieldName);
 
             m_Label.RegisterCallback<MouseDownEvent>(OnLabelMouseDown);
 
@@ -53,8 +59,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             m_TextField.RegisterCallback<ChangeEvent<string>>(OnChange);
             m_TextField.isDelayed = true;
 
-            m_ContextualMenuManipulator = new ContextualMenuManipulator(BuildContextualMenu);
-            this.AddManipulator(m_ContextualMenuManipulator);
+            ContextualMenuManipulator = new ContextualMenuManipulator(BuildContextualMenu);
         }
 
         public void SetValueWithoutNotify(string value)

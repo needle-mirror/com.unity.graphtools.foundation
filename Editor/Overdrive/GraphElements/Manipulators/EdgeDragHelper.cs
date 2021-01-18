@@ -8,11 +8,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class EdgeDragHelper
     {
-        internal const int k_PanAreaWidth = 100;
-        internal const int k_PanSpeed = 4;
-        internal const int k_PanInterval = 10;
-        internal const float k_MaxSpeedFactor = 2.5f;
-        internal const float k_MaxPanSpeed = k_MaxSpeedFactor * k_PanSpeed;
+        internal const int panAreaWidth = 100;
+        internal const int panSpeed = 4;
+        internal const int panInterval = 10;
+        internal const float maxSpeedFactor = 2.5f;
+        internal const float maxPanSpeed = maxSpeedFactor * panSpeed;
 
         List<IPortModel> m_CompatiblePorts;
         GhostEdgeModel m_GhostEdgeModel;
@@ -50,7 +50,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             {
                 ghostEdge = new GhostEdgeModel(graphModel);
             }
-            var ui = ghostEdge.CreateUI<Edge>(GraphView, m_Store);
+            var ui = GraphElementFactory.CreateUI<Edge>(GraphView, m_Store, ghostEdge);
             return ui;
         }
 
@@ -158,7 +158,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (portUI != null)
                 portUI.WillConnect = true;
 
-            m_CompatiblePorts = m_Store.GetState().CurrentGraphModel.GetCompatiblePorts(draggedPort);
+            m_CompatiblePorts = m_Store.State.GraphModel.GetCompatiblePorts(draggedPort);
 
             // Only light compatible anchors when dragging an edge.
             GraphView.Ports.ForEach((p) =>
@@ -181,7 +181,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             if (m_PanSchedule == null)
             {
-                m_PanSchedule = GraphView.schedule.Execute(Pan).Every(k_PanInterval).StartingIn(k_PanInterval);
+                m_PanSchedule = GraphView.schedule.Execute(Pan).Every(panInterval).StartingIn(panInterval);
                 m_PanSchedule.Pause();
             }
 
@@ -196,17 +196,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             Vector2 effectiveSpeed = Vector2.zero;
 
-            if (mousePos.x <= k_PanAreaWidth)
-                effectiveSpeed.x = -(((k_PanAreaWidth - mousePos.x) / k_PanAreaWidth) + 0.5f) * k_PanSpeed;
-            else if (mousePos.x >= GraphView.contentContainer.layout.width - k_PanAreaWidth)
-                effectiveSpeed.x = (((mousePos.x - (GraphView.contentContainer.layout.width - k_PanAreaWidth)) / k_PanAreaWidth) + 0.5f) * k_PanSpeed;
+            if (mousePos.x <= panAreaWidth)
+                effectiveSpeed.x = -(((panAreaWidth - mousePos.x) / panAreaWidth) + 0.5f) * panSpeed;
+            else if (mousePos.x >= GraphView.contentContainer.layout.width - panAreaWidth)
+                effectiveSpeed.x = (((mousePos.x - (GraphView.contentContainer.layout.width - panAreaWidth)) / panAreaWidth) + 0.5f) * panSpeed;
 
-            if (mousePos.y <= k_PanAreaWidth)
-                effectiveSpeed.y = -(((k_PanAreaWidth - mousePos.y) / k_PanAreaWidth) + 0.5f) * k_PanSpeed;
-            else if (mousePos.y >= GraphView.contentContainer.layout.height - k_PanAreaWidth)
-                effectiveSpeed.y = (((mousePos.y - (GraphView.contentContainer.layout.height - k_PanAreaWidth)) / k_PanAreaWidth) + 0.5f) * k_PanSpeed;
+            if (mousePos.y <= panAreaWidth)
+                effectiveSpeed.y = -(((panAreaWidth - mousePos.y) / panAreaWidth) + 0.5f) * panSpeed;
+            else if (mousePos.y >= GraphView.contentContainer.layout.height - panAreaWidth)
+                effectiveSpeed.y = (((mousePos.y - (GraphView.contentContainer.layout.height - panAreaWidth)) / panAreaWidth) + 0.5f) * panSpeed;
 
-            effectiveSpeed = Vector2.ClampMagnitude(effectiveSpeed, k_MaxPanSpeed);
+            effectiveSpeed = Vector2.ClampMagnitude(effectiveSpeed, maxPanSpeed);
 
             return effectiveSpeed;
         }
@@ -353,7 +353,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 var oldInput = edgeCandidateModel.ToPort;
                 var oldOutput = edgeCandidateModel.FromPort;
 
-                GraphView.DeleteElements(new[] { m_EdgeCandidate as GraphElement });
+                GraphView.RemoveElement(m_EdgeCandidate);
 
                 // Restore the previous input and output
                 edgeCandidateModel.ToPort = oldInput;

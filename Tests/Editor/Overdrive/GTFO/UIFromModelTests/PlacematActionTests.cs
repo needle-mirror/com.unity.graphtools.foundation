@@ -17,7 +17,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         public new void SetUp()
         {
             m_GraphModel = new GraphModel();
-            m_Store = new Store(new TestState(m_GraphModel));
+            m_Store = new Store(new TestState(m_Window.GUID, m_GraphModel));
             StoreHelper.RegisterDefaultReducers(m_Store);
             m_GraphView = new TestGraphView(m_Window, m_Store);
 
@@ -28,6 +28,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             m_Window.rootVisualElement.Add(m_GraphView);
         }
 
+        [TearDown]
+        public new void TearDown()
+        {
+            m_Window.rootVisualElement.Remove(m_GraphView);
+            m_GraphModel = null;
+            m_Store = null;
+            m_GraphView = null;
+        }
+
         [UnityTest]
         public IEnumerator PlacematCollapsesOnValueChanged()
         {
@@ -36,7 +45,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             placemat.SetupBuildAndUpdate(placematModel, m_Store, m_GraphView);
             yield return null;
 
-            var collapseButton = placemat.Q<CollapseButton>(Placemat.k_CollapseButtonPartName);
+            var collapseButton = placemat.Q<CollapseButton>(Placemat.collapseButtonPartName);
             Assert.IsNotNull(collapseButton);
             Assert.IsFalse(collapseButton.value);
             Assert.IsFalse(placematModel.Collapsed);
@@ -55,12 +64,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             placemat.SetupBuildAndUpdate(placematModel, m_Store, m_GraphView);
             yield return null;
 
-            var collapseButton = placemat.Q<CollapseButton>(Placemat.k_CollapseButtonPartName);
+            var collapseButton = placemat.Q<CollapseButton>(Placemat.collapseButtonPartName);
             Assert.IsNotNull(collapseButton);
             Assert.IsFalse(collapseButton.value);
             Assert.IsFalse(placematModel.Collapsed);
 
-            var collapseButtonIcon = placemat.Q<CollapseButton>(Placemat.k_CollapseButtonPartName).Q(CollapseButton.k_IconElementName);
+            var collapseButtonIcon = placemat.Q<CollapseButton>(Placemat.collapseButtonPartName).Q(CollapseButton.iconElementName);
             var clickPosition = collapseButton.parent.LocalToWorld(collapseButton.layout.center);
             Click(collapseButton, clickPosition);
             yield return null;
@@ -79,7 +88,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             placemat.SetupBuildAndUpdate(placematModel, m_Store, m_GraphView);
             yield return null;
 
-            var label = placemat.Q(Placemat.k_TitleContainerPartName).Q(EditableLabel.k_LabelName);
+            var label = placemat.Q(Placemat.titleContainerPartName).Q(EditableLabel.labelName);
             var clickPosition = label.parent.LocalToWorld(label.layout.center);
             DoubleClick(label, clickPosition);
 
@@ -97,12 +106,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             var originalRect = new Rect(0, 0, 400, 400);
             var move = new Vector2(100, 0);
 
-            var placematModel = m_GraphModel.CreatePlacemat("Placemat", originalRect);
+            var placematModel = m_GraphModel.CreatePlacemat(originalRect);
+            placematModel.Title = "Placemat";
             var placemat = new Placemat();
             placemat.SetupBuildAndUpdate(placematModel, m_Store, m_GraphView);
             yield return null;
 
-            var rightResizer = placemat.Q(Placemat.k_ResizerPartName).Q("right-resize");
+            var rightResizer = placemat.Q(Placemat.resizerPartName).Q("right-resize");
             var clickPosition = rightResizer.parent.LocalToWorld(rightResizer.layout.center);
             ClickDragRelease(rightResizer, clickPosition, move);
             yield return null;

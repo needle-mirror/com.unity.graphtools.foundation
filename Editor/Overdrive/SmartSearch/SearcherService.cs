@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.Searcher;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -70,16 +69,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public static void ShowInputToGraphNodes(State state, IPortModel portModel, Vector2 position,
             Action<GraphNodeModelSearcherItem> callback)
         {
-            var stencil = state.CurrentGraphModel.Stencil;
+            var stencil = state.GraphModel.Stencil;
             var filter = stencil.GetSearcherFilterProvider()?.GetInputToGraphSearcherFilter(portModel);
-            var adapter = stencil.GetSearcherAdapter(state.CurrentGraphModel, "Add an input node", portModel);
+            var adapter = stencil.GetSearcherAdapter(state.GraphModel, "Add an input node", portModel);
             var dbProvider = stencil.GetSearcherDatabaseProvider();
 
             if (dbProvider == null)
                 return;
 
-            var dbs = dbProvider.GetGraphElementsSearcherDatabases(state.CurrentGraphModel)
-                .Concat(dbProvider.GetGraphVariablesSearcherDatabases(state.CurrentGraphModel))
+            var dbs = dbProvider.GetGraphElementsSearcherDatabases(state.GraphModel)
+                .Concat(dbProvider.GetGraphVariablesSearcherDatabases(state.GraphModel))
                 .Concat(dbProvider.GetDynamicSearcherDatabases(portModel))
                 .ToList();
 
@@ -89,15 +88,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public static void ShowOutputToGraphNodes(State state, IPortModel portModel, Vector2 position,
             Action<GraphNodeModelSearcherItem> callback)
         {
-            var stencil = state.CurrentGraphModel.Stencil;
+            var stencil = state.GraphModel.Stencil;
             var filter = stencil.GetSearcherFilterProvider()?.GetOutputToGraphSearcherFilter(portModel);
-            var adapter = stencil.GetSearcherAdapter(state.CurrentGraphModel, $"Choose an action for {portModel.DataTypeHandle.GetMetadata(stencil).FriendlyName}", portModel);
+            var adapter = stencil.GetSearcherAdapter(state.GraphModel, $"Choose an action for {portModel.DataTypeHandle.GetMetadata(stencil).FriendlyName}", portModel);
             var dbProvider = stencil.GetSearcherDatabaseProvider();
 
             if (dbProvider == null)
                 return;
 
-            var dbs = dbProvider.GetGraphElementsSearcherDatabases(state.CurrentGraphModel).ToList();
+            var dbs = dbProvider.GetGraphElementsSearcherDatabases(state.GraphModel).ToList();
 
             ShowSearcher(state, position, callback, dbs, filter, adapter);
         }
@@ -105,30 +104,30 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public static void ShowEdgeNodes(State state, IEdgeModel edgeModel, Vector2 position,
             Action<GraphNodeModelSearcherItem> callback)
         {
-            var stencil = state.CurrentGraphModel.Stencil;
+            var stencil = state.GraphModel.Stencil;
             var filter = stencil.GetSearcherFilterProvider()?.GetEdgeSearcherFilter(edgeModel);
-            var adapter = stencil.GetSearcherAdapter(state.CurrentGraphModel, "Insert Node");
+            var adapter = stencil.GetSearcherAdapter(state.GraphModel, "Insert Node");
             var dbProvider = stencil.GetSearcherDatabaseProvider();
 
             if (dbProvider == null)
                 return;
 
-            var dbs = dbProvider.GetGraphElementsSearcherDatabases(state.CurrentGraphModel).ToList();
+            var dbs = dbProvider.GetGraphElementsSearcherDatabases(state.GraphModel).ToList();
 
             ShowSearcher(state, position, callback, dbs, filter, adapter);
         }
 
         public static void ShowGraphNodes(State state, Vector2 position, Action<GraphNodeModelSearcherItem> callback)
         {
-            var stencil = state.CurrentGraphModel.Stencil;
+            var stencil = state.GraphModel.Stencil;
             var filter = stencil.GetSearcherFilterProvider()?.GetGraphSearcherFilter();
-            var adapter = stencil.GetSearcherAdapter(state.CurrentGraphModel, "Add a graph node");
+            var adapter = stencil.GetSearcherAdapter(state.GraphModel, "Add a graph node");
             var dbProvider = stencil.GetSearcherDatabaseProvider();
 
             if (dbProvider == null)
                 return;
 
-            var dbs = dbProvider.GetGraphElementsSearcherDatabases(state.CurrentGraphModel)
+            var dbs = dbProvider.GetGraphElementsSearcherDatabases(state.GraphModel)
                 .Concat(dbProvider.GetDynamicSearcherDatabases(null))
                 .ToList();
 
@@ -294,9 +293,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             switch (node)
             {
                 // TODO virtual property in NodeModel formatting what's displayed in the find window
-                case ConstantNodeModel cnm:
+                case IConstantNodeModel cnm:
                 {
-                    var nodeTitle = cnm.Value is StringConstant ? $"\"{title}\"" : title;
+                    var nodeTitle = cnm.Type == typeof(string) ? $"\"{title}\"" : title;
                     title = $"Const {cnm.Type.Name} {nodeTitle}";
                     break;
                 }

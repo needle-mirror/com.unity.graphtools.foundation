@@ -17,9 +17,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             m_AutoSpacingHelper.SendSpacingAction(orientation);
             yield return null;
 
-            graphView.RebuildUI(GraphModel, Store);
-            yield return null;
-
             // Get the UI elements
             m_FirstNode = FirstNodeModel.GetUI<Node>(graphView);
             m_SecondNode = SecondNodeModel.GetUI<Node>(graphView);
@@ -238,11 +235,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 yield return null;
             }
 
-            actions = SelectConnectedNodes();
-            while (actions.MoveNext())
-            {
-                yield return null;
-            }
+            SelectConnectedNodes();
+            yield return null;
 
             float expectedDistanceBetweenFirstSecond = m_SecondNode.layout.xMin - m_FirstNode.layout.xMax;
 

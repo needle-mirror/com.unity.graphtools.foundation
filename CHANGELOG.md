@@ -5,11 +5,133 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.7.0-preview.2] - 2021-01-18
+
+### Fixed
+
+- Fixed compilation error on Unity 2020.2 and newer.
+
+## [0.7.0-preview.1] - 2021-01-11
+
+### Fixed
+
+- Remove orphaned .meta files for empty folders.
+
+## [0.7.0-preview] - 2021-01-05
+
+### Added
+
+- `Store.MarkStateDirty` to dirty the state and rebuild the UI completely.
+- `Store.BeginStateChange` and `Store.EndStateChange` to frame modifications to models. Except inside action reducers (where this
+  is done for you), all calls to `State.MarkModelNew`, `State.MarkModelChanged` and `State.MarkModelDeleted` should occur between
+  `Store.BeginStateChange` and `Store.EndStateChange`.
+- `Store.BeginViewUpdate` and `Store.EndViewUpdate`. These should be the first and last operations when you update the UI.
+  `GtfoWindow.Update` call them for you.
+- Dependency system for UI: a graph element can declare dependencies to other graph elements. They can be forward dependencies
+  (elements that need to be updated when the element changes) or reverse dependencies (elements that cause the element to be updated
+  when they change). There are also additional model dependencies: a graph element can specifies it needs an update whenever some model changes.
+- Graph element parts are notified when their owner is added or removed from the graph view, by calls to
+  `BaseGraphElementPart.PartOwnerAddedToGraphView` and `BaseGraphElementPart.PartOwnerRemovedFromGraphView`.
+- `IGraphElement.Setup` and `IGraphElement.SetupBuildAndUpdate` now take an additional context parameter, a string that can be used
+  to modulate the UI. This parameters is most often null, but can take different values to specify the instantiation point
+  of the UI. The goal is to specify a context for the model representation, when we need to use different graph elements for the same
+  model type represented in different parts of the graph view.
+- `GraphElement.AddToGraphView` and `GraphElement.RemoveFromGraphView` are called when an element is added or removed from the graph view.
+- `ChangeVariableDeclarationAction`, sent when the user changes the variable declaration of a variable node.
+- `RequestCompilationAction`, sent when the user request a compilation.
+- Polymorphic `AnyConstant`
+- `AnimationClipConstant`, `MeshConstant`, `Texture2DConstant` and `Texture3DConstant`
+
+### Removed
+
+- `State.AddModelToUpdate`. Use `State.MarkModelNew`, `State.MarkModelChanged` and `State.MarkModelDeleted` instead.
+- `State.ClearModelsToUpdate`
+- `State.MarkForUpdate`. Use `State.RequestUIRebuild`
+- `Store.StateChanged`. Use store observers instead.
+- `GraphElementFactory.CreateUI<T>(this IGraphElementModel)` extension method was removed. Use the static `GraphElementFactory.CreateUI<T>`
+  instead.
+- `GraphView.DeleteElements()`. Use `GraphView.RemoveElement()` instead.
+- `GtfoGraphView.UpdateTopology`. Override `GtfoGraphView.UpdateUI` instead.
+- `GraphModel.LastChanges`. Use `State.MarkModelNew`, `State.MarkModelChanged` and `State.MarkModelDeleted` instead.
+
+### Changed
+
+- Add `BadgeModel` as a model for `Badge`
+- Itemize menu item is enabled only on constants and (Get) variables that have more than one edge connected to their data output port.
+- GTF-140 The blackboard and minimap no longer close when the add graph(+) button is pressed.
+- Default BlankPage now provided
+- `BasicModel.DeclarationModel.DisplayTitle` now marked virtual
+- `Store.RegisterObserver` and `Store.UnregisterObserver` now take a parameter to register the observer as a
+  pre-observer, triggered before the action is executed, or a post-observer, triggered after the action was executed.
+- `GraphElementFactory.GetUI`, `GraphElementFactory.GetUI<T>`, `GraphElementFactory.GetAllUIs` were moved to the `UIForModel` class.
+- `CreateEdgeAction.InputPortModel` renamed to `CreateEdgeAction.ToPortModel`
+- `CreateEdgeAction.OutputPortModel` renamed to `CreateEdgeAction.FromPortModel`
+- `GraphView.PositionDependenciesManagers` renamed to `GraphView.PositionDependenciesManager` (without the final s)
+- `GraphView.AddElement` and `GraphView.RemoveElement` are now virtual.
+- Compilation is now an observer on the `Store`. The virtual property `GtfoWindow.RecompilationTriggerActions` lists the actions
+  that should trigger a compilation.
+- `IGraphModel` delete methods and extension methods now return the list of deleted models.
+- Visual Scripting `CompiledScriptingGraphAsset` now serialized in `VsGraphModel` instead of `DotsStencil`
+- Manipulators for all graph elements as well as graph view are now overridable.
+- `BlackboardGraphModel` is now owned by the `GraphAssetModel` instead of the `State`.
+- `BlackboardField` is now a `GraphElement`
+- `Blackboard.GraphVariables` renamed to `Blackboard.Highlightables`
+- `ExpandOrCollapseVariableDeclarationAction`  renamed to `ExpandOrCollapseBlackboardRowAction`
+- `BlackboardGraphModel` was moved to the `UnityEditor.GraphToolsFoundation.Overdrive.BasicModel` namespace
+- Removed the `k_` prefix from all non-private readonly fields.
+- Moved some images used by USS.
+- `Stencil.GetConstantNodeValueType()` replaced by `TypeToConstantMapper.GetConstantNodeType()`
+- Constant editor extension methods now takes an `IConstant` as their second parameter,
+  instead of an object representing the value of the constant.
+- `ConstantEditorExtensions.BuildInlineValueEditor()` is now public.
+
+
+### Fixed
+
+- GTF-126: NRE when itemize or convert variables on a set var node
+- `TypeSerializer` wasn't resolving `TypeHandle` marked with `MovedFromAttribute` when type wasn't in any namespace.
+- Fix a bug where dragging a token on a port would block further dragging
+- Fix a bug where dragging a token to a port wouldn't create an edge
+- GTF-145 Collapsed placemats at launch not hidding edges
+- Fix a bug where dragging a blackboard variable to a port wouldn't be allowed
+
+### Deprecated
+
+- Stencil shouldn't be considered serialized anymore. Kept Serializable for backward compatibility
+
+## [0.6.0-preview.4] - 2020-12-02
+
+### Changed
+- Updating minimum requirements for com.unity.collections
+- BasicModel.DeclarationModel.DisplayTitle now marked virtual
+- Updating minimum requirements for com.unity.collections
+- GraphModel.OnDuplicateNode now marked virtual
+- BasicModel.DeclarationModel.DisplayTitle now marked virtual
+
+### Fixed
+- TypeSerializer wasn't resolving TypeHandle marked with MovedFromAttribute when type wasn't in any namespace.
+
+### Added
+
+- GtfoWindow-derived classes needs to implement `CanHandleAssetType(Type)` to dictate supported asset types.
+- Added hook (`OnDuplicateNode(INodeModel copiedNode)`) on `INodeModel` when duplicating node
+- Added options to toggle Tracing / Options elements on `MainToolbar`
+- Added the `CloneGraph` function in the `GraphModel` for duplicating all the models of a source graph
+
 ## [0.5.0-preview.3] - 2020-10-28
 
 ## [0.5.0-preview.2] - 2020-10-20
 
+### Added
+
+- Generic `CreateEdge` on base `GraphModel` for easier overriding.
+- `GetPort` extension method to get ports by direction and port type.
+- Add `GraphModel` reference to `Stencil`
+- Add `InstantiateStencil`, changing `Stencil` set pattern in `GraphModel`
+- new virtual property `HasEditableLabel` for `EditableTitlePart`
+
 ### Removed
+
 - `ChangePlacematColorAction`
 - `OpenDocumentationAction`
 - `UnloadGraphAssetAction`
@@ -17,8 +139,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `SpawnFlags.CreateNodeAsset` and `SpawnFlags.Undoable` enum values
 - `CreateGraphAssetAction` and `CreateGraphAssetFromModelAction`. Use `GraphAssetCreationHelper` to create assets and `LoadGraphAssetAction` to load it in a window.
 - `ContextualMenuBuilder` and `IContextualMenuBuilder`; to populate a contextual menu, use the UIToolkit way of registering a callback on a `ContextualMenuPopulateEvent` or, for classes deriving from `GraphElement`, override `BuildContextualMenu`.
+- `IEditorDataModel` and `EditorDataModel`: use `EditorStateComponent` if you want to hold state that is related to a window or a window-asset combination.
+- `IPluginRepository`
+- `ICompilationResultModel`
 
 ### Changed
+
 - All reducers in the `UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting` namespace have been moved to the `UnityEditor.GraphToolsFoundation.Overdrive` namespace.
 - Reducers do not return the `State` anymore.
 - Almost all reducers are undoable.
@@ -36,6 +162,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   `UnityEditor.GraphToolsFoundation.Overdrive.GraphElements` and
   `UnityEditor.GraphToolsFoundation.Overdrive.SmartSearch` have all been merged into
   `UnityEditor.GraphToolsFoundation.Overdrive`.
+- Simplify `IGraphModel`. Lots of methods moved out of the interface and made extension methods. Order of parameters has been somewhat standardized.
+- `EdgePortalModel` is now backed by a `DeclarationModel` rather than a `VariableDeclarationModel`
+- `Store.GetState()` is now `Store.State`
+- Bug fix: the expanded/collapsed state of blackboard variables is persisted again.
+- Blackboard UI adopts the same architecture as the `GraphView`, with a backing model
+  (`IBlackboardGraphProxyElementModel`), using `IGraphElementParts` and the Setup/Build/Update lifecycle.
+- Added a `priority` parameter to `GraphElementsExtensionMethodsCacheAttribute` to enable overriding of reducers
+  (and all other extensions)
+- `Store.GetState()` is now `Store.State`
+- `State.CurrentGraphModel` is now `State.GraphModel`
+- `IBlackboardGraphProxyElementModel` is now `IBlackboardGraphModel`.
+- Moved `EditorDataModel.UpdateFlags`, `EditorDataModel.AddModelToUpdate` and `EditorDataModel.ClearModelsToUpdate` to `State`.
+- `CompilationResultModel` is now `CompilationStateComponent`
+- `TracingDataModel` is now `TracingStateComponent`
+- Made `CreatePort` and `DeletePort` part ot the `IPortNode` interface.
+- Made `AddInputPort` and `AddOutputPort` part of the `IInOutPortsNode` interface.
+- Moved all variations of `AddInputPort` and `AddOutputPort` to extension methods.
 
 ## [0.5.0-preview.1] - 2020-09-25
 
@@ -67,6 +210,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `IStringWrapperConstantModel.GetAllInputs`
 - `Stencil.Builder`
 - `ConstantEditorExtensions.BuildStringWrapperEditor`
+- `PortAlignmentType`
 - `VisualScripting.Node`, merged into `CollapsibleInOutNode`
 - `VisualScripting.Token`, merged into `TokenNode`
 - All factory extension method in `GraphElementFactoryExtensions` except the one that creates ports.
@@ -77,6 +221,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - When one drops an edge outside of a port, instead of deleting the edge, we now pop the searcher to create a new node.
 - Rename `CreateCollapsiblePortNode` to `CreateNode`.
 - Remove `GTF` from class and interface names. For example, `IGTFNodeModel` becomes `INodeModel`.
+- `PackageTransitionHelper` becomes `AssetHelper.
+- Base capabilities are no longer serialized with the `GraphToolsFoundation` prefix.
 
 ## [0.4.0-preview.1] - 2020-07-28
 

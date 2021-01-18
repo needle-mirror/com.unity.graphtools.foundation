@@ -7,21 +7,21 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Redux
 {
     static class MockReducers
     {
-        internal static void PassThrough(MockState previousState, PassThroughAction action)
+        internal static void PassThrough(MockState state, PassThroughAction action)
         {
             Assert.That(action, Is.Not.Null);
         }
 
-        internal static void ReplaceFoo(MockState previousState, ChangeFooAction action)
+        internal static void ReplaceFoo(MockState state, ChangeFooAction action)
         {
             Assert.That(action, Is.Not.Null);
-            previousState.Foo = action.Value;
+            state.Foo = action.Value;
         }
 
-        internal static void ReplaceBar(MockState previousState, ChangeBarAction action)
+        internal static void ReplaceBar(MockState state, ChangeBarAction action)
         {
             Assert.That(action, Is.Not.Null);
-            previousState.Bar = action.Value;
+            state.Bar = action.Value;
         }
     }
 }

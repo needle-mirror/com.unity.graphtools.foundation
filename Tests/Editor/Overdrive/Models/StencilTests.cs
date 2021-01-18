@@ -3,6 +3,7 @@ using System.Linq;
 using System.Reflection;
 using JetBrains.Annotations;
 using NUnit.Framework;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEngine;
 using UnityEngine.TestTools;
 
@@ -14,9 +15,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
     {
         class TestStencil : Stencil
         {
-            public override Blackboard CreateBlackboard(Store store, GraphView graphView)
+            public override Type GetConstantNodeValueType(TypeHandle typeHandle)
             {
-                return null;
+                return TypeToConstantMapper.GetConstantNodeType(typeHandle);
             }
 
             public override ISearcherDatabaseProvider GetSearcherDatabaseProvider()

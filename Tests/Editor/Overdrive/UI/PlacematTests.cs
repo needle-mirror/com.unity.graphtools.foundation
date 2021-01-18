@@ -34,13 +34,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         public IEnumerator CollapsingAPlacematHidesItsContentToOtherPlacemats([Values] TestingMode mode)
         {
             GraphView.AddToClassList("CollapsingAPlacematHidesItsContentToOtherPlacemats");
-            StylesheetsHelper.AddTestStylesheet(GraphView, "Tests.uss");
+            GraphView.AddTestStylesheet("Tests.uss");
 
-            GraphModel.CreatePlacemat(string.Empty, new Rect(0, 0, 200, 200));
-            GraphModel.CreatePlacemat(string.Empty, new Rect(205, 0, 200, 200));
+            GraphModel.CreatePlacemat(new Rect(0, 0, 200, 200));
+            GraphModel.CreatePlacemat(new Rect(205, 0, 200, 200));
             var nodeModel = GraphModel.CreateNode<Type0FakeNodeModel>("Node0", new Vector2(190, 100));
 
-            Store.ForceRefreshUI(UpdateFlags.All);;
+            Store.MarkStateDirty();
             yield return null;
 
             var nodeUI = nodeModel.GetUI<Node>(GraphView);
@@ -84,7 +84,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                     switch (frame)
                     {
                         case 0:
-                            Store.ForceRefreshUI(UpdateFlags.All);;
+                            Store.MarkStateDirty();
                             return TestPhase.WaitForNextFrame;
                         case 1:
                             {
@@ -94,7 +94,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                                 return TestPhase.WaitForNextFrame;
                             }
                         case 2:
-                            Store.ForceRefreshUI(UpdateFlags.All);;
+                            Store.MarkStateDirty();
                             return TestPhase.WaitForNextFrame;
                         default:
                             return TestPhase.Done;
@@ -145,8 +145,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         {
             {
                 // Create a placemat and collapse it.
-                var placemat = GraphModel.CreatePlacemat(string.Empty, new Rect(0, 0, 200, 500)) as PlacematModel;
-                Store.ForceRefreshUI(UpdateFlags.All);;
+                var placemat = GraphModel.CreatePlacemat(new Rect(0, 0, 200, 500)) as PlacematModel;
+                Store.MarkStateDirty();
                 yield return null;
 
                 Store.Dispatch(new SetPlacematCollapsedAction(placemat, true, new IGraphElementModel[] {}));
@@ -154,7 +154,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
 
                 // Add a node under it.
                 GraphModel.CreateNode<Type0FakeNodeModel>("Node0", new Vector2(10, 100));
-                Store.ForceRefreshUI(UpdateFlags.All);;
+                Store.MarkStateDirty();
                 yield return null;
             }
 
@@ -175,7 +175,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                     switch (frame)
                     {
                         case 0:
-                            Store.ForceRefreshUI(UpdateFlags.All);;
+                            Store.MarkStateDirty();
                             return TestPhase.WaitForNextFrame;
                         case 1:
                             {
@@ -184,7 +184,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                                 return TestPhase.WaitForNextFrame;
                             }
                         case 2:
-                            Store.ForceRefreshUI(UpdateFlags.All);;
+                            Store.MarkStateDirty();
                             return TestPhase.WaitForNextFrame;
                         default:
                             return TestPhase.Done;
@@ -224,8 +224,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         {
             {
                 // Create a placemat and collapse it.
-                var placemat = GraphModel.CreatePlacemat(string.Empty, new Rect(0, 0, 200, 500)) as PlacematModel;
-                Store.ForceRefreshUI(UpdateFlags.All);;
+                var placemat = GraphModel.CreatePlacemat(new Rect(0, 0, 200, 500)) as PlacematModel;
+                Store.MarkStateDirty();
                 yield return null;
 
                 Store.Dispatch(new SetPlacematCollapsedAction(placemat, true, new IGraphElementModel[] {}));
@@ -233,7 +233,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
 
                 // Add a node under it.
                 GraphModel.CreateNode<Type0FakeNodeModel>("Node0", new Vector2(10, 100));
-                Store.ForceRefreshUI(UpdateFlags.All);;
+                Store.MarkStateDirty();
                 yield return null;
             }
 
@@ -254,7 +254,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                     switch (frame)
                     {
                         case 0:
-                            Store.ForceRefreshUI(UpdateFlags.All);;
+                            Store.MarkStateDirty();
                             return TestPhase.WaitForNextFrame;
                         case 1:
                             {
@@ -263,7 +263,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                                 return TestPhase.WaitForNextFrame;
                             }
                         case 2:
-                            Store.ForceRefreshUI(UpdateFlags.All);;
+                            Store.MarkStateDirty();
                             return TestPhase.WaitForNextFrame;
                         default:
                             return TestPhase.Done;
@@ -286,7 +286,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         [Test(Description = "Test for VSB-865: Sticky Note doesn't collapse with placemats")]
         public void ElementIsHidableByPlacement()
         {
-            var placemat = GraphModel.CreatePlacemat(string.Empty, new Rect(0, 0, 200, 500)) as PlacematModel;
+            var placemat = GraphModel.CreatePlacemat(new Rect(0, 0, 200, 500)) as PlacematModel;
             var node = GraphModel.CreateNode<Type0FakeNodeModel>("Node0", new Vector2(10, 100));
             var sticky = (StickyNoteModel)GraphModel.CreateStickyNote(new Rect(100, 100, 50, 50));
 

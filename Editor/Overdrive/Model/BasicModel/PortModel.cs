@@ -35,9 +35,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
         public string DisplayTitle => Title.Nicify();
 
-        public string UniqueName => m_UniqueId ?? Title ?? m_Guid.ToString();
+        public string UniqueName
+        {
+            get => m_UniqueId ?? Title ?? m_Guid.ToString();
+            set => m_UniqueId = value;
+        }
 
-        public PortModelOptions Options { get; private set; }
+        public PortModelOptions Options { get; set; }
 
         public PortType PortType { get; set; }
 
@@ -109,6 +113,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
                 return newTooltip;
             }
+
+            // We don't support setting the tooltip for base port models.
+            set {}
         }
 
         public virtual bool CreateEmbeddedValueIfNeeded => PortType == PortType.Data;
@@ -124,12 +131,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             set => m_Guid = value;
         }
 
-        public PortModel(string name = null, string uniqueId = null, PortModelOptions options = PortModelOptions.Default)
+        public PortModel()
         {
             InternalInitCapabilities();
-            Title = name;
-            m_UniqueId = uniqueId;
-            Options = options;
         }
 
         public void AssignNewGuid()
@@ -149,14 +153,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             return PortType == PortType.Data ? Direction == Direction.Input ? PortCapacity.Single :
                 PortCapacity.Multi :
                 PortCapacity.Multi;
-        }
-
-        public static bool Equivalent(IPortModel a, IPortModel b)
-        {
-            if (a == null || b == null)
-                return a == b;
-
-            return a.Direction == b.Direction && a.NodeModel.Guid == b.NodeModel.Guid && a.UniqueName == b.UniqueName;
         }
 
         public virtual void MoveEdgeFirst(IEdgeModel edge)

@@ -4,16 +4,12 @@ using System.Linq;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public class PluginRepository : IPluginRepository, IDisposable
+    public class PluginRepository : IDisposable
     {
-        Store m_Store;
-        GraphViewEditorWindow m_GraphView;
         List<IPluginHandler> m_PluginHandlers;
 
-        internal PluginRepository(Store store, GraphViewEditorWindow graphView)
+        internal PluginRepository()
         {
-            m_Store = store;
-            m_GraphView = graphView;
             m_PluginHandlers = new List<IPluginHandler>();
         }
 
@@ -22,17 +18,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             return m_PluginHandlers;
         }
 
-        public void RegisterPlugins(IEnumerable<IPluginHandler> plugins)
+        public void RegisterPlugins(IEnumerable<IPluginHandler> plugins, Store store, GraphViewEditorWindow window)
         {
             UnregisterPlugins(plugins);
             foreach (IPluginHandler handler in plugins)
             {
-                handler.Register(m_Store, m_GraphView);
+                handler.Register(store, window);
                 m_PluginHandlers.Add(handler);
             }
         }
 
-        public void UnregisterPlugins(IEnumerable<IPluginHandler> except)
+        public void UnregisterPlugins(IEnumerable<IPluginHandler> except = null)
         {
             foreach (var plugin in m_PluginHandlers)
             {

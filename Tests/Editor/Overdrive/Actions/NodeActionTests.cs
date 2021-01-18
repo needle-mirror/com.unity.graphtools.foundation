@@ -57,10 +57,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                     info.OperationName = "Duplicate";
                     info.Delta = Vector2.one;
 
-                    var editorDataModel = m_Store.GetState().EditorDataModel;
                     GtfoGraphView.CopyPasteData copyPasteData = GtfoGraphView.GatherCopiedElementsData(new List<IGraphElementModel> { nodeModel });
 
-                    return new PasteSerializedDataAction(GraphModel, info, editorDataModel, copyPasteData);
+                    return new PasteSerializedDataAction(info, copyPasteData);
                 },
                 () =>
                 {
@@ -153,12 +152,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
         [Test]
         public void Test_DisconnectNodeAction([Values] TestingMode mode)
         {
-            var const0 = GraphModel.CreateConstantNode("const0", typeof(float).GenerateTypeHandle(), Vector2.zero);
-            var const1 = GraphModel.CreateConstantNode("const1", typeof(float).GenerateTypeHandle(), Vector2.zero);
-            var const2 = GraphModel.CreateConstantNode("const2", typeof(float).GenerateTypeHandle(), Vector2.zero);
-            var const3 = GraphModel.CreateConstantNode("const3", typeof(float).GenerateTypeHandle(), Vector2.zero);
-            var const4 = GraphModel.CreateConstantNode("const4", typeof(float).GenerateTypeHandle(), Vector2.zero);
-            var const5 = GraphModel.CreateConstantNode("const5", typeof(float).GenerateTypeHandle(), Vector2.zero);
+            var const0 = GraphModel.CreateConstantNode(typeof(float).GenerateTypeHandle(), "const0", Vector2.zero);
+            var const1 = GraphModel.CreateConstantNode(typeof(float).GenerateTypeHandle(), "const1", Vector2.zero);
+            var const2 = GraphModel.CreateConstantNode(typeof(float).GenerateTypeHandle(), "const2", Vector2.zero);
+            var const3 = GraphModel.CreateConstantNode(typeof(float).GenerateTypeHandle(), "const3", Vector2.zero);
+            var const4 = GraphModel.CreateConstantNode(typeof(float).GenerateTypeHandle(), "const4", Vector2.zero);
+            var const5 = GraphModel.CreateConstantNode(typeof(float).GenerateTypeHandle(), "const5", Vector2.zero);
             var binary0 = GraphModel.CreateNode<Type0FakeNodeModel>("Node0", Vector2.zero);
             var binary1 = GraphModel.CreateNode<Type0FakeNodeModel>("Node1", Vector2.zero);
             var binary2 = GraphModel.CreateNode<Type0FakeNodeModel>("Node2", Vector2.zero);
@@ -202,7 +201,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
         [Test]
         public void Test_RemoveNodesAction([Values] TestingMode mode)
         {
-            var constantA = GraphModel.CreateConstantNode("constantA", typeof(int).GenerateTypeHandle(), Vector2.zero);
+            var constantA = GraphModel.CreateConstantNode(typeof(int).GenerateTypeHandle(), "constantA", Vector2.zero);
             var binary0 = GraphModel.CreateNode<Type0FakeNodeModel>("Node1", Vector2.zero);
             var binary1 = GraphModel.CreateNode<Type0FakeNodeModel>("Node2", Vector2.zero);
             IPortModel outputPort = constantA.OutputPort;

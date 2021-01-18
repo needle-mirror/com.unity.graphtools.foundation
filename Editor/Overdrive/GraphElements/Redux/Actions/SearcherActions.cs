@@ -24,17 +24,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             Guids = guids;
         }
 
-        public static void DefaultReducer(State previousState, CreateNodeFromSearcherAction action)
+        public static void DefaultReducer(State state, CreateNodeFromSearcherAction action)
         {
-            previousState.PushUndo(action);
+            state.PushUndo(action);
 
-            var nodes = action.SelectedItem.CreateElements.Invoke(
-                new GraphNodeCreationData(previousState.CurrentGraphModel, action.Position, guids: action.Guids));
+            var newModels = action.SelectedItem.CreateElements.Invoke(
+                new GraphNodeCreationData(state.GraphModel, action.Position, guids: action.Guids));
 
-            if (nodes.Any(n => n is IEdgeModel))
-                previousState.CurrentGraphModel.LastChanges.ElementsToAutoAlign.AddRange(nodes);
-
-            previousState.MarkForUpdate(UpdateFlags.GraphTopology);
+            state.MarkNew(newModels);
         }
     }
 
@@ -61,17 +58,22 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             ItemizeSourceNode = itemizeSourceNode;
         }
 
-        public static void DefaultReducer(State previousState, CreateNodeFromPortAction action)
+        public static void DefaultReducer(State state, CreateNodeFromPortAction action)
         {
-            previousState.PushUndo(action);
+            state.PushUndo(action);
 
-            var graphModel = previousState.CurrentGraphModel;
+            var graphModel = state.GraphModel;
             if (action.EdgesToDelete != null)
-                graphModel.DeleteEdges(action.EdgesToDelete);
+            {
+                var deletedModels = graphModel.DeleteEdges(action.EdgesToDelete);
+                state.MarkDeleted(deletedModels);
+            }
 
-            var position = action.Position - Vector2.up * EdgeActionConfig.k_NodeOffset;
+            var position = action.Position - Vector2.up * EdgeActionConfig.nodeOffset;
             var elementModels = action.SelectedItem.CreateElements.Invoke(
                 new GraphNodeCreationData(graphModel, position));
+
+            state.MarkNew(elementModels);
 
             if (!elementModels.Any() || !(elementModels[0] is IPortNode selectedNodeModel))
                 return;
@@ -83,23 +85,28 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             var thisPortModel = action.PortModel;
 
-            IEdgeModel newEdge = null;
+            IEdgeModel newEdge;
             if (thisPortModel.Direction == Direction.Output)
             {
                 if (action.ItemizeSourceNode)
-                    graphModel.CreateItemizedNode(previousState, EdgeActionConfig.k_NodeOffset, ref thisPortModel);
+                {
+                    graphModel.CreateItemizedNode(state, EdgeActionConfig.nodeOffset, ref thisPortModel);
+                    state.RequestUIRebuild();
+                }
 
                 newEdge = graphModel.CreateEdge(otherPortModel, thisPortModel);
+                state.MarkNew(newEdge);
             }
             else
             {
                 newEdge = graphModel.CreateEdge(thisPortModel, otherPortModel);
+                state.MarkNew(newEdge);
             }
 
-            if (newEdge != null && previousState.Preferences.GetBool(BoolPref.AutoAlignDraggedEdges))
-                graphModel.LastChanges?.ElementsToAutoAlign.Add(newEdge);
-
-            graphModel.LastChanges?.ChangedElements.Add(action.PortModel.NodeModel);
+            if (newEdge != null && state.Preferences.GetBool(BoolPref.AutoAlignDraggedEdges))
+            {
+                state.MarkModelToAutoAlign(newEdge);
+            }
         }
     }
 
@@ -124,40 +131,49 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             Guid = guid;
         }
 
-        public static void DefaultReducer(State previousState, CreateNodeOnEdgeAction action)
+        public static void DefaultReducer(State state, CreateNodeOnEdgeAction action)
         {
-            previousState.PushUndo(action);
+            state.PushUndo(action);
 
             var edgeInput = action.EdgeModel.ToPort;
             var edgeOutput = action.EdgeModel.FromPort;
 
             // Instantiate node
-            var graphModel = previousState.CurrentGraphModel;
+            var graphModel = state.GraphModel;
 
-            var position = action.Position - Vector2.up * EdgeActionConfig.k_NodeOffset;
+            var position = action.Position - Vector2.up * EdgeActionConfig.nodeOffset;
 
             List<GUID> guids = action.Guid.HasValue ? new List<GUID> { action.Guid.Value } : null;
 
             var elementModels = action.SelectedItem.CreateElements.Invoke(
                 new GraphNodeCreationData(graphModel, position, guids: guids));
 
+            state.MarkNew(elementModels);
+
             if (elementModels.Length == 0 || !(elementModels[0] is IInOutPortsNode selectedNodeModel))
                 return;
 
             // Delete old edge
-            graphModel.DeleteEdge(action.EdgeModel);
+            var deletedModels = graphModel.DeleteEdge(action.EdgeModel);
+            state.MarkDeleted(deletedModels);
 
             // Connect input port
             var inputPortModel = selectedNodeModel.InputsByDisplayOrder.FirstOrDefault(p => p?.PortType == edgeOutput?.PortType);
 
             if (inputPortModel != null)
-                graphModel.CreateEdge(inputPortModel, edgeOutput);
+            {
+                var newEdge = graphModel.CreateEdge(inputPortModel, edgeOutput);
+                state.MarkNew(newEdge);
+            }
 
             // Find first matching output type and connect it
             var outputPortModel = selectedNodeModel.GetPortFitToConnectTo(edgeInput);
 
             if (outputPortModel != null)
-                graphModel.CreateEdge(edgeInput, outputPortModel);
+            {
+                var newEdge = graphModel.CreateEdge(edgeInput, outputPortModel);
+                state.MarkNew(newEdge);
+            }
         }
     }
 }

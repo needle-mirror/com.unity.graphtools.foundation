@@ -41,9 +41,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
         public TracingToolbar(GraphView graphView, Store store) : base(store, graphView)
         {
             name = "tracingToolbar";
-            AddToClassList("gtf-toolbar");
-            AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(PackageTransitionHelper.AssetPath + "VisualScripting/Editor/Plugins/Debugging/TracingToolbar.uxml").CloneTree(this);
-            styleSheets.Add(AssetDatabase.LoadAssetAtPath<StyleSheet>(PackageTransitionHelper.AssetPath + "VisualScripting/Editor/Plugins/Debugging/Tracing.uss"));
+            AddToClassList(ussClassName);
+            AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(AssetHelper.AssetPath + "VisualScripting/Editor/Plugins/Debugging/TracingToolbar.uxml").CloneTree(this);
+            styleSheets.Add(AssetDatabase.LoadAssetAtPath<StyleSheet>(AssetHelper.AssetPath + "VisualScripting/Editor/Plugins/Debugging/Tracing.uss"));
 
             m_PickTargetButton = this.Q<Button>("pickTargetButton");
             m_PickTargetButton.tooltip = "Pick a target";
@@ -97,23 +97,24 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
                 m_TracingTimeline.OnGUI(timeRect);
             });
 
-            m_TracingTimeline = new TracingTimeline(m_GraphView, m_Store.GetState());
+            m_TracingTimeline = new TracingTimeline(m_GraphView, m_Store.State);
             Add(imguiContainer);
         }
 
         public void SyncVisible()
         {
-            if (style.display.value == DisplayStyle.Flex != m_Store.GetState().EditorDataModel.TracingEnabled)
-                style.display = m_Store.GetState().EditorDataModel.TracingEnabled ? DisplayStyle.Flex : DisplayStyle.None;
+            var tracingDataModel = m_Store.State.TracingState;
+            if (style.display.value == DisplayStyle.Flex != tracingDataModel.TracingEnabled)
+                style.display = tracingDataModel.TracingEnabled ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         void OnPickTargetButton(EventBase eventBase)
         {
-            var state = m_Store.GetState();
-            IDebugger debugger = state.CurrentGraphModel.Stencil.Debugger;
-            var targetIndices = debugger.GetDebuggingTargets(state.CurrentGraphModel);
+            var state = m_Store.State;
+            IDebugger debugger = state.GraphModel.Stencil.Debugger;
+            var targetIndices = debugger.GetDebuggingTargets(state.GraphModel);
             var items = targetIndices == null ? null : targetIndices.Select(x =>
-                (SearcherItem) new TargetSearcherItem(x, debugger.GetTargetLabel(state.CurrentGraphModel, x))).ToList();
+                (SearcherItem) new TargetSearcherItem(x, debugger.GetTargetLabel(state.GraphModel, x))).ToList();
             if (items == null || !items.Any())
                 items = new List<SearcherItem> {new SearcherItem("<No Object found>")};
 
@@ -121,7 +122,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
             {
                 if (i == null || !(i is TargetSearcherItem targetSearcherItem))
                     return true;
-                state.TracingDataModel.CurrentTracingTarget = targetSearcherItem.Target;
+                state.TracingState.CurrentTracingTarget = targetSearcherItem.Target;
                 UpdateTracingMenu();
                 return true;
             }, eventBase.originalMousePosition);
@@ -133,22 +134,25 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
         {
             if (evt.keyCode == KeyCode.Return || evt.keyCode == KeyCode.KeypadEnter)
             {
+                var tracingDataModel = m_Store.State.TracingState;
+
                 int frame = m_CurrentFrameTextField.value;
 
                 frame = Math.Max(0, Math.Min(frame, Time.frameCount));
-                m_Store.GetState().TracingDataModel.CurrentTracingFrame = frame;
-                m_Store.GetState().TracingDataModel.CurrentTracingStep = -1;
+                tracingDataModel.CurrentTracingFrame = frame;
+                tracingDataModel.CurrentTracingStep = -1;
                 UpdateTracingMenu();
             }
         }
 
         public void UpdateTracingMenu(bool force = true)
         {
-            var state = m_Store.GetState();
+            var state = m_Store.State;
+            var tracingDataModel = state.TracingState;
 
-            if (EditorApplication.isPlaying && state.EditorDataModel.TracingEnabled)
+            if (EditorApplication.isPlaying && tracingDataModel.TracingEnabled)
             {
-                m_PickTargetLabel.text = state.CurrentGraphModel?.Stencil?.Debugger?.GetTargetLabel(state.CurrentGraphModel, state.TracingDataModel.CurrentTracingTarget);
+                m_PickTargetLabel.text = state.GraphModel?.Stencil?.Debugger?.GetTargetLabel(state.GraphModel, tracingDataModel.CurrentTracingTarget);
                 m_PickTargetIcon.style.visibility = Visibility.Hidden;
                 m_PickTargetButton.SetEnabled(true);
                 if (EditorApplication.isPaused || !EditorApplication.isPlaying)
@@ -164,8 +168,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
                 }
                 else
                 {
-                    state.TracingDataModel.CurrentTracingFrame = Time.frameCount;
-                    state.TracingDataModel.CurrentTracingStep = -1;
+                    tracingDataModel.CurrentTracingFrame = Time.frameCount;
+                    tracingDataModel.CurrentTracingStep = -1;
                     m_FirstFrameTracingButton.SetEnabled(false);
                     m_PreviousFrameTracingButton.SetEnabled(false);
                     m_PreviousStepTracingButton.SetEnabled(false);
@@ -180,11 +184,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
                     m_LastUpdate.Start();
                 if (force || EditorApplication.isPaused || m_LastUpdate.ElapsedMilliseconds > k_UpdateIntervalMs)
                 {
-                    m_CurrentFrameTextField.value = state.TracingDataModel.CurrentTracingFrame;
+                    m_CurrentFrameTextField.value = tracingDataModel.CurrentTracingFrame;
                     m_TotalFrameLabel.text = $"/{Time.frameCount.ToString()}";
-                    if (state.TracingDataModel.CurrentTracingStep != -1)
+                    if (tracingDataModel.CurrentTracingStep != -1)
                     {
-                        m_TotalFrameLabel.text += $" [{state.TracingDataModel.CurrentTracingStep}/{state.TracingDataModel.MaxTracingStep}]";
+                        m_TotalFrameLabel.text += $" [{tracingDataModel.CurrentTracingStep}/{tracingDataModel.MaxTracingStep}]";
                     }
 
                     m_LastUpdate.Restart();
@@ -211,39 +215,45 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
 
         void OnFirstFrameTracingButton()
         {
-            m_Store.GetState().TracingDataModel.CurrentTracingFrame = 0;
-            m_Store.GetState().TracingDataModel.CurrentTracingStep = -1;
+            var tracingDataModel = m_Store.State.TracingState;
+
+            tracingDataModel.CurrentTracingFrame = 0;
+            tracingDataModel.CurrentTracingStep = -1;
             UpdateTracingMenu();
         }
 
         void OnPreviousFrameTracingButton()
         {
-            if (m_Store.GetState().TracingDataModel.CurrentTracingFrame > 0)
+            var tracingDataModel = m_Store.State.TracingState;
+
+            if (tracingDataModel.CurrentTracingFrame > 0)
             {
-                m_Store.GetState().TracingDataModel.CurrentTracingFrame--;
-                m_Store.GetState().TracingDataModel.CurrentTracingStep = -1;
+                tracingDataModel.CurrentTracingFrame--;
+                tracingDataModel.CurrentTracingStep = -1;
                 UpdateTracingMenu();
             }
         }
 
         void OnPreviousStepTracingButton()
         {
-            if (m_Store.GetState().TracingDataModel.CurrentTracingStep > 0)
+            var tracingDataModel = m_Store.State.TracingState;
+
+            if (tracingDataModel.CurrentTracingStep > 0)
             {
-                m_Store.GetState().TracingDataModel.CurrentTracingStep--;
+                tracingDataModel.CurrentTracingStep--;
             }
             else
             {
-                if (m_Store.GetState().TracingDataModel.CurrentTracingStep == -1)
+                if (tracingDataModel.CurrentTracingStep == -1)
                 {
-                    m_Store.GetState().TracingDataModel.CurrentTracingStep = m_Store.GetState().TracingDataModel.MaxTracingStep;
+                    tracingDataModel.CurrentTracingStep = tracingDataModel.MaxTracingStep;
                 }
                 else
                 {
-                    if (m_Store.GetState().TracingDataModel.CurrentTracingFrame > 0)
+                    if (tracingDataModel.CurrentTracingFrame > 0)
                     {
-                        m_Store.GetState().TracingDataModel.CurrentTracingFrame--;
-                        m_Store.GetState().TracingDataModel.CurrentTracingStep = m_Store.GetState().TracingDataModel.MaxTracingStep;
+                        tracingDataModel.CurrentTracingFrame--;
+                        tracingDataModel.CurrentTracingStep = tracingDataModel.MaxTracingStep;
                     }
                 }
             }
@@ -253,22 +263,24 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
 
         void OnNextStepTracingButton()
         {
-            if (m_Store.GetState().TracingDataModel.CurrentTracingStep < m_Store.GetState().TracingDataModel.MaxTracingStep && m_Store.GetState().TracingDataModel.CurrentTracingStep >= 0)
+            var tracingDataModel = m_Store.State.TracingState;
+
+            if (tracingDataModel.CurrentTracingStep < tracingDataModel.MaxTracingStep && tracingDataModel.CurrentTracingStep >= 0)
             {
-                m_Store.GetState().TracingDataModel.CurrentTracingStep++;
+                tracingDataModel.CurrentTracingStep++;
             }
             else
             {
-                if (m_Store.GetState().TracingDataModel.CurrentTracingStep == -1 && (m_Store.GetState().TracingDataModel.CurrentTracingFrame < Time.frameCount))
+                if (tracingDataModel.CurrentTracingStep == -1 && (tracingDataModel.CurrentTracingFrame < Time.frameCount))
                 {
-                    m_Store.GetState().TracingDataModel.CurrentTracingStep = 0;
+                    tracingDataModel.CurrentTracingStep = 0;
                 }
                 else
                 {
-                    if (m_Store.GetState().TracingDataModel.CurrentTracingFrame < Time.frameCount)
+                    if (tracingDataModel.CurrentTracingFrame < Time.frameCount)
                     {
-                        m_Store.GetState().TracingDataModel.CurrentTracingFrame++;
-                        m_Store.GetState().TracingDataModel.CurrentTracingStep = 0;
+                        tracingDataModel.CurrentTracingFrame++;
+                        tracingDataModel.CurrentTracingStep = 0;
                     }
                 }
             }
@@ -278,18 +290,22 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
 
         void OnNextFrameTracingButton()
         {
-            if (m_Store.GetState().TracingDataModel.CurrentTracingFrame < Time.frameCount)
+            var tracingDataModel = m_Store.State.TracingState;
+
+            if (tracingDataModel.CurrentTracingFrame < Time.frameCount)
             {
-                m_Store.GetState().TracingDataModel.CurrentTracingFrame++;
-                m_Store.GetState().TracingDataModel.CurrentTracingStep = -1;
+                tracingDataModel.CurrentTracingFrame++;
+                tracingDataModel.CurrentTracingStep = -1;
                 UpdateTracingMenu();
             }
         }
 
         void OnLastFrameTracingButton()
         {
-            m_Store.GetState().TracingDataModel.CurrentTracingFrame = Time.frameCount;
-            m_Store.GetState().TracingDataModel.CurrentTracingStep = -1;
+            var tracingDataModel = m_Store.State.TracingState;
+
+            tracingDataModel.CurrentTracingFrame = Time.frameCount;
+            tracingDataModel.CurrentTracingStep = -1;
             UpdateTracingMenu();
         }
     }

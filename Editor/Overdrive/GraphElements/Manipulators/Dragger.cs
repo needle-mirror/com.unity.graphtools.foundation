@@ -9,15 +9,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         private Vector2 m_Start;
         protected bool m_Active;
 
-        public Vector2 panSpeed { get; set; }
+        public Vector2 PanSpeed { get; set; }
 
-        public bool clampToParentEdges { get; set; }
+        public bool ClampToParentEdges { get; set; }
 
         public Dragger()
         {
             activators.Add(new ManipulatorActivationFilter {button = MouseButton.LeftMouse});
-            panSpeed = new Vector2(1, 1);
-            clampToParentEdges = false;
+            PanSpeed = new Vector2(1, 1);
+            ClampToParentEdges = false;
             m_Active = false;
         }
 
@@ -25,7 +25,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             var rect = new Rect(x, y, width, height);
 
-            if (clampToParentEdges)
+            if (ClampToParentEdges)
             {
                 Rect shadowRect = target.hierarchy.parent.GetRect();
                 if (rect.x < shadowRect.xMin)

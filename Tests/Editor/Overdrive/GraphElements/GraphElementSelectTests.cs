@@ -41,7 +41,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator ElementCanBeSelected()
         {
-            graphView.RebuildUI(GraphModel, Store);
+            Store.State.RequestUIRebuild();
             yield return null;
             GetUI(out var node1, out var node2, out var node3);
 
@@ -57,7 +57,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator SelectingNewElementUnselectsPreviousOne()
         {
-            graphView.RebuildUI(GraphModel, Store);
+            Store.State.RequestUIRebuild();
             yield return null;
             GetUI(out var node1, out var node2, out var node3);
 
@@ -88,7 +88,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             // Create the node.
             var nodeModel = CreateNode(key, new Vector2(200, 200));
-            graphView.RebuildUI(GraphModel, Store);
+            Store.State.RequestUIRebuild();
             yield return null;
 
             var node = nodeModel.GetUI<Node>(graphView);
@@ -114,18 +114,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Assert.False(node.Selected);
         }
 
-        EventModifiers modifiers
-        {
-            get
-            {
-                return Application.platform == RuntimePlatform.OSXEditor ? EventModifiers.Command : EventModifiers.Control;
-            }
-        }
+        EventModifiers modifiers => Application.platform == RuntimePlatform.OSXEditor ? EventModifiers.Command : EventModifiers.Control;
 
         [UnityTest]
         public IEnumerator SelectingNewElementWithActionAddsToSelection()
         {
-            graphView.RebuildUI(GraphModel, Store);
+            Store.State.RequestUIRebuild();
             yield return null;
             GetUI(out var node1, out var node2, out var node3);
 
@@ -147,7 +141,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator SelectingSelectedElementWithActionModifierRemovesFromSelection()
         {
-            graphView.RebuildUI(GraphModel, Store);
+            Store.State.RequestUIRebuild();
             yield return null;
             GetUI(out var node1, out var node2, out var node3);
 
@@ -192,7 +186,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator ClickOnTwoOverlappingElementsSelectsTopOne()
         {
-            graphView.RebuildUI(GraphModel, Store);
+            Store.State.RequestUIRebuild();
             yield return null;
             GetUI(out var node1, out var node2, out var node3);
 
@@ -212,7 +206,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator RectangleSelectionWorks()
         {
-            graphView.RebuildUI(GraphModel, Store);
+            Store.State.RequestUIRebuild();
             yield return null;
             GetUI(out var node1, out var node2, out var node3);
 
@@ -230,7 +224,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator RectangleSelectionWithActionKeyWorks()
         {
-            graphView.RebuildUI(GraphModel, Store);
+            Store.State.RequestUIRebuild();
             yield return null;
             GetUI(out var node1, out var node2, out var node3);
 
@@ -254,7 +248,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator FreehandSelectionWorks()
         {
-            graphView.RebuildUI(GraphModel, Store);
+            Store.State.RequestUIRebuild();
             yield return null;
             GetUI(out var node1, out var node2, out var node3);
 
@@ -275,7 +269,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator FreehandDeleteWorks()
         {
-            graphView.RebuildUI(GraphModel, Store);
+            Store.State.RequestUIRebuild();
             yield return null;
             GetUI(out var node1, out var node2, out var node3);
 
@@ -286,7 +280,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Vector2 endPoint = new Vector2(rectangle.xMin, lineAcrossNodes);
             helpers.DragTo(startPoint, endPoint, eventModifiers: EventModifiers.Shift | EventModifiers.Alt, steps: 10);
 
-            graphView.RebuildUI(GraphModel, Store);
             yield return null;
 
             // After manipulation we should have only zero elements left.

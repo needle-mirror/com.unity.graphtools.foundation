@@ -29,7 +29,7 @@ namespace UnityEditor.VisualScripting.Editor
             var assetGUIDs = AssetDatabase.FindAssets($"t:{typeof(VSGraphAssetModel).FullName}");
 
             var assetsByBuilder = assetGUIDs.Select(assetGuid => AssetDatabase.LoadAssetAtPath<VSGraphAssetModel>(AssetDatabase.GUIDToAssetPath(assetGuid)))
-                .Where(asset => asset.GraphModel.State == ModelState.Enabled)
+                .Where(asset => asset != null && asset.GraphModel != null && asset.GraphModel.State == ModelState.Enabled)
                 .GroupBy(asset => asset.Builder);
             foreach (IGrouping<IBuilder, VSGraphAssetModel> grouping in assetsByBuilder)
             {

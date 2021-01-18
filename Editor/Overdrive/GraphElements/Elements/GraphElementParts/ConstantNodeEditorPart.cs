@@ -1,6 +1,5 @@
 using System;
 using System.Linq;
-using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
@@ -8,27 +7,25 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     public class ConstantNodeEditorPart : BaseGraphElementPart
     {
         public static ConstantNodeEditorPart Create(string name, IGraphElementModel model,
-            IGraphElement graphElement, string parentClassName, IEditorDataModel editorDataModel)
+            IGraphElement graphElement, string parentClassName)
         {
-            if (model is ConstantNodeModel)
+            if (model is IConstantNodeModel)
             {
-                return new ConstantNodeEditorPart(name, model, graphElement, parentClassName, editorDataModel);
+                return new ConstantNodeEditorPart(name, model, graphElement, parentClassName);
             }
 
             return null;
         }
 
         protected ConstantNodeEditorPart(string name, IGraphElementModel model, IGraphElement ownerElement,
-                                         string parentClassName, IEditorDataModel editorDataModel)
+                                         string parentClassName)
             : base(name, model, ownerElement, parentClassName)
         {
-            m_EditorDataModel = editorDataModel;
         }
 
-        public static readonly string k_ConstantEditorUssName = "constant-editor";
-        public static readonly string k_LabelUssName = "constant-editor-label";
+        public static readonly string constantEditorElementUssClassName = "constant-editor";
+        public static readonly string labelUssName = "constant-editor-label";
 
-        readonly IEditorDataModel m_EditorDataModel;
         Label m_Label;
 
         VisualElement m_Root;
@@ -36,19 +33,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         protected override void BuildPartUI(VisualElement container)
         {
-            if (m_Model is ConstantNodeModel constantNodeModel)
+            if (m_Model is IConstantNodeModel constantNodeModel)
             {
                 m_Root = new VisualElement { name = PartName };
                 m_Root.AddToClassList(m_ParentClassName.WithUssElement(PartName));
 
-                m_Label = new Label { name = k_LabelUssName };
-                m_Label.AddToClassList(m_ParentClassName.WithUssElement(k_LabelUssName));
+                m_Label = new Label { name = labelUssName };
+                m_Label.AddToClassList(m_ParentClassName.WithUssElement(labelUssName));
                 m_Root.Add(m_Label);
 
-                var tokenEditor = InlineValueEditor.CreateEditorForNodeModel(constantNodeModel, OnValueChanged, m_EditorDataModel);
+                var tokenEditor = InlineValueEditor.CreateEditorForNodeModel(constantNodeModel, OnValueChanged, m_OwnerElement.Store);
                 if (tokenEditor != null)
                 {
-                    tokenEditor.AddToClassList(m_ParentClassName.WithUssElement(k_ConstantEditorUssName));
+                    tokenEditor.AddToClassList(m_ParentClassName.WithUssElement(constantEditorElementUssClassName));
                     m_Root.Add(tokenEditor);
                 }
                 container.Add(m_Root);
@@ -57,7 +54,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         protected override void UpdatePartFromModel()
         {
-            if (m_Model is ConstantNodeModel constantNodeModel)
+            if (m_Model is IConstantNodeModel constantNodeModel)
             {
                 if (constantNodeModel.Value is IStringWrapperConstantModel icm)
                 {
@@ -83,7 +80,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             get
             {
-                if (m_Model is ConstantNodeModel constantNodeModel)
+                if (m_Model is IConstantNodeModel constantNodeModel)
                     return !s_PropsToHideLabel.Contains(constantNodeModel.Type.GenerateTypeHandle());
                 return true;
             }
@@ -91,7 +88,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         void OnValueChanged(IChangeEvent evt, object arg3)
         {
-            if (m_Model is ConstantNodeModel constantNodeModel)
+            if (m_Model is IConstantNodeModel constantNodeModel)
             {
                 if (evt != null) // Enum editor sends null
                 {

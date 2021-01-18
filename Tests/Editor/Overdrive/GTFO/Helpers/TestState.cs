@@ -4,12 +4,23 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO
 {
     public class TestState : State
     {
-        IGraphModel m_GraphModel;
-        public override IGraphModel CurrentGraphModel => m_GraphModel;
+        static Preferences CreatePreferences()
+        {
+            var prefs = TestPreferences.CreatePreferences();
+            prefs.SetBoolNoEditorUpdate(BoolPref.ErrorOnRecursiveDispatch, false);
+            prefs.SetBoolNoEditorUpdate(BoolPref.ErrorOnMultipleDispatchesPerFrame, false);
+            return prefs;
+        }
 
-        public TestState(IGraphModel graphModel) : base(null)
+        IGraphModel m_GraphModel;
+        public override IGraphModel GraphModel => m_GraphModel;
+
+        public TestState(GUID graphViewEditorWindowGUID, IGraphModel graphModel)
+            : base(graphViewEditorWindowGUID, CreatePreferences())
         {
             m_GraphModel = graphModel;
         }
+
+        ~TestState() => Dispose(false);
     }
 }

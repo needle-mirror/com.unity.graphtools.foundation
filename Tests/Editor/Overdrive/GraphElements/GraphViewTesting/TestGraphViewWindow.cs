@@ -1,37 +1,60 @@
+using System.Collections.Generic;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels;
+using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    class TestGraphViewWindow : GraphViewEditorWindow
+    class TestBlankPage : BlankPage
+    {
+        public TestBlankPage(Store store)
+            : base(store) {}
+    }
+
+    class TestGraphViewWindow : GtfoWindow
     {
         public IGraphModel GraphModel { get; private set; }
 
         public TestGraphViewWindow()
         {
             this.SetDisableInputEvents(true);
+            WithSidePanel = false;
+        }
+
+        protected override bool CanHandleAssetType(GraphAssetModel asset)
+        {
+            return true;
         }
 
         protected override Overdrive.State CreateInitialState()
         {
-            GraphModel = new GraphModel();
-            ((GraphModel)GraphModel).Stencil = new TestStencil();
-            return new State(GraphModel);
+            GraphModel = new GraphModel {StencilType = typeof(TestStencil)};
+            return new State(GUID, GraphModel);
         }
 
-        protected override void OnEnable()
+        protected override BlankPage CreateBlankPage()
         {
-            base.OnEnable();
-
-            m_GraphView = new TestGraphView(this, Store);
-            rootVisualElement.Add(GraphView);
+            return new TestBlankPage(Store);
         }
 
-        protected override void OnDisable()
+        protected override MainToolbar CreateMainToolbar()
         {
-            base.OnDisable();
+            return null;
+        }
 
-            rootVisualElement.Remove(GraphView);
+        protected override ErrorToolbar CreateErrorToolbar()
+        {
+            return null;
+        }
+
+        protected override GtfoGraphView CreateGraphView()
+        {
+            return new TestGraphView(this, Store);
+        }
+
+        protected override Dictionary<Event, ShortcutDelegate> GetShortcutDictionary()
+        {
+            return new Dictionary<Event, ShortcutDelegate>();
         }
     }
 }

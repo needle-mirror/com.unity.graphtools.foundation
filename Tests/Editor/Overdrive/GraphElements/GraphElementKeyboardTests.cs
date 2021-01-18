@@ -25,7 +25,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator ShortcutsWork()
         {
-            graphView.RebuildUI(GraphModel, Store);
+            Store.State.RequestUIRebuild();
             yield return null;
 
             var node1 = m_Node1Model.GetUI<Node>(graphView);
@@ -91,25 +91,23 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             AssertLayoutTransformAreEquals(transform, vc.transform.matrix);
 
             // Reset view to origin
-            window.SendEvent(new Event {type = EventType.KeyDown, character = 'o', keyCode = (KeyCode)'o'});
+            window.SendEvent(new Event { type = EventType.KeyDown, character = 'o', keyCode = (KeyCode)'o' });
             yield return null;
 
-            window.SendEvent(new Event {type = EventType.KeyUp, character = 'o', keyCode = (KeyCode)'o'});
+            window.SendEvent(new Event { type = EventType.KeyUp, character = 'o', keyCode = (KeyCode)'o' });
             yield return null;
 
             Assert.AreEqual(Matrix4x4.identity, vc.transform.matrix);
 
             // Select next
-            window.SendEvent(new Event {type = EventType.KeyDown, character = ']', keyCode = (KeyCode)']' });
+            window.SendEvent(new Event { type = EventType.KeyDown, character = ']', keyCode = (KeyCode)']' });
             yield return null;
 
-            window.SendEvent(new Event {type = EventType.KeyUp, character = ']', keyCode = (KeyCode)']' });
+            window.SendEvent(new Event { type = EventType.KeyUp, character = ']', keyCode = (KeyCode)']' });
             yield return null;
 
             Assert.False(node1.Selected);
             Assert.True(node2.Selected);
-
-            yield return null;
         }
     }
 }

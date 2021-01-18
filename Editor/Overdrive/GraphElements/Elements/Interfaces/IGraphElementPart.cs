@@ -11,5 +11,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         void BuildUI(VisualElement parent);
         void PostBuildUI();
         void UpdateFromModel();
+        void OwnerAddedToGraphView();
+        void OwnerRemovedFromGraphView();
     }
 }

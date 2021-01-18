@@ -7,10 +7,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     [InitializeOnLoad]
     public class Capabilities : Enumeration
     {
-        public static readonly string k_CapabilityPrefix = "GraphToolsFoundation";
+        const string k_CapabilityPrefix = "";
+        const string k_OldCapabilityPrefix = "GraphToolsFoundation";
 
-        static Dictionary<int, Capabilities> s_Capabilities = new Dictionary<int, Capabilities>();
-        static Dictionary<int, Capabilities> s_CapabilitiesByName = new Dictionary<int, Capabilities>();
+        static readonly Dictionary<int, Capabilities> s_Capabilities = new Dictionary<int, Capabilities>();
+        static readonly Dictionary<int, Capabilities> s_CapabilitiesByName = new Dictionary<int, Capabilities>();
 
         static int s_NextId;
 
@@ -44,12 +45,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             Collapsible = new Capabilities(nameof(Collapsible));
         }
 
-        protected Capabilities(string name, string prefix)
+        protected Capabilities(string name, string prefix = k_CapabilityPrefix)
             : this(s_NextId++, prefix + "." + name)
-        {}
-
-        Capabilities(string name)
-            : this(name, k_CapabilityPrefix)
         {}
 
         Capabilities(int id, string name) : base(id, name)
@@ -66,6 +63,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public static Capabilities Get(int id) => s_Capabilities[id];
 
-        public static Capabilities Get(string fullname) => s_CapabilitiesByName[fullname.GetHashCode()];
+        public static Capabilities Get(string fullname)
+        {
+            // TODO JOCE Remove this check before we go to 1.0
+            if (fullname.StartsWith(k_OldCapabilityPrefix))
+                fullname = fullname.Substring(k_OldCapabilityPrefix.Length);
+            return s_CapabilitiesByName[fullname.GetHashCode()];
+        }
     }
 }

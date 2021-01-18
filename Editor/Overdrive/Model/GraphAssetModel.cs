@@ -1,15 +1,15 @@
 using System;
 using UnityEngine;
-using UnityEngine.Assertions;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public abstract class GraphAssetModel : ScriptableObject, IGraphAssetModel
+    public abstract class GraphAssetModel : ScriptableObject, IGraphAssetModel, ISerializationCallbackReceiver
     {
         [SerializeReference]
         IGraphModel m_GraphModel;
 
         public IGraphModel GraphModel => m_GraphModel;
+        public abstract IBlackboardGraphModel BlackboardGraphModel { get; }
 
         public string Name
         {
@@ -17,28 +17,30 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             set => name = value;
         }
 
+        public string FriendlyScriptName => StringExtensions.CodifyString(Name);
+
+        public abstract string SourceFilePath { get; }
+
         protected abstract Type GraphModelType { get; }
 
-        public void CreateGraph(string graphName, Type stencilType, bool writeOnDisk = true)
+        public void CreateGraph(string graphName, Type stencilType = null, bool writeOnDisk = true)
         {
             Debug.Assert(typeof(IGraphModel).IsAssignableFrom(GraphModelType));
             var graphModel = (IGraphModel)Activator.CreateInstance(GraphModelType);
+            if (graphModel == null)
+                return;
+
+            graphModel.StencilType = stencilType ?? graphModel.DefaultStencilType;
+
             graphModel.Name = graphName;
             graphModel.AssetModel = this;
             m_GraphModel = graphModel;
-
-            if (m_GraphModel == null)
-                return;
 
             if (writeOnDisk)
             {
                 EditorUtility.SetDirty(this);
             }
 
-            Debug.Assert(typeof(Stencil).IsAssignableFrom(stencilType));
-            var stencil = (Stencil)Activator.CreateInstance(stencilType);
-            Assert.IsNotNull(stencil);
-            m_GraphModel.Stencil = stencil;
             if (writeOnDisk)
                 EditorUtility.SetDirty(this);
         }
@@ -54,5 +56,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         }
 
         public void Dispose() {}
+        public void OnBeforeSerialize() {}
+
+        public void OnAfterDeserialize()
+        {
+            GraphModel?.OnAfterDeserializeAssetModel();
+        }
     }
 }

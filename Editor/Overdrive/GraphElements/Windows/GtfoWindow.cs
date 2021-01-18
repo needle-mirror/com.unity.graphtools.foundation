@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.GraphToolsFoundation.Overdrive;
+using UnityEngine.Profiling;
 using UnityEngine.UIElements;
 using Debug = UnityEngine.Debug;
 using Object = UnityEngine.Object;
@@ -13,36 +15,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     {
         public enum OpenMode { Open, OpenAndFocus }
 
-        const string k_StyleSheetPath = PackageTransitionHelper.AssetPath + "VisualScripting/Editor/Views/Templates/";
         const int k_IdleTimeBeforeCompilationMs = 1000;
         const int k_IdleTimeBeforeCompilationMsPlayMode = 1000;
-        public const string k_CompilationPendingClassName = "compilationPending";
+        public const string compilationPendingUssClassName = "compilation-pending";
 
         static int s_LastFocusedEditor = -1;
 
         [SerializeField]
-        GameObject m_BoundObject;
-
-        [SerializeField]
-        List<OpenedGraph> m_PreviousGraphModels;
-
-        [SerializeField]
-        List<string> m_BlackboardExpandedRowStates;
-
-        [SerializeField]
-        List<string> m_ElementModelsToSelectUponCreation;
-
-        [SerializeField]
         LockTracker m_LockTracker = new LockTracker();
 
-        [SerializeField]
-        bool m_TracingEnabled;
+        uint m_LastStateVersion;
 
         ShortcutHandler m_ShortcutHandler;
-
-        public PluginRepository PluginRepository { get; private set; }
-
-        ErrorToolbar m_ErrorToolbar;
 
         Node m_ElementShownInSidePanel;
 
@@ -52,6 +36,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         bool m_Focused;
 
+        public ShortcutHandler ShortcutHandler
+        {
+            get => m_ShortcutHandler;
+            set => rootVisualElement.parent.ReplaceManipulator(ref m_ShortcutHandler, value);
+        }
+
+        public bool WithSidePanel { get; set; } = true;
+
         public override IEnumerable<GraphView> GraphViews
         {
             get { yield return GraphView; }
@@ -59,34 +51,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public new GtfoGraphView GraphView => base.GraphView as GtfoGraphView;
 
-        public GameObject BoundObject => m_BoundObject;
-
-        public List<OpenedGraph> PreviousGraphModels => m_PreviousGraphModels;
-
-        public bool TracingEnabled
-        {
-            get => m_TracingEnabled;
-            set => m_TracingEnabled = value;
-        }
-
-        // TODO: Until serialization/persistent data is brought back into VisualElements, we need
-        // a place for keeping otherwise-non serializable data, like blackboard related data (expanded/selected states, size, etc.)
-        // Note that all this data is indirectly used via the Editor Data Model and should someday have its own
-        // local implementation (e.g. directly in the Blackboard)
-        public List<string> BlackboardExpandedRowStates => m_BlackboardExpandedRowStates;
-
-        public List<string> ElementModelsToSelectUponCreation => m_ElementModelsToSelectUponCreation;
-
-        public string LastGraphFilePath => m_LastGraphFilePath;
-
-        public IEditorDataModel DataModel { get; protected set; }
-
         public bool RefreshUIDisabled { private get; set; }
 
         // PF setter is never used. Maybe useless?
         bool Locked
         {
-            get => Store?.GetState().AssetModel != null && m_LockTracker.IsLocked;
+            get => Store?.State?.AssetModel != null && m_LockTracker.IsLocked;
             set => m_LockTracker.IsLocked = value;
         }
 
@@ -96,137 +66,61 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             m_CompilationTimer = new CompilationTimer();
         }
 
-        protected abstract BlankPage CreateBlankPage();
-
-        protected abstract MainToolbar CreateMainToolbar();
-
-        protected abstract ErrorToolbar CreateErrorToolbar();
-
-        protected abstract GtfoGraphView CreateGraphView();
-
-        public virtual void SetBoundObject(GameObject boundObject)
-        {
-            m_BoundObject = boundObject;
-        }
-
         public override void UnloadGraph()
         {
             base.UnloadGraph();
             GraphView.UnloadGraph();
-            MainToolbar.UpdateUI();
+            MainToolbar?.UpdateUI();
         }
 
-        protected virtual void StoreOnStateChanged()
+        protected virtual IEnumerable<Type> RecompilationTriggerActions => new[]
         {
-            var editorDataModel = Store.GetState().EditorDataModel;
+            typeof(RequestCompilationAction),
+            typeof(ReorderEdgeAction),
+            typeof(RenameElementAction),
+            typeof(UpdateConstantNodeValueAction),
+            typeof(UpdatePortConstantAction),
+            typeof(UpdateModelPropertyValueAction),
+            typeof(LoadGraphAssetAction),
+            typeof(ChangeVariableTypeAction),
+            typeof(BuildAllEditorAction),
+            typeof(CreateGraphVariableDeclarationAction),
+            typeof(InitializeVariableAction),
+            typeof(UpdateExposedAction),
+            typeof(CreateEdgeAction),
+            typeof(DeleteElementsAction)
+        };
 
-            UpdateFlags currentUpdateFlags = editorDataModel.UpdateFlags;
-            if (currentUpdateFlags == 0)
-                return;
-
-            if (currentUpdateFlags.HasFlag(UpdateFlags.UpdateView))
+        void RecompileGraphObserver(BaseAction action)
+        {
+            if (RecompilationTriggerActions.Contains(action.GetType()))
             {
-                foreach (var model in editorDataModel.ModelsToUpdate)
-                {
-                    var ui = model.GetUI<IGraphElement>(m_GraphView);
-                    ui?.UpdateFromModel();
-                }
-                editorDataModel.ClearModelsToUpdate();
-                return;
+                RecompileGraph();
             }
+        }
 
-            var graphModel = Store.GetState()?.CurrentGraphModel;
-            m_LastGraphFilePath = graphModel?.GetAssetPath();
+        internal void RecompileGraph()
+        {
+            m_CompilationTimer.Restart(Store.State.CompilationStateComponent);
+            m_CompilationPendingLabel.EnableInClassList(compilationPendingUssClassName, true);
 
-            if (currentUpdateFlags.HasFlag(UpdateFlags.RequestCompilation))
+            // Register
+            var stencil = Store.State.GraphModel?.Stencil;
+            if (stencil != null)
             {
-                if (!currentUpdateFlags.HasFlag(UpdateFlags.CompilationResult))
-                {
-                    m_CompilationTimer.Restart(editorDataModel);
-                    m_CompilationPendingLabel.EnableInClassList(k_CompilationPendingClassName, true);
-                    // Register
-                    var stencil = Store.GetState().CurrentGraphModel?.Stencil;
-                    if (stencil != null)
-                    {
-                        var plugins = stencil.GetCompilationPluginHandlers(GetCompilationOptions());
-                        PluginRepository.RegisterPlugins(plugins);
-                        stencil.OnCompilationStarted(graphModel);
-                    }
-                }
-            }
-
-            // The GraphGeometry part must happen BEFORE the GraphTopology part
-            // When the onboarding page is displayed before loading a graph, we need first to insert the graphview in
-            // the hierarchy (UpdateGraphContainer) then create the graph itself (UpdateTopology)
-            // Fixes VSB-257: edge bubbles rely on a specific event order (AttachedToPanelEvent must occur early enough or the
-            // bubble won't get attached)
-            if (currentUpdateFlags.HasFlag(UpdateFlags.GraphGeometry))
-            {
-                UpdateGraphContainer();
-                m_BlankPage.UpdateUI();
-                m_MainToolbar.UpdateUI();
-            }
-
-            if (currentUpdateFlags.HasFlag(UpdateFlags.GraphTopology))
-            {
-                if (graphModel != null)
-                {
-                    if (!currentUpdateFlags.HasFlag(UpdateFlags.CompilationResult))
-                    {
-                        m_CompilationTimer.Restart(editorDataModel);
-                        m_CompilationPendingLabel.EnableInClassList(k_CompilationPendingClassName, true);
-
-                        var stencil = Store.GetState().CurrentGraphModel?.Stencil;
-                        stencil?.OnCompilationStarted(graphModel);
-                    }
-
-                    GraphView.NotifyTopologyChange(graphModel);
-                }
-
-                // A topology change should update everything.
-                GraphView.UpdateTopology();
-                currentUpdateFlags |= UpdateFlags.All;
-            }
-
-            if (currentUpdateFlags.HasFlag(UpdateFlags.CompilationResult))
-            {
-                UpdateCompilationErrorsDisplay(Store.GetState());
-            }
-
-            Store?.GetState()?.CurrentGraphModel?.CheckIntegrity(Verbosity.Errors);
-
-            if (graphModel != null && graphModel.LastChanges.ElementsToAutoAlign.Any())
-            {
-                var elementsToAlign = graphModel.LastChanges.ElementsToAutoAlign
-                    .Select(n => n.GetUI(m_GraphView));
-                m_GraphView.schedule.Execute(() =>
-                {
-                    GraphView.AlignGraphElements(elementsToAlign);
-
-                    // Black magic counter spell to the curse cast by WindowsDropTargetImpl::DragPerformed.
-                    // Basically our scheduled alignment gets called right in the middle of a DragExit
-                    //      (yes DragExit even though the Drag was performed properly, Look at WindowsDropTargetImpl::DragPerformed you'll understand...)
-                    // DragExit calls Application::TickTimer() in the middle of its execution, letting our scheduled task run
-                    // right after the TickTimer() resumes, since we're supposedly doing a DragExit (so a drag cancel) it Undoes the CurrentGroup
-                    // since we don't want our scheduled task to be canceled, we do the following
-                    Undo.IncrementCurrentGroup();
-                });
+                var plugins = stencil.GetCompilationPluginHandlers(GetCompilationOptions());
+                Store.State.PluginRepository.RegisterPlugins(plugins, Store, this);
+                stencil.OnCompilationStarted(Store.State?.GraphModel);
             }
         }
 
         protected abstract Dictionary<Event, ShortcutDelegate> GetShortcutDictionary();
 
-        protected virtual void SetupWindow()
-        {
-            rootVisualElement.Add(m_MainToolbar);
-            // AddTracingTimeline();
-            rootVisualElement.Add(m_GraphContainer);
-            if (m_ErrorToolbar != null)
-                m_GraphView.Add(m_ErrorToolbar);
-        }
-
         public void ShowNodeInSidePanel(ISelectableGraphElement selectable, bool show)
         {
+            if (m_SidePanel == null)
+                return;
+
             if (!(selectable is Node node) ||
                 !((selectable as IGraphElement).Model is INodeModel nodeModel) || !show)
             {
@@ -254,7 +148,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public virtual void AddItemsToMenu(GenericMenu menu)
         {
-            var disabled = Store?.GetState().CurrentGraphModel == null;
+            var disabled = Store.State.GraphModel == null;
 
             m_LockTracker.AddItemsToMenu(menu, disabled);
         }
@@ -262,7 +156,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public void AdjustWindowMinSize(Vector2 size)
         {
             // Set the window min size from the graphView, adding the menu bar height
-            minSize = new Vector2(size.x, size.y + m_MainToolbar.layout.height);
+            minSize = new Vector2(size.x, size.y + m_MainToolbar?.layout.height ?? 0);
         }
 
         protected void OnCompilationRequest(RequestCompilationOptions options)
@@ -270,13 +164,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             var compilationOptions = GetCompilationOptions();
 
             // Register
-            var graphModel = Store.GetState().CurrentGraphModel;
+            var graphModel = Store.State.GraphModel;
 
             if (graphModel == null || graphModel.Stencil == null)
                 return;
 
             var plugins = graphModel.Stencil.GetCompilationPluginHandlers(compilationOptions);
-            PluginRepository.RegisterPlugins(plugins);
+            Store.State.PluginRepository.RegisterPlugins(plugins, Store, this);
 
             ITranslator translator = graphModel.Stencil.CreateTranslator();
             if (!translator.SupportsCompilation())
@@ -285,21 +179,21 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (options == RequestCompilationOptions.SaveGraph)
                 AssetDatabase.SaveAssets();
 
-            CompilationResult r = graphModel.Compile(translator);
-            if (Store?.GetState()?.CompilationResultModel is CompilationResultModel compilationResultModel) // TODO: could have disappeared during the await
+            CompilationResult r = translator.Compile(graphModel);
+            if (Store?.State != null)
             {
-                compilationResultModel.lastResult = r;
+                Store.State.CompilationStateComponent.m_LastResult = r;
                 OnCompilationDone(graphModel, compilationOptions, r);
             }
         }
 
-        protected CompilationOptions GetCompilationOptions()
+        protected virtual CompilationOptions GetCompilationOptions()
         {
             CompilationOptions compilationOptions = EditorApplication.isPlaying
                 ? CompilationOptions.LiveEditing
                 : CompilationOptions.Default;
 
-            if (TracingEnabled)
+            if (Store.State.TracingState.TracingEnabled)
                 compilationOptions |= CompilationOptions.Tracing;
             return compilationOptions;
         }
@@ -313,9 +207,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 return;
             }
 
-            var state = Store.GetState();
-
-            UpdateCompilationErrorsDisplay(state);
+            UpdateCompilationErrorsDisplay();
 
             if (results != null && results.errors.Count == 0)
             {
@@ -324,9 +216,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        public virtual void UpdateCompilationErrorsDisplay(State state)
+        public virtual void UpdateCompilationErrorsDisplay()
         {
-            m_ErrorToolbar.Update();
+            GraphView.DisplayCompilationErrors();
         }
 
         void OnLockStateChanged(bool locked)
@@ -335,6 +227,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (!locked)
                 OnGlobalSelectionChange();
         }
+
+        protected abstract bool CanHandleAssetType(GraphAssetModel asset);
 
         // DO NOT name this one "OnSelectionChange", which is a magical unity function name
         // and would automatically call this method when the selection changes.
@@ -345,7 +239,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (Locked)
                 return;
 
-            foreach (var onboardingProvider in m_BlankPage.OnboardingProviders)
+            foreach (var onboardingProvider in m_BlankPage?.OnboardingProviders ?? Enumerable.Empty<IOnboardingProvider>())
             {
                 if (onboardingProvider.GetGraphAndObjectFromSelection(this, Selection.activeObject, out var selectedAssetPath, out GameObject boundObject))
                 {
@@ -354,10 +248,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 }
             }
 
-            // selection is a GraphAssetModel
-            var semanticGraph = Selection.activeObject as GraphAssetModel;
-            Object selectedObject = semanticGraph;
-            if (semanticGraph != null)
+            var graph = Selection.activeObject as IGraphAssetModel;
+            if (CanHandleAssetType(graph as GraphAssetModel) && graph is Object selectedObject && selectedObject)
             {
                 SetCurrentSelection(AssetDatabase.GetAssetPath(selectedObject), OpenMode.Open);
             }
@@ -371,17 +263,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (s_LastFocusedEditor != GetInstanceID() && windows.Length > 1)
                 return;
 
-            var editorDataModel = Store.GetState().EditorDataModel;
-            if (editorDataModel == null)
-                return;
-            var curBoundObject = editorDataModel.BoundObject;
-
-            if (AssetDatabase.LoadAssetAtPath<GraphAssetModel>(graphAssetFilePath))
+            // PF FIXME load correct asset type (not GraphAssetModel)
+            if (AssetDatabase.LoadAssetAtPath(graphAssetFilePath, typeof(GraphAssetModel)))
             {
+                var currentOpenedGraph = Store.State?.WindowState.CurrentGraph ?? default;
                 // don't load if same graph and same bound object
-                if (Store.GetState() != null && Store.GetState().AssetModel != null &&
-                    graphAssetFilePath == LastGraphFilePath &&
-                    curBoundObject == boundObject)
+                if (Store.State?.AssetModel != null &&
+                    graphAssetFilePath == currentOpenedGraph.GraphAssetModelPath &&
+                    currentOpenedGraph.BoundObject == boundObject)
                     return;
             }
 
@@ -410,78 +299,53 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         string GetCurrentAssetPath()
         {
-            var asset = Store.GetState().AssetModel;
-            return asset == null ? null : AssetDatabase.GetAssetPath(asset as ScriptableObject);
+            var asset = Store.State.AssetModel;
+            return asset == null ? null : AssetDatabase.GetAssetPath(asset as Object);
         }
 
         protected override void OnEnable()
         {
-            if (m_PreviousGraphModels == null)
-                m_PreviousGraphModels = new List<OpenedGraph>();
+            base.OnEnable();
 
-            if (m_BlackboardExpandedRowStates == null)
-                m_BlackboardExpandedRowStates = new List<string>();
-
-            if (m_ElementModelsToSelectUponCreation == null)
-                m_ElementModelsToSelectUponCreation = new List<string>();
-
-            // PF FIXME Stylesheet
-            rootVisualElement.styleSheets.Add(AssetDatabase.LoadAssetAtPath<StyleSheet>(k_StyleSheetPath + "VSEditor.uss"));
+            Store.RegisterObserver(RecompileGraphObserver, asPostActionObserver: true);
 
             rootVisualElement.RegisterCallback<MouseMoveEvent>(_ =>
             {
                 if (m_CompilationTimer.IsRunning)
-                    m_CompilationTimer.Restart(Store.GetState().EditorDataModel);
+                    m_CompilationTimer.Restart(Store.State.CompilationStateComponent);
             });
-
-            rootVisualElement.Clear();
-            rootVisualElement.style.overflow = Overflow.Hidden;
-            rootVisualElement.pickingMode = PickingMode.Ignore;
-            rootVisualElement.style.flexDirection = FlexDirection.Column;
-            rootVisualElement.name = "vseRoot";
-
-            // Create the store.
-            base.OnEnable();
-
-            m_GraphContainer = new VisualElement { name = "graphContainer" };
-            m_GraphView = CreateGraphView();
-            m_MainToolbar = CreateMainToolbar();
-            m_ErrorToolbar = CreateErrorToolbar();
-            m_BlankPage = CreateBlankPage();
-
-            SetupWindow();
 
             m_CompilationPendingLabel = new Label("Compilation Pending"){name = "compilationPendingLabel"};
 
-            m_SidePanel = new VisualElement(){name = "sidePanel"};
-            m_SidePanelTitle = new Label();
-            m_SidePanel.Add(m_SidePanelTitle);
-            m_SidePanelPropertyElement = new Unity.Properties.UI.PropertyElement {name = "sidePanelInspector"};
-            m_SidePanelPropertyElement.OnChanged += (element, path) =>
+            if (WithSidePanel)
             {
-                if (m_ElementShownInSidePanel.Model is IPropertyVisitorNodeTarget nodeTarget2)
+                m_SidePanel = new VisualElement { name = "sidePanel" };
+                m_SidePanelTitle = new Label();
+                m_SidePanel.Add(m_SidePanelTitle);
+                m_SidePanelPropertyElement = new Unity.Properties.UI.PropertyElement { name = "sidePanelInspector" };
+                m_SidePanelPropertyElement.OnChanged += (element, path) =>
                 {
-                    Store.Dispatch(new UpdateModelPropertyValueAction(m_ElementShownInSidePanel.Model, path, m_SidePanelPropertyElement.GetValue<object>(path)));
-                    nodeTarget2.Target = element.GetTarget<object>();
-                }
-                else
-                    Store.Dispatch(new UpdateModelPropertyValueAction(m_ElementShownInSidePanel.Model, path, m_SidePanelPropertyElement.GetValue<object>(path)));
+                    // PF FIXME: OnChanged is not only called as a direct result of a user action.
+                    // It is called as a result of any change to one of the property. It results in a
+                    // Multiple actions dispatched during the same frame (previous one was CreateOppositePortalAction), current: UpdateModelPropertyValueAction
+                    // Repro: Select a portal and create opposite portal.
+                    if (m_ElementShownInSidePanel.Model is IPropertyVisitorNodeTarget nodeTarget2)
+                    {
+                        Store.Dispatch(new UpdateModelPropertyValueAction(m_ElementShownInSidePanel.Model, path, m_SidePanelPropertyElement.GetValue<object>(path)));
+                        nodeTarget2.Target = element.GetTarget<object>();
+                    }
+                    else
+                        Store.Dispatch(new UpdateModelPropertyValueAction(m_ElementShownInSidePanel.Model, path, m_SidePanelPropertyElement.GetValue<object>(path)));
+                };
+                m_SidePanel.Add(m_SidePanelPropertyElement);
+                ShowNodeInSidePanel(null, false);
+            }
 
-                m_ElementShownInSidePanel?.NodeModel.DefineNode();
-                m_ElementShownInSidePanel?.UpdateFromModel();
-                Store.ForceRefreshUI(UpdateFlags.RequestCompilation);
-            };
-            m_SidePanel.Add(m_SidePanelPropertyElement);
-            ShowNodeInSidePanel(null, false);
+            if (m_SidePanel != null)
+                m_GraphContainer.Add(m_SidePanel);
 
-            m_GraphContainer.Add(m_GraphView);
-            m_GraphContainer.Add(m_SidePanel);
+            ShortcutHandler = new ShortcutHandler(GetShortcutDictionary());
 
-            m_ShortcutHandler = new ShortcutHandler(GetShortcutDictionary());
-
-            rootVisualElement.parent.AddManipulator(m_ShortcutHandler);
-
-            Store.StateChanged += StoreOnStateChanged;
             Undo.undoRedoPerformed += UndoRedoPerformed;
 
             rootVisualElement.RegisterCallback<AttachToPanelEvent>(OnEnterPanel);
@@ -492,31 +356,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             titleContent = new GUIContent("Visual Script");
 
-            // After a domain reload, all loaded objects will get reloaded and their OnEnable() called again
-            // It looks like all loaded objects are put in a deserialization/OnEnable() queue
-            // the previous graph's nodes/edges/... might be queued AFTER this window's OnEnable
-            // so relying on objects to be loaded/initialized is not safe
-            // hence, we need to defer the loading action
-            rootVisualElement.schedule.Execute(() =>
-            {
-                if (!String.IsNullOrEmpty(LastGraphFilePath))
-                {
-                    try
-                    {
-                        Store.Dispatch(new LoadGraphAssetAction(LastGraphFilePath, boundObject: m_BoundObject, loadType: LoadGraphAssetAction.Type.KeepHistory));
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.LogError(e);
-                    }
-                }
-                else             // will display the blank page. not needed otherwise as the LoadGraphAsset reducer will refresh
-                    Store.ForceRefreshUI(UpdateFlags.All);
-            }).ExecuteLater(0);
-
             m_LockTracker.lockStateChanged.AddListener(OnLockStateChanged);
-
-            PluginRepository = new PluginRepository(Store, this);
 
             EditorApplication.playModeStateChanged += OnEditorPlayModeStateChanged;
             EditorApplication.pauseStateChanged += OnEditorPauseStateChanged;
@@ -524,12 +364,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         void OnEditorPlayModeStateChanged(PlayModeStateChange playMode)
         {
-            MainToolbar.UpdateUI();
+            MainToolbar?.UpdateUI();
         }
 
         void OnEditorPauseStateChanged(PauseState pauseState)
         {
-            MainToolbar.UpdateUI();
+            MainToolbar?.UpdateUI();
         }
 
         protected override void OnDisable()
@@ -537,15 +377,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             // ReSharper disable once DelegateSubtraction
             Undo.undoRedoPerformed -= UndoRedoPerformed;
 
-            if (rootVisualElement != null)
-            {
-                if (m_ShortcutHandler != null)
-                    rootVisualElement.parent.RemoveManipulator(m_ShortcutHandler);
-            }
-
             base.OnDisable();
-
-            PluginRepository?.Dispose();
 
             EditorApplication.playModeStateChanged -= OnEditorPlayModeStateChanged;
             EditorApplication.pauseStateChanged -= OnEditorPauseStateChanged;
@@ -553,8 +385,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         protected virtual void OnFocus()
         {
-            m_Focused = true;
-
             s_LastFocusedEditor = GetInstanceID();
 
             if (m_Focused)
@@ -563,11 +393,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (rootVisualElement == null)
                 return;
 
-            if (m_ShortcutHandler != null)
-                rootVisualElement.parent.AddManipulator(m_ShortcutHandler);
-
             // selection may have changed while Visual Scripting Editor was looking away
             OnGlobalSelectionChange();
+
+            m_Focused = true;
         }
 
         protected virtual void OnLostFocus()
@@ -580,15 +409,47 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (Store == null)
                 return;
 
-            Store.Update();
+            Profiler.BeginSample("GtfoWindow.Update");
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
 
-            if (DataModel.Preferences.GetBool(BoolPref.AutoRecompile) &&
+            Store.BeginViewUpdate();
+
+            var rebuildType = Store.State.GetUpdateType(m_LastStateVersion);
+
+            UpdateGraphContainer();
+
+            if (m_BlankPage?.panel != null)
+                m_BlankPage.UpdateUI();
+
+            if (m_MainToolbar?.panel != null)
+                m_MainToolbar?.UpdateUI();
+
+            if (m_ErrorToolbar?.panel != null)
+                m_ErrorToolbar?.UpdateUI();
+
+            if (GraphView?.panel != null)
+                GraphView.UpdateUI(rebuildType);
+
+            m_LastStateVersion = Store.EndViewUpdate();
+
+            if (Store.State.Preferences.GetBool(BoolPref.WarnOnUIFullRebuild) && rebuildType == UIRebuildType.Complete)
+            {
+                Debug.LogWarning($"Rebuilding the whole UI ({Store.State.LastDispatchedActionName})");
+            }
+
+            if (Store.State.Preferences.GetBool(BoolPref.LogUIBuildTime))
+            {
+                Debug.Log($"UI Update ({Store.State.LastDispatchedActionName}) took {sw.ElapsedMilliseconds} ms");
+            }
+
+            if (Store.State.Preferences.GetBool(BoolPref.AutoRecompile) &&
                 m_CompilationTimer.ElapsedMilliseconds >= (EditorApplication.isPlaying
                                                            ? k_IdleTimeBeforeCompilationMsPlayMode
                                                            : k_IdleTimeBeforeCompilationMs))
             {
-                m_CompilationTimer.Stop(DataModel);
-                m_CompilationPendingLabel.EnableInClassList(k_CompilationPendingClassName, false);
+                m_CompilationTimer.Stop(Store.State.CompilationStateComponent);
+                m_CompilationPendingLabel.EnableInClassList(compilationPendingUssClassName, false);
 
                 OnCompilationRequest(RequestCompilationOptions.Default);
             }
@@ -597,19 +458,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         void UndoRedoPerformed()
         {
             if (!RefreshUIDisabled)
-                Store.ForceRefreshUI(UpdateFlags.All);
+                Store.MarkStateDirty();
         }
 
         void OnEnterPanel(AttachToPanelEvent e)
         {
-            rootVisualElement.parent.AddManipulator(m_ShortcutHandler);
             Selection.selectionChanged += OnGlobalSelectionChange;
             OnGlobalSelectionChange();
         }
 
         void OnLeavePanel(DetachFromPanelEvent e)
         {
-            rootVisualElement.parent.RemoveManipulator(m_ShortcutHandler);
             // ReSharper disable once DelegateSubtraction
             Selection.selectionChanged -= OnGlobalSelectionChange;
         }

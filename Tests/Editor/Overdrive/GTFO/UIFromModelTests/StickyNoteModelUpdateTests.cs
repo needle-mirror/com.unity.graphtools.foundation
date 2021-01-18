@@ -15,9 +15,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         public void SetUp()
         {
             m_GraphModel = new GraphModel();
-            m_Store = new Store(new TestState(m_GraphModel));
+            m_Store = new Store(new TestState(default, m_GraphModel));
             StoreHelper.RegisterDefaultReducers(m_Store);
             m_GraphView = new TestGraphView(null, m_Store);
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            m_GraphModel = null;
+            m_Store = null;
+            m_GraphView = null;
         }
 
         [Test]
@@ -31,7 +39,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             var stickyNote = new StickyNote();
             stickyNote.SetupBuildAndUpdate(stickyNoteModel, m_Store, m_GraphView);
 
-            var titleLabel = stickyNote.Q(StickyNote.k_TitleContainerPartName).Q<Label>(EditableLabel.k_LabelName);
+            var titleLabel = stickyNote.Q(StickyNote.titleContainerPartName).Q<Label>(EditableLabel.labelName);
             Assert.AreEqual(initialTitle, titleLabel.text);
 
             stickyNoteModel.Title = newTitle;
@@ -50,7 +58,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             var stickyNote = new StickyNote();
             stickyNote.SetupBuildAndUpdate(stickyNoteModel, m_Store, m_GraphView);
 
-            var contentLabel = stickyNote.Q(StickyNote.k_ContentContainerPartName).Q<Label>(EditableLabel.k_LabelName);
+            var contentLabel = stickyNote.Q(StickyNote.contentContainerPartName).Q<Label>(EditableLabel.labelName);
             Assert.AreEqual(initialContent, contentLabel.text);
 
             stickyNoteModel.Contents = newContent;
@@ -62,7 +70,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         public void ResizingStickyNoteModelUpdatesStickyNoteRect()
         {
             var initialRect = new Rect(0, 0, 400, 400);
-            var newRect = new Rect(50, 70, 500, 300);;
+            var newRect = new Rect(50, 70, 500, 300);
 
             var stickyNoteModel = m_GraphModel.CreateStickyNote();
             stickyNoteModel.PositionAndSize = initialRect;

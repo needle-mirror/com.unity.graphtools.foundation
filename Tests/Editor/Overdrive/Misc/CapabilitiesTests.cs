@@ -70,9 +70,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Misc
         public void GtfCapabilitiesNamesAreAttributedCorrectly()
         {
             // Just one is enough.
-            Assert.AreEqual("GraphToolsFoundation.Selectable", Capabilities.Selectable.Name);
+            Assert.AreEqual(".Selectable", Capabilities.Selectable.Name);
 
-            Assert.AreEqual(Capabilities.Selectable, Capabilities.Get("GraphToolsFoundation.Selectable"));
+            Assert.AreEqual(Capabilities.Selectable, Capabilities.Get(".Selectable"));
         }
 
         [Test]

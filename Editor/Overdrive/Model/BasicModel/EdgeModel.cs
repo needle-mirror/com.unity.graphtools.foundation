@@ -145,11 +145,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             m_EdgeControlPoints.RemoveAt(index);
         }
 
-        public string GetId()
-        {
-            return $"{m_ToPortReference}/{m_FromPortReference}";
-        }
-
         public override string ToString()
         {
             return $"{m_ToPortReference} -> {m_FromPortReference}";
@@ -175,11 +170,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
         public bool TryMigratePorts()
         {
+            bool result = true;
             if (ToPort == null && !PortReference.TryMigratePorts(ref m_ToPortReference, Direction.Input, ref m_ToPortModelCache))
-                return false;
+                result = false;
             if (FromPort == null && !PortReference.TryMigratePorts(ref m_FromPortReference, Direction.Output, ref m_FromPortModelCache))
-                return false;
-            return true;
+                result = false;
+            return result;
         }
 
         public bool AddPlaceHolderPorts(out INodeModel inputNode, out INodeModel outputNode)

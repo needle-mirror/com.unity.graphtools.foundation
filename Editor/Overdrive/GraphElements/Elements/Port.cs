@@ -10,30 +10,41 @@ using Object = UnityEngine.Object;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public class Port : VisualElementBridge, IGraphElement, IBadgeContainer, IDropTarget
+    public class Port : VisualElementBridge, IGraphElement, IDropTarget
     {
-        public static readonly string k_UssClassName = "ge-port";
-        public static readonly string k_WillConnectModifierUssClassName = k_UssClassName.WithUssModifier("will-connect");
-        public static readonly string k_ConnectedModifierUssClassName = k_UssClassName.WithUssModifier("connected");
-        public static readonly string k_NotConnectedModifierUssClassName = k_UssClassName.WithUssModifier("not-connected");
-        public static readonly string k_InputModifierUssClassName = k_UssClassName.WithUssModifier("direction-input");
-        public static readonly string k_OutputModifierUssClassName = k_UssClassName.WithUssModifier("direction-output");
-        public static readonly string k_DropHighlightClass = k_UssClassName.WithUssModifier("drop-highlighted");
-        public static readonly string k_PortDataTypeClassNamePrefix = k_UssClassName.WithUssModifier("data-type-");
-        public static readonly string k_PortTypeModifierClassNamePrefix = k_UssClassName.WithUssModifier("type-");
+        public static readonly string ussClassName = "ge-port";
+        public static readonly string highlightedModifierUssClassName = ussClassName.WithUssModifier("highlighted");
+        public static readonly string willConnectModifierUssClassName = ussClassName.WithUssModifier("will-connect");
+        public static readonly string connectedModifierUssClassName = ussClassName.WithUssModifier("connected");
+        public static readonly string notConnectedModifierUssClassName = ussClassName.WithUssModifier("not-connected");
+        public static readonly string inputModifierUssClassName = ussClassName.WithUssModifier("direction-input");
+        public static readonly string outputModifierUssClassName = ussClassName.WithUssModifier("direction-output");
+        public static readonly string dropHighlightClass = ussClassName.WithUssModifier("drop-highlighted");
+        public static readonly string portDataTypeClassNamePrefix = ussClassName.WithUssModifier("data-type-");
+        public static readonly string portTypeModifierClassNamePrefix = ussClassName.WithUssModifier("type-");
 
-        public static readonly string k_ConnectorPartName = "connector-container";
-        public static readonly string k_ConstantEditorPartName = "constant-editor";
+        public static readonly string connectorPartName = "connector-container";
+        public static readonly string constantEditorPartName = "constant-editor";
 
         Node m_Node;
 
         CustomStyleProperty<Color> m_PortColorProperty = new CustomStyleProperty<Color>("--port-color");
 
-        protected ContextualMenuManipulator m_ContextualMenuManipulator;
+        ContextualMenuManipulator m_ContextualMenuManipulator;
+
+        EdgeConnector m_EdgeConnector;
+
+        protected ContextualMenuManipulator ContextualMenuManipulator
+        {
+            get => m_ContextualMenuManipulator;
+            set => this.ReplaceManipulator(ref m_ContextualMenuManipulator, value);
+        }
 
         public GraphElementPartList PartList { get; private set; }
 
         public GraphView GraphView { get; private set; }
+
+        public string Context { get; private set; }
 
         public IPortModel PortModel { get; private set; }
 
@@ -41,18 +52,28 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public Store Store { get; private set; }
 
-        public EdgeConnector EdgeConnector { get; protected set; }
+        protected UIDependencies Dependencies { get; }
+
+        public EdgeConnector EdgeConnector
+        {
+            get => m_EdgeConnector;
+            protected set
+            {
+                var connectorElement = this.Q(PortConnectorPart.connectorUssName) ?? this.Q(connectorPartName) ?? this;
+                connectorElement.ReplaceManipulator(ref m_EdgeConnector, value);
+            }
+        }
 
         public bool WillConnect
         {
-            set => EnableInClassList(k_WillConnectModifierUssClassName, value);
+            set => EnableInClassList(willConnectModifierUssClassName, value);
         }
 
         public bool Highlighted
         {
             set
             {
-                EnableInClassList("ge-port--highlighted", value);
+                EnableInClassList(highlightedModifierUssClassName, value);
                 foreach (var edgeModel in PortModel.GetConnectedEdges())
                 {
                     var edge = edgeModel.GetUI<Edge>(GraphView);
@@ -61,45 +82,68 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        public Orientation Orientation { get; set; }
+        public Orientation Orientation { get; private set; }
 
         public Color PortColor { get; private set; }
 
-        public IconBadge ErrorBadge { get; set; }
-
-        public ValueBadge ValueBadge { get; set; }
-
         public Port()
         {
-            m_ContextualMenuManipulator = new ContextualMenuManipulator(BuildContextualMenu);
-            this.AddManipulator(m_ContextualMenuManipulator);
+            ContextualMenuManipulator = new ContextualMenuManipulator(BuildContextualMenu);
 
+            RegisterCallback<GeometryChangedEvent>(OnGeometryChanged);
             RegisterCallback<CustomStyleResolvedEvent>(OnCustomStyleResolved);
+            RegisterCallback<DetachFromPanelEvent>(OnDetachedFromPanel);
+
+            Dependencies = new UIDependencies(this);
         }
 
-        public void SetupBuildAndUpdate(IGraphElementModel model, Store store, GraphView graphView)
+        public void SetupBuildAndUpdate(IGraphElementModel model, Store store, GraphView graphView, string context)
         {
-            Setup(model, store, graphView);
+            Setup(model, store, graphView, context);
             BuildUI();
             UpdateFromModel();
         }
 
-        public void Setup(IGraphElementModel portModel, Store store, GraphView graphView)
+        public void Setup(IGraphElementModel portModel, Store store, GraphView graphView, string context)
         {
             PortModel = portModel as IPortModel;
             Store = store;
             GraphView = graphView;
+            Context = context;
 
             PartList = new GraphElementPartList();
             BuildPartList();
+        }
+
+        public void AddToGraphView(GraphView graphView)
+        {
+            GraphView = graphView;
+            UIForModel.AddOrReplaceGraphElement(this);
+
+            foreach (var component in PartList)
+            {
+                component.OwnerAddedToGraphView();
+            }
+        }
+
+        public void RemoveFromGraphView()
+        {
+            foreach (var component in PartList)
+            {
+                component.OwnerRemovedFromGraphView();
+            }
+
+            Dependencies.ClearDependencyLists();
+            UIForModel.RemoveGraphElement(this);
+            GraphView = null;
         }
 
         protected virtual void BuildPartList()
         {
             if (!PortModel?.Options.HasFlag(PortModelOptions.Hidden) ?? true)
             {
-                PartList.AppendPart(PortConnectorWithIconPart.Create(k_ConnectorPartName, Model, this, k_UssClassName));
-                PartList.AppendPart(PortConstantEditorPart.Create(k_ConstantEditorPartName, Model, this, k_UssClassName, Store?.GetState()?.EditorDataModel));
+                PartList.AppendPart(PortConnectorWithIconPart.Create(connectorPartName, Model, this, ussClassName));
+                PartList.AppendPart(PortConstantEditorPart.Create(constantEditorPartName, Model, this, ussClassName));
             }
         }
 
@@ -125,21 +169,25 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         protected virtual void BuildSelfUI()
         {
+            Orientation = PortModel?.Orientation ?? Orientation.Horizontal;
         }
 
         protected virtual void PostBuildUI()
         {
-            var connectorElement = this.Q(PortConnectorPart.k_ConnectorUssName) ?? this.Q(k_ConnectorPartName) ?? this;
             EdgeConnector = new EdgeConnector(Store, GraphView, new EdgeConnectorListener());
             EdgeConnector.SetDropOutsideDelegate(OnDropOutsideCallback);
-            connectorElement.AddManipulator(EdgeConnector);
 
-            AddToClassList(k_UssClassName);
+            AddToClassList(ussClassName);
             this.AddStylesheet("Port.uss");
         }
 
         public void UpdateFromModel()
         {
+            if (Store?.State?.Preferences.GetBool(BoolPref.LogUIUpdate) ?? false)
+            {
+                Debug.LogWarning($"Rebuilding {this} ({Store.State.LastDispatchedActionName})");
+            }
+
             if (!PortModel?.Options.HasFlag(PortModelOptions.Hidden) ?? true)
             {
                 UpdateSelfFromModel();
@@ -149,25 +197,69 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     component.UpdateFromModel();
                 }
             }
+
+            Dependencies.UpdateDependencyLists();
+        }
+
+        public virtual void AddForwardDependencies()
+        {
+        }
+
+        public virtual void AddBackwardDependencies()
+        {
+        }
+
+        public virtual void AddModelDependencies()
+        {
+            if (PortModel.IsConnected())
+            {
+                foreach (var edgeModel in PortModel.GetConnectedEdges())
+                {
+                    Dependencies.AddModelDependency(edgeModel);
+                }
+            }
+        }
+
+        void OnGeometryChanged(GeometryChangedEvent evt)
+        {
+            Dependencies.OnGeometryChanged(evt);
+        }
+
+        void OnCustomStyleResolved(CustomStyleResolvedEvent evt)
+        {
+            if (evt.customStyle.TryGetValue(m_PortColorProperty, out var portColorValue))
+                PortColor = portColorValue;
+
+            if (PartList.GetPart(connectorPartName) is PortConnectorWithIconPart portConnector)
+            {
+                portConnector.UpdateFromModel();
+            }
+
+            Dependencies.OnCustomStyleResolved(evt);
+        }
+
+        void OnDetachedFromPanel(DetachFromPanelEvent evt)
+        {
+            Dependencies.OnDetachedFromPanel(evt);
         }
 
         static string GetClassNameModifierForType(PortType t)
         {
-            return k_PortTypeModifierClassNamePrefix + t.ToString().ToLower();
+            return portTypeModifierClassNamePrefix + t.ToString().ToLower();
         }
 
         protected virtual void UpdateSelfFromModel()
         {
-            EnableInClassList(k_ConnectedModifierUssClassName, PortModel.IsConnected());
-            EnableInClassList(k_NotConnectedModifierUssClassName, !PortModel.IsConnected());
+            EnableInClassList(connectedModifierUssClassName, PortModel.IsConnected());
+            EnableInClassList(notConnectedModifierUssClassName, !PortModel.IsConnected());
 
-            EnableInClassList(k_InputModifierUssClassName, PortModel.Direction == Direction.Input);
-            EnableInClassList(k_OutputModifierUssClassName, PortModel.Direction == Direction.Output);
+            EnableInClassList(inputModifierUssClassName, PortModel.Direction == Direction.Input);
+            EnableInClassList(outputModifierUssClassName, PortModel.Direction == Direction.Output);
 
-            this.PrefixRemoveFromClassList(k_PortDataTypeClassNamePrefix);
+            this.PrefixRemoveFromClassList(portDataTypeClassNamePrefix);
             AddToClassList(GetClassNameForDataType(PortModel.PortDataType));
 
-            this.PrefixRemoveFromClassList(k_PortTypeModifierClassNamePrefix);
+            this.PrefixRemoveFromClassList(portTypeModifierClassNamePrefix);
             AddToClassList(GetClassNameModifierForType(PortModel.PortType));
 
             tooltip = PortModel.ToolTip;
@@ -175,39 +267,28 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         protected virtual void BuildContextualMenu(ContextualMenuPopulateEvent evt) {}
 
-        void OnCustomStyleResolved(CustomStyleResolvedEvent e)
-        {
-            if (e.customStyle.TryGetValue(m_PortColorProperty, out var portColorValue))
-                PortColor = portColorValue;
-
-            if (PartList.GetPart(k_ConnectorPartName) is PortConnectorWithIconPart portConnector)
-            {
-                portConnector.UpdateFromModel();
-            }
-        }
-
         static string GetClassNameForDataType(Type thisPortType)
         {
             if (thisPortType == null)
                 return String.Empty;
 
             if (thisPortType.IsSubclassOf(typeof(Component)))
-                return k_PortDataTypeClassNamePrefix + "component";
+                return portDataTypeClassNamePrefix + "component";
             if (thisPortType.IsSubclassOf(typeof(GameObject)))
-                return k_PortDataTypeClassNamePrefix + "game-object";
+                return portDataTypeClassNamePrefix + "game-object";
             if (thisPortType.IsSubclassOf(typeof(Rigidbody)) || thisPortType.IsSubclassOf(typeof(Rigidbody2D)))
-                return k_PortDataTypeClassNamePrefix + "rigidbody";
+                return portDataTypeClassNamePrefix + "rigidbody";
             if (thisPortType.IsSubclassOf(typeof(Transform)))
-                return k_PortDataTypeClassNamePrefix + "transform";
+                return portDataTypeClassNamePrefix + "transform";
             if (thisPortType.IsSubclassOf(typeof(Texture)) || thisPortType.IsSubclassOf(typeof(Texture2D)))
-                return k_PortDataTypeClassNamePrefix + "texture2d";
+                return portDataTypeClassNamePrefix + "texture2d";
             if (thisPortType.IsSubclassOf(typeof(KeyCode)))
-                return k_PortDataTypeClassNamePrefix + "key-code";
+                return portDataTypeClassNamePrefix + "key-code";
             if (thisPortType.IsSubclassOf(typeof(Material)))
-                return k_PortDataTypeClassNamePrefix + "material";
+                return portDataTypeClassNamePrefix + "material";
             if (thisPortType == typeof(Object))
-                return k_PortDataTypeClassNamePrefix + "object";
-            return k_PortDataTypeClassNamePrefix + thisPortType.Name.ToKebabCase();
+                return portDataTypeClassNamePrefix + "object";
+            return portDataTypeClassNamePrefix + thisPortType.Name.ToKebabCase();
         }
 
         public Vector3 GetGlobalCenter()
@@ -225,18 +306,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public VisualElement GetConnector()
         {
-            var portConnector = PartList.GetPart(k_ConnectorPartName) as PortConnectorPart;
-            var connector = portConnector?.Root.Q(PortConnectorPart.k_ConnectorUssName) ?? portConnector?.Root ?? this;
+            var portConnector = PartList.GetPart(connectorPartName) as PortConnectorPart;
+            var connector = portConnector?.Root.Q(PortConnectorPart.connectorUssName) ?? portConnector?.Root ?? this;
             return connector;
         }
 
-        static void OnDropOutsideCallback(Store store, Edge edge, Vector2 pos)
+        void OnDropOutsideCallback(Store store, Edge edge, Vector2 pos)
         {
-            if (store?.GetState()?.CurrentGraphModel?.Stencil == null)
+            if (store.State?.GraphModel?.Stencil == null)
                 return;
 
-            GraphView graphView = edge.GetFirstAncestorOfType<GraphView>();
-            Vector2 localPos = graphView.contentViewContainer.WorldToLocal(pos);
+            Vector2 localPos = GraphView.contentViewContainer.WorldToLocal(pos);
 
             List<IEdgeModel> edgesToDelete = EdgeConnectorListener.GetDropEdgeModelsToDelete(edge.EdgeModel);
 
@@ -261,20 +341,32 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 existingPortModel = edge.Input ?? edge.Output;
             }
 
-            store.GetState().CurrentGraphModel.Stencil.CreateNodesFromPort(store, existingPortModel, localPos, pos, edgesToDelete);
+            store.State.GraphModel.Stencil.CreateNodesFromPort(store, existingPortModel, localPos, pos, edgesToDelete);
         }
 
         public virtual bool CanAcceptDrop(List<ISelectableGraphElement> dragSelection)
         {
-            return dragSelection.Count == 1 && PortModel.PortType != PortType.Execution && IsTokenToDrop(dragSelection[0]);
+            return dragSelection.Count == 1 && PortModel.PortType != PortType.Execution && HasModelToDrop(dragSelection[0]);
         }
 
-        bool IsTokenToDrop(ISelectableGraphElement selectable)
+        IPortModel GetPortToConnect(ISelectableGraphElement selectable)
         {
-            return selectable is TokenNode token
-                && token.Model is IVariableNodeModel varModel
-                && varModel.OutputPort.GetConnectedPorts().All(p => p != PortModel)
-                && !ReferenceEquals(PortModel.NodeModel, token.Model);
+            if (selectable is GraphElement graphElement)
+            {
+                var modelToDrop = graphElement.Model;
+                if (modelToDrop is ISingleOutputPortNode singleOutputPortNode && PortModel.Direction == Direction.Input)
+                    return singleOutputPortNode.OutputPort;
+                if (modelToDrop is ISingleInputPortNode singleInputPortModelNode && PortModel.Direction == Direction.Output)
+                    return singleInputPortModelNode.InputPort;
+            }
+
+            return null;
+        }
+
+        bool HasModelToDrop(ISelectableGraphElement selectable)
+        {
+            var portToConnect = GetPortToConnect(selectable);
+            return portToConnect != null && !ReferenceEquals(PortModel.NodeModel, portToConnect.NodeModel);
         }
 
         public virtual bool DragUpdated(DragUpdatedEvent evt, IEnumerable<ISelectableGraphElement> selection, IDropTarget dropTarget, ISelection dragSource)
@@ -293,14 +385,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             Assert.IsTrue(dropElements.Count == 1);
 
             var edgesToDelete = PortModel.Capacity == PortCapacity.Multi ? new List<IEdgeModel>() : PortModel.GetConnectedEdges().ToList();
+            var portToConnect = GetPortToConnect(selectionList[0]);
 
-            if (IsTokenToDrop(selectionList[0]))
+            if (portToConnect != null)
             {
-                if (selectionList[0] is TokenNode token)
-                {
-                    token.Model.SetCapability(Capabilities.Movable, true);
-                    Store.Dispatch(new CreateEdgeAction(PortModel, ((IVariableNodeModel)token.Model).OutputPort, edgesToDelete, CreateEdgeAction.PortAlignmentType.Input));
-                }
+                Store.Dispatch(new CreateEdgeAction(PortModel, portToConnect, edgesToDelete, Direction.Input));
                 return true;
             }
 
@@ -321,25 +410,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public virtual bool DragEnter(DragEnterEvent evt, IEnumerable<ISelectableGraphElement> selection, IDropTarget enteredTarget, ISelection dragSource)
         {
-            AddToClassList(k_DropHighlightClass);
-            var dragSelection = selection.ToList();
-            if (dragSelection.Count == 1 && dragSelection[0] is TokenNode token)
-                token.Model.SetCapability(Capabilities.Movable, false);
+            AddToClassList(dropHighlightClass);
             return true;
         }
 
         public virtual bool DragLeave(DragLeaveEvent evt, IEnumerable<ISelectableGraphElement> selection, IDropTarget leftTarget, ISelection dragSource)
         {
-            RemoveFromClassList(k_DropHighlightClass);
-            var dragSelection = selection.ToList();
-            if (dragSelection.Count == 1 && dragSelection[0] is TokenNode token)
-                token.Model.SetCapability(Capabilities.Movable, true);
+            RemoveFromClassList(dropHighlightClass);
             return true;
         }
 
         public virtual bool DragExited()
         {
-            RemoveFromClassList(k_DropHighlightClass);
+            RemoveFromClassList(dropHighlightClass);
             return false;
         }
     }

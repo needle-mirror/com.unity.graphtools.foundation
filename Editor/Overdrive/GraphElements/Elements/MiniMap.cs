@@ -9,6 +9,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class MiniMap : GraphElement
     {
+        public new static readonly string ussClassName = "ge-minimap";
+        public static readonly string anchoredModifierClassName = ussClassName.WithUssModifier("anchored");
+        public static readonly string windowedModifierClassName = ussClassName.WithUssModifier("windowed");
+
         static Vector3[] s_CachedRect = new Vector3[4];
 
         float m_PreviousContainerWidth = -1;
@@ -35,28 +39,24 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         bool m_Windowed;
 
-        public new GraphView GraphView
-        {
-            get
-            {
-                if (!Windowed && base.GraphView == null)
-                    base.GraphView = GetFirstAncestorOfType<GraphView>();
-                return base.GraphView;
-            }
-
-            set
-            {
-                if (!Windowed)
-                    return;
-                base.GraphView = value;
-            }
-        }
-
         public float MaxHeight { get; set; }
 
         public float MaxWidth { get; set; }
 
         int TitleBarOffset => (int)resolvedStyle.paddingTop;
+
+        protected Dragger Dragger
+        {
+            get => m_Dragger;
+            set
+            {
+                if (!m_Windowed)
+                    this.RemoveManipulator(m_Dragger);
+                m_Dragger = value;
+                if (!m_Windowed)
+                    this.AddManipulator(m_Dragger);
+            }
+        }
 
         public Action<string> ZoomFactorTextChanged { get; set; }
 
@@ -73,11 +73,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 if (m_Anchored)
                 {
                     this.ResetPositionProperties();
-                    AddToClassList("anchored");
+                    AddToClassList(anchoredModifierClassName);
                 }
                 else
                 {
-                    RemoveFromClassList("anchored");
+                    RemoveFromClassList(anchoredModifierClassName);
                 }
 
                 Resize();
@@ -94,12 +94,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 if (value)
                 {
                     Anchored = false; // Can't be anchored and windowed
-                    AddToClassList("windowed");
+                    AddToClassList(windowedModifierClassName);
                     this.RemoveManipulator(m_Dragger);
                 }
                 else
                 {
-                    RemoveFromClassList("windowed");
+                    RemoveFromClassList(windowedModifierClassName);
                     this.AddManipulator(m_Dragger);
                 }
                 m_Windowed = value;
@@ -108,8 +108,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public MiniMap()
         {
-            m_Dragger = new Dragger { clampToParentEdges = true };
-            this.AddManipulator(m_Dragger);
+            Dragger = new Dragger { ClampToParentEdges = true };
 
             Anchored = false;
 
@@ -124,6 +123,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             m_Label.RegisterCallback<MouseDownEvent>(EatMouseDown);
 
             this.AddStylesheet("Minimap.uss");
+            AddToClassList(ussClassName);
 
             generateVisualContent += OnGenerateVisualContent;
         }

@@ -37,6 +37,7 @@ namespace UnityEditor.VisualScripting.Editor
                 self.ErrorBadge.AttachTo(target, alignment);
 
                 target.EnableInClassList(k_HasErrorBadge, true);
+
                 if (errorQuickFix != null)
                     self.ErrorBadge.RegisterCallback<MouseDownEvent>(e => errorQuickFix.quickFix(store));
 

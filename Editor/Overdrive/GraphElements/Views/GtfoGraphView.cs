@@ -1,12 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
+using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEngine;
-using UnityEngine.Profiling;
 using UnityEngine.UIElements;
 using Debug = UnityEngine.Debug;
 using Object = UnityEngine.Object;
@@ -20,8 +17,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         [Serializable]
         public class CopyPasteData
         {
-            public List<NodeModel> nodes;
-            public List<EdgeModel> edges;
+            public List<INodeModel> nodes;
+            public List<IEdgeModel> edges;
             public List<VariableDeclarationModel> variableDeclarations;
             public Vector2 topLeftNodePosition;
             public List<StickyNoteModel> stickyNotes;
@@ -40,28 +37,53 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         static CopyPasteData s_LastCopiedData;
 
-        public static GraphElement clickTarget;
-
         public event Action<List<ISelectableGraphElement>> OnSelectionChangedCallback;
 
         bool m_SelectionDraggerWasActive;
         Vector2 m_LastMousePosition;
+
         SelectionDragger m_SelectionDragger;
-        VisualElement m_IconsParent;
+        ContentDragger m_ContentDragger;
+        Clickable m_Clickable;
+        RectangleSelector m_RectangleSelector;
+        FreehandSelector m_FreehandSelector;
+
+        protected SelectionDragger SelectionDragger
+        {
+            get => m_SelectionDragger;
+            set => this.ReplaceManipulator(ref m_SelectionDragger, value);
+        }
+
+        protected ContentDragger ContentDragger
+        {
+            get => m_ContentDragger;
+            set => this.ReplaceManipulator(ref m_ContentDragger, value);
+        }
+
+        protected Clickable Clickable
+        {
+            get => m_Clickable;
+            set => this.ReplaceManipulator(ref m_Clickable, value);
+        }
+
+        protected RectangleSelector RectangleSelector
+        {
+            get => m_RectangleSelector;
+            set => this.ReplaceManipulator(ref m_RectangleSelector, value);
+        }
+
+        public FreehandSelector FreehandSelector
+        {
+            get => m_FreehandSelector;
+            set => this.ReplaceManipulator(ref m_FreehandSelector, value);
+        }
 
         protected IExternalDragNDropHandler m_CurrentDragNDropHandler;
 
         // Cache for INodeModelProxies
         Dictionary<Type, INodeModelProxy> m_ModelProxies;
 
-        IGraphModel m_LastGraphModel;
-        public IGraphModel LastGraphModel => m_LastGraphModel;
-
-        public IRenamableGraphElement ElementToRename { private get; set; }
-
         public new GtfoWindow Window => base.Window as GtfoWindow;
-
-        Dictionary<IGraphElementModel, GraphElement> ModelsToNodeMapping { get; set; }
 
         protected GtfoGraphView(GraphViewEditorWindow window, Store store, string uniqueGraphViewName)
             : base(window, store)
@@ -73,25 +95,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             m_ModelProxies = new Dictionary<Type, INodeModelProxy>();
 
-            SetupZoom(minScaleSetup: .1f, maxScaleSetup: 4f);
+            SetupZoom(minScaleSetup: .1f, maxScaleSetup: 4f, 1.0f);
 
-            var clickable = new Clickable(OnDoubleClick);
-            clickable.activators.Clear();
-            clickable.activators.Add(
+            Clickable = new Clickable(OnDoubleClick);
+            Clickable.activators.Clear();
+            Clickable.activators.Add(
                 new ManipulatorActivationFilter { button = MouseButton.LeftMouse, clickCount = 2 });
-            this.AddManipulator(clickable);
 
-            this.AddManipulator(new ContentDragger());
-            m_SelectionDragger = new SelectionDragger(this);
-            this.AddManipulator(m_SelectionDragger);
-            this.AddManipulator(new RectangleSelector());
-            this.AddManipulator(new FreehandSelector());
+            ContentDragger = new ContentDragger();
+            SelectionDragger = new SelectionDragger(this);
+            RectangleSelector = new RectangleSelector();
+            FreehandSelector = new FreehandSelector();
 
             RegisterCallback<MouseOverEvent>(OnMouseOver);
-
-            // Order is important here: MouseUp event needs to be registered after adding the RectangleSelector
-            // to let the selector adding elements to the selection's list before mouseUp event is fired.
-            RegisterCallback<MouseUpEvent>(OnMouseUp);
             RegisterCallback<MouseMoveEvent>(OnMouseMove);
 
             // TODO: Until GraphView.SelectionDragger is used widely in VS, we must register to drag events ON TOP of
@@ -103,20 +119,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             Insert(0, new GridBackground());
 
-            ElementResizedCallback = OnElementResized;
-
             SerializeGraphElementsCallback = OnSerializeGraphElements;
             UnserializeAndPasteCallback = UnserializeAndPaste;
-
-            GraphViewChangedCallback += OnGraphViewChanged;
-
-            m_IconsParent = new VisualElement { name = "iconsParent"};
-            m_IconsParent.style.overflow = Overflow.Visible;
         }
 
         internal void UnloadGraph()
         {
-            Blackboard?.ClearContents();
             Blackboard?.Clear();
             ClearGraph();
         }
@@ -125,16 +133,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             List<GraphElement> elements = GraphElements.ToList();
 
-            PositionDependenciesManagers.Clear();
+            PositionDependenciesManager.Clear();
             foreach (var element in elements)
             {
-                RemoveElement(element);
-
-                element.UnregisterCallback<MouseOverEvent>(OnMouseOver);
+                RemoveElement(element, false);
             }
-
-            if (contentViewContainer.Contains(m_IconsParent))
-                contentViewContainer.Remove(m_IconsParent);
         }
 
         void OnCustomStyleResolved(CustomStyleResolvedEvent evt)
@@ -147,7 +150,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             // Display graph in inspector when clicking on background
             // TODO: displayed on double click ATM as this method overrides the Token.Select() which does not stop propagation
-            UnityEditor.Selection.activeObject = Store.GetState()?.CurrentGraphModel.AssetModel as Object;
+            UnityEditor.Selection.activeObject = Store.State?.AssetModel as Object;
         }
 
         public void OnMouseOver(MouseOverEvent evt)
@@ -165,23 +168,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             evt.StopPropagation();
         }
 
-        void OnMouseUp(MouseUpEvent evt)
-        {
-            var pickList = new List<VisualElement>();
-            var pickElem = panel.PickAll(evt.mousePosition, pickList);
-            GraphElement graphElement = pickElem?.GetFirstOfType<GraphElement>();
-
-            clickTarget = graphElement;
-
-            this.HighlightGraphElements();
-        }
-
         void OnMouseMove(MouseMoveEvent evt)
         {
             if (m_SelectionDraggerWasActive && !m_SelectionDragger.IsActive) // cancelled
             {
                 m_SelectionDraggerWasActive = false;
-                PositionDependenciesManagers.CancelMove();
+                PositionDependenciesManager.CancelMove();
             }
             else if (!m_SelectionDraggerWasActive && m_SelectionDragger.IsActive) // started
             {
@@ -200,7 +192,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 bool moveNodeDependencies = requireShiftToMoveDependencies == hasShift;
 
                 if (moveNodeDependencies)
-                    PositionDependenciesManagers.StartNotifyMove(Selection, startPos);
+                    PositionDependenciesManager.StartNotifyMove(Selection, startPos);
 
                 // schedule execute because the mouse won't be moving when the graph view is panning
                 schedule.Execute(() =>
@@ -208,7 +200,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     if (m_SelectionDragger.IsActive && moveNodeDependencies) // processed
                     {
                         Vector2 pos = contentViewContainer.ChangeCoordinatesTo(elem.hierarchy.parent, elem.GetPosition().position);
-                        PositionDependenciesManagers.ProcessMovedNodes(pos);
+                        PositionDependenciesManager.ProcessMovedNodes(pos);
                     }
                 }).Until(() => !m_SelectionDraggerWasActive);
             }
@@ -216,41 +208,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             m_LastMousePosition = this.ChangeCoordinatesTo(contentViewContainer, evt.localMousePosition);
         }
 
-        void OnElementResized(VisualElement element)
+        public override void StopSelectionDragger()
         {
-            if (!(element is GraphElement ce))
-                return;
-
-            // Check for authorized size (GraphView manipulator might have resized to
-            var proposedWidth = ce.style.width.value.value;
-            var proposedHeight = ce.style.height.value.value;
-
-            var maxAllowedWidth = ce.resolvedStyle.maxWidth.value - ce.resolvedStyle.left;
-            var maxAllowedHeight = ce.resolvedStyle.maxHeight.value - ce.resolvedStyle.top;
-
-            var newWidth = Mathf.Min(maxAllowedWidth, proposedWidth);
-            var newHeight = Mathf.Min(maxAllowedHeight, proposedHeight);
-
-            // Resize only if values have changed
-            if (Math.Abs(proposedWidth - newWidth) > Mathf.Epsilon ||
-                Math.Abs(proposedHeight - newHeight) > Mathf.Epsilon)
-                ce.SetPosition(new Rect(ce.layout.x, ce.layout.y, newWidth, newHeight));
-        }
-
-        GraphViewChange OnGraphViewChanged(GraphViewChange graphViewChange)
-        {
-            if (graphViewChange.movedElements?.Any() != true)
-                return graphViewChange;
-
             // cancellation is handled in the MoveMove callback
             m_SelectionDraggerWasActive = false;
-            PositionDependenciesManagers.StopNotifyMove();
-
-            Vector2 delta = graphViewChange.moveDelta;
-            if (delta == Vector2.zero)
-                return graphViewChange;
-
-            return graphViewChange;
         }
 
         public override void ClearSelection()
@@ -320,106 +281,24 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        public virtual void UpdateTopology()
-        {
-            Profiler.BeginSample("UpdateTopology");
-            Stopwatch topologyStopwatch = new Stopwatch();
-            topologyStopwatch.Start();
-
-            var state = Store.GetState();
-            var currentGraphModel = state.CurrentGraphModel;
-            if (currentGraphModel == null)
-            {
-                return;
-            }
-
-            GraphChangeList graphChangeList = currentGraphModel.LastChanges;
-            string dispatchedActionName = state.LastDispatchedActionName; // save this now, because some actions trigger a UIRefresh, hiding the original action (TODO)
-
-            DisablePersistedSelectionRestore();
-
-            bool fullUIRebuildOnChange = state.Preferences.GetBool(BoolPref.FullUIRebuildOnChange);
-            bool forceRebuildUI = fullUIRebuildOnChange || currentGraphModel != m_LastGraphModel || graphChangeList == null || !graphChangeList.HasAnyTopologyChange() || ModelsToNodeMapping == null;
-
-            if (forceRebuildUI) // no specific graph changes passed, assume rebuild everything
-            {
-                RebuildAll(state);
-            }
-            else
-            {
-                PartialRebuild(state);
-            }
-
-            state.EditorDataModel.ClearElementsToSelectUponCreation();
-
-            MapModelsToNodes();
-
-            if (state.Preferences.GetBool(BoolPref.ShowUnusedNodes))
-                PositionDependenciesManagers.UpdateNodeState();
-
-            this.HighlightGraphElements();
-
-            m_LastGraphModel = currentGraphModel;
-
-            EnablePersistedSelectionRestore();
-
-            if (ElementToRename != null)
-            {
-                ClearSelection();
-                AddToSelection((GraphElement)ElementToRename);
-                ElementToRename.Rename(forceRename: true);
-                ElementToRename = null;
-                state.EditorDataModel.ElementModelToRename = null;
-            }
-
-            // We need to do this after all graph elements are created.
-            foreach (var p in PlacematContainer.Placemats)
-            {
-                p.UpdateFromModel();
-            }
-
-            MarkDirtyRepaint();
-
-            topologyStopwatch.Stop();
-            Profiler.EndSample();
-
-            if (state.Preferences.GetBool(BoolPref.WarnOnUIFullRebuild) && state.LastActionUIRebuildType == State.UIRebuildType.Full)
-            {
-                Debug.LogWarning($"Rebuilding the whole UI ({dispatchedActionName})");
-            }
-
-            if (state.Preferences.GetBool(BoolPref.LogUIBuildTime))
-            {
-                Debug.Log($"UI Update ({dispatchedActionName}) took {topologyStopwatch.ElapsedMilliseconds} ms");
-            }
-        }
-
-        GraphElement CreateElement(IGraphElementModel model)
-        {
-            GraphElement element = model.CreateUI<GraphElement>(this, Store);
-            if (element != null)
-                AddToGraphView(element);
-
-            return element;
-        }
-
-        void AddToGraphView(GraphElement graphElement)
+        public override void AddElement(GraphElement graphElement)
         {
             // exception thrown by graphview while in playmode
             // probably related to the undo selection thingy
             try
             {
-                if (graphElement.parent == null) // Some elements (e.g. Placemats) come in already added to the right spot.
-                    AddElement(graphElement);
+                base.AddElement(graphElement);
             }
             catch (Exception e)
             {
                 Debug.LogError(e);
             }
 
-            if (graphElement != null &&
-                Store.GetState().EditorDataModel.ShouldSelectElementUponCreation(graphElement.Model))
+            if (graphElement?.Model != null &&
+                Store.State.SelectionStateComponent.ShouldSelectElementUponCreation(graphElement.Model))
+            {
                 graphElement.Select(this, true);
+            }
 
             if (graphElement is Node || graphElement is Edge)
                 graphElement.RegisterCallback<MouseOverEvent>(OnMouseOver);
@@ -430,92 +309,112 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        void RemoveFromGraphView(GraphElement graphElement)
+        public override void RemoveElement(GraphElement graphElement, bool unselectBeforeRemove = false)
         {
-            switch (graphElement)
+            var graphElementModel = graphElement.Model;
+            switch (graphElementModel)
             {
-                case Edge e:
-                    RemovePositionDependency(e.EdgeModel);
+                case IEdgeModel e:
+                    RemovePositionDependency(e);
                     break;
-                case Node n when n.NodeModel is IEdgePortalModel portalModel:
+                case IEdgePortalModel portalModel:
                     RemovePortalDependency(portalModel);
                     break;
             }
 
-            graphElement.Unselect(this);
-            DeleteElements(new[] { graphElement });
-            graphElement.UnregisterCallback<MouseOverEvent>(OnMouseOver);
+            if (graphElement is Node || graphElement is Edge)
+                graphElement.UnregisterCallback<MouseOverEvent>(OnMouseOver);
+
+            base.RemoveElement(graphElement, unselectBeforeRemove);
         }
 
-        void PartialRebuild(State state)
+        public virtual void UpdateUI(UIRebuildType rebuildType)
         {
-            state.LastActionUIRebuildType = State.UIRebuildType.Partial;
-
-            using (var partialRebuilder = new UIPartialRebuilder(state, CreateElement, RemoveFromGraphView))
+            if (rebuildType == UIRebuildType.Complete || Store.State.NewModels.Any())
             {
-                // get changes into sensible lists (sets)
-                partialRebuilder.ComputeChanges(state.CurrentGraphModel.LastChanges, ModelsToNodeMapping);
+                RebuildAll(Store.State);
 
-                // actually delete stuff
-                partialRebuilder.DeleteEdgeModels();
-                partialRebuilder.DeleteGraphElements();
-
-                // update model to graphview mapping
-                MapModelsToNodes();
-
-                // rebuild nodes
-                partialRebuilder.RebuildNodes(ModelsToNodeMapping);
-
-                // rebuild needed edges
-                partialRebuilder.RebuildEdges(e => RestoreEdge(e));
-
-                if (partialRebuilder.BlackboardChanged)
+                // PF FIXME: This should not be necessary
+                this.HighlightGraphElements();
+            }
+            else if (rebuildType == UIRebuildType.Partial)
+            {
+                foreach (var model in Store.State.DeletedModels)
                 {
-                    Blackboard?.Rebuild(Blackboard.RebuildMode.BlackboardOnly);
+                    foreach (var ui in model.GetAllUIs(this).ToList())
+                    {
+                        RemoveElement(ui as GraphElement, true);
+                    }
+
+                    foreach (var ui in model.GetDependencies().ToList())
+                    {
+                        ui.UpdateFromModel();
+                    }
                 }
 
-                if (state.Preferences.GetBool(BoolPref.LogUIBuildTime))
+                foreach (var model in Store.State.ChangedModels)
                 {
-                    Debug.Log(partialRebuilder.DebugOutput);
+                    foreach (var ui in model.GetAllUIs(this).ToList())
+                    {
+                        ui.UpdateFromModel();
+                    }
+
+                    foreach (var ui in model.GetDependencies().ToList())
+                    {
+                        ui.UpdateFromModel();
+                    }
                 }
+
+                // PF FIXME: This should not be necessary
+                this.HighlightGraphElements();
+            }
+
+            // PF FIXME: node state (enable/disabled, used/unused) should be part of the State.
+            if (Store.State.Preferences.GetBool(BoolPref.ShowUnusedNodes))
+                PositionDependenciesManager.UpdateNodeState();
+
+            if (Store.State.ModelsToAutoAlign.Any())
+            {
+                // Auto placement relies on UI layout to compute node positions, so we need to
+                // schedule it to execute after the next layout pass.
+                // Furthermore, it will modify the model position, hence it must be
+                // done inside a Store.BeginStateChange block.
+                var elementsToAlign = Store.State.ModelsToAutoAlign.ToList();
+                schedule.Execute(() =>
+                {
+                    Store.BeginStateChange();
+                    PositionDependenciesManager.AlignNodes(true, elementsToAlign);
+                    Store.EndStateChange();
+                });
             }
         }
 
         void RebuildAll(State state)
         {
-            state.LastActionUIRebuildType = State.UIRebuildType.Full;
             ClearGraph();
 
-            var graphModel = state.CurrentGraphModel;
+            var graphModel = state.GraphModel;
             if (graphModel == null)
                 return;
 
             PlacematContainer.RemoveAllPlacemats();
-            foreach (var placematModel in state.CurrentGraphModel.PlacematModels.OrderBy(e => e.ZOrder))
-            {
-                var placemat = GraphElementFactory.CreateUI<GraphElement>(this, Store, placematModel);
-                if (placemat != null)
-                    AddToGraphView(placemat);
-            }
 
             foreach (var nodeModel in graphModel.NodeModels)
             {
                 var node = GraphElementFactory.CreateUI<GraphElement>(this, Store, nodeModel);
                 if (node != null)
-                    AddToGraphView(node);
+                    AddElement(node);
             }
 
-            foreach (var stickyNoteModel in state.CurrentGraphModel.StickyNoteModels)
+            foreach (var stickyNoteModel in graphModel.StickyNoteModels)
             {
                 var stickyNote = GraphElementFactory.CreateUI<GraphElement>(this, Store, stickyNoteModel);
                 if (stickyNote != null)
-                    AddToGraphView(stickyNote);
+                    AddElement(stickyNote);
             }
 
-            MapModelsToNodes();
-
             int index = 0;
-            foreach (var edge in state.CurrentGraphModel.EdgeModels)
+            foreach (var edge in graphModel.EdgeModels)
             {
                 if (!RestoreEdge(edge))
                 {
@@ -523,22 +422,35 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 }
                 index++;
             }
+            foreach (var placematModel in state.GraphModel.PlacematModels.OrderBy(e => e.ZOrder))
+            {
+                var placemat = GraphElementFactory.CreateUI<GraphElement>(this, Store, placematModel);
+                if (placemat != null)
+                    AddElement(placemat);
+            }
 
-            Blackboard?.Rebuild(Blackboard.RebuildMode.BlackboardOnly);
+            contentViewContainer.Add(BadgesParent);
 
-            contentViewContainer.Add(m_IconsParent);
-            this.HighlightGraphElements();
-        }
+            BadgesParent.Clear();
+            foreach (var badgeModel in graphModel.BadgeModels)
+            {
+                if (badgeModel.ParentModel == null)
+                    continue;
 
-        void MapModelsToNodes()
-        {
-            var hasGraphElementModels = this.Query<GraphElement>()
-                .Where(x => !(x is BlackboardVariableField) && x.Model != null)
-                .ToList();
+                var badge = GraphElementFactory.CreateUI<Badge>(this, Store, badgeModel);
+                if (badge != null)
+                {
+                    AddElement(badge);
+                }
+            }
 
-            ModelsToNodeMapping = hasGraphElementModels
-                .GroupBy(x => x.Model, x => x)
-                .ToDictionary(g => g.Key, g => g.First());
+            // We need to do this after all graph elements are created.
+            foreach (var placemat in PlacematContainer.Placemats)
+            {
+                placemat.UpdateFromModel();
+            }
+
+            Blackboard?.SetupBuildAndUpdate(state.BlackboardGraphModel, Store, this);
         }
 
         bool RestoreEdge(IEdgeModel edge)
@@ -578,44 +490,22 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         void Connect(IEdgeModel edgeModel)
         {
-            var edge = GraphElementFactory.CreateUI<Edge>(this, Store, edgeModel);
-            AddToGraphView(edge);
+            var edge = GraphElementFactory.CreateUI<GraphElement>(this, Store, edgeModel);
+            AddElement(edge);
 
-            AddPositionDependency(edge.EdgeModel);
-        }
-
-        internal void AttachValue(IBadgeContainer badgeContainer, VisualElement visualElement, string value, Color badgeColor, SpriteAlignment alignment)
-        {
-            Assert.IsNotNull(visualElement);
-
-            badgeContainer.ShowValueBadge(m_IconsParent, visualElement, alignment, value, badgeColor);
-        }
-
-        internal void AttachErrorBadge(VisualElement visualElement, string errorDescription, SpriteAlignment alignment, Store store = null, CompilerQuickFix errorQuickFix = null)
-        {
-            Assert.IsNotNull(visualElement);
-            if (errorQuickFix != null)
-                Assert.IsNotNull(store);
-
-            VisualElement visualElementParent = visualElement.parent;
-            while (visualElementParent.GetType().IsSubclassOf(typeof(GraphElement)) && visualElementParent.parent != null)
-            {
-                visualElementParent = visualElementParent.parent;
-            }
-
-            (visualElement as IBadgeContainer)?.ShowErrorBadge(m_IconsParent, alignment, errorDescription, store, errorQuickFix);
+            AddPositionDependency(edgeModel);
         }
 
         public void NotifyTopologyChange(IGraphModel graphModel)
         {
-            viewDataKey = graphModel.GetAssetPath();
+            viewDataKey = graphModel.AssetModel.GetPath();
         }
 
         protected virtual void OnDragUpdatedEvent(DragUpdatedEvent e)
         {
             if (DragAndDrop.objectReferences.Length > 0)
             {
-                var stencil = Store.GetState().CurrentGraphModel.Stencil;
+                var stencil = Store.State.GraphModel.Stencil;
                 m_CurrentDragNDropHandler = stencil.DragNDropHandler;
                 m_CurrentDragNDropHandler?.HandleDragUpdated(e, DragNDropContext.Graph);
             }
@@ -648,11 +538,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         internal static CopyPasteData GatherCopiedElementsData(IReadOnlyCollection<IGraphElementModel> graphElementModels)
         {
-            IEnumerable<NodeModel> originalNodes = graphElementModels.OfType<NodeModel>();
-            List<NodeModel> nodesToCopy = originalNodes
-                .ToList();
-
-            IEnumerable<INodeModel> floatingNodes = graphElementModels.OfType<INodeModel>();
+            var originalNodes = graphElementModels.OfType<INodeModel>().ToList();
 
             List<VariableDeclarationModel> variableDeclarationsToCopy = graphElementModels
                 .OfType<VariableDeclarationModel>()
@@ -666,12 +552,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 .OfType<PlacematModel>()
                 .ToList();
 
-            List<EdgeModel> edgesToCopy = graphElementModels
-                .OfType<EdgeModel>()
+            List<IEdgeModel> edgesToCopy = graphElementModels
+                .OfType<IEdgeModel>()
                 .ToList();
 
             Vector2 topLeftNodePosition = Vector2.positiveInfinity;
-            foreach (var n in floatingNodes)
+            foreach (var n in originalNodes)
             {
                 topLeftNodePosition = Vector2.Min(topLeftNodePosition, n.Position);
             }
@@ -691,7 +577,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             CopyPasteData copyPasteData = new CopyPasteData
             {
                 topLeftNodePosition = topLeftNodePosition,
-                nodes = nodesToCopy,
+                nodes = originalNodes,
                 edges = edgesToCopy,
                 variableDeclarations = variableDeclarationsToCopy,
                 stickyNotes = stickyNotesToCopy,
@@ -701,9 +587,23 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             return copyPasteData;
         }
 
-        internal static void PasteSerializedData(IGraphModel graph, TargetInsertionInfo targetInfo, IEditorDataModel editorDataModel, CopyPasteData copyPasteData)
+        internal static void PasteSerializedData(IGraphModel graph, TargetInsertionInfo targetInfo, SelectionStateComponent selectionState, CopyPasteData copyPasteData)
         {
             var elementMapping = new Dictionary<string, IGraphElementModel>();
+
+            if (copyPasteData.variableDeclarations.Any())
+            {
+                List<IVariableDeclarationModel> variableDeclarationModels =
+                    copyPasteData.variableDeclarations.Cast<IVariableDeclarationModel>().ToList();
+                List<IVariableDeclarationModel> duplicatedModels = new List<IVariableDeclarationModel>();
+
+                foreach (var sourceModel in variableDeclarationModels)
+                {
+                    duplicatedModels.Add(graph.DuplicateGraphVariableDeclaration(sourceModel));
+                }
+
+                selectionState?.SelectElementsUponCreation(duplicatedModels, true);
+            }
 
             var nodeMapping = new Dictionary<INodeModel, INodeModel>();
             foreach (var originalModel in copyPasteData.nodes)
@@ -711,7 +611,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 if (!graph.Stencil.CanPasteNode(originalModel, graph))
                     continue;
 
-                PasteNode(targetInfo.OperationName, originalModel, nodeMapping, graph, editorDataModel, targetInfo.Delta);
+                var pastedNode = PasteNode(targetInfo.OperationName, originalModel, graph, selectionState, targetInfo.Delta);
+                nodeMapping[originalModel] = pastedNode;
             }
 
             foreach (var nodeModel in nodeMapping)
@@ -724,45 +625,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 elementMapping.TryGetValue(edge.ToNodeGuid.ToString(), out var newInput);
                 elementMapping.TryGetValue(edge.FromNodeGuid.ToString(), out var newOutput);
 
-                IPortModel inputPortModel = null;
-                IPortModel outputPortModel = null;
-                if (newInput != null && newOutput != null)
+                var copiedEdge = graph.DuplicateEdge(edge, newInput as INodeModel, newOutput as INodeModel);
+                if (copiedEdge != null)
                 {
-                    // Both node were duplicated; create a new edge between the duplicated nodes.
-                    inputPortModel = (newInput as IInOutPortsNode)?.InputsById[edge.ToPortId];
-                    outputPortModel = (newOutput as IInOutPortsNode)?.OutputsById[edge.FromPortId];
+                    elementMapping.Add(edge.Guid.ToString(), copiedEdge);
+                    selectionState?.SelectElementsUponCreation(new[] { copiedEdge }, true);
                 }
-                else if (newInput != null)
-                {
-                    inputPortModel = (newInput as IInOutPortsNode)?.InputsById[edge.ToPortId];
-                    outputPortModel = edge.FromPort;
-                }
-                else if (newOutput != null)
-                {
-                    inputPortModel = edge.ToPort;
-                    outputPortModel = (newOutput as IInOutPortsNode)?.OutputsById[edge.FromPortId];
-                }
-
-                if (inputPortModel != null && outputPortModel != null)
-                {
-                    if (inputPortModel.Capacity == PortCapacity.Single && inputPortModel.GetConnectedEdges().Any())
-                        continue;
-                    if (outputPortModel.Capacity == PortCapacity.Single && outputPortModel.GetConnectedEdges().Any())
-                        continue;
-
-                    var copiedEdge = graph.CreateEdge(inputPortModel, outputPortModel);
-                    elementMapping.Add(edge.GetId(), copiedEdge);
-                    editorDataModel?.SelectElementsUponCreation(new[] { copiedEdge }, true);
-                }
-            }
-
-            if (copyPasteData.variableDeclarations.Any())
-            {
-                List<IVariableDeclarationModel> variableDeclarationModels =
-                    copyPasteData.variableDeclarations.Cast<IVariableDeclarationModel>().ToList();
-
-                var duplicatedModels = graph.DuplicateGraphVariableDeclarations(variableDeclarationModels);
-                editorDataModel?.SelectElementsUponCreation(duplicatedModels, true);
             }
 
             foreach (var stickyNote in copyPasteData.stickyNotes)
@@ -773,7 +641,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 pastedStickyNote.Contents = stickyNote.Contents;
                 pastedStickyNote.Theme = stickyNote.Theme;
                 pastedStickyNote.TextSize = stickyNote.TextSize;
-                editorDataModel?.SelectElementsUponCreation(new[] { pastedStickyNote }, true);
+                selectionState?.SelectElementsUponCreation(new[] { pastedStickyNote }, true);
                 elementMapping.Add(stickyNote.Guid.ToString(), pastedStickyNote);
             }
 
@@ -783,11 +651,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             {
                 var newPosition = new Rect(placemat.PositionAndSize.position + targetInfo.Delta, placemat.PositionAndSize.size);
                 var newTitle = "Copy of " + placemat.Title;
-                var pastedPlacemat = (PlacematModel)graph.CreatePlacemat(newTitle, newPosition);
+                var pastedPlacemat = (PlacematModel)graph.CreatePlacemat(newPosition);
+                pastedPlacemat.Title = newTitle;
                 pastedPlacemat.Color = placemat.Color;
                 pastedPlacemat.Collapsed = placemat.Collapsed;
                 pastedPlacemat.HiddenElementsGuid = placemat.HiddenElementsGuid;
-                editorDataModel?.SelectElementsUponCreation(new[] { pastedPlacemat }, true);
+                selectionState?.SelectElementsUponCreation(new[] { pastedPlacemat }, true);
                 pastedPlacemats.Add(pastedPlacemat);
                 elementMapping.Add(placemat.Guid.ToString(), pastedPlacemat);
             }
@@ -819,7 +688,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             ClearSelection();
 
-            var graph = Store.GetState().CurrentGraphModel;
             CopyPasteData copyPasteData = s_LastCopiedData;// JsonUtility.FromJson<CopyPasteData>(data);
             var delta = m_LastMousePosition - copyPasteData.topLeftNodePosition;
 
@@ -827,59 +695,57 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             info.OperationName = operationName;
             info.Delta = delta;
 
-            IEditorDataModel editorDataModel = Store.GetState().EditorDataModel;
-            Store.Dispatch(new PasteSerializedDataAction(graph, info, editorDataModel, s_LastCopiedData));
+            Store.Dispatch(new PasteSerializedDataAction(info, s_LastCopiedData));
         }
 
-        static void PasteNode(string operationName, INodeModel copiedNode, Dictionary<INodeModel, INodeModel> mapping,
-            IGraphModel graph, IEditorDataModel editorDataModel, Vector2 delta)
+        static INodeModel PasteNode(string operationName, INodeModel copiedNode, IGraphModel graph,
+            SelectionStateComponent selectionState, Vector2 delta)
         {
-            var pastedNodeModel = graph.DuplicateNode(copiedNode, mapping, delta);
-            editorDataModel?.SelectElementsUponCreation(new[] { pastedNodeModel }, true);
+            var pastedNodeModel = graph.DuplicateNode(copiedNode, delta);
+            selectionState?.SelectElementsUponCreation(new[] { pastedNodeModel }, true);
+            return pastedNodeModel;
         }
 
-        public void DisplayCompilationErrors(State state)
+        public void DisplayCompilationErrors()
         {
             ConsoleWindowBridge.RemoveLogEntries();
-            if (ModelsToNodeMapping == null)
-                UpdateTopology();
 
-            var lastCompilationResult = state.CompilationResultModel.GetLastResult();
-            if (lastCompilationResult?.errors == null)
-                return;
+            var deletedBadges = Store.State.GraphModel.DeleteBadgesOfType<CompilerErrorBadgeModel>();
+            var newBadges = new List<IGraphElementModel>();
 
-            var graphAsset = (GraphAssetModel)Store.GetState().CurrentGraphModel?.AssetModel;
-            foreach (var error in lastCompilationResult.errors)
+            var lastCompilationResult = Store.State.CompilationStateComponent.GetLastResult();
+            if (lastCompilationResult?.errors != null && lastCompilationResult.errors.Count > 0)
             {
-                if (error.sourceNode != null && !error.sourceNode.Destroyed)
+                var graphAsset = Store.State.AssetModel;
+                foreach (var error in lastCompilationResult.errors)
                 {
-                    var alignment = SpriteAlignment.RightCenter;
+                    if (error.sourceNode != null && !error.sourceNode.Destroyed)
+                    {
+                        var badgeModel = new CompilerErrorBadgeModel(error);
+                        Store.State.GraphModel.AddBadge(badgeModel);
+                        newBadges.Add(badgeModel);
+                    }
 
-                    var graphElement = error.sourceNode.GetUI(this);
-                    if (graphElement != null)
-                        AttachErrorBadge(graphElement, error.description, alignment, Store, error.quickFix);
-                }
-
-                if (graphAsset != null && graphAsset)
-                {
-                    var graphAssetPath = graphAsset ? AssetDatabase.GetAssetPath(graphAsset) : "<unknown>";
-                    ConsoleWindowBridge.LogSticky(
-                        $"{graphAssetPath}: {error.description}",
-                        $"{graphAssetPath}@{error.sourceNodeGuid}",
-                        error.isWarning ? LogType.Warning : LogType.Error,
-                        LogOption.None,
-                        graphAsset.GetInstanceID());
+                    if (graphAsset != null && graphAsset is Object asset)
+                    {
+                        var graphAssetPath = asset ? AssetDatabase.GetAssetPath(asset) : "<unknown>";
+                        ConsoleWindowBridge.LogSticky(
+                            $"{graphAssetPath}: {error.description}",
+                            $"{graphAssetPath}@{error.sourceNodeGuid}",
+                            error.isWarning ? LogType.Warning : LogType.Error,
+                            LogOption.None,
+                            asset.GetInstanceID());
+                    }
                 }
             }
-        }
 
-        public void ClearCompilationErrors()
-        {
-            this.Query().Descendents<IconBadge>().ForEach(badge =>
+            if (deletedBadges.Count > 0 || newBadges.Count > 0)
             {
-                badge.Detach();
-                badge.RemoveFromHierarchy();
-            });
+                Store.BeginStateChange();
+                Store.State.MarkDeleted(deletedBadges);
+                Store.State.MarkNew(newBadges);
+                Store.EndStateChange();
+            }
         }
 
         public abstract bool CanAcceptDrop(List<ISelectableGraphElement> dragSelection);

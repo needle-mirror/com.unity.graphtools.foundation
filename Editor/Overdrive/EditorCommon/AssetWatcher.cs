@@ -65,9 +65,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (graphAssetModel != null)
             {
                 if (Instance.m_ProjectAssetPaths.ContainsKey(path))
-                    Instance.m_ProjectAssetPaths[path] = graphAssetModel.GraphModel?.GetSourceFilePath();
+                    Instance.m_ProjectAssetPaths[path] = graphAssetModel.SourceFilePath;
                 else
-                    Instance.m_ProjectAssetPaths.Add(path, graphAssetModel.GraphModel?.GetSourceFilePath());
+                    Instance.m_ProjectAssetPaths.Add(path, graphAssetModel.SourceFilePath);
             }
         }
 
@@ -124,8 +124,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                             {
                                 newAssetModel.Name = newGraphName;
                                 newAssetModel.GraphModel.Name = newGraphName;
-                                foreach (var gvWindow in gvWindows.Where(w => w.Store.GetState()?.CurrentGraphModel == newAssetModel.GraphModel))
-                                    gvWindow.Store.ForceRefreshUI(UpdateFlags.All);
+                                foreach (var gvWindow in gvWindows.Where(w => w.Store.State?.GraphModel == newAssetModel.GraphModel))
+                                {
+                                    gvWindow.Store.MarkStateDirty();
+                                    (gvWindow as GtfoWindow)?.RecompileGraph();
+                                }
                             }
                         }
                     }
@@ -137,7 +140,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             {
                 if (AssetDatabase.LoadAssetAtPath<Object>(importedGraphAsset) is IGraphAssetModel graphAssetModel)
                 {
-                    var path = graphAssetModel.GraphModel?.GetSourceFilePath();
+                    var path = graphAssetModel.SourceFilePath;
                     if (path != null)
                         Instance.m_ProjectAssetPaths[importedGraphAsset] = path;
                     else

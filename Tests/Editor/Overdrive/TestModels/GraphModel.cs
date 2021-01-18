@@ -1,6 +1,6 @@
 using System;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEngine;
-using UnityEngine.GraphToolsFoundation.Overdrive;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels
 {
@@ -13,9 +13,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels
             m_SearcherProvider = new ClassSearcherDatabaseProvider(this);
         }
 
-        public override Blackboard CreateBlackboard(Store store, GraphView graphView)
+        public override Type GetConstantNodeValueType(TypeHandle typeHandle)
         {
-            return null;
+            return TypeToConstantMapper.GetConstantNodeType(typeHandle);
         }
 
         public override ISearcherDatabaseProvider GetSearcherDatabaseProvider()
@@ -26,15 +26,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels
 
     class GraphModel : BasicModel.GraphModel
     {
-        public override string GetSourceFilePath()
-        {
-            throw new NotImplementedException();
-        }
+        public override Type DefaultStencilType => typeof(TestStencil);
 
-        public override IEdgeModel CreateEdge(IPortModel inputPort, IPortModel outputPort)
+        public override IEdgeModel CreateEdge(IPortModel toPort, IPortModel fromPort)
         {
             var edge = new EdgeModel(this);
-            edge.SetPorts(inputPort, outputPort);
+            edge.SetPorts(toPort, fromPort);
             m_GraphEdgeModels.Add(edge);
             return edge;
         }
@@ -71,10 +68,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels
             return placemat;
         }
 
-        public override IPlacematModel CreatePlacemat(string title, Rect position, SpawnFlags dataSpawnFlags = SpawnFlags.Default)
+        public override IPlacematModel CreatePlacemat(Rect position, SpawnFlags spawnFlags = SpawnFlags.Default)
         {
             var placemat = CreatePlacemat();
-            placemat.Title = title;
             placemat.PositionAndSize = position;
             return placemat;
         }
@@ -86,7 +82,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels
             return sticky;
         }
 
-        public override IStickyNoteModel CreateStickyNote(Rect position, SpawnFlags dataSpawnFlags = SpawnFlags.Default)
+        public override IStickyNoteModel CreateStickyNote(Rect position, SpawnFlags spawnFlags = SpawnFlags.Default)
         {
             var sticky = CreateStickyNote();
             sticky.PositionAndSize = position;
@@ -95,14 +91,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels
             return sticky;
         }
 
-        public override CompilationResult Compile(ITranslator translator)
+        public override bool CheckIntegrity(Verbosity errors)
         {
-            throw new NotImplementedException();
-        }
-
-        public GraphModel()
-        {
-            Stencil = new TestStencil();
+            return true;
         }
     }
 }

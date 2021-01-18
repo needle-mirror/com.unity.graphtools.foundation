@@ -1,3 +1,5 @@
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
+
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels
 {
     class IONodeModel : NodeModel
@@ -16,16 +18,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels
         protected override void OnDefineNode()
         {
             for (var i = 0; i < ExeInputCount; i++)
-                AddExecutionInputPort<PortModel>("Exe In " + i);
+                this.AddExecutionInputPort("Exe In " + i);
 
             for (var i = 0; i < ExeOuputCount; i++)
-                AddExecutionOutputPort<PortModel>("Exe Out " + i);
+                this.AddExecutionOutputPort("Exe Out " + i);
 
             for (var i = 0; i < InputCount; i++)
-                AddDataInputPort<PortModel>("In " + i, TypeHandle.Unknown);
+                this.AddDataInputPort("In " + i, TypeHandle.Unknown);
 
             for (var i = 0; i < OuputCount; i++)
-                AddDataOutputPort<PortModel>("Out " + i, TypeHandle.Unknown);
+                this.AddDataOutputPort("Out " + i, TypeHandle.Unknown);
         }
     }
 }

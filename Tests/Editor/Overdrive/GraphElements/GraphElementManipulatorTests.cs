@@ -34,7 +34,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator DeletableElementCanBeDeleted()
         {
-            graphView.RebuildUI(GraphModel, Store);
             yield return null;
             var node1 = m_NodeModel1.GetUI<Node>(graphView);
             var node2 = m_NodeModel2.GetUI<Node>(graphView);
@@ -51,7 +50,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             node1.Select(graphView, noAdditiveSelect);
 
             helpers.ExecuteCommand("Delete");
-            graphView.RebuildUI(GraphModel, Store);
             yield return null;
 
             Assert.AreEqual(1, graphView.GraphElements.ToList().Count);
@@ -61,7 +59,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             node2.Select(graphView, noAdditiveSelect);
 
             helpers.ExecuteCommand("Delete");
-            graphView.RebuildUI(GraphModel, Store);
             yield return null;
 
             Assert.AreEqual(1, graphView.GraphElements.ToList().Count);

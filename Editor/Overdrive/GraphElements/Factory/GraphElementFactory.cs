@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -9,27 +7,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public static class GraphElementFactory
     {
-        static Dictionary<ValueTuple<GraphView, IGraphElementModel>, IGraphElement> s_UIForModel = new Dictionary<ValueTuple<GraphView, IGraphElementModel>, IGraphElement>();
-
         [CanBeNull]
-        public static T GetUI<T>(this IGraphElementModel model, GraphView graphView) where T : class, IGraphElement
-        {
-            return s_UIForModel.TryGetValue(new ValueTuple<GraphView, IGraphElementModel>(graphView, model), out var ui) ? ui as T : null;
-        }
-
-        [CanBeNull]
-        internal static GraphElement GetUI(this IGraphElementModel model, GraphView graphView)
-        {
-            return s_UIForModel.TryGetValue(new ValueTuple<GraphView, IGraphElementModel>(graphView, model), out var ui) ? ui as GraphElement : null;
-        }
-
-        [CanBeNull]
-        public static T CreateUI<T>(this IGraphElementModel model, GraphView graphView, Store store) where T : class, IGraphElement
-        {
-            return CreateUI<T>(graphView, store, model);
-        }
-
         public static T CreateUI<T>(GraphView graphView, Store store, IGraphElementModel model) where T : class, IGraphElement
+        {
+            return CreateUI<T>(graphView, store, model, null);
+        }
+
+        public static T CreateUI<T>(GraphView graphView, Store store, IGraphElementModel model, string context) where T : class, IGraphElement
         {
             if (model == null)
             {
@@ -46,7 +30,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             T newElem = null;
             if (ext != null)
             {
-                var nodeBuilder = new ElementBuilder { GraphView = graphView };
+                var nodeBuilder = new ElementBuilder { GraphView = graphView, Context = context };
                 newElem = ext.Invoke(null, new object[] { nodeBuilder, store, model }) as T;
             }
 
@@ -55,8 +39,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 Debug.LogError($"GraphElementFactory doesn't know how to create a UI for element of type: {model.GetType()}");
                 return null;
             }
-
-            s_UIForModel[new ValueTuple<GraphView, IGraphElementModel>(graphView, model)] = newElem;
 
             return newElem;
         }
@@ -73,16 +55,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             var parameters = x.GetParameters();
             return parameters.Length == 3 && parameters[1].ParameterType == typeof(Store);
-        }
-
-        public static void RemoveAll(GraphView graphView)
-        {
-            var toRemove = s_UIForModel.Where(pair => pair.Key.Item1 == graphView).Select(pair => pair.Key).ToList();
-
-            foreach (var key in toRemove)
-            {
-                s_UIForModel.Remove(key);
-            }
         }
     }
 }

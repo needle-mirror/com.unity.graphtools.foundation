@@ -16,9 +16,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             m_AlignmentHelper.SendAlignAction(reference);
             yield return null;
 
-            graphView.RebuildUI(GraphModel, Store);
-            yield return null;
-
             // Get the UI elements
             m_FirstNode = FirstNodeModel.GetUI<Node>(graphView);
             m_SecondNode = SecondNodeModel.GetUI<Node>(graphView);
@@ -418,11 +415,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 yield return null;
             }
 
-            actions = SelectConnectedNodes();
-            while (actions.MoveNext())
-            {
-                yield return null;
-            }
+            SelectConnectedNodes();
+            yield return null;
 
             float expectedDistanceBetweenFirstSecond = GraphViewStaticBridge.RoundToPixelGrid(secondNodePos.y - firstNodePos.y);
             float expectedYmin = GraphViewStaticBridge.RoundToPixelGrid(fourthNodePos.y);
@@ -464,11 +458,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 yield return null;
             }
 
-            actions = SelectConnectedNodes();
-            while (actions.MoveNext())
-            {
-                yield return null;
-            }
+            SelectConnectedNodes();
+            yield return null;
 
             float expectedDistanceBetweenFirstSecond = GraphViewStaticBridge.RoundToPixelGrid(secondNodePos.y - firstNodePos.y);
             float expectedYmax = GraphViewStaticBridge.RoundToPixelGrid(fourthNodePos.y + m_FourthNode.layout.height);
@@ -516,11 +507,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 yield return null;
             }
 
-            actions = SelectConnectedNodes();
-            while (actions.MoveNext())
-            {
-                yield return null;
-            }
+            SelectConnectedNodes();
+            yield return null;
 
             float expectedDistanceBetweenFirstSecond = GraphViewStaticBridge.RoundToPixelGrid(secondNodePos.x - firstNodePos.x);
             float expectedXmin = GraphViewStaticBridge.RoundToPixelGrid(firstNodePos.x);
@@ -568,11 +556,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 yield return null;
             }
 
-            actions = SelectConnectedNodes();
-            while (actions.MoveNext())
-            {
-                yield return null;
-            }
+            SelectConnectedNodes();
+            yield return null;
 
             float expectedDistanceBetweenFirstSecond = GraphViewStaticBridge.RoundToPixelGrid(secondNodePos.x - firstNodePos.x);
             float expectedXmax = GraphViewStaticBridge.RoundToPixelGrid(fourthNodePos.x + m_FourthNode.layout.width);
@@ -620,11 +605,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 yield return null;
             }
 
-            actions = SelectConnectedNodes();
-            while (actions.MoveNext())
-            {
-                yield return null;
-            }
+            SelectConnectedNodes();
+            yield return null;
 
             float expectedDistanceBetweenFirstSecond = m_SecondNode.layout.xMin - m_FirstNode.layout.xMax;
             float expectedCenter = GraphViewStaticBridge.RoundToPixelGrid(((m_SecondNode.layout.center.x + m_FirstNode.layout.center.x) / 2 + m_ThirdNode.layout.center.x + m_FourthNode.layout.center.x) / 3);
@@ -666,11 +648,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 yield return null;
             }
 
-            actions = SelectConnectedNodes();
-            while (actions.MoveNext())
-            {
-                yield return null;
-            }
+            SelectConnectedNodes();
+            yield return null;
 
             float expectedDistanceBetweenFirstSecond = GraphViewStaticBridge.RoundToPixelGrid(secondNodePos.y - firstNodePos.y);
             float expectedCenter = GraphViewStaticBridge.RoundToPixelGrid(((m_SecondNode.layout.center.y + m_FirstNode.layout.center.y) / 2 + m_ThirdNode.layout.center.y + m_FourthNode.layout.center.y) / 3);
@@ -713,17 +692,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Vector2 thirdNodePos = new Vector2(300, 200);
             Vector2 fourthNodePos = new Vector2(500, 400);
 
-            var actions = CreateConnectedNodes(firstNodePos, secondNodePos, thirdNodePos, fourthNodePos, false);
+            var actions = CreateConnectedNodes(firstNodePos, secondNodePos, thirdNodePos, fourthNodePos, true);
             while (actions.MoveNext())
             {
                 yield return null;
             }
 
-            actions = SelectConnectedNodes();
-            while (actions.MoveNext())
-            {
-                yield return null;
-            }
+            SelectConnectedNodes();
+            yield return null;
 
             float expectedDistanceBetweenFirstSecond = m_SecondNode.layout.xMin - m_FirstNode.layout.xMax;
             float expectedXMax = m_FourthNode.layout.xMax;
@@ -764,7 +740,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             FourthNodeModel = CreateNode("Node4", fourthNodePos, 0, 0, 1, 1);
             var fifthNodeModel = CreateNode("Node5", fifthNodePos, 0, 0, 1);
 
-            graphView.RebuildUI(GraphModel, Store);
+            Store.State.RequestUIRebuild();
             yield return null;
 
             IPortModel outputPortFirstNode = FirstNodeModel.OutputsByDisplayOrder[0];
@@ -785,9 +761,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             IPortModel inputPortFifthNode = fifthNodeModel.InputsByDisplayOrder[0];
             Assert.IsNotNull(inputPortFifthNode);
-
-            graphView.RebuildUI(GraphModel, Store);
-            yield return null;
 
             // Connect the ports together
             var actions = ConnectPorts(outputPortFirstNode, inputPortThirdNode);
@@ -820,9 +793,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 yield return null;
             }
 
-            graphView.RebuildUI(GraphModel, Store);
-            yield return null;
-
             Assert.AreEqual(5, GraphModel.EdgeModels.Count, "Not all edges were created.");
 
             // Get the UI nodes
@@ -837,11 +807,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Assert.IsNotNull(m_FourthNode);
             Assert.IsNotNull(fifthNode);
 
-            actions = SelectConnectedNodes();
-            while (actions.MoveNext())
-            {
-                yield return null;
-            }
+            SelectConnectedNodes();
+            yield return null;
 
             // Select node 5
             Vector2 selectionPosNode5 = graphView.contentViewContainer.LocalToWorld(fifthNode.layout.position) + k_SelectionOffset;
@@ -899,7 +866,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             FourthNodeModel = CreateNode("Node4", fourthNodePos, 0, 0, 1, 1);
             var fifthNodeModel = CreateNode("Node5", fifthNodePos, 0, 0, 1);
 
-            graphView.RebuildUI(GraphModel, Store);
+            Store.State.RequestUIRebuild();
             yield return null;
 
             IPortModel outputPortFirstNode = FirstNodeModel.OutputsByDisplayOrder[0];
@@ -920,9 +887,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             IPortModel inputPortFifthNode = fifthNodeModel.InputsByDisplayOrder[0];
             Assert.IsNotNull(inputPortFifthNode);
-
-            graphView.RebuildUI(GraphModel, Store);
-            yield return null;
 
             // Connect the ports together
             var actions = ConnectPorts(outputPortFirstNode, inputPortThirdNode);
@@ -955,9 +919,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 yield return null;
             }
 
-            graphView.RebuildUI(GraphModel, Store);
-            yield return null;
-
             Assert.AreEqual(5, GraphModel.EdgeModels.Count, "Not all edges were created.");
 
             // Get the UI nodes
@@ -972,11 +933,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Assert.IsNotNull(m_FourthNode);
             Assert.IsNotNull(fifthNode);
 
-            actions = SelectConnectedNodes();
-            while (actions.MoveNext())
-            {
-                yield return null;
-            }
+            SelectConnectedNodes();
+            yield return null;
 
             // Select node 5
             Vector2 selectionPosNode5 = graphView.contentViewContainer.LocalToWorld(fifthNode.layout.position) + k_SelectionOffset;
@@ -1029,7 +987,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             FourthNodeModel = CreateNode("Node4", fourthNodePos, 0, 0, 1, 1);
             var fifthNodeModel = CreateNode("Node5", fifthNodePos, 0, 0, 1);
 
-            graphView.RebuildUI(GraphModel, Store);
+            Store.State.RequestUIRebuild();
             yield return null;
 
             IPortModel outputPortFirstNode = FirstNodeModel.OutputsByDisplayOrder[0];
@@ -1052,9 +1010,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             IPortModel inputPortFifthNode = fifthNodeModel.InputsByDisplayOrder[0];
             Assert.IsNotNull(inputPortFifthNode);
-
-            graphView.RebuildUI(GraphModel, Store);
-            yield return null;
 
             // Connect the ports together
             var actions = ConnectPorts(outputPortFirstNode, inputPortThirdNode);
@@ -1088,9 +1043,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 yield return null;
             }
 
-            graphView.RebuildUI(GraphModel, Store);
-            yield return null;
-
             Assert.AreEqual(5, GraphModel.EdgeModels.Count, "Not all edges were created.");
 
             // Get the UI nodes
@@ -1105,11 +1057,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Assert.IsNotNull(m_FourthNode);
             Assert.IsNotNull(fifthNode);
 
-            actions = SelectConnectedNodes();
-            while (actions.MoveNext())
-            {
-                yield return null;
-            }
+            SelectConnectedNodes();
+            yield return null;
 
             // Select node 5
             Vector2 selectionPosNode5 = graphView.contentViewContainer.LocalToWorld(fifthNode.layout.position) + k_SelectionOffset;

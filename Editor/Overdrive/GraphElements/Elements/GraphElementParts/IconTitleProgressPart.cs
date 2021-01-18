@@ -1,4 +1,3 @@
-using System;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 
@@ -6,8 +5,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class IconTitleProgressPart : EditableTitlePart
     {
-        public static new readonly string k_UssClassName = "ge-icon-title-progress";
-        public static readonly string k_CollapseButtonPartName = "collapse-button";
+        public static new readonly string ussClassName = "ge-icon-title-progress";
+        public static readonly string collapseButtonPartName = "collapse-button";
 
         public static IconTitleProgressPart Create(string name, IGraphElementModel model, IGraphElement graphElement, string parentClassName)
         {
@@ -30,7 +29,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             if (model is ICollapsible)
             {
-                var collapseButtonPart = NodeCollapseButtonPart.Create(k_CollapseButtonPartName, model, ownerElement, k_UssClassName);
+                var collapseButtonPart = NodeCollapseButtonPart.Create(collapseButtonPartName, model, ownerElement, ussClassName);
                 PartList.AppendPart(collapseButtonPart);
             }
         }
@@ -41,44 +40,42 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 return;
 
             m_Root = new VisualElement { name = PartName };
-            m_Root.AddToClassList(k_UssClassName);
+            m_Root.AddToClassList(ussClassName);
             m_Root.AddToClassList(m_ParentClassName.WithUssElement(PartName));
 
             TitleContainer = new VisualElement();
-            TitleContainer.AddToClassList(k_UssClassName.WithUssElement("title-container"));
+            TitleContainer.AddToClassList(ussClassName.WithUssElement("title-container"));
             TitleContainer.AddToClassList(m_ParentClassName.WithUssElement("title-container"));
             m_Root.Add(TitleContainer);
 
             var icon = new VisualElement();
-            icon.AddToClassList(k_UssClassName.WithUssElement("icon"));
+            icon.AddToClassList(ussClassName.WithUssElement("icon"));
             icon.AddToClassList(m_ParentClassName.WithUssElement("icon"));
             if (!string.IsNullOrEmpty(nodeModel.IconTypeString))
             {
-                icon.AddToClassList(k_UssClassName.WithUssElement("icon").WithUssModifier(nodeModel.IconTypeString));
+                icon.AddToClassList(ussClassName.WithUssElement("icon").WithUssModifier(nodeModel.IconTypeString));
                 icon.AddToClassList(m_ParentClassName.WithUssElement("icon").WithUssModifier(nodeModel.IconTypeString));
             }
             TitleContainer.Add(icon);
 
-            bool isRenamable = m_Model.IsRenamable();
-
-            if (isRenamable)
+            if (HasEditableLabel)
             {
-                TitleLabel = new EditableLabel { name = k_TitleLabelName };
+                TitleLabel = new EditableLabel { name = titleLabelName };
                 TitleLabel.RegisterCallback<ChangeEvent<string>>(OnRename);
             }
             else
             {
-                TitleLabel = new Label { name = k_TitleLabelName };
+                TitleLabel = new Label { name = titleLabelName };
             }
 
-            TitleLabel.AddToClassList(k_UssClassName.WithUssElement("title"));
+            TitleLabel.AddToClassList(ussClassName.WithUssElement("title"));
             TitleLabel.AddToClassList(m_ParentClassName.WithUssElement("title"));
             TitleContainer.Add(TitleLabel);
 
             if (nodeModel.HasProgress)
             {
                 CoroutineProgressBar = new ProgressBar();
-                CoroutineProgressBar.AddToClassList(k_UssClassName.WithUssElement("progress-bar"));
+                CoroutineProgressBar.AddToClassList(ussClassName.WithUssElement("progress-bar"));
                 CoroutineProgressBar.AddToClassList(m_ParentClassName.WithUssElement("progress-bar"));
                 TitleContainer.Add(CoroutineProgressBar);
             }

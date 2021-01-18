@@ -1,4 +1,5 @@
 using System.Linq;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels
 {
@@ -6,7 +7,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels
     {
         protected override void OnDefineNode()
         {
-            AddDataOutputPort<PortModel>("", TypeHandle.Unknown);
+            this.AddDataOutputPort("", TypeHandle.Unknown);
         }
 
         public IPortModel OutputPort => Ports.First();

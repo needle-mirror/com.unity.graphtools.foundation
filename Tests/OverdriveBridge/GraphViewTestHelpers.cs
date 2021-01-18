@@ -34,6 +34,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.TestBridge
             return new TimerEventSchedulerWrapper(graphView);
         }
 
-        public static int SelectionDraggerPanInterval => SelectionDragger.k_PanInterval;
+        public static int SelectionDraggerPanInterval => SelectionDragger.panInterval;
     }
 }

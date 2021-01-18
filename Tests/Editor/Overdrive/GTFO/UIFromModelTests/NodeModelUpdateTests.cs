@@ -13,7 +13,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             var node = new CollapsibleInOutNode();
             node.SetupBuildAndUpdate(nodeModel, null, null);
 
-            var collapseButton = node.Q<CollapseButton>(CollapsibleInOutNode.k_CollapseButtonPartName);
+            var collapseButton = node.Q<CollapseButton>(CollapsibleInOutNode.collapseButtonPartName);
             Assert.IsFalse(collapseButton.value);
 
             nodeModel.Collapsed = true;
@@ -31,7 +31,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             var node = new CollapsibleInOutNode();
             node.SetupBuildAndUpdate(nodeModel, null, null);
 
-            var titleLabel = node.Q<Label>(EditableTitlePart.k_TitleLabelName);
+            var titleLabel = node.Q<Label>(EditableTitlePart.titleLabelName);
             Assert.AreEqual(initialTitle, titleLabel.text);
 
             nodeModel.Title = newTitle;
@@ -49,7 +49,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             var node = new Node();
             node.SetupBuildAndUpdate(nodeModel, null, null);
 
-            var titleLabel = node.Q(EditableTitlePart.k_TitleLabelName).Q<Label>(EditableLabel.k_LabelName);
+            var titleLabel = node.Q(EditableTitlePart.titleLabelName).Q<Label>(EditableLabel.labelName);
             Assert.AreEqual(initialTitle, titleLabel.text);
 
             nodeModel.Title = newTitle;

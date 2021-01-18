@@ -38,8 +38,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (m_SelectedGraphView != null)
             {
                 m_Blackboard = m_SelectedGraphView.Blackboard;
-                m_Blackboard.windowed = true;
-                rootVisualElement.Add(m_Blackboard);
+                if (m_Blackboard != null)
+                {
+                    m_Blackboard.Windowed = true;
+                    rootVisualElement.Add(m_Blackboard);
+                }
             }
             else
             {

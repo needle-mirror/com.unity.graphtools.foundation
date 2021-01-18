@@ -5,8 +5,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class EditableTitlePart : BaseGraphElementPart
     {
-        public static readonly string k_UssClassName = "ge-editable-title-part";
-        public static readonly string k_TitleLabelName = "title";
+        public static readonly string ussClassName = "ge-editable-title-part";
+        public static readonly string titleLabelName = "title";
 
         public static EditableTitlePart Create(string name, IGraphElementModel model, IGraphElement graphElement, string parentClassName, bool multiline = false)
         {
@@ -22,7 +22,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         protected VisualElement TitleContainer { get; set; }
 
-        protected VisualElement TitleLabel { get; set; }
+        public VisualElement TitleLabel { get; protected set; }
 
         public override VisualElement Root => TitleContainer;
 
@@ -32,27 +32,28 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             m_Multiline = multiline;
         }
 
+        protected virtual bool HasEditableLabel => m_Model.IsRenamable();
+
         protected override void BuildPartUI(VisualElement container)
         {
             if (m_Model is IHasTitle)
             {
-                bool isRenamable = m_Model.IsRenamable();
                 TitleContainer = new VisualElement { name = PartName };
-                TitleContainer.AddToClassList(k_UssClassName);
+                TitleContainer.AddToClassList(ussClassName);
                 TitleContainer.AddToClassList(m_ParentClassName.WithUssElement(PartName));
 
-                if (isRenamable)
+                if (HasEditableLabel)
                 {
-                    TitleLabel = new EditableLabel { name = k_TitleLabelName, multiline = m_Multiline };
+                    TitleLabel = new EditableLabel { name = titleLabelName, multiline = m_Multiline };
                     TitleLabel.RegisterCallback<ChangeEvent<string>>(OnRename);
                 }
                 else
                 {
-                    TitleLabel = new Label { name = k_TitleLabelName };
+                    TitleLabel = new Label { name = titleLabelName };
                 }
 
-                TitleLabel.AddToClassList(k_UssClassName.WithUssElement(k_TitleLabelName));
-                TitleLabel.AddToClassList(m_ParentClassName.WithUssElement(k_TitleLabelName));
+                TitleLabel.AddToClassList(ussClassName.WithUssElement(titleLabelName));
+                TitleLabel.AddToClassList(m_ParentClassName.WithUssElement(titleLabelName));
                 TitleContainer.Add(TitleLabel);
 
                 container.Add(TitleContainer);

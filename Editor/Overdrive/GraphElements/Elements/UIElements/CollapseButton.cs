@@ -1,17 +1,24 @@
-using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class CollapseButton : VisualElement, INotifyValueChanged<bool>
     {
-        public static readonly string k_UssClassName = "ge-collapse-button";
-        public static readonly string k_CollapsedUssClassName = k_UssClassName.WithUssModifier("collapsed");
+        public static readonly string ussClassName = "ge-collapse-button";
+        public static readonly string collapsedUssClassName = ussClassName.WithUssModifier("collapsed");
 
-        public static readonly string k_IconElementName = "icon";
-        public static readonly string k_IconElementUssClassName = k_UssClassName.WithUssElement(k_IconElementName);
+        public static readonly string iconElementName = "icon";
+        public static readonly string iconElementUssClassName = ussClassName.WithUssElement(iconElementName);
 
         bool m_Collapsed;
+
+        Clickable m_Clickable;
+
+        protected Clickable Clickable
+        {
+            get => m_Clickable;
+            set => this.ReplaceManipulator(ref m_Clickable, value);
+        }
 
         public bool value
         {
@@ -35,14 +42,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             m_Collapsed = false;
 
             this.AddStylesheet("CollapseButton.uss");
-            AddToClassList(k_UssClassName);
+            AddToClassList(ussClassName);
 
-            var icon = new VisualElement { name = k_IconElementName };
-            icon.AddToClassList(k_IconElementUssClassName);
+            var icon = new VisualElement { name = iconElementName };
+            icon.AddToClassList(iconElementUssClassName);
             Add(icon);
 
-            var clickable = new Clickable(OnClick);
-            this.AddManipulator(clickable);
+            Clickable = new Clickable(OnClick);
         }
 
         void OnClick()
@@ -53,7 +59,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public void SetValueWithoutNotify(bool newValue)
         {
             m_Collapsed = newValue;
-            EnableInClassList(k_CollapsedUssClassName, m_Collapsed);
+            EnableInClassList(collapsedUssClassName, m_Collapsed);
         }
     }
 }

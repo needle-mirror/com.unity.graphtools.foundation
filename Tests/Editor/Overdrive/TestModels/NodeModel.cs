@@ -35,22 +35,26 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels
         }
 
         // Can't be on the property as we inherit a getter only GraphModel property.
-        public void SetGraphModel(IGraphModel graphModel)
+        internal void SetGraphModel(IGraphModel graphModel)
         {
             m_GraphModel = graphModel;
         }
 
-        protected override IPortModel CreatePort(Direction direction, string portName, PortType portType,
+        public override IPortModel CreatePort(Direction direction, string portName, PortType portType,
             TypeHandle dataType, string portId, PortModelOptions options)
         {
-            return new PortModel(GraphModel)
+            var port = new PortModel
             {
-                Title = portName ?? "",
                 Direction = direction,
                 PortType = portType,
                 DataTypeHandle = dataType,
+                Title = portName,
+                UniqueName = portId,
+                Options = options,
                 NodeModel = this
             };
+            port.SetGraphModel(GraphModel);
+            return port;
         }
     }
 }

@@ -6,7 +6,7 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public abstract class BlankPage : VisualElement
+    public class BlankPage : VisualElement
     {
         readonly Store m_Store;
 
@@ -18,7 +18,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             OnboardingProviders = Enumerable.Empty<IOnboardingProvider>();
         }
 
-        public virtual void UpdateUI()
+        public virtual void CreateUI()
         {
             Clear();
 
@@ -26,6 +26,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             {
                 Add(provider.CreateOnboardingElement(m_Store));
             }
+        }
+
+        public virtual void UpdateUI()
+        {
         }
     }
 }

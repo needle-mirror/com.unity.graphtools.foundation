@@ -7,7 +7,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     public interface IConstantEditorBuilder
     {
         Action<IChangeEvent> OnValueChanged { get; }
-        IEditorDataModel EditorDataModel { get; }
+        Store Store { get; }
         bool ConstantIsLocked { get; }
+        IPortModel PortModel { get; }
     }
 }

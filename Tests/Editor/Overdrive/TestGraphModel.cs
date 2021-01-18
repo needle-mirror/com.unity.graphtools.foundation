@@ -1,22 +1,54 @@
 using System;
-using System.IO;
-using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
+using System.Collections.Generic;
+using GraphModel = UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.GraphModel;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
 {
     [Serializable]
-    class TestGraphModel : GraphModel
+    class TestGraphModel : GraphModel, IBlackboardGraphModel
     {
-        static readonly string k_AssemblyRelativePath = Path.Combine("Assets", "Runtime", "Tests");
+        public override Type DefaultStencilType => typeof(ClassStencil);
+        public bool Valid => true;
 
-        public override string GetSourceFilePath()
+        public string GetBlackboardTitle()
         {
-            return Path.Combine(k_AssemblyRelativePath, FriendlyScriptName + ".asset");
+            return "Blackboard";
         }
 
-        public override CompilationResult Compile(UnityEngine.GraphToolsFoundation.Overdrive.ITranslator translator)
+        public string GetBlackboardSubTitle()
         {
-            return new CompilationResult();
+            return "";
         }
+
+        public IEnumerable<string> SectionNames
+        {
+            get
+            {
+                yield return "Variables";
+            }
+        }
+
+        public IEnumerable<IVariableDeclarationModel> GetSectionRows(string sectionName)
+        {
+            return VariableDeclarations;
+        }
+
+        public void PopulateCreateMenu(string sectionName, GenericMenu menu, Store store)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IGraphModel GraphModel => this;
+        public GUID Guid { get; set; }
+
+        public void AssignNewGuid()
+        {
+            Guid = GUID.Generate();
+        }
+
+        public IReadOnlyList<Capabilities> Capabilities => new List<Capabilities>
+        {
+            Overdrive.Capabilities.NoCapabilities
+        };
     }
 }

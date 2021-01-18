@@ -19,6 +19,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public static readonly BoolPref LogAllDispatchedActions = new BoolPref(9, nameof(LogAllDispatchedActions));
         public static readonly BoolPref ShowUnusedNodes = new BoolPref(10, nameof(ShowUnusedNodes));
         public static readonly BoolPref SearcherInRegularWindow = new BoolPref(11, nameof(SearcherInRegularWindow));
+        public static readonly BoolPref LogUIUpdate = new BoolPref(12, nameof(LogUIUpdate));
 
         [PublicAPI]
         protected static readonly int k_ToolBasePrefId = 10000;
@@ -89,12 +90,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public bool GetBool(BoolPref k)
         {
-            return m_BoolPrefs[k];
+            bool result;
+            m_BoolPrefs.TryGetValue(k, out result);
+            return result;
         }
 
         public int GetInt(IntPref k)
         {
-            return m_IntPrefs[k];
+            int result;
+            m_IntPrefs.TryGetValue(k, out result);
+            return result;
         }
 
         public void SetBool(BoolPref k, bool value)

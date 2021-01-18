@@ -8,9 +8,11 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public abstract class GraphViewEditorWindow : GraphViewEditorWindowBridge
+    public abstract class GraphViewEditorWindow : EditorWindow
     {
-        Store m_Store;
+        [SerializeField]
+        GUID m_GUID;
+
         protected GraphView m_GraphView;
         protected VisualElement m_GraphContainer;
         protected BlankPage m_BlankPage;
@@ -18,14 +20,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         protected Label m_SidePanelTitle;
         protected Label m_CompilationPendingLabel;
         protected MainToolbar m_MainToolbar;
-        protected string m_LastGraphFilePath;
+        protected ErrorToolbar m_ErrorToolbar;
+
+        public GUID GUID => m_GUID;
 
         public virtual IEnumerable<GraphView> GraphViews { get; }
-        public Store Store
-        {
-            get => m_Store;
-            private set => m_Store = value;
-        }
+
+        public Store Store { get; private set; }
 
         public GraphView GraphView => m_GraphView;
         protected MainToolbar MainToolbar => m_MainToolbar;
@@ -37,16 +38,116 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             StoreHelper.RegisterDefaultReducers(Store);
         }
 
+        protected virtual BlankPage CreateBlankPage()
+        {
+            return new BlankPage(Store);
+        }
+
+        protected abstract MainToolbar CreateMainToolbar();
+
+        protected abstract ErrorToolbar CreateErrorToolbar();
+
+        protected abstract GtfoGraphView CreateGraphView();
+
+        protected virtual void Reset()
+        {
+            if (Store?.State == null)
+                return;
+
+            Store.State.WindowState.CurrentGraph = new OpenedGraph(null, null);
+        }
+
         protected virtual void OnEnable()
         {
+            // When we open a window (including when we start the Editor), a new GUID is assigned.
+            // When a window is opened and there is a domain reload, the GUID stays the same.
+            if (m_GUID == default)
+            {
+                m_GUID = GUID.Generate();
+            }
+
             var initialState = CreateInitialState();
             Store = new Store(initialState);
             RegisterReducers();
+
+            rootVisualElement.Clear();
+            rootVisualElement.pickingMode = PickingMode.Ignore;
+
+            m_GraphContainer = new VisualElement { name = "graphContainer" };
+            m_GraphView = CreateGraphView();
+            m_MainToolbar = CreateMainToolbar();
+            m_ErrorToolbar = CreateErrorToolbar();
+            m_BlankPage = CreateBlankPage();
+            m_BlankPage?.CreateUI();
+
+            if (m_MainToolbar != null)
+                rootVisualElement.Add(m_MainToolbar);
+            // AddTracingTimeline();
+            rootVisualElement.Add(m_GraphContainer);
+            if (m_ErrorToolbar != null)
+                m_GraphView.Add(m_ErrorToolbar);
+
+            m_GraphContainer.Add(m_GraphView);
+
+            rootVisualElement.name = "gtfRoot";
+            rootVisualElement.AddStylesheet("GraphViewWindow.uss");
+
+            // PF FIXME: Use EditorApplication.playModeStateChanged / AssemblyReloadEvents ? Make sure it works on all domain reloads.
+
+            // After a domain reload, all loaded objects will get reloaded and their OnEnable() called again
+            // It looks like all loaded objects are put in a deserialization/OnEnable() queue
+            // the previous graph's nodes/edges/... might be queued AFTER this window's OnEnable
+            // so relying on objects to be loaded/initialized is not safe
+            // hence, we need to defer the loading action
+            rootVisualElement.schedule.Execute(() =>
+            {
+                var lastGraphFilePath = Store.State.WindowState.LastOpenedGraph.GraphAssetModelPath;
+                if (!string.IsNullOrEmpty(lastGraphFilePath))
+                {
+                    try
+                    {
+                        Store.Dispatch(new LoadGraphAssetAction(
+                            lastGraphFilePath,
+                            Store.State.WindowState.LastOpenedGraph.BoundObject,
+                            LoadGraphAssetAction.Type.KeepHistory));
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogError(e);
+                    }
+                }
+                else
+                {
+                    // Force display of blank page.
+                    Store.MarkStateDirty();
+                }
+            }).ExecuteLater(0);
         }
 
         protected virtual void OnDisable()
         {
+            UnloadGraph();
+
+            if (m_ErrorToolbar != null)
+                m_GraphView.Remove(m_ErrorToolbar);
+            rootVisualElement.Remove(m_GraphContainer);
+            if (m_MainToolbar != null)
+                rootVisualElement.Remove(m_MainToolbar);
+
+            m_GraphView = null;
+            m_MainToolbar = null;
+            m_ErrorToolbar = null;
+            m_BlankPage = null;
+
+            // Calling Dispose() manually to clean things up now, not at GC time.
             Store.Dispose();
+            Store = null;
+        }
+
+        protected virtual void OnDestroy()
+        {
+            // When window is closed, remove all associated state to avoid cluttering the Library folder.
+            PersistedEditorState.RemoveViewState(GUID);
         }
 
         public override IEnumerable<Type> GetExtraPaneTypes()
@@ -70,7 +171,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         protected void UpdateGraphContainer()
         {
-            var graphModel = m_Store.GetState().CurrentGraphModel;
+            var graphModel = Store?.State?.GraphModel;
 
             if (graphModel != null)
             {
@@ -98,14 +199,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public virtual void UnloadGraph()
         {
-            m_Store.GetState().UnloadCurrentGraphAsset();
-            m_LastGraphFilePath = null;
+            Store.State.UnloadCurrentGraphAsset();
             UpdateGraphContainer();
         }
 
         public void UnloadGraphIfDeleted()
         {
-            var iGraphModel = m_Store.GetState().AssetModel as ScriptableObject;
+            var iGraphModel = Store.State.AssetModel as ScriptableObject;
             if (!iGraphModel)
             {
                 UnloadGraph();

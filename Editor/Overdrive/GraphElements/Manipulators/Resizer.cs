@@ -7,13 +7,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class Resizer : VisualElement
     {
-        private Vector2 m_Start;
-        private Vector2 m_MinimumSize;
-        private Rect m_StartPos;
-        private Action m_OnResizedCallback;
+        public static readonly string ussClassName = "ge-resizer";
+        public static readonly string bothDirectionModifierClassName = ussClassName.WithUssModifier("both-directions");
+        public static readonly string horizontalModifierClassName = ussClassName.WithUssModifier("horizontal");
+        public static readonly string verticalModifierClassName = ussClassName.WithUssModifier("vertical");
+        public static readonly string iconElementUssClassName = ussClassName.WithUssElement("icon");
+
+        Vector2 m_Start;
+        Vector2 m_MinimumSize;
+        Rect m_StartPos;
+        Action m_OnResizedCallback;
         static readonly Vector2 k_ResizerSize = new Vector2(30.0f, 30.0f);
 
-        public MouseButton activateButton { get; set; }
+        public MouseButton ActivateButton { get; set; }
 
         bool m_Active;
 
@@ -22,26 +28,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
         }
 
-        public Resizer(Action onResizedCallback) :
-            this(k_ResizerSize, onResizedCallback)
-        {
-        }
-
         public Resizer(Vector2 minimumSize, Action onResizedCallback = null)
         {
             m_MinimumSize = minimumSize;
-            style.position = Position.Absolute;
-            style.top = float.NaN;
-            style.left = float.NaN;
-            style.bottom = 0f;
-            style.right = 0f;
-            // make clickable area bigger than render area
-            style.paddingLeft = 10f;
-            style.paddingTop = 14f;
-            style.width = 20f;
-            style.height = 20f;
-            style.unityBackgroundScaleMode = ScaleMode.ScaleAndCrop;
-
             m_Active = false;
             m_OnResizedCallback = onResizedCallback;
 
@@ -50,12 +39,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             RegisterCallback<MouseMoveEvent>(OnMouseMove);
 
             ClearClassList();
-            AddToClassList("resizer");
+            AddToClassList(ussClassName);
 
-            var icon = new VisualElement() {
-                style = { unityBackgroundScaleMode = ScaleMode.ScaleAndCrop }
-            };
-            icon.AddToClassList("resizer-icon");
+            var icon = new VisualElement();
+            icon.AddToClassList(iconElementUssClassName);
             Add(icon);
         }
 
@@ -67,18 +54,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 return;
             }
 
-            IPanel panel = (e.target as VisualElement)?.panel;
-            if (panel.GetCapturingElement(PointerId.mousePointerId) != null)
+            var targetPanel = (e.target as VisualElement)?.panel;
+            if (targetPanel.GetCapturingElement(PointerId.mousePointerId) != null)
                 return;
 
-            var ce = parent as GraphElement;
-            if (ce == null)
+            if (!(parent is GraphElement ce))
                 return;
 
             if (!ce.IsResizable())
                 return;
 
-            if (e.button == (int)activateButton)
+            if (e.button == (int)ActivateButton)
             {
                 m_Start = this.ChangeCoordinatesTo(parent, e.localMousePosition);
                 m_StartPos = parent.layout;
@@ -106,7 +92,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (!m_Active)
                 return;
 
-            if (e.button == (int)activateButton && m_Active)
+            if (e.button == (int)ActivateButton && m_Active)
             {
                 if (m_OnResizedCallback != null)
                     m_OnResizedCallback();
@@ -129,31 +115,31 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             // Then can be resize in all direction
             if (ce.ResizeRestriction == ResizeRestriction.None)
             {
-                if (ClassListContains("resizeAllDir") == false)
+                if (ClassListContains(bothDirectionModifierClassName) == false)
                 {
-                    AddToClassList("resizeAllDir");
-                    RemoveFromClassList("resizeHorizontalDir");
-                    RemoveFromClassList("resizeVerticalDir");
+                    AddToClassList(bothDirectionModifierClassName);
+                    RemoveFromClassList(horizontalModifierClassName);
+                    RemoveFromClassList(verticalModifierClassName);
                 }
             }
             else if (ce.resolvedStyle.position == Position.Absolute)
             {
                 if (ce.resolvedStyle.flexDirection == FlexDirection.Column)
                 {
-                    if (ClassListContains("resizeHorizontalDir") == false)
+                    if (ClassListContains(horizontalModifierClassName) == false)
                     {
-                        AddToClassList("resizeHorizontalDir");
-                        RemoveFromClassList("resizeAllDir");
-                        RemoveFromClassList("resizeVerticalDir");
+                        AddToClassList(horizontalModifierClassName);
+                        RemoveFromClassList(bothDirectionModifierClassName);
+                        RemoveFromClassList(verticalModifierClassName);
                     }
                 }
                 else if (ce.resolvedStyle.flexDirection == FlexDirection.Row)
                 {
-                    if (ClassListContains("resizeVerticalDir") == false)
+                    if (ClassListContains(verticalModifierClassName) == false)
                     {
-                        AddToClassList("resizeVerticalDir");
-                        RemoveFromClassList("resizeAllDir");
-                        RemoveFromClassList("resizeHorizontalDir");
+                        AddToClassList(verticalModifierClassName);
+                        RemoveFromClassList(bothDirectionModifierClassName);
+                        RemoveFromClassList(horizontalModifierClassName);
                     }
                 }
             }
@@ -172,39 +158,24 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 newSize.x = (newSize.x < minWidth) ? minWidth : ((newSize.x > maxWidth) ? maxWidth : newSize.x);
                 newSize.y = (newSize.y < minHeight) ? minHeight : ((newSize.y > maxHeight) ? maxHeight : newSize.y);
 
-                bool resized = false;
-
                 if (ce.GetPosition().size != newSize)
                 {
                     if (ce.IsLayoutManual())
                     {
                         ce.SetPosition(new Rect(ce.layout.x, ce.layout.y, newSize.x, newSize.y));
-                        resized = true;
                     }
                     else if (ce.ResizeRestriction == ResizeRestriction.None)
                     {
                         ce.style.width = newSize.x;
                         ce.style.height = newSize.y;
-                        resized = true;
                     }
                     else if (parent.resolvedStyle.flexDirection == FlexDirection.Column)
                     {
                         ce.style.width = newSize.x;
-                        resized = true;
                     }
                     else if (parent.resolvedStyle.flexDirection == FlexDirection.Row)
                     {
                         ce.style.height = newSize.y;
-                        resized = true;
-                    }
-                }
-
-                if (resized)
-                {
-                    GraphView graphView = ce.GetFirstAncestorOfType<GraphView>();
-                    if (graphView != null && graphView.ElementResizedCallback != null)
-                    {
-                        graphView.ElementResizedCallback(ce);
                     }
                 }
 

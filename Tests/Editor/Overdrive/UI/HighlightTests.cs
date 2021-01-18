@@ -3,7 +3,6 @@ using System.Collections;
 using System.Linq;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
 using UnityEngine;
 using UnityEngine.TestTools;
 
@@ -27,13 +26,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         {
             base.SetUp();
 
-            m_IntVariableModel = GraphModel.CreateGraphVariableDeclaration(
-                "int", typeof(int).GenerateTypeHandle(), ModifierFlags.None, false
-            );
+            m_IntVariableModel = GraphModel.CreateGraphVariableDeclaration(typeof(int).GenerateTypeHandle(), "int", ModifierFlags.None, false);
 
-            m_StringVariableModel = GraphModel.CreateGraphVariableDeclaration(
-                "string", typeof(string).GenerateTypeHandle(), ModifierFlags.None, false
-            );
+            m_StringVariableModel = GraphModel.CreateGraphVariableDeclaration(typeof(string).GenerateTypeHandle(), "string", ModifierFlags.None, false);
 
             m_IntTokenModel1 = GraphModel.CreateNode<VariableNodeModel>();
             m_IntTokenModel1.DeclarationModel = m_IntVariableModel;
@@ -63,26 +58,29 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             stringToken2 = m_StringTokenModel2.GetUI<TokenNode>(GraphView);
             Assert.IsNotNull(stringToken2);
 
-            intField = GraphView.Blackboard.GraphVariables.FirstOrDefault(gv =>
-                ReferenceEquals((gv as BlackboardVariableField)?.VariableDeclarationModel, m_IntVariableModel));
+            intField = null;
+            stringField = null;
+
+            intField = GraphView.Blackboard.Highlightables.FirstOrDefault(gv =>
+                ReferenceEquals((gv as BlackboardField)?.Model, m_IntVariableModel));
             Assert.IsNotNull(intField);
 
-            stringField = GraphView.Blackboard.GraphVariables.FirstOrDefault(gv =>
-                ReferenceEquals((gv as BlackboardVariableField)?.VariableDeclarationModel, m_StringVariableModel));
+            stringField = GraphView.Blackboard.Highlightables.FirstOrDefault(gv =>
+                ReferenceEquals((gv as BlackboardField)?.Model, m_StringVariableModel));
             Assert.IsNotNull(stringField);
         }
 
         [UnityTest]
         public IEnumerator TestHighlightTokenSelection()
         {
-            Store.ForceRefreshUI(UpdateFlags.All);
+            Store.MarkStateDirty();
             yield return null;
 
             GetUI(out TokenNode intToken1, out TokenNode intToken2, out TokenNode stringToken1, out TokenNode stringToken2,
                 out IHighlightable intField, out IHighlightable stringField);
 
             intToken1.Select(GraphView, false);
-            GraphView.HighlightGraphElements();
+            yield return null;
 
             Assert.IsFalse(intToken1.Highlighted, "1. intToken1.highlighted");
             Assert.IsTrue(intToken2.Highlighted, "1. intToken2.highlighted");
@@ -92,7 +90,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             Assert.IsFalse(stringField.Highlighted, "1. m_StringField.highlighted");
 
             intToken1.Unselect(GraphView);
-            GraphView.HighlightGraphElements();
+            yield return null;
 
             Assert.IsFalse(intToken1.Highlighted, "2. intToken1.highlighted");
             Assert.IsFalse(intToken2.Highlighted, "2. intToken2.highlighted");
@@ -105,19 +103,22 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         [UnityTest]
         public IEnumerator TestHighlightFieldSelection()
         {
-            Store.ForceRefreshUI(UpdateFlags.All);
+            Store.MarkStateDirty();
             yield return null;
 
-            GetUI(out TokenNode intToken1, out TokenNode intToken2, out TokenNode stringToken1, out TokenNode stringToken2,
-                out IHighlightable intField, out IHighlightable stringField);
+            GetUI(out var intToken1, out _, out var stringToken1, out _,
+                out var intField, out var stringField);
 
             (intField as GraphElement)?.Select(GraphView, false);
+            yield return null;
+
             Assert.IsTrue(intToken1.Highlighted, "1. intToken1.highlighted");
             Assert.IsFalse(intField.Highlighted, "1. m_IntField.highlighted");
             Assert.IsFalse(stringToken1.Highlighted, "1. stringToken1.highlighted");
             Assert.IsFalse(stringField.Highlighted, "1. m_StringField.highlighted");
 
             (stringField as GraphElement)?.Select(GraphView, true);
+            yield return null;
 
             Assert.IsTrue(intToken1.Highlighted, "2. intToken1.highlighted");
             Assert.IsFalse(intField.Highlighted, "2. m_IntField.highlighted");
@@ -125,6 +126,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             Assert.IsFalse(stringField.Highlighted, "2. m_StringField.highlighted");
 
             (intField as GraphElement)?.Unselect(GraphView);
+            yield return null;
 
             Assert.IsFalse(intToken1.Highlighted, "3. intToken1.highlighted");
             Assert.IsFalse(intField.Highlighted, "3. m_IntField.highlighted");
@@ -132,6 +134,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             Assert.IsFalse(stringField.Highlighted, "3. m_StringField.highlighted");
 
             (stringField as GraphElement)?.Unselect(GraphView);
+            yield return null;
 
             Assert.IsFalse(intToken1.Highlighted, "4. intToken1.highlighted");
             Assert.IsFalse(intField.Highlighted, "4. m_IntField.highlighted");

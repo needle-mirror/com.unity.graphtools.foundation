@@ -40,6 +40,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             store.RegisterReducer<ResetElementColorAction>(ResetElementColorAction.DefaultReducer);
 
             store.RegisterReducer<CreatePlacematAction>(CreatePlacematAction.DefaultReducer);
+            store.RegisterReducer<TogglePortsAction>(TogglePortsAction.DefaultReducer);
+            store.RegisterReducer<ToggleEdgePortsAction>(ToggleEdgePortsAction.DefaultReducer);
             store.RegisterReducer<ChangePlacematLayoutAction>(ChangePlacematLayoutAction.DefaultReducer);
             store.RegisterReducer<ChangePlacematZOrdersAction>(ChangePlacematZOrdersAction.DefaultReducer);
             store.RegisterReducer<SetPlacematCollapsedAction>(SetPlacematCollapsedAction.DefaultReducer);
@@ -59,9 +61,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             store.RegisterReducer<ItemizeNodeAction>(ItemizeNodeAction.DefaultReducer);
             store.RegisterReducer<ToggleLockConstantNodeAction>(ToggleLockConstantNodeAction.DefaultReducer);
 
+            store.RegisterReducer<InitializeVariableAction>(InitializeVariableAction.DefaultReducer);
             store.RegisterReducer<ChangeVariableTypeAction>(ChangeVariableTypeAction.DefaultReducer);
             store.RegisterReducer<UpdateExposedAction>(UpdateExposedAction.DefaultReducer);
             store.RegisterReducer<UpdateTooltipAction>(UpdateTooltipAction.DefaultReducer);
+            store.RegisterReducer<ExpandOrCollapseBlackboardRowAction>(ExpandOrCollapseBlackboardRowAction.DefaultReducer);
+            store.RegisterReducer<ChangeVariableDeclarationAction>(ChangeVariableDeclarationAction.DefaultReducer);
+
+            store.RegisterReducer<RequestCompilationAction>(RequestCompilationAction.DefaultReducer);
 
             // PF: Dubious actions since they do not act on the model.
             store.RegisterReducer<LoadGraphAssetAction>(LoadGraphAssetAction.DefaultReducer);

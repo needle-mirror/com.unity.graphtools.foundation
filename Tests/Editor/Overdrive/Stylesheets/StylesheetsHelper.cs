@@ -3,14 +3,13 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
 {
-    public static class StylesheetsHelper
+    static class StylesheetsHelper
     {
-        static string StylesheetPath = "Packages/com.unity.graphtools.foundation/Tests/Editor/Overdrive/Stylesheets/";
-
-        public static void AddTestStylesheet(VisualElement ve, string stylesheetName)
+        internal static void AddTestStylesheet(this VisualElement ve, string stylesheetName)
         {
-            StyleSheet stylesheet;
-            stylesheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(StylesheetPath + stylesheetName);
+            const string stylesheetPath = "Packages/com.unity.graphtools.foundation/Tests/Editor/Overdrive/Stylesheets/";
+
+            var stylesheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(stylesheetPath + stylesheetName);
             Assert.IsNotNull(stylesheet);
             ve.styleSheets.Add(stylesheet);
         }

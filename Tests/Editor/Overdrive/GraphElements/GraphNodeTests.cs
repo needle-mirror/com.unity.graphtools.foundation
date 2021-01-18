@@ -73,7 +73,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator SelectedNodeCanBeDeleted()
         {
-            graphView.RebuildUI(GraphModel, Store);
+            Store.State.RequestUIRebuild();
             yield return null;
 
             int initialCount = graphView.Nodes.ToList().Count;
@@ -82,7 +82,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Node node = graphView.Nodes.First();
             graphView.AddToSelection(node);
             graphView.DeleteSelection();
-            graphView.RebuildUI(GraphModel, Store);
             yield return null;
 
             Assert.AreEqual(initialCount - 1, graphView.Nodes.ToList().Count);
@@ -92,7 +91,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         public IEnumerator SelectedEdgeCanBeDeleted()
         {
             var edge = GraphModel.CreateEdge(m_Node1.GetOutputPorts().First(), m_Node2.GetInputPorts().First());
-            graphView.RebuildUI(GraphModel, Store);
+            Store.State.RequestUIRebuild();
             yield return null;
 
             int initialCount = window.GraphView.Edges.ToList().Count;
@@ -100,7 +99,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             window.GraphView.AddToSelection(edge.GetUI<Edge>(graphView));
             window.GraphView.DeleteSelection();
-            graphView.RebuildUI(GraphModel, Store);
             yield return null;
 
             Assert.AreEqual(initialCount - 1, window.GraphView.Edges.ToList().Count);
@@ -112,8 +110,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             graphView.AddToClassList("EdgeColorsMatchCustomPortColors");
 
             var edge = GraphModel.CreateEdge(m_Node2.GetInputPorts().First(), m_Node1.GetOutputPorts().First());
-            graphView.RebuildUI(GraphModel, Store);
-            // Resolve custom styles.
+            Store.State.RequestUIRebuild();
             yield return null;
 
             var outputPort = m_Node1.GetOutputPorts().First().GetUI<Port>(graphView);

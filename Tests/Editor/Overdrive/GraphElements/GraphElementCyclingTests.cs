@@ -29,7 +29,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator ElementCanBeCycledForward()
         {
-            graphView.RebuildUI(GraphModel, Store);
+            Store.State.RequestUIRebuild();
+            yield return null;
 
             List<GraphElement> elemList = graphView.GraphElements.ToList().Where(e => e.IsSelectable() && !(e is Edge)).OrderBy(e => e.controlid).ToList();
 
@@ -41,7 +42,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 helpers.KeyPressed(KeyCode.RightBracket);
                 yield return null;
                 Assert.AreEqual(1, graphView.Selection.Count);
-                Assert.AreEqual(elemList[i], graphView.Selection[0]);
+                Assert.IsNotNull(elemList[i].Model);
+                Assert.AreEqual(elemList[i].Model, (graphView.Selection[0] as IGraphElement)?.Model);
             }
 
             // Cycle one more brings us back to the 1st element
@@ -49,15 +51,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             yield return null;
 
             Assert.AreEqual(1, graphView.Selection.Count);
-            Assert.AreEqual(elemList[0], graphView.Selection[0]);
-
-            yield return null;
+            Assert.IsNotNull(elemList[0].Model);
+            Assert.AreEqual(elemList[0].Model, (graphView.Selection[0] as IGraphElement)?.Model);
         }
 
         [UnityTest]
         public IEnumerator ElementCanBeCycledBackward()
         {
-            graphView.RebuildUI(GraphModel, Store);
+            Store.State.RequestUIRebuild();
+            yield return null;
 
             List<GraphElement> elemList = graphView.GraphElements.ToList().Where(e => e.IsSelectable() && !(e is Edge)).OrderBy(e => e.controlid).ToList();
 
@@ -69,7 +71,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 helpers.KeyPressed(KeyCode.LeftBracket);
                 yield return null;
                 Assert.AreEqual(1, graphView.Selection.Count);
-                Assert.AreEqual(elemList[i], graphView.Selection[0]);
+                Assert.IsNotNull(elemList[i].Model);
+                Assert.AreEqual(elemList[i].Model, (graphView.Selection[0] as IGraphElement)?.Model);
             }
 
             // Cycle one more brings us back to the last element
@@ -77,9 +80,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             yield return null;
 
             Assert.AreEqual(1, graphView.Selection.Count);
-            Assert.AreEqual(elemList[k_NodeCount - 1], graphView.Selection[0]);
-
-            yield return null;
+            Assert.IsNotNull(elemList[k_NodeCount - 1].Model);
+            Assert.AreEqual(elemList[k_NodeCount - 1].Model, (graphView.Selection[0] as IGraphElement)?.Model);
         }
     }
 }

@@ -5,10 +5,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         IGraphElementModel Model { get; }
         Store Store { get; }
         GraphView GraphView { get; }
+        string Context { get; }
 
-        void Setup(IGraphElementModel model, Store store, GraphView graphView);
+        void AddToGraphView(GraphView graphView);
+        void RemoveFromGraphView();
+
+        void Setup(IGraphElementModel model, Store store, GraphView graphView, string context);
         void BuildUI();
         void UpdateFromModel();
-        void SetupBuildAndUpdate(IGraphElementModel model, Store store, GraphView graphView);
+        void SetupBuildAndUpdate(IGraphElementModel model, Store store, GraphView graphView, string context);
+
+        void AddBackwardDependencies();
+        void AddForwardDependencies();
+        void AddModelDependencies();
     }
 }

@@ -10,8 +10,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         static readonly CustomStyleProperty<int> s_LayerProperty = new CustomStyleProperty<int>("--layer");
         static readonly Color k_MinimapColor = new Color(0.9f, 0.9f, 0.9f, 0.5f);
 
-        public static readonly string k_UssClassName = "ge-graph-element";
-        public static readonly string k_SelectableModifierUssClassName = k_UssClassName.WithUssModifier("selectable");
+        public static readonly string ussClassName = "ge-graph-element";
+        public static readonly string selectableModifierUssClassName = ussClassName.WithUssModifier("selectable");
 
         int m_Layer;
 
@@ -19,7 +19,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         bool m_Selected;
 
-        protected ContextualMenuManipulator m_ContextualMenuManipulator;
+        ClickSelector m_ClickSelector;
+
+        ContextualMenuManipulator m_ContextualMenuManipulator;
+
+        protected ContextualMenuManipulator ContextualMenuManipulator
+        {
+            get => m_ContextualMenuManipulator;
+            set => this.ReplaceManipulator(ref m_ContextualMenuManipulator, value);
+        }
+
+        protected UIDependencies Dependencies { get; }
 
         public int Layer
         {
@@ -57,23 +67,30 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public GraphElementPartList PartList { get; private set; }
 
-        protected ClickSelector ClickSelector { get; private set; }
+        protected ClickSelector ClickSelector
+        {
+            get => m_ClickSelector;
+            set => this.ReplaceManipulator(ref m_ClickSelector, value);
+        }
 
         public IGraphElementModel Model { get; private set; }
 
-        // PF make setter private (needed by Blackboard)
-        public Store Store { get; protected set; }
+        public Store Store { get; private set; }
 
-        // PF make setter private (needed by Blackboard)
         public GraphView GraphView { get; protected set; }
+
+        public string Context { get; private set; }
 
         protected GraphElement()
         {
             MinimapColor = k_MinimapColor;
+            RegisterCallback<GeometryChangedEvent>(OnGeometryChanged);
             RegisterCallback<CustomStyleResolvedEvent>(OnCustomStyleResolved);
+            RegisterCallback<DetachFromPanelEvent>(OnDetachedFromPanel);
 
-            m_ContextualMenuManipulator = new ContextualMenuManipulator(BuildContextualMenu);
-            this.AddManipulator(m_ContextualMenuManipulator);
+            ContextualMenuManipulator = new ContextualMenuManipulator(BuildContextualMenu);
+
+            Dependencies = new UIDependencies(this);
         }
 
         public void ResetLayer()
@@ -83,11 +100,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             m_LayerIsInline = false;
             customStyle.TryGetValue(s_LayerProperty, out m_Layer);
             UpdateLayer(prevLayer);
-        }
-
-        void OnCustomStyleResolved(CustomStyleResolvedEvent e)
-        {
-            OnCustomStyleResolved(e.customStyle);
         }
 
         protected virtual void OnCustomStyleResolved(ICustomStyle resolvedCustomStyle)
@@ -102,31 +114,26 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         void UpdateLayer(int prevLayer)
         {
             if (prevLayer != m_Layer)
-            {
-                GraphView view = GetFirstAncestorOfType<GraphView>();
-                if (view != null)
-                {
-                    view.ChangeLayer(this);
-                }
-            }
+                GraphView?.ChangeLayer(this);
         }
 
         protected virtual void BuildContextualMenu(ContextualMenuPopulateEvent evt)
         {
         }
 
-        public void SetupBuildAndUpdate(IGraphElementModel model, Store store, GraphView graphView)
+        public void SetupBuildAndUpdate(IGraphElementModel model, Store store, GraphView graphView, string context = null)
         {
-            Setup(model, store, graphView);
+            Setup(model, store, graphView, context);
             BuildUI();
             UpdateFromModel();
         }
 
-        public void Setup(IGraphElementModel model, Store store, GraphView graphView)
+        public void Setup(IGraphElementModel model, Store store, GraphView graphView, string context)
         {
             Model = model;
             Store = store;
             GraphView = graphView;
+            Context = context;
 
             // Used by graph view to restore selection on graph rebuild.
             viewDataKey = Model != null ? Model.Guid.ToString() : Guid.NewGuid().ToString();
@@ -135,10 +142,24 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             BuildPartList();
         }
 
+        public void AddToGraphView(GraphView graphView)
+        {
+            GraphView = graphView;
+            UIForModel.AddOrReplaceGraphElement(this);
+        }
+
+        public void RemoveFromGraphView()
+        {
+            Dependencies.ClearDependencyLists();
+            UIForModel.RemoveGraphElement(this);
+            GraphView = null;
+        }
+
         protected virtual void BuildPartList() {}
 
         public void BuildUI()
         {
+            ClearElementUI();
             BuildElementUI();
 
             foreach (var component in PartList)
@@ -154,42 +175,72 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             PostBuildUI();
         }
 
+        protected virtual void ClearElementUI()
+        {
+            Clear();
+        }
+
         protected virtual void BuildElementUI()
         {
-            AddToClassList(k_UssClassName);
-
-            // PF: Uncomment when all graph elements have a clean Setup/BuildUI/UpdateFromModel path.
-            // BlackboardVariableField do not.
-            // FIXME: make it a separate step from BuildUI(), since subclasses may want to do stuff before their base.
-            // Clear();
+            AddToClassList(ussClassName);
         }
 
         protected virtual void PostBuildUI() {}
 
         public void UpdateFromModel()
         {
+            if (Store?.State?.Preferences.GetBool(BoolPref.LogUIUpdate) ?? false)
+            {
+                Debug.LogWarning($"Rebuilding {this}");
+                if (GraphView == null)
+                {
+                    Debug.LogWarning($"Updating a graph element that is not attached to a graph view: {this}");
+                }
+            }
+
             UpdateElementFromModel();
 
             foreach (var component in PartList)
             {
                 component.UpdateFromModel();
             }
+
+            Dependencies.UpdateDependencyLists();
         }
 
         protected virtual void UpdateElementFromModel()
         {
-            if (IsSelectable() && ClickSelector == null)
-            {
-                ClickSelector = new ClickSelector();
-                this.AddManipulator(ClickSelector);
-            }
-            else if (!IsSelectable() && ClickSelector != null)
-            {
-                this.RemoveManipulator(ClickSelector);
-                ClickSelector = null;
-            }
+            ClickSelector = IsSelectable() ? new ClickSelector() : null;
 
-            EnableInClassList(k_SelectableModifierUssClassName, IsSelectable() && ClickSelector != null);
+            EnableInClassList(selectableModifierUssClassName, IsSelectable() && ClickSelector != null);
+        }
+
+        public virtual void AddForwardDependencies()
+        {
+        }
+
+        public virtual void AddBackwardDependencies()
+        {
+        }
+
+        public virtual void AddModelDependencies()
+        {
+        }
+
+        void OnGeometryChanged(GeometryChangedEvent evt)
+        {
+            Dependencies.OnGeometryChanged(evt);
+        }
+
+        void OnCustomStyleResolved(CustomStyleResolvedEvent evt)
+        {
+            OnCustomStyleResolved(evt.customStyle);
+            Dependencies.OnCustomStyleResolved(evt);
+        }
+
+        void OnDetachedFromPanel(DetachFromPanelEvent evt)
+        {
+            Dependencies.OnDetachedFromPanel(evt);
         }
 
         public virtual bool IsSelectable()
@@ -249,8 +300,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public virtual void Select(VisualElement selectionContainer, bool additive)
         {
-            var selection = selectionContainer as ISelection;
-            if (selection != null)
+            if (selectionContainer is ISelection selection)
             {
                 if (!selection.Selection.Contains(this))
                 {
@@ -264,8 +314,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public virtual void Unselect(VisualElement  selectionContainer)
         {
-            var selection = selectionContainer as ISelection;
-            if (selection != null)
+            if (selectionContainer is ISelection selection)
             {
                 if (selection.Selection.Contains(this))
                 {
@@ -276,8 +325,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public virtual bool IsSelected(VisualElement selectionContainer)
         {
-            var selection = selectionContainer as ISelection;
-            if (selection != null)
+            if (selectionContainer is ISelection selection)
             {
                 if (selection.Selection.Contains(this))
                 {
@@ -286,6 +334,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
 
             return false;
+        }
+
+        public virtual void Rename()
+        {
+            var editableLabel = this.Q<EditableLabel>();
+            editableLabel.BeginEditing();
         }
     }
 }

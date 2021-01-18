@@ -31,6 +31,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             {
                 throw new NotImplementedException();
             }
+
+            public void OwnerAddedToGraphView()
+            {
+            }
+
+            public void OwnerRemovedFromGraphView()
+            {
+            }
         }
 
         static void AssertSequentialPartList(GraphElementPartList partList, int expectedCount)

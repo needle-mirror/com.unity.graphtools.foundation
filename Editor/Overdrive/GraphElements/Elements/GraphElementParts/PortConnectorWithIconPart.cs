@@ -6,7 +6,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class PortConnectorWithIconPart : PortConnectorPart
     {
-        public static readonly string k_IconUssName = "icon";
+        public static readonly string iconUssName = "icon";
 
         public new static PortConnectorWithIconPart Create(string name, IGraphElementModel model, IGraphElement graphElement, string parentClassName)
         {
@@ -28,7 +28,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             base.BuildPartUI(container);
 
             m_Icon = new Image();
-            m_Icon.AddToClassList(m_ParentClassName.WithUssElement(k_IconUssName));
+            m_Icon.AddToClassList(m_ParentClassName.WithUssElement(iconUssName));
             m_Icon.tintColor = (m_OwnerElement as Port)?.PortColor ?? Color.white;
             Root.Insert(1, m_Icon);
         }

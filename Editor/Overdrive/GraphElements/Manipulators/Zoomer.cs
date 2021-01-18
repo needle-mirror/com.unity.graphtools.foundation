@@ -7,9 +7,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class ContentZoomer : Manipulator
     {
-        public static readonly float DefaultReferenceScale = 1;
+        public static readonly float DefaultReferenceScale = 1.0f;
         public static readonly float DefaultMinScale = 0.25f;
-        public static readonly float DefaultMaxScale = 1;
+        public static readonly float DefaultMaxScale = 1.0f;
         public static readonly float DefaultScaleStep = 0.15f;
 
         /// <summary>

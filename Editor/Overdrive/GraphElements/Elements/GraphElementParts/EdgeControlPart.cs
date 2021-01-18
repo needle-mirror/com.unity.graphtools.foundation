@@ -25,7 +25,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         protected override void BuildPartUI(VisualElement container)
         {
-            m_EdgeControl = new EdgeControl { name = PartName };
+            m_EdgeControl = new EdgeControl() { name = PartName };
             m_EdgeControl.AddToClassList(m_ParentClassName.WithUssElement(PartName));
 
             m_EdgeControl.RegisterCallback<MouseEnterEvent>(OnMouseEnterEdge);

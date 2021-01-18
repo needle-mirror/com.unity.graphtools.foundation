@@ -15,9 +15,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         public void SetUp()
         {
             m_GraphModel = new GraphModel();
-            m_Store = new Store(new TestState(m_GraphModel));
+            m_Store = new Store(new TestState(default, m_GraphModel));
             StoreHelper.RegisterDefaultReducers(m_Store);
             m_GraphView = new TestGraphView(null, m_Store);
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            m_GraphModel = null;
+            m_Store = null;
+            m_GraphView = null;
         }
 
         [Test]
@@ -27,7 +35,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             var placemat = new Placemat();
             placemat.SetupBuildAndUpdate(placematModel, m_Store, m_GraphView);
 
-            var collapseButton = placemat.Q<CollapseButton>(CollapsibleInOutNode.k_CollapseButtonPartName);
+            var collapseButton = placemat.Q<CollapseButton>(CollapsibleInOutNode.collapseButtonPartName);
             Assert.IsFalse(collapseButton.value);
 
             placematModel.Collapsed = true;
@@ -46,7 +54,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             var placemat = new Placemat();
             placemat.SetupBuildAndUpdate(placematModel, m_Store, m_GraphView);
 
-            var titleLabel = placemat.Q(EditableTitlePart.k_TitleLabelName).Q<Label>(EditableLabel.k_LabelName);
+            var titleLabel = placemat.Q(EditableTitlePart.titleLabelName).Q<Label>(EditableLabel.labelName);
             Assert.AreEqual(initialTitle, titleLabel.text);
 
             placematModel.Title = newTitle;

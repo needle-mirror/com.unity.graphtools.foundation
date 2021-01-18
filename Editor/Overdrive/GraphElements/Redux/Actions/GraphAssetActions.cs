@@ -10,11 +10,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     {
         public static void InitTemplate(IGraphTemplate template, IGraphModel graphModel)
         {
-            if (template != null)
-            {
-                template.InitBasicGraph(graphModel);
-                graphModel.LastChanges.ElementsToAutoAlign.AddRange(graphModel.Stencil.GetEntryPoints(graphModel));
-            }
+            template?.InitBasicGraph(graphModel);
         }
     }
 
@@ -50,31 +46,53 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             LoadType = loadType;
         }
 
-        public static void DefaultReducer(State previousState, LoadGraphAssetAction action)
+        public static void DefaultReducer(State state, LoadGraphAssetAction action)
         {
-            if (ReferenceEquals(Selection.activeObject, previousState.AssetModel))
+            if (ReferenceEquals(Selection.activeObject, state.AssetModel))
                 Selection.activeObject = null;
 
-            if (previousState.CurrentGraphModel != null)
+            if (state.GraphModel != null)
             {
+                var compilationState = state.CompilationStateComponent;
                 // force queued compilation to happen now when unloading a graph
-                if (previousState.EditorDataModel?.CompilationPending ?? false)
+                if (compilationState.CompilationPending)
                 {
                     // Do not force compilation if it's the same graph
-                    if ((action.AssetPath != null && previousState.CurrentGraphModel.GetAssetPath() != action.AssetPath) ||
-                        (action.Asset != null && previousState.AssetModel != action.Asset))
+                    if ((action.AssetPath != null && state.AssetModel.GetPath() != action.AssetPath) ||
+                        (action.Asset != null && state.AssetModel != action.Asset))
                     {
-                        previousState.EditorDataModel.RequestCompilation(RequestCompilationOptions.Default);
+                        compilationState.RequestCompilation(RequestCompilationOptions.Default);
                     }
-                    previousState.EditorDataModel.CompilationPending = false;
+                    compilationState.CompilationPending = false;
                 }
             }
 
-            previousState.AssetModel?.Dispose();
-            previousState.EditorDataModel?.PluginRepository?.UnregisterPlugins();
+            // PF: FIXME: could this be updated by an observer?
+            // PF: FIXME: how to notify the owner of the viewGUID that it should update itself?
+            switch (action.LoadType)
+            {
+                case Type.Replace:
+                    state.WindowState.ClearHistory();
+                    break;
+                case Type.PushOnStack:
+                    state.WindowState.PushCurrentGraph();
+                    break;
+                case Type.KeepHistory:
+                    break;
+            }
 
-            var asset = action.Asset ?? AssetDatabase.LoadAssetAtPath<GraphAssetModel>(action.AssetPath);
-            if (asset == null || !(asset as Object))
+            state.AssetModel?.Dispose();
+
+            state.PluginRepository?.UnregisterPlugins();
+
+            var asset = action.Asset;
+            if (asset == null)
+            {
+                // PF FIXME: load the right asset type (not GraphAssetModel)
+                asset = (IGraphAssetModel)AssetDatabase.LoadAssetAtPath(action.AssetPath, typeof(GraphAssetModel));
+            }
+
+            if (asset == null)
             {
                 Debug.LogError($"Could not load visual scripting asset at path '{action.AssetPath}'");
                 return;
@@ -83,40 +101,26 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             var assetPath = AssetDatabase.GetAssetPath(asset as Object);
             AssetWatcher.Instance.WatchGraphAssetAtPath(assetPath, asset);
 
-            switch (action.LoadType)
-            {
-                case Type.Replace:
-                    previousState.EditorDataModel?.PreviousGraphModels.Clear();
-                    break;
-                case Type.PushOnStack:
-                    previousState.EditorDataModel?.PreviousGraphModels.Add(new OpenedGraph(previousState.CurrentGraphModel?.AssetModel, previousState.EditorDataModel?.BoundObject));
-                    break;
-                case Type.KeepHistory:
-                    break;
-            }
+            state.LoadGraphAsset(asset, action.BoundObject);
+            state.BlackboardGraphModel.AssetModel = asset;
 
-            previousState.AssetModel = asset;
+            state.RequestUIRebuild();
 
-            if (previousState.EditorDataModel != null)
-                previousState.EditorDataModel.BoundObject = action.BoundObject;
+            var graphModel = state.GraphModel;
+            graphModel?.Stencil?.PreProcessGraph(state.GraphModel);
 
-            previousState.MarkForUpdate(UpdateFlags.All);
-
-            var graphModel = previousState.CurrentGraphModel;
-            graphModel?.Stencil?.PreProcessGraph(previousState.CurrentGraphModel);
-
-            CheckGraphIntegrity(previousState);
+            CheckGraphIntegrity(state);
         }
 
         static void CheckGraphIntegrity(State state)
         {
-            var graphModel = state.CurrentGraphModel;
+            var graphModel = state.GraphModel;
             if (graphModel == null)
                 return;
 
             var invalidNodeCount = graphModel.NodeModels.Count(n => n == null);
             var invalidEdgeCount = graphModel.EdgeModels.Count(n => n == null);
-            var invalidStickyCount = state.CurrentGraphModel.StickyNoteModels.Count(n => n == null);
+            var invalidStickyCount = state.GraphModel.StickyNoteModels.Count(n => n == null);
 
             var countMessage = new StringBuilder();
             countMessage.Append(invalidNodeCount == 0 ? string.Empty : $"{invalidNodeCount} invalid node(s) found.\n");
@@ -130,6 +134,23 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     "Clean",
                     "Cancel"))
                     graphModel.Repair();
+        }
+    }
+
+    public class RequestCompilationAction : BaseAction
+    {
+        public RequestCompilationOptions Options;
+
+        public RequestCompilationAction(RequestCompilationOptions options)
+        {
+            UndoString = "Compile";
+
+            Options = options;
+        }
+
+        public static void DefaultReducer(State state, RequestCompilationAction action)
+        {
+            state.CompilationStateComponent.RequestCompilation(action.Options);
         }
     }
 }

@@ -30,8 +30,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIToolkitTests
             m_Window.rootVisualElement.Add(editableLabel);
             yield return null;
 
-            var label = editableLabel.Q(EditableLabel.k_LabelName);
-            var textField = editableLabel.Q(EditableLabel.k_TextFieldName);
+            var label = editableLabel.Q(EditableLabel.labelName);
+            var textField = editableLabel.Q(EditableLabel.textFieldName);
 
             Assert.AreEqual(DisplayStyle.Flex, label.resolvedStyle.display);
             Assert.AreEqual(DisplayStyle.None, textField.resolvedStyle.display);
@@ -50,8 +50,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIToolkitTests
             m_Window.rootVisualElement.Add(editableLabel);
             yield return null;
 
-            var label = editableLabel.Q(EditableLabel.k_LabelName);
-            var textField = editableLabel.Q(EditableLabel.k_TextFieldName);
+            var label = editableLabel.Q(EditableLabel.labelName);
+            var textField = editableLabel.Q(EditableLabel.textFieldName);
             var center = label.layout.center;
 
             Assert.AreEqual(DisplayStyle.Flex, label.resolvedStyle.display);
@@ -74,8 +74,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIToolkitTests
             // Compute layout
             yield return null;
 
-            var label = editableLabel.Q(EditableLabel.k_LabelName);
-            var textField = editableLabel.Q(EditableLabel.k_TextFieldName);
+            var label = editableLabel.Q(EditableLabel.labelName);
+            var textField = editableLabel.Q(EditableLabel.textFieldName);
             var center = label.layout.center;
 
             // Activate text field
@@ -103,8 +103,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIToolkitTests
             // Compute layout
             yield return null;
 
-            var label = editableLabel.Q(EditableLabel.k_LabelName);
-            var textField = editableLabel.Q(EditableLabel.k_TextFieldName);
+            var label = editableLabel.Q(EditableLabel.labelName);
+            var textField = editableLabel.Q(EditableLabel.textFieldName);
             var center = label.layout.center;
 
             // Activate text field
@@ -129,8 +129,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIToolkitTests
             // Compute layout
             yield return null;
 
-            var label = editableLabel.Q(EditableLabel.k_LabelName);
-            var textField = editableLabel.Q(EditableLabel.k_TextFieldName);
+            var label = editableLabel.Q(EditableLabel.labelName);
+            var textField = editableLabel.Q(EditableLabel.textFieldName);
             var center = label.layout.center;
 
             // Activate text field

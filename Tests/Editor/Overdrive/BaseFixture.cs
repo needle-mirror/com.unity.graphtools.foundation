@@ -6,7 +6,6 @@ using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEngine;
 using UnityEngine.Profiling;
-using Object = UnityEngine.Object;
 
 // ReSharper disable AccessToStaticMemberViaDerivedType
 
@@ -29,72 +28,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
         }
     }
 
-    class TestEditorDataModel : IEditorDataModel
+    class TestState : State
     {
-        public UpdateFlags UpdateFlags { get; private set; }
+        public TestState(GUID graphViewEditorWindowGUID, Preferences preferences)
+            : base(graphViewEditorWindowGUID, preferences) {}
 
-        List<IGraphElementModel> m_ModelsToUpdate = new List<IGraphElementModel>();
-
-        public IEnumerable<IGraphElementModel> ModelsToUpdate => m_ModelsToUpdate;
-
-        public void AddModelToUpdate(IGraphElementModel controller)
+        public override void PostDispatchAction(BaseAction action)
         {
-            m_ModelsToUpdate.Add(controller);
-        }
+            base.PostDispatchAction(action);
 
-        public void ClearModelsToUpdate()
-        {
-            m_ModelsToUpdate.Clear();
-        }
-
-        public IGraphElementModel ElementModelToRename { get; set; }
-        public int CurrentGraphIndex => 0;
-        public Preferences Preferences { get; }  = CreatePreferences();
-
-        static Preferences CreatePreferences()
-        {
-            var prefs = TestPreferences.CreatePreferences();
-            prefs.SetBoolNoEditorUpdate(BoolPref.ErrorOnRecursiveDispatch, false);
-            prefs.SetBoolNoEditorUpdate(BoolPref.ErrorOnMultipleDispatchesPerFrame, false);
-            return prefs;
-        }
-
-        public GameObject BoundObject { get; set; }
-
-        public List<OpenedGraph> PreviousGraphModels { get; } = new List<OpenedGraph>();
-        public bool TracingEnabled { get; set; }
-        public bool CompilationPending { get; set; }
-
-        public void SetUpdateFlag(UpdateFlags flag)
-        {
-            UpdateFlags = flag;
-        }
-
-        public void RequestCompilation(RequestCompilationOptions options)
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool ShouldSelectElementUponCreation(IGraphElementModel model)
-        {
-            return false;
-        }
-
-        public void SelectElementsUponCreation(IEnumerable<IGraphElementModel> graphElementModels, bool select)
-        {
-        }
-
-        public void ClearElementsToSelectUponCreation()
-        {
-        }
-
-        public IPluginRepository PluginRepository { get; } = new TestPluginRepository();
-
-        class TestPluginRepository : IPluginRepository
-        {
-            public void RegisterPlugins(IEnumerable<IPluginHandler> plugins) {}
-            public void UnregisterPlugins(IEnumerable<IPluginHandler> except = null) {}
-            public IEnumerable<IPluginHandler> RegisteredPlugins => Enumerable.Empty<IPluginHandler>();
+            if (GraphModel != null)
+                Assert.IsTrue(GraphModel.CheckIntegrity(Verbosity.Errors));
         }
     }
 
@@ -120,16 +64,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
         protected Store m_Store;
         protected const string k_GraphPath = "Assets/test.asset";
 
-        protected GraphModel GraphModel => (GraphModel)m_Store.GetState().CurrentGraphModel;
+        protected GraphModel GraphModel => (GraphModel)m_Store.State.GraphModel;
         protected Stencil Stencil => GraphModel.Stencil;
 
         protected abstract bool CreateGraphOnStartup { get; }
         protected virtual Type CreatedGraphType => typeof(ClassStencil);
-
-        protected virtual IEditorDataModel CreateEditorDataModel()
-        {
-            return new TestEditorDataModel();
-        }
 
         internal static void AssumePreviousTest(Action delegateToRun)
         {
@@ -215,10 +154,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
         {
             Profiler.BeginSample("VS Tests SetUp");
 
-            m_Store = new Store(new State(CreateEditorDataModel()));
-            StoreHelper.RegisterDefaultReducers(m_Store);
+            var prefs = TestPreferences.CreatePreferences();
+            prefs.SetBoolNoEditorUpdate(BoolPref.ErrorOnRecursiveDispatch, false);
+            prefs.SetBoolNoEditorUpdate(BoolPref.ErrorOnMultipleDispatchesPerFrame, false);
 
-            m_Store.StateChanged += AssertIntegrity;
+            m_Store = new Store(new TestState(default, prefs));
+            StoreHelper.RegisterDefaultReducers(m_Store);
 
             if (CreateGraphOnStartup)
             {
@@ -232,20 +173,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
         [TearDown]
         public virtual void TearDown()
         {
-            m_Store.StateChanged -= AssertIntegrity;
             UnloadGraph();
-            m_Store.Dispose();
+            m_Store = null;
             Profiler.enabled = false;
         }
 
         void UnloadGraph()
         {
-            State previousState = m_Store.GetState();
+            State state = m_Store.State;
 
-            if (previousState.CurrentGraphModel != null)
-                AssetWatcher.Instance.UnwatchGraphAssetAtPath(previousState.CurrentGraphModel.GetAssetPath());
+            if (state.GraphModel != null)
+                AssetWatcher.Instance.UnwatchGraphAssetAtPath(state.GraphModel.AssetModel?.GetPath());
 
-            previousState.UnloadCurrentGraphAsset();
+            state.UnloadCurrentGraphAsset();
         }
 
         protected void AssertIntegrity()

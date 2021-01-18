@@ -9,13 +9,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     public static class InlineValueEditor
     {
         public static VisualElement CreateEditorForNodeModel(IConstantNodeModel model,
-            Action<IChangeEvent, object> onValueChanged, IEditorDataModel editorDataModel)
+            Action<IChangeEvent, object> onValueChanged, Store store)
         {
-            return CreateEditorForConstant(model.AssetModel, model.Value, onValueChanged, editorDataModel, model.IsLocked);
+            return CreateEditorForConstant(model.AssetModel, null, model.Value, onValueChanged, store, model.IsLocked);
         }
 
-        public static VisualElement CreateEditorForConstant(IGraphAssetModel graphAsset, IConstant constant,
-            Action<IChangeEvent, object> onValueChanged, IEditorDataModel editorDataModel, bool modelIsLocked)
+        public static VisualElement CreateEditorForConstant(IGraphAssetModel graphAsset, IPortModel portModel, IConstant constant,
+            Action<IChangeEvent, object> onValueChanged, Store store, bool modelIsLocked)
         {
             Action<IChangeEvent> myValueChanged = evt =>
             {
@@ -30,26 +30,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 }
             };
 
-            var ext = ExtensionMethodCache<IConstantEditorBuilder>.GetExtensionMethod(constant.Type, ConstantEditorBuilder.FilterMethods, ConstantEditorBuilder.KeySelector);
+            var ext = ExtensionMethodCache<IConstantEditorBuilder>.GetExtensionMethod(constant.GetType(), ConstantEditorBuilder.FilterMethods, ConstantEditorBuilder.KeySelector);
 
             if (ext != null)
             {
-                var constantBuilder = new ConstantEditorBuilder(myValueChanged, editorDataModel, modelIsLocked);
-                return (VisualElement)ext.Invoke(null, new[] { constantBuilder, constant.ObjectValue });
-            }
-
-            if (constant is IStringWrapperConstantModel stringWrapperConstant)
-            {
-                // PF: It should have been found by the previous call to GetExtensionMethod. Find why it did not work.
-                ext = ExtensionMethodCache<IConstantEditorBuilder>.GetExtensionMethod(
-                    typeof(IStringWrapperConstantModel), ConstantEditorBuilder.FilterMethods,
-                    ConstantEditorBuilder.KeySelector);
-
-                if (ext != null)
-                {
-                    var constantBuilder = new ConstantEditorBuilder(myValueChanged, editorDataModel, modelIsLocked);
-                    return (VisualElement)ext.Invoke(null, new object[] {constantBuilder, stringWrapperConstant});
-                }
+                var constantBuilder = new ConstantEditorBuilder(myValueChanged, store, modelIsLocked, portModel);
+                return (VisualElement)ext.Invoke(null, new object[] { constantBuilder, constant });
             }
 
             Debug.Log($"Could not draw Editor GUI for node of type {constant.Type}");

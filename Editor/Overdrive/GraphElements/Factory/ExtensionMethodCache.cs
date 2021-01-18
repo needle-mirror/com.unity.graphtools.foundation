@@ -10,7 +10,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     // Use this attribute to tag classes containing static extension methods you want to cache in an ExtensionMethodCache
     [MeansImplicitUse(ImplicitUseTargetFlags.WithMembers)]
-    public class GraphElementsExtensionMethodsCacheAttribute : Attribute {}
+    public class GraphElementsExtensionMethodsCacheAttribute : Attribute
+    {
+        public const int lowestPriority = 0;
+        public const int toolDefaultPriority = 1;
+
+        public int Priority { get; }
+
+        public GraphElementsExtensionMethodsCacheAttribute(int priority = toolDefaultPriority)
+        {
+            Priority = priority;
+        }
+    }
 
     enum ExtensionMethodCacheVisitMode
     {
@@ -93,12 +104,49 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 foreach (var methodInfo in allMethodInfos.Where(filterMethods))
                 {
                     var key = keySelector(methodInfo);
-                    if (factoryMethods.TryGetValue(key, out var prevValue))
-                    {
-                        Debug.LogError($"Duplicate extension methods for type {key}, previous value: {prevValue}, new value: {methodInfo}, extended type: {extendedType.FullName}");
-                    }
 
-                    factoryMethods[key] = methodInfo;
+                    if (!factoryMethods.TryGetValue(key, out var currentValue))
+                    {
+                        factoryMethods[key] = methodInfo;
+                    }
+                    else
+                    {
+                        int currentPriority = 0;
+                        if (currentValue.DeclaringType != null)
+                        {
+                            var methodCacheAttr = (GraphElementsExtensionMethodsCacheAttribute)Attribute.GetCustomAttribute(currentValue.DeclaringType, typeof(GraphElementsExtensionMethodsCacheAttribute));
+                            currentPriority = methodCacheAttr.Priority;
+                        }
+
+                        int priority = 0;
+                        if (methodInfo.DeclaringType != null)
+                        {
+                            var methodCacheAttr = (GraphElementsExtensionMethodsCacheAttribute)Attribute.GetCustomAttribute(methodInfo.DeclaringType, typeof(GraphElementsExtensionMethodsCacheAttribute));
+                            priority = methodCacheAttr.Priority;
+                        }
+
+                        if (priority == currentPriority)
+                        {
+                            Debug.LogError($"Duplicate extension methods for type {key} have the same priority" +
+                                $"as a previously discovered extension method. It will be ignored." +
+                                $" Previous value: {currentValue}, new value: {methodInfo}, extended type: {extendedType.FullName}");
+                        }
+                        else if (priority < currentPriority)
+                        {
+                            var gtfAssembly = typeof(GraphElementsExtensionMethodsCacheAttribute).Assembly;
+                            var newMethodAssembly = methodInfo.DeclaringType?.Assembly;
+                            if (newMethodAssembly != gtfAssembly)
+                            {
+                                Debug.LogError($"Extension methods for type {key} has lower priority than an" +
+                                    $"extension method declared in GraphToolsFoundation. It will be ignored." +
+                                    $" Previous value: {currentValue}, new value: {methodInfo}, extended type: {extendedType.FullName}");
+                            }
+                        }
+                        else if (priority > currentPriority)
+                        {
+                            factoryMethods[key] = methodInfo;
+                        }
+                    }
                 }
             }
 

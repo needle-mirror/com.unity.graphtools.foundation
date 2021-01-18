@@ -8,64 +8,64 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     static class EdgeActionConfig
     {
-        public const int k_NodeOffset = 60;
+        public const int nodeOffset = 60;
     }
 
     public class CreateEdgeAction : ModelAction<IEdgeModel>
     {
         const string k_UndoString = "Create Edge";
 
-        [Flags]
-        public enum PortAlignmentType
-        {
-            None = 0,
-            Input = 1,
-            Output = 2,
-        }
-
-        public IPortModel InputPortModel;
-        public IPortModel OutputPortModel;
-        public PortAlignmentType PortAlignment;
+        public IPortModel ToPortModel;
+        public IPortModel FromPortModel;
+        public Direction PortAlignment;
         public bool CreateItemizedNode;
 
         public CreateEdgeAction()
             : base(k_UndoString) {}
 
-        public CreateEdgeAction(IPortModel inputPortModel, IPortModel outputPortModel,
+        public CreateEdgeAction(IPortModel toPortModel, IPortModel fromPortModel,
                                 IReadOnlyList<IEdgeModel> edgeModelsToDelete = null,
-                                PortAlignmentType portAlignment = PortAlignmentType.None,
+                                Direction portAlignment = Direction.None,
                                 bool createItemizedNode = true)
             : base(k_UndoString, k_UndoString, edgeModelsToDelete)
         {
-            Assert.IsTrue(inputPortModel == null || inputPortModel.Direction == Direction.Input);
-            Assert.IsTrue(outputPortModel == null || outputPortModel.Direction == Direction.Output);
-            InputPortModel = inputPortModel;
-            OutputPortModel = outputPortModel;
+            Assert.IsTrue(toPortModel == null || toPortModel.Direction == Direction.Input);
+            Assert.IsTrue(fromPortModel == null || fromPortModel.Direction == Direction.Output);
+            ToPortModel = toPortModel;
+            FromPortModel = fromPortModel;
             PortAlignment = portAlignment;
             CreateItemizedNode = createItemizedNode;
         }
 
-        public static void DefaultReducer(State previousState, CreateEdgeAction action)
+        public static void DefaultReducer(State state, CreateEdgeAction action)
         {
-            previousState.PushUndo(action);
+            state.PushUndo(action);
 
-            var graphModel = previousState.CurrentGraphModel;
+            var graphModel = state.GraphModel;
 
             if (action.Models != null)
-                graphModel.DeleteElements(action.Models);
+            {
+                graphModel.DeleteEdges(action.Models);
+                state.MarkDeleted(action.Models);
+            }
 
-            var outputPortModel = action.OutputPortModel;
-            var inputPortModel = action.InputPortModel;
+            var fromPortModel = action.FromPortModel;
+            var toPortModel = action.ToPortModel;
 
             if (action.CreateItemizedNode)
-                graphModel.CreateItemizedNode(previousState, EdgeActionConfig.k_NodeOffset, ref outputPortModel);
+            {
+                graphModel.CreateItemizedNode(state, EdgeActionConfig.nodeOffset, ref fromPortModel);
+                // We do not know what happened in CreateItemizedNode. Refresh the whole UI.
+                state.RequestUIRebuild();
+            }
 
-            graphModel.CreateEdge(inputPortModel, outputPortModel);
+            var edgeModel = graphModel.CreateEdge(toPortModel, fromPortModel);
+            state.MarkNew(edgeModel);
 
-            if (action.PortAlignment.HasFlag(PortAlignmentType.Input))
-                graphModel.LastChanges.ElementsToAutoAlign.Add(inputPortModel.NodeModel);
-            if (action.PortAlignment.HasFlag(PortAlignmentType.Output))
-                graphModel.LastChanges.ElementsToAutoAlign.Add(outputPortModel.NodeModel);
+            if (action.PortAlignment.HasFlag(Direction.Input))
+                state.MarkModelToAutoAlign(toPortModel.NodeModel);
+            if (action.PortAlignment.HasFlag(Direction.Output))
+                state.MarkModelToAutoAlign(fromPortModel.NodeModel);
         }
     }
 
@@ -82,13 +82,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
         }
 
-        public static void DefaultReducer(State previousState, DeleteEdgeAction action)
+        public static void DefaultReducer(State state, DeleteEdgeAction action)
         {
-            if (!action.Models.Any())
+            if (action.Models == null || !action.Models.Any())
                 return;
 
-            previousState.PushUndo(action);
-            previousState.CurrentGraphModel.DeleteEdges(action.Models);
+            state.PushUndo(action);
+            state.GraphModel.DeleteEdges(action.Models);
+            state.MarkDeleted(action.Models);
         }
     }
 
@@ -110,11 +111,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             Position = position;
         }
 
-        public static void DefaultReducer(State previousState, AddControlPointOnEdgeAction action)
+        public static void DefaultReducer(State state, AddControlPointOnEdgeAction action)
         {
-            previousState.PushUndo(action);
+            state.PushUndo(action);
             action.EdgeModel.InsertEdgeControlPoint(action.AtIndex, action.Position, 100);
-            previousState.MarkForUpdate(UpdateFlags.UpdateView, action.EdgeModel);
+            state.MarkChanged(action.EdgeModel);
         }
     }
 
@@ -138,10 +139,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             NewTightness = newTightness;
         }
 
-        public static void DefaultReducer(State previousState, MoveEdgeControlPointAction action)
+        public static void DefaultReducer(State state, MoveEdgeControlPointAction action)
         {
-            previousState.PushUndo(action);
+            state.PushUndo(action);
             action.EdgeModel.ModifyEdgeControlPoint(action.EdgeIndex, action.NewPosition, action.NewTightness);
+            state.MarkChanged(action.EdgeModel);
         }
     }
 
@@ -161,11 +163,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             EdgeIndex = edgeIndex;
         }
 
-        public static void DefaultReducer(State previousState, RemoveEdgeControlPointAction action)
+        public static void DefaultReducer(State state, RemoveEdgeControlPointAction action)
         {
-            previousState.PushUndo(action);
+            state.PushUndo(action);
             action.EdgeModel.RemoveEdgeControlPoint(action.EdgeIndex);
-            previousState.MarkForUpdate(UpdateFlags.UpdateView, action.EdgeModel);
+            state.MarkChanged(action.EdgeModel);
         }
     }
 
@@ -185,11 +187,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             Value = value;
         }
 
-        public static void DefaultReducer(State previousState, SetEdgeEditModeAction action)
+        public static void DefaultReducer(State state, SetEdgeEditModeAction action)
         {
-            previousState.PushUndo(action);
+            state.PushUndo(action);
             action.EdgeModel.EditMode = action.Value;
-            previousState.MarkForUpdate(UpdateFlags.UpdateView, action.EdgeModel);
+            state.MarkChanged(action.EdgeModel);
         }
     }
 
@@ -233,7 +235,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        public static void DefaultReducer(State previousState, ReorderEdgeAction action)
+        public static void DefaultReducer(State state, ReorderEdgeAction action)
         {
             if (action.EdgeModel?.FromPort is IReorderableEdgesPort fromPort && fromPort.HasReorderableEdges)
             {
@@ -261,9 +263,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
                     if (reorderAction != null)
                     {
-                        previousState.PushUndo(action);
+                        state.PushUndo(action);
                         reorderAction(action.EdgeModel);
-                        previousState.MarkForUpdate(UpdateFlags.RequestCompilation, action.EdgeModel);
+                        fromPort.NodeModel.RevealReorderableEdgesOrder(true, action.EdgeModel);
+
+                        state.MarkChanged(siblingEdges);
+                        state.MarkChanged(fromPort.NodeModel);
                     }
                 }
             }
@@ -286,19 +291,23 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             NodeModel = nodeModel;
         }
 
-        public static void DefaultReducer(State previousState, SplitEdgeAndInsertExistingNodeAction action)
+        public static void DefaultReducer(State state, SplitEdgeAndInsertExistingNodeAction action)
         {
             Assert.IsTrue(action.NodeModel.InputsById.Count > 0);
             Assert.IsTrue(action.NodeModel.OutputsById.Count > 0);
 
-            previousState.PushUndo(action);
+            state.PushUndo(action);
 
-            var graphModel = previousState.CurrentGraphModel;
+            var graphModel = state.GraphModel;
             var edgeInput = action.EdgeModel.ToPort;
             var edgeOutput = action.EdgeModel.FromPort;
-            graphModel.DeleteEdge(action.EdgeModel);
-            graphModel.CreateEdge(edgeInput, action.NodeModel.OutputsByDisplayOrder.First(p => p?.PortType == edgeInput?.PortType));
-            graphModel.CreateEdge(action.NodeModel.InputsByDisplayOrder.First(p => p?.PortType == edgeOutput?.PortType), edgeOutput);
+            var deletedModels = graphModel.DeleteEdge(action.EdgeModel);
+            var edge1 = graphModel.CreateEdge(edgeInput, action.NodeModel.OutputsByDisplayOrder.First(p => p?.PortType == edgeInput?.PortType));
+            var edge2 = graphModel.CreateEdge(action.NodeModel.InputsByDisplayOrder.First(p => p?.PortType == edgeOutput?.PortType), edgeOutput);
+
+            state.MarkDeleted(deletedModels);
+            state.MarkNew(edge1);
+            state.MarkNew(edge2);
         }
     }
 
@@ -325,9 +334,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         }
 
         // TODO JOCE: Move to GraphView or something. We should be able to create from edge without a reducer (for tests, for example)
-        public static void DefaultReducer(State previousState, ConvertEdgesToPortalsAction action)
+        public static void DefaultReducer(State state, ConvertEdgesToPortalsAction action)
         {
-            var graphModel = previousState.CurrentGraphModel;
+            var graphModel = state.GraphModel;
 
             if (action.EdgeData == null)
                 return;
@@ -336,7 +345,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (!edgeData.Any())
                 return;
 
-            previousState.PushUndo(action);
+            state.PushUndo(action);
 
             var existingPortalEntries = new Dictionary<IPortModel, IEdgePortalEntryModel>();
             var existingPortalExits = new Dictionary<IPortModel, List<IEdgePortalExitModel>>();
@@ -358,8 +367,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 }
             }
 
-            graphModel.DeleteEdges(edgeData.Select(d => d.edge));
-            previousState.MarkForUpdate(UpdateFlags.GraphTopology);
+            graphModel.DeleteEdges(edgeData.Select(d => d.edge).ToList());
+
+            state.RequestUIRebuild();
 
             void ConvertEdgeToPortals((IEdgeModel edgeModel, Vector2 startPos, Vector2 endPos) data)
             {
@@ -422,6 +432,64 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
                 graphModel.CreateEdge(inputPortModel, portalExit.OutputPort);
             }
+        }
+    }
+
+    public class TogglePortsAction : BaseAction
+    {
+        public TogglePortsAction()
+        {
+            UndoString = "Toggle Ports";
+        }
+
+        public static void DefaultReducer(State previousState, TogglePortsAction action)
+        {
+            previousState.PushUndo(action);
+
+            var changedPorts = new List<IPortModel>();
+            foreach (var node in previousState.GraphModel.NodeModels.OfType<IPortNode>())
+            {
+                foreach (var port in node.Ports)
+                {
+                    if (port.Orientation == Orientation.Horizontal)
+                        port.Orientation = Orientation.Vertical;
+                    else
+                        port.Orientation = Orientation.Horizontal;
+                    changedPorts.Add(port);
+                }
+            }
+            previousState.MarkChanged(changedPorts);
+        }
+    }
+
+    public class ToggleEdgePortsAction : BaseAction
+    {
+        public readonly IEdgeModel[] EdgeModels;
+
+        public ToggleEdgePortsAction(IEdgeModel[] edgeModels)
+        {
+            UndoString = "Toggle Edge Ports";
+            EdgeModels = edgeModels;
+        }
+
+        public static void DefaultReducer(State previousState, ToggleEdgePortsAction action)
+        {
+            previousState.PushUndo(action);
+
+            var changedPorts = new List<IPortModel>();
+
+            foreach (var edgeModel in action.EdgeModels)
+            {
+                foreach (var port in new[] { edgeModel.FromPort, edgeModel.ToPort })
+                {
+                    if (port.Orientation == Orientation.Horizontal)
+                        port.Orientation = Orientation.Vertical;
+                    else
+                        port.Orientation = Orientation.Horizontal;
+                    changedPorts.Add(port);
+                }
+            }
+            previousState.MarkChanged(changedPorts);
         }
     }
 }

@@ -12,15 +12,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             UndoString = "Create Sticky Note";
         }
 
-        public CreateStickyNoteAction(string name, Rect position) : this()
+        public CreateStickyNoteAction(Rect position) : this()
         {
             Position = position;
         }
 
-        public static void DefaultReducer(State previousState, CreateStickyNoteAction action)
+        public static void DefaultReducer(State state, CreateStickyNoteAction action)
         {
-            previousState.PushUndo(action);
-            previousState.CurrentGraphModel.CreateStickyNote(action.Position);
+            state.PushUndo(action);
+            var stickyNote = state.GraphModel.CreateStickyNote(action.Position);
+            state.MarkNew(stickyNote);
         }
     }
 
@@ -40,7 +41,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             ResizeWhat = resizeWhat;
         }
 
-        public static void DefaultReducer(State previousState, ChangeStickyNoteLayoutAction action)
+        public static void DefaultReducer(State state, ChangeStickyNoteLayoutAction action)
         {
             if (!action.Models.Any())
                 return;
@@ -48,7 +49,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (action.ResizeWhat == ResizeFlags.None)
                 return;
 
-            previousState.PushUndo(action);
+            state.PushUndo(action);
 
             foreach (var noteModel in action.Models)
             {
@@ -71,8 +72,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 }
 
                 noteModel.PositionAndSize = newRect;
-                previousState.MarkForUpdate(UpdateFlags.UpdateView, noteModel);
             }
+            state.MarkChanged(action.Models);
         }
     }
 
@@ -94,12 +95,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             Contents = contents;
         }
 
-        public static void DefaultReducer(State previousState, UpdateStickyNoteAction action)
+        public static void DefaultReducer(State state, UpdateStickyNoteAction action)
         {
             if (action.Title == null && action.Contents == null)
                 return;
 
-            previousState.PushUndo(action);
+            state.PushUndo(action);
 
             if (action.Title != null)
                 action.StickyNoteModel.Title = action.Title;
@@ -107,7 +108,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (action.Contents != null)
                 action.StickyNoteModel.Contents = action.Contents;
 
-            previousState.MarkForUpdate(UpdateFlags.UpdateView, action.StickyNoteModel);
+            state.MarkChanged(action.StickyNoteModel);
         }
     }
 
@@ -122,18 +123,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public UpdateStickyNoteThemeAction(IStickyNoteModel[] stickyNoteModels, string theme)
             : base(k_UndoStringSingular, k_UndoStringPlural, stickyNoteModels, theme) {}
 
-        public static void DefaultReducer(State previousState, UpdateStickyNoteThemeAction action)
+        public static void DefaultReducer(State state, UpdateStickyNoteThemeAction action)
         {
             if (!action.Models.Any())
                 return;
 
-            previousState.PushUndo(action);
+            state.PushUndo(action);
 
             foreach (var noteModel in action.Models)
             {
                 noteModel.Theme = action.Value;
-                previousState.MarkForUpdate(UpdateFlags.UpdateView, noteModel);
             }
+            state.MarkChanged(action.Models);
         }
     }
 
@@ -148,18 +149,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public UpdateStickyNoteTextSizeAction(IStickyNoteModel[] stickyNoteModels, string textSize)
             : base(k_UndoStringSingular, k_UndoStringPlural, stickyNoteModels, textSize) {}
 
-        public static void DefaultReducer(State previousState, UpdateStickyNoteTextSizeAction action)
+        public static void DefaultReducer(State state, UpdateStickyNoteTextSizeAction action)
         {
             if (!action.Models.Any())
                 return;
 
-            previousState.PushUndo(action);
+            state.PushUndo(action);
 
             foreach (var noteModel in action.Models)
             {
                 noteModel.TextSize = action.Value;
-                previousState.MarkForUpdate(UpdateFlags.UpdateView, noteModel);
             }
+            state.MarkChanged(action.Models);
         }
     }
 }

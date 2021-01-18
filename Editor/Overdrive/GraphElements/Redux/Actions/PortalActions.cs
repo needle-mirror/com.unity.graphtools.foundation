@@ -16,7 +16,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public CreateOppositePortalAction(IReadOnlyList<IEdgePortalModel> portalModels)
             : base(k_UndoStringSingular, k_UndoStringPlural, portalModels) {}
 
-        public static void DefaultReducer(State previousState, CreateOppositePortalAction action)
+        public static void DefaultReducer(State state, CreateOppositePortalAction action)
         {
             if (action.Models == null)
                 return;
@@ -25,12 +25,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (!portalsToOpen.Any())
                 return;
 
-            previousState.PushUndo(action);
+            state.PushUndo(action);
 
             foreach (var portalModel in portalsToOpen)
-                previousState.CurrentGraphModel.CreateOppositePortal(portalModel);
-
-            previousState.MarkForUpdate(UpdateFlags.GraphTopology);
+            {
+                var newPortal = state.GraphModel.CreateOppositePortal(portalModel);
+                state.MarkNew(newPortal);
+            }
         }
     }
 }

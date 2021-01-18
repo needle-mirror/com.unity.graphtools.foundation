@@ -15,13 +15,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Redux
 
         Store m_Store;
 
-        MockState GetStoreState() => m_Store.GetState() as MockState;
+        MockState GetStoreState() => m_Store.State as MockState;
 
         [SetUp]
         public void SetUp()
         {
             m_Store = new Store(new MockState(k_MockStateDefault));
             StoreHelper.RegisterDefaultReducers(m_Store);
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            m_Store = null;
         }
 
         [Test]
@@ -99,23 +105,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Redux
             Assert.That(GetStoreState().Bar, Is.EqualTo(30));
         }
 
-        [UnityTest]
-        public IEnumerable DispatchedActionShouldTriggerStateChangedAfterUpdate()
+        [Test]
+        public void DispatchedActionShouldTriggerStateChangedAfterUpdate()
         {
-            int stateChangedCount = 0;
-
             m_Store.RegisterReducer<MockState, ChangeFooAction>(MockReducers.ReplaceFoo);
             m_Store.RegisterReducer<MockState, ChangeBarAction>(MockReducers.ReplaceBar);
 
-            m_Store.StateChanged += () => { stateChangedCount++; };
+            var versionCount = m_Store.State.Version;
 
             m_Store.Dispatch(new ChangeFooAction(10));
-            yield return null;
-            Assert.That(stateChangedCount, Is.EqualTo(1));
+            Assert.That(m_Store.State.Version, Is.EqualTo(versionCount + 1));
 
             m_Store.Dispatch(new ChangeBarAction(20));
-            yield return null;
-            Assert.That(stateChangedCount, Is.EqualTo(2));
+            Assert.That(m_Store.State.Version, Is.EqualTo(versionCount + 2));
         }
 
         [Test]

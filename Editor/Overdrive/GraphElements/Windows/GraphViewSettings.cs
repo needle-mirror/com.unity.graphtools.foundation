@@ -22,7 +22,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             const string k_SnappingLineColorBlueKey = k_SettingsUniqueKey + "SnappingLineColoBlue";
             const string k_SnappingLineColorAlphaKey = k_SettingsUniqueKey + "SnappingLineColoAlpha";
 
-            public static readonly Color k_DefaultSnappingLineColor = new Color(68 / 255f, 192 / 255f, 255 / 255f, 68 / 255f);
+            public static readonly Color defaultSnappingLineColor = new Color(68 / 255f, 192 / 255f, 255 / 255f, 68 / 255f);
 
             static Dictionary<Type, bool> s_SnappingStrategiesStates = new Dictionary<Type, bool>()
             {
@@ -44,10 +44,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 get =>
                     new Color
                 {
-                    r = EditorPrefs.GetFloat(k_SnappingLineColorRedKey, k_DefaultSnappingLineColor.r),
-                    g = EditorPrefs.GetFloat(k_SnappingLineColorGreenKey, k_DefaultSnappingLineColor.g),
-                    b = EditorPrefs.GetFloat(k_SnappingLineColorBlueKey, k_DefaultSnappingLineColor.b),
-                    a = EditorPrefs.GetFloat(k_SnappingLineColorAlphaKey, k_DefaultSnappingLineColor.a)
+                    r = EditorPrefs.GetFloat(k_SnappingLineColorRedKey, defaultSnappingLineColor.r),
+                    g = EditorPrefs.GetFloat(k_SnappingLineColorGreenKey, defaultSnappingLineColor.g),
+                    b = EditorPrefs.GetFloat(k_SnappingLineColorBlueKey, defaultSnappingLineColor.b),
+                    a = EditorPrefs.GetFloat(k_SnappingLineColorAlphaKey, defaultSnappingLineColor.a)
                 };
                 set
                 {
@@ -161,7 +161,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             if (GUILayout.Button("Reset"))
             {
-                UserSettings.SnappingLineColor = UserSettings.k_DefaultSnappingLineColor;
+                UserSettings.SnappingLineColor = UserSettings.defaultSnappingLineColor;
             }
             EditorGUILayout.EndHorizontal();
 

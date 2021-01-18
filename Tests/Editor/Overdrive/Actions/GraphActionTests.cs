@@ -175,7 +175,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
 
             var origPlacematPosition = new Rect(Vector2.one * 200, itemSize);
             var newPlacematPosition = new Rect(origPlacematPosition.position + deltaMove, itemSize);
-            var placemat = (PlacematModel)GraphModel.CreatePlacemat("Blah", origPlacematPosition);
+            var placemat = (PlacematModel)GraphModel.CreatePlacemat(origPlacematPosition);
+            placemat.Title = "Blah";
 
             TestPrereqActionPostreq(mode,
                 () =>
@@ -214,7 +215,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
             var nodeA = GraphModel.CreateNode<Type0FakeNodeModel>("A");
             var nodeB = GraphModel.CreateNode<Type0FakeNodeModel>("B");
 
-            Store.ForceRefreshUI(UpdateFlags.All);;
+            Store.MarkStateDirty();
             yield return null;
 
             GraphView.ViewTransformChangedCallback += view => m_Changed = true;
@@ -248,19 +249,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
             var nodeA = GraphModel.CreateNode<Type0FakeNodeModel>("A", new Vector2(100, -100));
             var nodeB = GraphModel.CreateNode<Type0FakeNodeModel>("B", new Vector2(100, 100));
 
-            Store.ForceRefreshUI(UpdateFlags.All);;
+            Store.MarkStateDirty();
             yield return null;
 
             GraphView.ClearSelection();
-            GraphView.AddToSelection(nodeA.GetUI(GraphView));
+            GraphView.AddToSelection(nodeA.GetUI<GraphElement>(GraphView));
             yield return SendPanToNodeAndRefresh(nodeA);
             GraphView.ClearSelection();
-            GraphView.AddToSelection(nodeB.GetUI(GraphView));
+            GraphView.AddToSelection(nodeB.GetUI<GraphElement>(GraphView));
             yield return SendPanToNodeAndRefresh(nodeB);
 
             IEnumerator SendPanToNodeAndRefresh(NodeModel nodeModel)
             {
-                Store.ForceRefreshUI(UpdateFlags.All);;
+                Store.MarkStateDirty();
                 yield return null;
                 Assert.That(GraphView.Selection.
                     OfType<IGraphElement>().
@@ -277,19 +278,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
         [UnityTest]
         public IEnumerator DuplicateNodeAndEdgeCreatesEdgeToOriginalNode()
         {
-            var declaration0 = GraphModel.CreateGraphVariableDeclaration("decl0", typeof(int).GenerateTypeHandle(), ModifierFlags.None, true);
+            var declaration0 = GraphModel.CreateGraphVariableDeclaration(typeof(int).GenerateTypeHandle(), "decl0", ModifierFlags.None, true);
 
             var nodeA = GraphModel.CreateVariableNode(declaration0, new Vector2(100, -100));
             var nodeB = GraphModel.CreateNode<Type0FakeNodeModel>("A", new Vector2(100, 100));
 
             var edge = GraphModel.CreateEdge(nodeB.Input0, nodeA.OutputPort) as EdgeModel;
 
-            Store.ForceRefreshUI(UpdateFlags.All);;
+            Store.MarkStateDirty();
             yield return null;
 
             GraphView.ClearSelection();
-            GraphView.AddToSelection(nodeB.GetUI(GraphView));
-            GraphView.AddToSelection(edge.GetUI(GraphView));
+            GraphView.AddToSelection(nodeB.GetUI<GraphElement>(GraphView));
+            GraphView.AddToSelection(edge.GetUI<GraphElement>(GraphView));
 
             GraphView.Focus();
             using (var evt = ExecuteCommandEvent.GetPooled("Duplicate"))
@@ -297,7 +298,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                 evt.target = GraphView;
                 GraphView.SendEvent(evt);
             }
-            Store.ForceRefreshUI(UpdateFlags.All);;
+            Store.MarkStateDirty();
             yield return null;
 
             Assert.AreEqual(3, GraphModel.NodeModels.Count);

@@ -16,5 +16,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         IEnumerable<IEdgeModel> GetConnectedEdges();
 
         void DefineNode();
+        void OnDuplicateNode(INodeModel sourceNode);
     }
 }

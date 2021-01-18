@@ -12,8 +12,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
 
         protected override void OnDefineNode()
         {
-            Input = AddDataInputPort<GameObject>("input0");
-            Output = AddDataOutputPort<GameObject>("output0");
+            Input = this.AddDataInputPort<GameObject>("input0");
+            Output = this.AddDataOutputPort<GameObject>("output0");
         }
     }
 }

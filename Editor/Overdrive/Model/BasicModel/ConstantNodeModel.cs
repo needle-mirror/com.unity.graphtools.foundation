@@ -68,7 +68,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
         protected override void OnDefineNode()
         {
-            AddDataOutputPort(null, Value.Type.GenerateTypeHandle());
+            this.AddDataOutputPort(null, Value.Type.GenerateTypeHandle());
         }
     }
 }

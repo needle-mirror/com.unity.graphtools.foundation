@@ -21,16 +21,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     // ReSharper disable once InconsistentNaming
     public interface IPortModel : IGraphElementModel
     {
-        IPortNode NodeModel { get; }
-        Direction Direction { get; }
+        IPortNode NodeModel { get; set; }
+        Direction Direction { get; set; }
         PortType PortType { get; set; }
-        Orientation Orientation { get; }
+        Orientation Orientation { get; set; }
         PortCapacity Capacity { get; }
         Type PortDataType { get; }
-        PortModelOptions Options { get;}
+        PortModelOptions Options { get; set; }
 
         TypeHandle DataTypeHandle { get; set; }
-        string ToolTip { get; }
+        string ToolTip { get; set;  }
 
         bool CreateEmbeddedValueIfNeeded { get; }
 

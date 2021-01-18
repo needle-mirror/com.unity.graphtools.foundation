@@ -83,7 +83,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                         graphModel =>
                         {
                             string name = "myInt";
-                            var decl = graphModel.CreateGraphVariableDeclaration(name, typeof(int).GenerateTypeHandle(), ModifierFlags.None, true);
+                            var decl = graphModel.CreateGraphVariableDeclaration(typeof(int).GenerateTypeHandle(), name, ModifierFlags.None, true);
                             return graphModel.CreateVariableNode(decl, Vector2.zero);
                         }
                     );
@@ -92,7 +92,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                         graphModel =>
                         {
                             string name = "myInt";
-                            return graphModel.CreateConstantNode(name, typeof(int).GenerateTypeHandle(), Vector2.zero);
+                            return graphModel.CreateConstantNode(typeof(int).GenerateTypeHandle(), name, Vector2.zero);
                         });
                 }
             }
@@ -113,7 +113,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
 
             // connect int to first input
             m_Store.Dispatch(new CreateEdgeAction(opNode.Input0, node0.OutputsByDisplayOrder.First()));
-            m_Store.Update();
 
             // test how the node reacts to getting connected a second time
             TestPrereqActionPostreq(testingMode,
@@ -443,7 +442,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                     Assert.That(node0.Input0, Is.ConnectedTo(node1.Output0));
                     Assert.That(node0.Input1, Is.ConnectedTo(node1.Output1));
                     Assert.That(node0.Input2, Is.ConnectedTo(node1.Output2));
-                    var edge0 = GraphModel.EdgeModels.First(e => PortModel.Equivalent(e.ToPort, node0.Input0));
+                    var edge0 = GraphModel.EdgeModels.First(e => e.ToPort.Equivalent(node0.Input0));
                     Assert.IsTrue(edge0.IsDeletable());
                     return new DeleteElementsAction(new[] { edge0 });
                 },
@@ -468,7 +467,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                     Assert.That(node0.Input0, Is.Not.ConnectedTo(node1.Output0));
                     Assert.That(node0.Input1, Is.ConnectedTo(node1.Output1));
                     Assert.That(node0.Input2, Is.ConnectedTo(node1.Output2));
-                    var edge1 = GraphModel.EdgeModels.First(e => PortModel.Equivalent(e.ToPort, node0.Input1));
+                    var edge1 = GraphModel.EdgeModels.First(e => e.ToPort.Equivalent(node0.Input1));
                     Assert.IsTrue(edge1.IsDeletable());
                     return new DeleteElementsAction(new[] { edge1 });
                 },
@@ -493,7 +492,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                     Assert.That(node0.Input0, Is.Not.ConnectedTo(node1.Output0));
                     Assert.That(node0.Input1, Is.Not.ConnectedTo(node1.Output1));
                     Assert.That(node0.Input2, Is.ConnectedTo(node1.Output2));
-                    var edge2 = GraphModel.EdgeModels.First(e => PortModel.Equivalent(e.ToPort, node0.Input2));
+                    var edge2 = GraphModel.EdgeModels.First(e => e.ToPort.Equivalent(node0.Input2));
                     Assert.IsTrue(edge2.IsDeletable());
                     return new DeleteElementsAction(new[] { edge2 });
                 },
@@ -512,7 +511,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
         [Test]
         public void Test_SplitEdgeAndInsertNodeAction([Values] TestingMode mode)
         {
-            var constant = GraphModel.CreateConstantNode("Constant", typeof(int).GenerateTypeHandle(), Vector2.zero);
+            var constant = GraphModel.CreateConstantNode(typeof(int).GenerateTypeHandle(), "Constant", Vector2.zero);
             var binary0 = GraphModel.CreateNode<Type0FakeNodeModel>("Node0", Vector2.zero);
             var binary1 = GraphModel.CreateNode<Type0FakeNodeModel>("Node1", Vector2.zero);
             GraphModel.CreateEdge(binary0.Input0, constant.OutputPort);
@@ -544,7 +543,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
         [Test]
         public void TestCreateNodeOnEdge_BothPortsConnected([Values] TestingMode mode)
         {
-            var constant = GraphModel.CreateConstantNode("int", typeof(int).GenerateTypeHandle(), Vector2.zero);
+            var constant = GraphModel.CreateConstantNode(typeof(int).GenerateTypeHandle(), "int", Vector2.zero);
             var unary = GraphModel.CreateNode<Type0FakeNodeModel>("Node0", Vector2.zero);
             var edge = GraphModel.CreateEdge(unary.Input0, constant.OutputPort);
 
@@ -584,7 +583,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
         [Test]
         public void TestCreateNodeOnEdge_WithOutputNodeConnectedToUnknown([Values] TestingMode mode)
         {
-            var constantNode = GraphModel.CreateConstantNode("int1", typeof(int).GenerateTypeHandle(), Vector2.zero);
+            var constantNode = GraphModel.CreateConstantNode(typeof(int).GenerateTypeHandle(), "int1", Vector2.zero);
             var addNode = GraphModel.CreateNode<Type0FakeNodeModel>("Node0", Vector2.zero);
             GraphModel.CreateEdge(addNode.Input0, constantNode.OutputPort);
             GraphModel.CreateEdge(addNode.Input1, constantNode.OutputPort);
@@ -649,7 +648,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
                     RefreshReference(ref edge4);
                     RefreshReference(ref edge5);
 
-                    Assert.IsTrue(originNode.ExeOutput0.HasReorderableEdges);
+                    Assert.IsTrue(((PortModel)originNode.ExeOutput0)?.HasReorderableEdges ?? false);
                     Assert.AreEqual(2, GraphModel.EdgeModels.IndexOf(edge3));
 
                     return new ReorderEdgeAction(edge3, reorderType);
@@ -699,7 +698,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
 
             const int immutableIdx = 1;
 
-            Assert.IsFalse(originNode.Output0.HasReorderableEdges);
+            Assert.IsFalse(((PortModel)originNode.Output0)?.HasReorderableEdges ?? false);
             Assert.AreEqual(immutableIdx, GraphModel.EdgeModels.IndexOf(edge2));
 
             m_Store.Dispatch(new ReorderEdgeAction(edge2, reorderType));

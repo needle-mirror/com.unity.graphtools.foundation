@@ -30,7 +30,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Actions
 
             foreach (var n in nodes)
             {
-                var node = GraphModel.CreateConstantNode(n.Name, n.Type.GenerateTypeHandle(), Vector2.zero);
+                var node = GraphModel.CreateConstantNode(n.Type.GenerateTypeHandle(), n.Name, Vector2.zero);
                 n.Guid = node.Guid;
 
                 TestPrereqActionPostreq(mode,

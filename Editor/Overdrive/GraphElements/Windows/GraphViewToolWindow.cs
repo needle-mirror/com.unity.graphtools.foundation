@@ -21,6 +21,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         const string k_DefaultSelectorName = "Select a panel";
 
+        [SerializeField]
+        GUID m_GUID;
+
         UIElements.Toolbar m_Toolbar;
         protected VisualElement m_ToolbarContainer;
         ToolbarMenu m_SelectorMenu;
@@ -36,6 +39,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         bool m_FirstUpdate;
 
+        public GUID GUID => m_GUID;
+
         protected abstract string ToolName { get; }
 
         public override IEnumerable<Type> GetExtraPaneTypes()
@@ -46,7 +51,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 .Where(myType => myType.IsClass && !myType.IsAbstract && myType.IsSubclassOf(typeof(GraphViewToolWindow)));
         }
 
-        public override void SelectGraphViewFromWindow(GraphViewEditorWindowBridge window, GraphViewBridge graphView, int graphViewIndexInWindow = 0)
+        public override void SelectGraphViewFromWindow(EditorWindow window, GraphViewBridge graphView, int graphViewIndexInWindow = 0)
         {
             var gvChoice = new GraphViewChoice { window = window, graphView = graphView as GraphView, idx = graphViewIndexInWindow };
             SelectGraphView(gvChoice);
@@ -54,6 +59,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         protected virtual void OnEnable()
         {
+            // When we open a window (including when we start the Editor), a new GUID is assigned.
+            // When a window is opened and there is a domain reload, the GUID stays the same.
+            if (m_GUID == default)
+            {
+                m_GUID = GUID.Generate();
+            }
+
             var root = rootVisualElement;
 
             this.SetAntiAliasing(4);
@@ -91,6 +103,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         protected virtual void OnDisable()
         {
+        }
+
+        protected virtual void OnDestroy()
+        {
+            // When window is closed, remove all associated state to avoid cluttering the Library folder.
+            PersistedEditorState.RemoveViewState(GUID);
         }
 
         protected virtual void Update()

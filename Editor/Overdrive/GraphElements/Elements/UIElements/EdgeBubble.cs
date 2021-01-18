@@ -6,6 +6,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class EdgeBubble : Label
     {
+        public new static readonly string ussClassName = "ge-edge-bubble";
+
         Attacher m_Attacher;
 
         TextField TextField { get; }
@@ -25,7 +27,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             TextField = new TextField { isDelayed = true };
 
-            AddToClassList("edgeBubble");
+            AddToClassList(ussClassName);
         }
 
         void OnBlur(BlurEvent evt)
@@ -63,7 +65,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public void AttachTo(VisualElement edgeControlTarget, SpriteAlignment align)
         {
-            if (m_Attacher?.target == edgeControlTarget && m_Attacher?.alignment == align)
+            if (m_Attacher?.Target == edgeControlTarget && m_Attacher?.Alignment == align)
                 return;
 
             Detach();
@@ -90,7 +92,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public void SetAttacherOffset(Vector2 offset)
         {
             if (m_Attacher != null)
-                m_Attacher.offset = offset;
+                m_Attacher.Offset = offset;
         }
 
         void ComputeTextSize()

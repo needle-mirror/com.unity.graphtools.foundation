@@ -1,12 +1,12 @@
-.searcher-graph-view {
+.ge-searcher-graph-view {
     padding: 5px;
     height: auto;
     min-width: auto;
     min-height: auto;
 }
 
-.searcher-graph-view #contentViewContainer,
-.searcher-graph-view Layer,
-.searcher-graph-view .ge-node {
+.ge-searcher-graph-view #contentViewContainer,
+.ge-searcher-graph-view Layer,
+.ge-searcher-graph-view .ge-node {
     position: relative;
 }

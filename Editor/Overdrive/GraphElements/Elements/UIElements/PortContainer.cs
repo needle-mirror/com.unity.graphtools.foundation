@@ -10,11 +10,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     {
         public new class UxmlFactory : UxmlFactory<PortContainer> {}
 
-        static readonly string sPortCountClassNamePrefix = "ge-port-container--port-count-";
+        public static readonly string ussClassName = "ge-port-container";
+        static readonly string portCountClassNamePrefix = ussClassName.WithUssModifier("port-count-");
 
         public PortContainer()
         {
-            AddToClassList("ge-port-container");
+            AddToClassList(ussClassName);
             this.AddStylesheet("PortContainer.uss");
         }
 
@@ -46,25 +47,35 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             if (rebuildPorts)
             {
+                foreach (var visualElement in Children())
+                {
+                    if (visualElement is Port port)
+                    {
+                        port.RemoveFromGraphView();
+                    }
+                }
+
                 Clear();
+
                 foreach (var portModel in portViewModels)
                 {
                     var ui = GraphElementFactory.CreateUI<Port>(graphView, store, portModel);
                     Debug.Assert(ui != null, "GraphElementFactory does not know how to create UI for " + portModel.GetType());
-                    ui.Orientation = Orientation.Horizontal;
                     Add(ui);
+
+                    ui.AddToGraphView(graphView);
                 }
             }
             else
             {
-                foreach (Port port in uiPorts)
+                foreach (var port in uiPorts)
                 {
                     port.UpdateFromModel();
                 }
             }
 
-            this.PrefixRemoveFromClassList(sPortCountClassNamePrefix);
-            AddToClassList(sPortCountClassNamePrefix + portViewModels.Count);
+            this.PrefixRemoveFromClassList(portCountClassNamePrefix);
+            AddToClassList(portCountClassNamePrefix + portViewModels.Count);
         }
     }
 }

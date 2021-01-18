@@ -1,4 +1,4 @@
-MiniMap {
+.ge-minimap {
     position: absolute;
     top: 0;
     left: 0;
@@ -6,7 +6,7 @@ MiniMap {
     height: 200px;
 }
 
-MiniMap.windowed {
+.ge-minimap--windowed {
     position: relative;
     width: auto;
     height: auto;
@@ -15,7 +15,7 @@ MiniMap.windowed {
     flex-grow: 1;
 }
 
-MiniMap .unity-label {
+.ge-minimap .unity-label {
     position:absolute;
     top:0;
     left:0;
@@ -28,28 +28,15 @@ MiniMap .unity-label {
     margin-right: 4px;
 }
 
-MiniMap.windowed .unity-label  {
+.ge-minimap--windowed .unity-label  {
     display: none;
 }
 
-MiniMap.graphElement {
-    border-color:#CCC;
-    background-color:rgba(100, 100, 100, 0.5);
-    position:absolute;
-    padding-top: 22px;
-}
-
-MiniMap.graphElement.windowed {
-    position:relative;
-    padding-top:0;
-    flex-grow:1;
-}
-
-MiniMap.anchored {
+.ge-minimap--anchored {
     left: 20px;
     bottom: 20px;
 }
 
-MiniMap.anchored Label {
+.ge-minimap--anchored Label {
     color:#aaaa00;
 }
