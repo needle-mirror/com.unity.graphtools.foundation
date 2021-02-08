@@ -4,15 +4,15 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public class EdgeBubblePart : BaseGraphElementPart
+    public class EdgeBubblePart : BaseModelUIPart
     {
         public static readonly string ussClassName = "ge-edge-bubble-part";
 
-        public static EdgeBubblePart Create(string name, IGraphElementModel model, IGraphElement graphElement, string parentClassName)
+        public static EdgeBubblePart Create(string name, IGraphElementModel model, IModelUI modelUI, string parentClassName)
         {
             if (model is IEdgeModel)
             {
-                return new EdgeBubblePart(name, model, graphElement, parentClassName);
+                return new EdgeBubblePart(name, model, modelUI, parentClassName);
             }
 
             return null;
@@ -22,7 +22,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         protected EdgeBubble m_EdgeBubble;
 
-        protected EdgeBubblePart(string name, IGraphElementModel model, IGraphElement ownerElement, string parentClassName)
+        protected EdgeBubblePart(string name, IGraphElementModel model, IModelUI ownerElement, string parentClassName)
             : base(name, model, ownerElement, parentClassName) {}
 
         protected override void BuildPartUI(VisualElement container)

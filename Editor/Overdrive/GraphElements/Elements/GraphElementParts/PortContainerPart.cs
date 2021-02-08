@@ -3,16 +3,16 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public class PortContainerPart : BaseGraphElementPart
+    public class PortContainerPart : BaseModelUIPart
     {
         public static readonly string ussClassName = "ge-port-container-part";
         public static readonly string portsUssName = "ports";
 
-        public static PortContainerPart Create(string name, IGraphElementModel model, IGraphElement graphElement, string parentClassName)
+        public static PortContainerPart Create(string name, IGraphElementModel model, IModelUI modelUI, string parentClassName)
         {
             if (model is IPortNode)
             {
-                return new PortContainerPart(name, model, graphElement, parentClassName);
+                return new PortContainerPart(name, model, modelUI, parentClassName);
             }
 
             return null;
@@ -24,7 +24,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public override VisualElement Root => m_Root;
 
-        protected PortContainerPart(string name, IGraphElementModel model, IGraphElement ownerElement, string parentClassName)
+        protected PortContainerPart(string name, IGraphElementModel model, IModelUI ownerElement, string parentClassName)
             : base(name, model, ownerElement, parentClassName) {}
 
         protected override void BuildPartUI(VisualElement container)
@@ -53,7 +53,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             if (m_Model is IPortNode portHolder)
             {
-                PortContainer?.UpdatePorts(portHolder.Ports, m_OwnerElement.GraphView, m_OwnerElement.Store);
+                PortContainer?.UpdatePorts(portHolder.Ports, m_OwnerElement.GraphView, m_OwnerElement.CommandDispatcher);
             }
         }
     }

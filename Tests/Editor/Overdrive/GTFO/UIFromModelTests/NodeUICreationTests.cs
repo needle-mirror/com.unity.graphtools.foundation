@@ -8,7 +8,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
 {
     public class NodeUICreationTests
     {
-        static IEnumerable<Func<INodeModel>> NodeModelCreators()
+        static IEnumerable<Func<BasicModel.NodeModel>> NodeModelCreators()
         {
             yield return () => new NodeModel();
             yield return () => new SingleInputNodeModel();
@@ -22,7 +22,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
 
         [Test]
         [TestCaseSource(nameof(NodeModelCreators))]
-        public void NodeHasExpectedParts(Func<INodeModel> nodeCreator)
+        public void NodeHasExpectedParts(Func<BasicModel.NodeModel> nodeCreator)
         {
             var nodeModel = nodeCreator.Invoke();
             nodeModel.DefineNode();
@@ -43,7 +43,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
 
         [Test]
         [TestCaseSource(nameof(NodeModelCreators))]
-        public void CollapsibleNodeHasExpectedParts(Func<INodeModel> nodeCreator)
+        public void CollapsibleNodeHasExpectedParts(Func<BasicModel.NodeModel> nodeCreator)
         {
             var nodeModel = nodeCreator.Invoke();
             nodeModel.DefineNode();
@@ -75,7 +75,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
 
         [Test]
         [TestCaseSource(nameof(NodeModelCreators))]
-        public void TokenNodeHasExpectedParts(Func<INodeModel> nodeCreator)
+        public void TokenNodeHasExpectedParts(Func<BasicModel.NodeModel> nodeCreator)
         {
             var nodeModel = nodeCreator.Invoke();
             nodeModel.DefineNode();

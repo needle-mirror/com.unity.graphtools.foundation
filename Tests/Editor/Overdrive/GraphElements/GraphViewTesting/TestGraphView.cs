@@ -1,33 +1,17 @@
 using System.Collections.Generic;
-using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    class TestGraphView : GtfoGraphView
+    class TestGraphView : GraphView
     {
         public SelectionDragger TestSelectionDragger => SelectionDragger;
 
-        public TestGraphView(GraphViewEditorWindow window, Store store) : base(window, store, "")
+        public TestGraphView(GraphViewEditorWindow window, CommandDispatcher commandDispatcher) : base(window, commandDispatcher)
         {
-            // This is needed for selection persistence.
-            viewDataKey = "TestGraphView";
-
-            name = "TestGraphView";
-
-            SetupZoom(ContentZoomer.DefaultMinScale, ContentZoomer.DefaultMaxScale, 1.0f);
-
-            ContentDragger = new ContentDragger();
-            SelectionDragger = new SelectionDragger(this);
-            RectangleSelector = new RectangleSelector();
-            FreehandSelector = new FreehandSelector();
-
-            Insert(0, new GridBackground());
-
-            focusable = true;
         }
 
-        // If you need this, ask yourself if you should not use a UnityTest and Store.State.RequestUIRebuild();
-        public void RebuildUI(IGraphModel graphModel, Store store)
+        // If you need this, ask yourself if you should not use a UnityTest and CommandDispatcher.State.RequestUIRebuild();
+        public void RebuildUI(IGraphModel graphModel, CommandDispatcher commandDispatcher)
         {
             var nodeList = Nodes.ToList();
             foreach (var node in nodeList)
@@ -58,26 +42,26 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             foreach (var nodeModel in graphModel.NodeModels)
             {
-                var element = GraphElementFactory.CreateUI<GraphElement>(this, store, nodeModel);
+                var element = GraphElementFactory.CreateUI<GraphElement>(this, commandDispatcher, nodeModel);
                 AddElement(element);
             }
 
             foreach (var edgeModel in graphModel.EdgeModels)
             {
-                var element = GraphElementFactory.CreateUI<GraphElement>(this, store, edgeModel);
+                var element = GraphElementFactory.CreateUI<GraphElement>(this, commandDispatcher, edgeModel);
                 AddElement(element);
             }
 
             foreach (var stickyNoteModel in graphModel.StickyNoteModels)
             {
-                var element = GraphElementFactory.CreateUI<GraphElement>(this, store, stickyNoteModel);
+                var element = GraphElementFactory.CreateUI<GraphElement>(this, commandDispatcher, stickyNoteModel);
                 AddElement(element);
             }
 
-            List<IGraphElement> placemats = new List<IGraphElement>();
+            List<IModelUI> placemats = new List<IModelUI>();
             foreach (var placematModel in graphModel.PlacematModels)
             {
-                var element = GraphElementFactory.CreateUI<GraphElement>(this, store, placematModel);
+                var element = GraphElementFactory.CreateUI<GraphElement>(this, commandDispatcher, placematModel);
                 AddElement(element);
                 placemats.Add(element);
             }
@@ -88,36 +72,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             {
                 placemat.UpdateFromModel();
             }
-        }
-
-        public override bool CanAcceptDrop(List<ISelectableGraphElement> dragSelection)
-        {
-            return false;
-        }
-
-        public override bool DragUpdated(DragUpdatedEvent evt, IEnumerable<ISelectableGraphElement> dragSelection, IDropTarget dropTarget, ISelection dragSource)
-        {
-            return false;
-        }
-
-        public override bool DragPerform(DragPerformEvent evt, IEnumerable<ISelectableGraphElement> dragSelection, IDropTarget dropTarget, ISelection dragSource)
-        {
-            return false;
-        }
-
-        public override bool DragEnter(DragEnterEvent evt, IEnumerable<ISelectableGraphElement> dragSelection, IDropTarget enteredTarget, ISelection dragSource)
-        {
-            return false;
-        }
-
-        public override bool DragLeave(DragLeaveEvent evt, IEnumerable<ISelectableGraphElement> dragSelection, IDropTarget leftTarget, ISelection dragSource)
-        {
-            return false;
-        }
-
-        public override bool DragExited()
-        {
-            return false;
         }
     }
 }

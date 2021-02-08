@@ -220,7 +220,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Assert.IsNotNull(node2OutputPort);
             Assert.IsNotNull(node3InputPort);
 
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             // Connect the ports together
@@ -322,7 +322,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Assert.IsNotNull(node2OutputPort);
             Assert.IsNotNull(node3InputPort);
 
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             // Connect the ports together
@@ -416,7 +416,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Assert.IsNotNull(node1SecondOutputPort);
             Assert.IsNotNull(node2InputPort);
 
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             // Connect the ports together

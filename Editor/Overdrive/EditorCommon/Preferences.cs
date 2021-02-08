@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using UnityEngine;
 
 // ReSharper disable InconsistentNaming
 
@@ -11,7 +12,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public static readonly BoolPref WarnOnUIFullRebuild = new BoolPref(1, nameof(WarnOnUIFullRebuild));
         public static readonly BoolPref LogUIBuildTime = new BoolPref(2, nameof(LogUIBuildTime));
         // 3 was BoundObjectLogging, now unused
-        public static readonly BoolPref AutoRecompile = new BoolPref(4, nameof(AutoRecompile));
+        public static readonly BoolPref AutoProcess = new BoolPref(4, nameof(AutoProcess), new[] {"AutoRecompile"});
         public static readonly BoolPref AutoAlignDraggedEdges = new BoolPref(5, nameof(AutoAlignDraggedEdges));
         public static readonly BoolPref DependenciesLogging = new BoolPref(6, nameof(DependenciesLogging));
         public static readonly BoolPref ErrorOnRecursiveDispatch = new BoolPref(7, nameof(ErrorOnRecursiveDispatch));
@@ -24,8 +25,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         [PublicAPI]
         protected static readonly int k_ToolBasePrefId = 10000;
 
-        protected BoolPref(int id, string name)
-            : base(id, name)
+        protected BoolPref(int id, string name, string[] obsoleteNames = null)
+            : base(id, name, obsoleteNames)
         {
         }
     }
@@ -35,21 +36,34 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         [PublicAPI]
         protected static readonly int k_ToolBasePrefId = 10000;
 
-        protected IntPref(int id, string name)
-            : base(id, name)
+        protected IntPref(int id, string name, string[] obsoleteNames = null)
+            : base(id, name, obsoleteNames)
         {
         }
     }
 
-    public abstract class Preferences
+    public class Preferences
     {
+        public static Preferences CreatePreferences(string editorPreferencesPrefix)
+        {
+            var preferences = new Preferences(editorPreferencesPrefix);
+            preferences.Initialize<BoolPref, IntPref>();
+            return preferences;
+        }
+
         Dictionary<BoolPref, bool> m_BoolPrefs;
         Dictionary<IntPref, int> m_IntPrefs;
+        string m_EditorPreferencesPrefix;
 
-        protected Preferences()
+        Preferences()
         {
             m_BoolPrefs = new Dictionary<BoolPref, bool>();
             m_IntPrefs = new Dictionary<IntPref, int>();
+        }
+
+        protected Preferences(string editorPreferencesPrefix) : this()
+        {
+            m_EditorPreferencesPrefix = editorPreferencesPrefix;
         }
 
         protected void Initialize<TBool, TInt>()
@@ -63,14 +77,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             ReadAllFromEditorPrefs<TBool, TInt>();
         }
 
-        protected abstract string GetEditorPreferencesPrefix();
-
         protected virtual void SetDefaultValues()
         {
             // specific default values, if you want something else than default(type)
-            SetBoolNoEditorUpdate(BoolPref.AutoRecompile, true);
-            SetBoolNoEditorUpdate(BoolPref.AutoAlignDraggedEdges, true);
-
             if (Unsupported.IsDeveloperBuild())
             {
                 SetBoolNoEditorUpdate(BoolPref.ErrorOnRecursiveDispatch, true);
@@ -90,15 +99,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public bool GetBool(BoolPref k)
         {
-            bool result;
-            m_BoolPrefs.TryGetValue(k, out result);
+            m_BoolPrefs.TryGetValue(k, out var result);
             return result;
         }
 
         public int GetInt(IntPref k)
         {
-            int result;
-            m_IntPrefs.TryGetValue(k, out result);
+            m_IntPrefs.TryGetValue(k, out var result);
             return result;
         }
 
@@ -106,12 +113,28 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             SetBoolNoEditorUpdate(k, value);
             EditorPrefs.SetBool(GetKeyName(k), value);
+
+            if (k.ObsoleteNames != null)
+            {
+                foreach (var obsoleteName in k.ObsoleteNames)
+                {
+                    EditorPrefs.DeleteKey(m_EditorPreferencesPrefix + obsoleteName);
+                }
+            }
         }
 
         public void SetInt(IntPref k, int value)
         {
             SetIntNoEditorUpdate(k, value);
             EditorPrefs.SetInt(GetKeyName(k), value);
+
+            if (k.ObsoleteNames != null)
+            {
+                foreach (var obsoleteName in k.ObsoleteNames)
+                {
+                    EditorPrefs.DeleteKey(m_EditorPreferencesPrefix + obsoleteName);
+                }
+            }
         }
 
         public void ToggleBool(BoolPref k)
@@ -144,23 +167,56 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         void ReadBoolFromEditorPref(BoolPref k)
         {
-            string keyName = GetKeyName(k);
-            bool pref = GetBool(k);
-            bool value = EditorPrefs.GetBool(keyName, pref);
-            SetBoolNoEditorUpdate(k, value);
+            string keyName = GetKeyNameInEditorPrefs(k);
+            if (keyName != null)
+            {
+                bool value = EditorPrefs.GetBool(keyName);
+                SetBoolNoEditorUpdate(k, value);
+            }
         }
 
         void ReadIntFromEditorPref(IntPref k)
         {
-            string keyName = GetKeyName(k);
-            int pref = GetInt(k);
-            int value = EditorPrefs.GetInt(keyName, pref);
-            SetIntNoEditorUpdate(k, value);
+            string keyName = GetKeyNameInEditorPrefs(k);
+            if (keyName != null)
+            {
+                int value = EditorPrefs.GetInt(keyName);
+                SetIntNoEditorUpdate(k, value);
+            }
         }
 
-        string GetKeyName<T>(T key)
+        string GetKeyName<T>(T key) where T : Enumeration
         {
-            return GetEditorPreferencesPrefix() + key;
+            return m_EditorPreferencesPrefix + key;
+        }
+
+        IEnumerable<string> GetObsoleteKeyNames<T>(T key) where T : Enumeration
+        {
+            foreach (var obsoleteName in key.ObsoleteNames)
+            {
+                yield return m_EditorPreferencesPrefix + obsoleteName;
+            }
+        }
+
+        string GetKeyNameInEditorPrefs<T>(T key) where T : Enumeration
+        {
+            var keyName = GetKeyName(key);
+
+            if (!EditorPrefs.HasKey(keyName) && key.ObsoleteNames != null)
+            {
+                keyName = null;
+
+                foreach (var obsoleteKeyName in GetObsoleteKeyNames(key))
+                {
+                    if (EditorPrefs.HasKey(obsoleteKeyName))
+                    {
+                        keyName = obsoleteKeyName;
+                        break;
+                    }
+                }
+            }
+
+            return keyName;
         }
     }
 }

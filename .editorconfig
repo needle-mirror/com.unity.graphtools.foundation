@@ -9,6 +9,8 @@ end_of_line = lf
 #charset = utf-8
 trim_trailing_whitespace = true
 insert_final_newline = true
+# require manual formatting so that bugs during dev of formatter do not auto-ruin formatter code
+disable_auto_format = true
 
 # formattable file extensions (keep in sync with format.ini from unity-meta repo)
 #
@@ -67,3 +69,15 @@ end_of_line = crlf
 charset = utf-8
 trim_trailing_whitespace = true
 insert_final_newline = false
+
+[*.asmdef]
+scrape_api = false
+
+[**/Tests/**.asmdef]
+scrape_api = false
+
+[**/Overdrive/Unity.GraphTools.Foundation.Overdrive.Editor.asmdef]
+scrape_api = true
+
+[**/Overdrive/InternalBridge/InternalBridge.asmdef]
+scrape_api = true

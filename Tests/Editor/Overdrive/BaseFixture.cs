@@ -11,31 +11,16 @@ using UnityEngine.Profiling;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
 {
-    public enum TestingMode { Action, UndoRedo }
+    public enum TestingMode { Command, UndoRedo }
 
-    class TestPreferences : Preferences
+    class TestGraphToolState : GraphToolState
     {
-        public static TestPreferences CreatePreferences()
-        {
-            var preferences = new TestPreferences();
-            preferences.Initialize<BoolPref, IntPref>();
-            return preferences;
-        }
-
-        protected override string GetEditorPreferencesPrefix()
-        {
-            return "GraphToolsFoundationTests.";
-        }
-    }
-
-    class TestState : State
-    {
-        public TestState(GUID graphViewEditorWindowGUID, Preferences preferences)
+        public TestGraphToolState(GUID graphViewEditorWindowGUID, Preferences preferences)
             : base(graphViewEditorWindowGUID, preferences) {}
 
-        public override void PostDispatchAction(BaseAction action)
+        public override void PostDispatchCommand(Command command)
         {
-            base.PostDispatchAction(action);
+            base.PostDispatchCommand(command);
 
             if (GraphModel != null)
                 Assert.IsTrue(GraphModel.CheckIntegrity(Verbosity.Errors));
@@ -61,10 +46,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
     [PublicAPI]
     public abstract class BaseFixture
     {
-        protected Store m_Store;
+        protected CommandDispatcher m_CommandDispatcher;
         protected const string k_GraphPath = "Assets/test.asset";
 
-        protected GraphModel GraphModel => (GraphModel)m_Store.State.GraphModel;
+        protected GraphModel GraphModel => (GraphModel)m_CommandDispatcher.GraphToolState.GraphModel;
         protected Stencil Stencil => GraphModel.Stencil;
 
         protected abstract bool CreateGraphOnStartup { get; }
@@ -96,15 +81,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
             }
         }
 
-        protected void TestPrereqActionPostreq<T>(TestingMode mode, Action checkReqs, Func<T> provideAction, Action checkPostReqs) where T : BaseAction
+        protected void TestPrereqCommandPostreq<T>(TestingMode mode, Action checkReqs, Func<T> provideCommand, Action checkPostReqs) where T : Command
         {
-            T action;
+            T command;
             switch (mode)
             {
-                case TestingMode.Action:
+                case TestingMode.Command:
                     checkReqs();
-                    action = provideAction();
-                    m_Store.Dispatch(action);
+                    command = provideCommand();
+                    m_CommandDispatcher.Dispatch(command);
 
                     checkPostReqs();
                     break;
@@ -114,8 +99,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
                     AssumePreviousTest(() =>
                     {
                         checkReqs();
-                        action = provideAction();
-                        m_Store.Dispatch(action);
+                        command = provideCommand();
+                        m_CommandDispatcher.Dispatch(command);
                         checkPostReqs();
                     });
 
@@ -123,7 +108,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
 
                     Undo.PerformUndo();
 
-                    CheckUndo(checkReqs, provideAction);
+                    CheckUndo(checkReqs, provideCommand);
 
                     Undo.PerformRedo();
                     CheckRedo(checkPostReqs);
@@ -138,15 +123,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
             AssertPreviousTest(checkPostReqs);
         }
 
-        static void CheckUndo<T>(Action checkReqs, Func<T> provideAction) where T : BaseAction
+        static void CheckUndo<T>(Action checkReqs, Func<T> provideCommand) where T : Command
         {
             AssertPreviousTest(checkReqs);
-            AssertPreviousTest(() => provideAction());
+            AssertPreviousTest(() => provideCommand());
         }
 
-        protected void TestPrereqActionPostreq<T>(TestingMode mode, Func<T> checkReqsAndProvideAction, Action checkPostReqs) where T : BaseAction
+        protected void TestPrereqCommandPostreq<T>(TestingMode mode, Func<T> checkReqsAndProvideCommand, Action checkPostReqs) where T : Command
         {
-            TestPrereqActionPostreq(mode, () => {}, checkReqsAndProvideAction, checkPostReqs);
+            TestPrereqCommandPostreq(mode, () => {}, checkReqsAndProvideCommand, checkPostReqs);
         }
 
         [SetUp]
@@ -154,17 +139,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
         {
             Profiler.BeginSample("VS Tests SetUp");
 
-            var prefs = TestPreferences.CreatePreferences();
+            var prefs = Preferences.CreatePreferences("GraphToolsFoundationTests.");
             prefs.SetBoolNoEditorUpdate(BoolPref.ErrorOnRecursiveDispatch, false);
             prefs.SetBoolNoEditorUpdate(BoolPref.ErrorOnMultipleDispatchesPerFrame, false);
 
-            m_Store = new Store(new TestState(default, prefs));
-            StoreHelper.RegisterDefaultReducers(m_Store);
+            m_CommandDispatcher = new CommandDispatcher(new TestGraphToolState(default, prefs));
+            CommandDispatcherHelper.RegisterDefaultCommandHandlers(m_CommandDispatcher);
 
             if (CreateGraphOnStartup)
             {
                 var graphAsset = GraphAssetCreationHelpers<TestGraphAssetModel>.CreateInMemoryGraphAsset(CreatedGraphType, "Test", k_GraphPath);
-                m_Store.Dispatch(new LoadGraphAssetAction(graphAsset));
+                m_CommandDispatcher.Dispatch(new LoadGraphAssetCommand(graphAsset));
                 AssumeIntegrity();
             }
             Profiler.EndSample();
@@ -174,18 +159,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
         public virtual void TearDown()
         {
             UnloadGraph();
-            m_Store = null;
+            m_CommandDispatcher = null;
             Profiler.enabled = false;
         }
 
         void UnloadGraph()
         {
-            State state = m_Store.State;
+            GraphToolState graphToolState = m_CommandDispatcher.GraphToolState;
 
-            if (state.GraphModel != null)
-                AssetWatcher.Instance.UnwatchGraphAssetAtPath(state.GraphModel.AssetModel?.GetPath());
+            if (graphToolState.GraphModel != null)
+                AssetWatcher.Instance.UnwatchGraphAssetAtPath(graphToolState.GraphModel.AssetModel?.GetPath());
 
-            state.UnloadCurrentGraphAsset();
+            graphToolState.UnloadCurrentGraphAsset();
         }
 
         protected void AssertIntegrity()
@@ -283,20 +268,20 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
         protected void AddUsage(IVariableDeclarationModel fieldModel)
         {
             int prevCount = GetFloatingVariableModels(GraphModel).Count();
-            m_Store.Dispatch(new CreateVariableNodesAction(fieldModel, Vector2.one));
+            m_CommandDispatcher.Dispatch(new CreateVariableNodesCommand(fieldModel, Vector2.one));
             Assume.That(GetFloatingVariableModels(GraphModel).Count(), Is.EqualTo(prevCount + 1));
         }
 
         protected IVariableNodeModel GetGraphVariableUsage(string fieldName)
         {
-            return GetFloatingVariableModels(GraphModel).First(f => f.Title == fieldName && f.GetVariableType() == VariableType.GraphVariable);
+            return GetFloatingVariableModels(GraphModel).First(f => f.Title == fieldName);
         }
 
         protected IVariableDeclarationModel CreateGraphVariableDeclaration(string fieldName, Type type)
         {
             int prevCount = GraphModel.VariableDeclarations.Count();
 
-            m_Store.Dispatch(new CreateGraphVariableDeclarationAction(fieldName, false, type.GenerateTypeHandle()));
+            m_CommandDispatcher.Dispatch(new CreateGraphVariableDeclarationCommand(fieldName, false, type.GenerateTypeHandle()));
 
             Assert.AreEqual(prevCount + 1, GraphModel.VariableDeclarations.Count());
             IVariableDeclarationModel decl = GetGraphVariableDeclaration(fieldName);
@@ -307,7 +292,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
 
         protected void EnableUndoRedoModificationsLogging()
         {
-            m_Store.RegisterObserver(a => Debug.Log("Action " + a.GetType().Name));
+            m_CommandDispatcher.RegisterObserver(a => Debug.Log("Command " + a.GetType().Name));
             // TODO : Undo.postprocessModifications += PostprocessModifications;
         }
 

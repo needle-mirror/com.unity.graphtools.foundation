@@ -10,8 +10,5 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     {
         public static TypeHandle GetDataType(this IVariableNodeModel self) =>
             self.VariableDeclarationModel?.DataType ?? TypeHandle.Unknown;
-
-        public static VariableType GetVariableType(this IVariableNodeModel self) =>
-            self.VariableDeclarationModel.VariableType;
     }
 }

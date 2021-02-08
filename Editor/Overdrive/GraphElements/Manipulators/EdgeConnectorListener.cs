@@ -7,15 +7,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class EdgeConnectorListener
     {
-        Action<Store, Edge, Vector2> m_OnDropOutsideDelegate;
-        Action<Store, Edge> m_OnDropDelegate;
+        Action<CommandDispatcher, Edge, Vector2> m_OnDropOutsideDelegate;
+        Action<CommandDispatcher, Edge> m_OnDropDelegate;
 
-        public void SetDropOutsideDelegate(Action<Store, Edge, Vector2> action)
+        public void SetDropOutsideDelegate(Action<CommandDispatcher, Edge, Vector2> action)
         {
             m_OnDropOutsideDelegate = action;
         }
 
-        public void SetDropDelegate(Action<Store, Edge> action)
+        public void SetDropDelegate(Action<CommandDispatcher, Edge> action)
         {
             m_OnDropDelegate = action;
         }
@@ -45,11 +45,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             return edgeModelsToDelete;
         }
 
-        public void OnDropOutsidePort(Store store, Edge edge, Vector2 position, Edge originalEdge)
+        public void OnDropOutsidePort(CommandDispatcher commandDispatcher, Edge edge, Vector2 position, Edge originalEdge)
         {
             if (m_OnDropOutsideDelegate != null)
             {
-                m_OnDropOutsideDelegate(store, edge, position);
+                m_OnDropOutsideDelegate(commandDispatcher, edge, position);
             }
             else
             {
@@ -62,15 +62,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 if (originalEdge != null)
                     edgesToDelete.Add(originalEdge.EdgeModel);
 
-                store.Dispatch(new DeleteEdgeAction(edgesToDelete));
+                commandDispatcher.Dispatch(new DeleteEdgeCommand(edgesToDelete));
             }
         }
 
-        public void OnDrop(Store store, Edge edge, Edge originalEdge)
+        public void OnDrop(CommandDispatcher commandDispatcher, Edge edge, Edge originalEdge)
         {
             if (m_OnDropDelegate != null)
             {
-                m_OnDropDelegate(store, edge);
+                m_OnDropDelegate(commandDispatcher, edge);
             }
             else
             {
@@ -86,7 +86,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 if (originalEdge != null)
                     edgeModelsToDelete.Add(originalEdge.EdgeModel);
 
-                store.Dispatch(new CreateEdgeAction(
+                commandDispatcher.Dispatch(new CreateEdgeCommand(
                     edge.EdgeModel.ToPort,
                     edge.EdgeModel.FromPort,
                     edgeModelsToDelete

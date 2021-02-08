@@ -1,9 +1,8 @@
-using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public interface ISelectableGraphElement
+    public interface ISelectableGraphElement : IGraphElement
     {
         bool IsSelectable();
         void Select(VisualElement selectionContainer, bool additive);

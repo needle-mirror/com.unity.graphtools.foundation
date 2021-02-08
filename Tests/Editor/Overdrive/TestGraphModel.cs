@@ -33,17 +33,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
             return VariableDeclarations;
         }
 
-        public void PopulateCreateMenu(string sectionName, GenericMenu menu, Store store)
+        public void PopulateCreateMenu(string sectionName, GenericMenu menu, CommandDispatcher commandDispatcher)
         {
             throw new NotImplementedException();
         }
 
         public IGraphModel GraphModel => this;
-        public GUID Guid { get; set; }
+        public SerializableGUID Guid { get; set; }
 
         public void AssignNewGuid()
         {
-            Guid = GUID.Generate();
+            Guid = SerializableGUID.Generate();
         }
 
         public IReadOnlyList<Capabilities> Capabilities => new List<Capabilities>

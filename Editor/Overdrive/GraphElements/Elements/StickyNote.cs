@@ -186,7 +186,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             if (resizeWhat != ResizeFlags.None)
             {
-                Store.Dispatch(new ChangeStickyNoteLayoutAction(StickyNoteModel, newRect, resizeWhat));
+                CommandDispatcher.Dispatch(new ChangeStickyNoteLayoutCommand(StickyNoteModel, newRect, resizeWhat));
             }
         }
 

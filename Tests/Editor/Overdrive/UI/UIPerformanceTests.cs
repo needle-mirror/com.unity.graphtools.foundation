@@ -12,47 +12,47 @@ using UnityEngine.TestTools;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
 {
-    class ActionThatMarksNew : BaseAction
+    class CommandThatMarksNew : Command
     {
-        public static void DefaultReducer(State state, ActionThatMarksNew action)
+        public static void DefaultCommandHandler(GraphToolState graphToolState, CommandThatMarksNew command)
         {
-            var placematModel = state.GraphModel.CreatePlacemat(Rect.zero);
-            state.MarkNew(placematModel);
+            var placematModel = graphToolState.GraphModel.CreatePlacemat(Rect.zero);
+            graphToolState.MarkNew(placematModel);
         }
     }
 
-    class ActionThatMarksChanged : BaseAction
+    class CommandThatMarksChanged : Command
     {
-        public static void DefaultReducer(State state, ActionThatMarksChanged action)
+        public static void DefaultCommandHandler(GraphToolState graphToolState, CommandThatMarksChanged command)
         {
-            var placemat = state.GraphModel.PlacematModels.FirstOrDefault();
+            var placemat = graphToolState.GraphModel.PlacematModels.FirstOrDefault();
             Debug.Assert(placemat != null);
-            state.MarkChanged(placemat);
+            graphToolState.MarkChanged(placemat);
         }
     }
 
-    class ActionThatMarksDeleted : BaseAction
+    class CommandThatMarksDeleted : Command
     {
-        public static void DefaultReducer(State state, ActionThatMarksDeleted action)
+        public static void DefaultCommandHandler(GraphToolState graphToolState, CommandThatMarksDeleted command)
         {
-            var placemat = state.GraphModel.PlacematModels.FirstOrDefault();
-            state.GraphModel.DeletePlacemats(new[] { placemat });
+            var placemat = graphToolState.GraphModel.PlacematModels.FirstOrDefault();
+            graphToolState.GraphModel.DeletePlacemats(new[] { placemat });
             Debug.Assert(placemat != null);
-            state.MarkDeleted(placemat);
+            graphToolState.MarkDeleted(placemat);
         }
     }
 
-    class ActionThatRebuildsAll : BaseAction
+    class CommandThatRebuildsAll : Command
     {
-        public static void DefaultReducer(State state, ActionThatRebuildsAll action)
+        public static void DefaultCommandHandler(GraphToolState graphToolState, CommandThatRebuildsAll command)
         {
-            state.RequestUIRebuild();
+            graphToolState.RequestUIRebuild();
         }
     }
 
-    class ActionThatDoesNothing : BaseAction
+    class CommandThatDoesNothing : Command
     {
-        public static void DefaultReducer(State state, ActionThatDoesNothing action)
+        public static void DefaultCommandHandler(GraphToolState graphToolState, CommandThatDoesNothing command)
         {
         }
     }
@@ -68,48 +68,48 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         {
             base.SetUp();
 
-            Store.State.GraphModel.CreatePlacemat(Rect.zero);
+            CommandDispatcher.GraphToolState.GraphModel.CreatePlacemat(Rect.zero);
 
-            Store.RegisterReducer<ActionThatMarksNew>(ActionThatMarksNew.DefaultReducer);
-            Store.RegisterReducer<ActionThatMarksChanged>(ActionThatMarksChanged.DefaultReducer);
-            Store.RegisterReducer<ActionThatMarksDeleted>(ActionThatMarksDeleted.DefaultReducer);
-            Store.RegisterReducer<ActionThatRebuildsAll>(ActionThatRebuildsAll.DefaultReducer);
-            Store.RegisterReducer<ActionThatDoesNothing>(ActionThatDoesNothing.DefaultReducer);
+            CommandDispatcher.RegisterCommandHandler<CommandThatMarksNew>(CommandThatMarksNew.DefaultCommandHandler);
+            CommandDispatcher.RegisterCommandHandler<CommandThatMarksChanged>(CommandThatMarksChanged.DefaultCommandHandler);
+            CommandDispatcher.RegisterCommandHandler<CommandThatMarksDeleted>(CommandThatMarksDeleted.DefaultCommandHandler);
+            CommandDispatcher.RegisterCommandHandler<CommandThatRebuildsAll>(CommandThatRebuildsAll.DefaultCommandHandler);
+            CommandDispatcher.RegisterCommandHandler<CommandThatDoesNothing>(CommandThatDoesNothing.DefaultCommandHandler);
         }
 
         static Func<GraphModel, int, Type0FakeNodeModel> MakeNode =>
             (graphModel, i) => graphModel.CreateNode<Type0FakeNodeModel>("Node" + i, Vector2.zero);
 
-        static IEnumerable<object[]> GetSomeActions()
+        static IEnumerable<object[]> GetSomeCommands()
         {
-            yield return new object[] { new ActionThatMarksNew(), UIRebuildType.Partial};
-            yield return new object[] { new ActionThatMarksChanged(), UIRebuildType.Partial};
-            yield return new object[] { new ActionThatMarksDeleted(), UIRebuildType.Partial};
-            yield return new object[] { new ActionThatRebuildsAll(), UIRebuildType.Complete};
-            yield return new object[] { new ActionThatDoesNothing(), UIRebuildType.None};
+            yield return new object[] { new CommandThatMarksNew(), UIRebuildType.Partial};
+            yield return new object[] { new CommandThatMarksChanged(), UIRebuildType.Partial};
+            yield return new object[] { new CommandThatMarksDeleted(), UIRebuildType.Partial};
+            yield return new object[] { new CommandThatRebuildsAll(), UIRebuildType.Complete};
+            yield return new object[] { new CommandThatDoesNothing(), UIRebuildType.None};
         }
 
         void FakeUpdate()
         {
-            Store.BeginViewUpdate();
+            CommandDispatcher.BeginViewUpdate();
 
-            var rebuildType = Store.State.GetUpdateType(m_LastStateVersion);
+            var rebuildType = CommandDispatcher.GraphToolState.GetUpdateType(m_LastStateVersion);
             GraphView.UpdateUI(rebuildType);
-            m_LastStateVersion = Store.EndViewUpdate();
+            m_LastStateVersion = CommandDispatcher.EndViewUpdate();
         }
 
-        [Test, TestCaseSource(nameof(GetSomeActions))]
-        public void TestRebuildType(BaseAction action, UIRebuildType rebuildType)
+        [Test, TestCaseSource(nameof(GetSomeCommands))]
+        public void TestRebuildType(Command command, UIRebuildType rebuildType)
         {
             // Do the initial update.
             FakeUpdate();
 
-            Store.Dispatch(action);
+            CommandDispatcher.Dispatch(command);
             FakeUpdate();
-            Assert.That(Store.State.LastActionUIRebuildType, Is.EqualTo(rebuildType));
+            Assert.That(CommandDispatcher.GraphToolState.LastCommandUIRebuildType, Is.EqualTo(rebuildType));
 
             FakeUpdate();
-            Assert.That(Store.State.LastActionUIRebuildType, Is.EqualTo(UIRebuildType.None));
+            Assert.That(CommandDispatcher.GraphToolState.LastCommandUIRebuildType, Is.EqualTo(UIRebuildType.None));
         }
 
         [UnityTest]
@@ -117,17 +117,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         {
             var model = MakeNode(GraphModel, 0);
             yield return null;
-            Assert.That(Store.State.LastActionUIRebuildType, Is.EqualTo(UIRebuildType.Complete));
+            Assert.That(CommandDispatcher.GraphToolState.LastCommandUIRebuildType, Is.EqualTo(UIRebuildType.Complete));
 
             yield return null;
-            Assert.That(Store.State.LastActionUIRebuildType, Is.EqualTo(UIRebuildType.None));
+            Assert.That(CommandDispatcher.GraphToolState.LastCommandUIRebuildType, Is.EqualTo(UIRebuildType.None));
 
-            Store.Dispatch(new DeleteElementsAction(new[] { model }));
+            CommandDispatcher.Dispatch(new DeleteElementsCommand(new[] { model }));
             yield return null;
-            Assert.That(Store.State.LastActionUIRebuildType, Is.EqualTo(UIRebuildType.Partial));
+            Assert.That(CommandDispatcher.GraphToolState.LastCommandUIRebuildType, Is.EqualTo(UIRebuildType.Partial));
 
             yield return null;
-            Assert.That(Store.State.LastActionUIRebuildType, Is.EqualTo(UIRebuildType.None));
+            Assert.That(CommandDispatcher.GraphToolState.LastCommandUIRebuildType, Is.EqualTo(UIRebuildType.None));
         }
     }
 }

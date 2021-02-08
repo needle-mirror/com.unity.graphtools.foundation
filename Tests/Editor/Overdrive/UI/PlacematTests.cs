@@ -40,7 +40,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             GraphModel.CreatePlacemat(new Rect(205, 0, 200, 200));
             var nodeModel = GraphModel.CreateNode<Type0FakeNodeModel>("Node0", new Vector2(190, 100));
 
-            Store.MarkStateDirty();
+            CommandDispatcher.MarkStateDirty();
             yield return null;
 
             var nodeUI = nodeModel.GetUI<Node>(GraphView);
@@ -51,7 +51,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             IEnumerable<IGraphElementModel> modelsToMove = null;
             HashSet<GraphElement> elementsToMove = new HashSet<GraphElement>();
 
-            yield return TestPrereqActionPostreq(mode,
+            yield return TestPrereqCommandPostreq(mode,
                 () =>
                 {
                     var placemat0 = GetGraphElementModel(0) as PlacematModel;
@@ -84,17 +84,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                     switch (frame)
                     {
                         case 0:
-                            Store.MarkStateDirty();
+                            CommandDispatcher.MarkStateDirty();
                             return TestPhase.WaitForNextFrame;
                         case 1:
                             {
                                 var placemat0 = GetGraphElementModel(0) as PlacematModel;
                                 var node = GetGraphElementModel(2);
-                                Store.Dispatch(new SetPlacematCollapsedAction(placemat0, true, new[] { node }));
+                                CommandDispatcher.Dispatch(new SetPlacematCollapsedCommand(placemat0, true, new[] { node }));
                                 return TestPhase.WaitForNextFrame;
                             }
                         case 2:
-                            Store.MarkStateDirty();
+                            CommandDispatcher.MarkStateDirty();
                             return TestPhase.WaitForNextFrame;
                         default:
                             return TestPhase.Done;
@@ -146,19 +146,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             {
                 // Create a placemat and collapse it.
                 var placemat = GraphModel.CreatePlacemat(new Rect(0, 0, 200, 500)) as PlacematModel;
-                Store.MarkStateDirty();
+                CommandDispatcher.MarkStateDirty();
                 yield return null;
 
-                Store.Dispatch(new SetPlacematCollapsedAction(placemat, true, new IGraphElementModel[] {}));
+                CommandDispatcher.Dispatch(new SetPlacematCollapsedCommand(placemat, true, new IGraphElementModel[] {}));
                 yield return null;
 
                 // Add a node under it.
                 GraphModel.CreateNode<Type0FakeNodeModel>("Node0", new Vector2(10, 100));
-                Store.MarkStateDirty();
+                CommandDispatcher.MarkStateDirty();
                 yield return null;
             }
 
-            yield return TestPrereqActionPostreq(mode,
+            yield return TestPrereqCommandPostreq(mode,
                 () =>
                 {
                     var placemat = GetGraphElementModel(0) as PlacematModel;
@@ -175,16 +175,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                     switch (frame)
                     {
                         case 0:
-                            Store.MarkStateDirty();
+                            CommandDispatcher.MarkStateDirty();
                             return TestPhase.WaitForNextFrame;
                         case 1:
                             {
                                 var node = GetGraphElementModel(1) as NodeModel;
-                                Store.Dispatch(new MoveElementsAction(new Vector2(10, 0), new[] { node }));
+                                CommandDispatcher.Dispatch(new MoveElementsCommand(new Vector2(10, 0), new[] { node }));
                                 return TestPhase.WaitForNextFrame;
                             }
                         case 2:
-                            Store.MarkStateDirty();
+                            CommandDispatcher.MarkStateDirty();
                             return TestPhase.WaitForNextFrame;
                         default:
                             return TestPhase.Done;
@@ -225,19 +225,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             {
                 // Create a placemat and collapse it.
                 var placemat = GraphModel.CreatePlacemat(new Rect(0, 0, 200, 500)) as PlacematModel;
-                Store.MarkStateDirty();
+                CommandDispatcher.MarkStateDirty();
                 yield return null;
 
-                Store.Dispatch(new SetPlacematCollapsedAction(placemat, true, new IGraphElementModel[] {}));
+                CommandDispatcher.Dispatch(new SetPlacematCollapsedCommand(placemat, true, new IGraphElementModel[] {}));
                 yield return null;
 
                 // Add a node under it.
                 GraphModel.CreateNode<Type0FakeNodeModel>("Node0", new Vector2(10, 100));
-                Store.MarkStateDirty();
+                CommandDispatcher.MarkStateDirty();
                 yield return null;
             }
 
-            yield return TestPrereqActionPostreq(mode,
+            yield return TestPrereqCommandPostreq(mode,
                 () =>
                 {
                     var placemat = GetGraphElementModel(0) as PlacematModel;
@@ -254,16 +254,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                     switch (frame)
                     {
                         case 0:
-                            Store.MarkStateDirty();
+                            CommandDispatcher.MarkStateDirty();
                             return TestPhase.WaitForNextFrame;
                         case 1:
                             {
                                 var placemat = GetGraphElementModel(0) as PlacematModel;
-                                Store.Dispatch(new SetPlacematCollapsedAction(placemat, false, new IGraphElementModel[] {}));
+                                CommandDispatcher.Dispatch(new SetPlacematCollapsedCommand(placemat, false, new IGraphElementModel[] {}));
                                 return TestPhase.WaitForNextFrame;
                             }
                         case 2:
-                            Store.MarkStateDirty();
+                            CommandDispatcher.MarkStateDirty();
                             return TestPhase.WaitForNextFrame;
                         default:
                             return TestPhase.Done;

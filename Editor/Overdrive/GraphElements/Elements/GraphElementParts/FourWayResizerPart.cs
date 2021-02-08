@@ -2,13 +2,13 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public class FourWayResizerPart : BaseGraphElementPart
+    public class FourWayResizerPart : BaseModelUIPart
     {
-        public static FourWayResizerPart Create(string name, IGraphElementModel model, IGraphElement graphElement, string parentClassName)
+        public static FourWayResizerPart Create(string name, IGraphElementModel model, IModelUI modelUI, string parentClassName)
         {
             if (model is IResizable)
             {
-                return new FourWayResizerPart(name, model, graphElement, parentClassName);
+                return new FourWayResizerPart(name, model, modelUI, parentClassName);
             }
 
             return null;
@@ -18,7 +18,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         ResizableElement m_ResizableElement;
 
-        protected FourWayResizerPart(string name, IGraphElementModel model, IGraphElement ownerElement, string parentClassName)
+        protected FourWayResizerPart(string name, IGraphElementModel model, IModelUI ownerElement, string parentClassName)
             : base(name, model, ownerElement, parentClassName) {}
 
         protected override void BuildPartUI(VisualElement container)

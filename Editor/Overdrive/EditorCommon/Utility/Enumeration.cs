@@ -11,10 +11,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public int Id { get; }
 
-        protected Enumeration(int id, string name)
+        public string[] ObsoleteNames;
+
+        protected Enumeration(int id, string name, string[] obsoleteNames = null)
         {
             Id = id;
             Name = name;
+            ObsoleteNames = obsoleteNames;
         }
 
         public override string ToString() => Name;

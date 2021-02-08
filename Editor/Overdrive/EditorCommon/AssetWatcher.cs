@@ -45,32 +45,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             m_ProjectAssetPaths = new Dictionary<string, string>();
         }
 
-        public void AddWatchedType(Type t)
-        {
-            if (typeof(IGraphAssetModel).IsAssignableFrom(t))
-            {
-                var graphAssetGUIDs = AssetDatabase.FindAssets("t:" + t.FullName);
-                foreach (var guid in graphAssetGUIDs)
-                {
-                    var path = AssetDatabase.GUIDToAssetPath(guid);
-                    var graphAssetModel = AssetDatabase.LoadMainAssetAtPath(path) as IGraphAssetModel;
-                    if (graphAssetModel != null)
-                        WatchGraphAssetAtPath(path, graphAssetModel);
-                }
-            }
-        }
-
-        public void WatchGraphAssetAtPath(string path, IGraphAssetModel graphAssetModel)
-        {
-            if (graphAssetModel != null)
-            {
-                if (Instance.m_ProjectAssetPaths.ContainsKey(path))
-                    Instance.m_ProjectAssetPaths[path] = graphAssetModel.SourceFilePath;
-                else
-                    Instance.m_ProjectAssetPaths.Add(path, graphAssetModel.SourceFilePath);
-            }
-        }
-
         public void UnwatchGraphAssetAtPath(string path)
         {
             Instance.m_ProjectAssetPaths.Remove(path);
@@ -124,10 +98,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                             {
                                 newAssetModel.Name = newGraphName;
                                 newAssetModel.GraphModel.Name = newGraphName;
-                                foreach (var gvWindow in gvWindows.Where(w => w.Store.State?.GraphModel == newAssetModel.GraphModel))
+                                foreach (var gvWindow in gvWindows.Where(w => w.CommandDispatcher.GraphToolState?.GraphModel == newAssetModel.GraphModel))
                                 {
-                                    gvWindow.Store.MarkStateDirty();
-                                    (gvWindow as GtfoWindow)?.RecompileGraph();
+                                    gvWindow.CommandDispatcher.MarkStateDirty();
+                                    gvWindow.ProcessGraph();
                                 }
                             }
                         }
@@ -136,17 +110,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
 
             var importedGraphAssets = importedAssets.Where(AssetAtPathIsGraphAsset).ToList();
-            foreach (var importedGraphAsset in importedGraphAssets)
-            {
-                if (AssetDatabase.LoadAssetAtPath<Object>(importedGraphAsset) is IGraphAssetModel graphAssetModel)
-                {
-                    var path = graphAssetModel.SourceFilePath;
-                    if (path != null)
-                        Instance.m_ProjectAssetPaths[importedGraphAsset] = path;
-                    else
-                        Instance.m_ProjectAssetPaths.Remove(importedGraphAsset);
-                }
-            }
             if (importedGraphAssets.Any())
                 Version++;
         }

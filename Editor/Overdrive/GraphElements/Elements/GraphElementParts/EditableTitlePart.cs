@@ -3,16 +3,16 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public class EditableTitlePart : BaseGraphElementPart
+    public class EditableTitlePart : BaseModelUIPart
     {
         public static readonly string ussClassName = "ge-editable-title-part";
         public static readonly string titleLabelName = "title";
 
-        public static EditableTitlePart Create(string name, IGraphElementModel model, IGraphElement graphElement, string parentClassName, bool multiline = false)
+        public static EditableTitlePart Create(string name, IGraphElementModel model, IModelUI modelUI, string parentClassName, bool multiline = false)
         {
             if (model is IHasTitle)
             {
-                return new EditableTitlePart(name, model, graphElement, parentClassName, multiline);
+                return new EditableTitlePart(name, model, modelUI, parentClassName, multiline);
             }
 
             return null;
@@ -26,7 +26,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public override VisualElement Root => TitleContainer;
 
-        protected EditableTitlePart(string name, IGraphElementModel model, IGraphElement ownerElement, string parentClassName, bool multiline)
+        protected EditableTitlePart(string name, IGraphElementModel model, IModelUI ownerElement, string parentClassName, bool multiline)
             : base(name, model, ownerElement, parentClassName)
         {
             m_Multiline = multiline;
@@ -80,7 +80,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         protected void OnRename(ChangeEvent<string> e)
         {
-            m_OwnerElement.Store.Dispatch(new RenameElementAction(m_Model as IRenamable, e.newValue));
+            m_OwnerElement.CommandDispatcher.Dispatch(new RenameElementCommand(m_Model as IRenamable, e.newValue));
         }
     }
 }

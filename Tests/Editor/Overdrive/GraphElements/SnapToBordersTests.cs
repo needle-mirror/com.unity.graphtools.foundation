@@ -863,7 +863,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             m_SnappingNodePos = new Vector2(k_ReferenceNodePos.x + 50, k_ReferenceNodePos.y + 100);
             var placematModel = CreatePlacemat(new Rect(m_SnappingNodePos, new Vector2(200, 200)), "Placemat");
 
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             // Get the UI nodes
@@ -920,7 +920,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Vector2 secondSelectedElementPos = new Vector2(m_SnappingNodePos.x + 200, m_SnappingNodePos.y + 100);
             var placematModel = CreatePlacemat(new Rect(secondSelectedElementPos, new Vector2(200, 200)), "Placemat");
 
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             Vector2 worldPosNode2 = graphView.contentViewContainer.LocalToWorld(m_SnappingNodePos);
@@ -994,7 +994,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             var nodeInsidePlacematPos = m_SnappingNodePos + new Vector2(60, 60);
             var nodeInsidePlacematModel = CreateNode("Node2", nodeInsidePlacematPos);
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             // Get the UI nodes

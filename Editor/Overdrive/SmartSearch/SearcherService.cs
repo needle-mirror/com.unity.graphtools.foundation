@@ -57,81 +57,81 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             GraphView = new SearcherGraphView(null, null);
         }
 
-        static void ShowSearcher(State state, Vector2 position, Action<GraphNodeModelSearcherItem> callback, List<SearcherDatabaseBase> dbs, SearcherFilter filter, ISearcherAdapter adapter)
+        static void ShowSearcher(GraphToolState graphToolState, Vector2 position, Action<GraphNodeModelSearcherItem> callback, List<SearcherDatabaseBase> dbs, SearcherFilter filter, ISearcherAdapter adapter)
         {
-            var prefs = state.Preferences;
+            var prefs = graphToolState.Preferences;
             if (prefs?.GetBool(BoolPref.SearcherInRegularWindow) ?? false)
                 PromptSearcherInOwnWindow(dbs, filter, adapter, callback);
             else
                 PromptSearcherPopup(dbs, filter, adapter, position, callback);
         }
 
-        public static void ShowInputToGraphNodes(State state, IPortModel portModel, Vector2 position,
+        public static void ShowInputToGraphNodes(GraphToolState graphToolState, IPortModel portModel, Vector2 position,
             Action<GraphNodeModelSearcherItem> callback)
         {
-            var stencil = state.GraphModel.Stencil;
+            var stencil = graphToolState.GraphModel.Stencil;
             var filter = stencil.GetSearcherFilterProvider()?.GetInputToGraphSearcherFilter(portModel);
-            var adapter = stencil.GetSearcherAdapter(state.GraphModel, "Add an input node", portModel);
+            var adapter = stencil.GetSearcherAdapter(graphToolState.GraphModel, "Add an input node", portModel);
             var dbProvider = stencil.GetSearcherDatabaseProvider();
 
             if (dbProvider == null)
                 return;
 
-            var dbs = dbProvider.GetGraphElementsSearcherDatabases(state.GraphModel)
-                .Concat(dbProvider.GetGraphVariablesSearcherDatabases(state.GraphModel))
+            var dbs = dbProvider.GetGraphElementsSearcherDatabases(graphToolState.GraphModel)
+                .Concat(dbProvider.GetGraphVariablesSearcherDatabases(graphToolState.GraphModel))
                 .Concat(dbProvider.GetDynamicSearcherDatabases(portModel))
                 .ToList();
 
-            ShowSearcher(state, position, callback, dbs, filter, adapter);
+            ShowSearcher(graphToolState, position, callback, dbs, filter, adapter);
         }
 
-        public static void ShowOutputToGraphNodes(State state, IPortModel portModel, Vector2 position,
+        public static void ShowOutputToGraphNodes(GraphToolState graphToolState, IPortModel portModel, Vector2 position,
             Action<GraphNodeModelSearcherItem> callback)
         {
-            var stencil = state.GraphModel.Stencil;
+            var stencil = graphToolState.GraphModel.Stencil;
             var filter = stencil.GetSearcherFilterProvider()?.GetOutputToGraphSearcherFilter(portModel);
-            var adapter = stencil.GetSearcherAdapter(state.GraphModel, $"Choose an action for {portModel.DataTypeHandle.GetMetadata(stencil).FriendlyName}", portModel);
+            var adapter = stencil.GetSearcherAdapter(graphToolState.GraphModel, $"Choose an action for {portModel.DataTypeHandle.GetMetadata(stencil).FriendlyName}", portModel);
             var dbProvider = stencil.GetSearcherDatabaseProvider();
 
             if (dbProvider == null)
                 return;
 
-            var dbs = dbProvider.GetGraphElementsSearcherDatabases(state.GraphModel).ToList();
+            var dbs = dbProvider.GetGraphElementsSearcherDatabases(graphToolState.GraphModel).ToList();
 
-            ShowSearcher(state, position, callback, dbs, filter, adapter);
+            ShowSearcher(graphToolState, position, callback, dbs, filter, adapter);
         }
 
-        public static void ShowEdgeNodes(State state, IEdgeModel edgeModel, Vector2 position,
+        public static void ShowEdgeNodes(GraphToolState graphToolState, IEdgeModel edgeModel, Vector2 position,
             Action<GraphNodeModelSearcherItem> callback)
         {
-            var stencil = state.GraphModel.Stencil;
+            var stencil = graphToolState.GraphModel.Stencil;
             var filter = stencil.GetSearcherFilterProvider()?.GetEdgeSearcherFilter(edgeModel);
-            var adapter = stencil.GetSearcherAdapter(state.GraphModel, "Insert Node");
+            var adapter = stencil.GetSearcherAdapter(graphToolState.GraphModel, "Insert Node");
             var dbProvider = stencil.GetSearcherDatabaseProvider();
 
             if (dbProvider == null)
                 return;
 
-            var dbs = dbProvider.GetGraphElementsSearcherDatabases(state.GraphModel).ToList();
+            var dbs = dbProvider.GetGraphElementsSearcherDatabases(graphToolState.GraphModel).ToList();
 
-            ShowSearcher(state, position, callback, dbs, filter, adapter);
+            ShowSearcher(graphToolState, position, callback, dbs, filter, adapter);
         }
 
-        public static void ShowGraphNodes(State state, Vector2 position, Action<GraphNodeModelSearcherItem> callback)
+        public static void ShowGraphNodes(GraphToolState graphToolState, Vector2 position, Action<GraphNodeModelSearcherItem> callback)
         {
-            var stencil = state.GraphModel.Stencil;
+            var stencil = graphToolState.GraphModel.Stencil;
             var filter = stencil.GetSearcherFilterProvider()?.GetGraphSearcherFilter();
-            var adapter = stencil.GetSearcherAdapter(state.GraphModel, "Add a graph node");
+            var adapter = stencil.GetSearcherAdapter(graphToolState.GraphModel, "Add a graph node");
             var dbProvider = stencil.GetSearcherDatabaseProvider();
 
             if (dbProvider == null)
                 return;
 
-            var dbs = dbProvider.GetGraphElementsSearcherDatabases(state.GraphModel)
+            var dbs = dbProvider.GetGraphElementsSearcherDatabases(graphToolState.GraphModel)
                 .Concat(dbProvider.GetDynamicSearcherDatabases(null))
                 .ToList();
 
-            ShowSearcher(state, position, callback, dbs, filter, adapter);
+            ShowSearcher(graphToolState, position, callback, dbs, filter, adapter);
         }
 
         static void PromptSearcherPopup<T>(List<SearcherDatabaseBase> databases, SearcherFilter filter,

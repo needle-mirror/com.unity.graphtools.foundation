@@ -30,7 +30,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             var startPort = firstNodeModel.GetOutputPorts().First();
             var endPort = secondNodeModel.GetInputPorts().First();
 
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             var actions = ConnectPorts(startPort, endPort);
@@ -71,7 +71,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             CreateNode<FooNode>("N2", Vector2.zero);
             CreateNode<FooNode>("N3", Vector2.zero);
 
-            graphView.RebuildUI(GraphModel, Store);
+            graphView.RebuildUI(GraphModel, CommandDispatcher);
 
             graphView.ClearSelection();
             graphView.AddToSelection(graphView.GraphElements.First());
@@ -109,7 +109,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             CreateNode<FooNode>("N2", Vector2.zero);
             CreateNode<FooNode>("N3", Vector2.zero);
 
-            graphView.RebuildUI(GraphModel, Store);
+            graphView.RebuildUI(GraphModel, CommandDispatcher);
 
             // Reset selection for next test
             graphView.ClearSelection();
@@ -134,7 +134,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             CreateNode<FooNode>("F2", Vector2.zero);
             CreateNode<BarNode>("B2", Vector2.zero);
 
-            graphView.RebuildUI(GraphModel, Store);
+            graphView.RebuildUI(GraphModel, CommandDispatcher);
 
             graphView.ClearSelection();
             graphView.AddToSelection(f0.GetUI<GraphElement>(graphView));

@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
@@ -159,12 +158,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             base.BuildContextualMenu(evt);
 
-            var selectedModels = Selection.OfType<IGraphElement>().Select(e => e.Model).ToArray();
+            var selectedModels = Selection.OfType<IModelUI>().Select(e => e.Model).ToArray();
             if (selectedModels.Length > 0)
             {
                 evt.menu.AppendAction("Delete", menuAction =>
                 {
-                    Store.Dispatch(new DeleteElementsAction(selectedModels));
+                    CommandDispatcher.Dispatch(new DeleteElementsCommand(selectedModels));
                 }, eventBase => DropdownMenuAction.Status.Normal);
             }
         }
@@ -172,37 +171,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         void OnAttachToPanel(AttachToPanelEvent evt)
         {
             RegisterCallback<KeyDownEvent>(OnKeyDownEvent);
-            RegisterCallback<DragUpdatedEvent>(OnDragUpdated);
-            RegisterCallback<DragPerformEvent>(OnDragPerform);
         }
 
         void OnDetachFromPanel(DetachFromPanelEvent evt)
         {
             UnregisterCallback<KeyDownEvent>(OnKeyDownEvent);
-            UnregisterCallback<DragUpdatedEvent>(OnDragUpdated);
-            UnregisterCallback<DragPerformEvent>(OnDragPerform);
-        }
-
-        void OnDragUpdated(DragUpdatedEvent e)
-        {
-            IGraphModel currentGraphModel = Store.State.GraphModel;
-            if (currentGraphModel == null)
-                return;
-            var stencil = currentGraphModel.Stencil;
-            var dragNDropHandler = stencil.DragNDropHandler;
-            dragNDropHandler?.HandleDragUpdated(e, DragNDropContext.Blackboard);
-            e.StopPropagation();
-        }
-
-        void OnDragPerform(DragPerformEvent e)
-        {
-            IGraphModel currentGraphModel = Store.State.GraphModel;
-            if (currentGraphModel == null)
-                return;
-            var stencil = currentGraphModel.Stencil;
-            var dragNDropHandler = stencil.DragNDropHandler;
-            dragNDropHandler?.HandleDragPerform(e, Store, DragNDropContext.Blackboard, this);
-            e.StopPropagation();
         }
 
         void OnKeyDownEvent(KeyDownEvent e)
@@ -250,7 +223,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 e.MenuPosition,
                 (t, i) =>
                 {
-                    Store.Dispatch(new CreateGraphVariableDeclarationAction
+                    CommandDispatcher.Dispatch(new CreateGraphVariableDeclarationCommand
                     {
                         VariableName = "newVariable",
                         TypeHandle = t,

@@ -5,6 +5,9 @@ using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 {
+    /// <summary>
+    /// A model that represents a blackboard for a graph.
+    /// </summary>
     public class BlackboardGraphModel : IBlackboardGraphModel
     {
         public bool Valid => GraphModel != null;
@@ -27,7 +30,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             return GraphModel?.VariableDeclarations ?? Enumerable.Empty<IVariableDeclarationModel>();
         }
 
-        public virtual void PopulateCreateMenu(string sectionName, GenericMenu menu, Store store)
+        public virtual void PopulateCreateMenu(string sectionName, GenericMenu menu, CommandDispatcher commandDispatcher)
         {
             menu.AddItem(new GUIContent("Create Variable"), false, () =>
             {
@@ -35,22 +38,28 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
                 var finalName = newItemName;
                 var i = 0;
                 // ReSharper disable once AccessToModifiedClosure
-                while (store.State.GraphModel.VariableDeclarations.Any(v => v.Title == finalName))
+                while (commandDispatcher.GraphToolState.GraphModel.VariableDeclarations.Any(v => v.Title == finalName))
                     finalName = newItemName + i++;
 
-                store.Dispatch(new CreateGraphVariableDeclarationAction(finalName, true, TypeHandle.Float));
+                commandDispatcher.Dispatch(new CreateGraphVariableDeclarationCommand(finalName, true, TypeHandle.Float));
             });
         }
 
         public IGraphModel GraphModel => AssetModel?.GraphModel;
 
-        public GUID Guid { get; set; }
+        /// <summary>
+        /// The unique identifier of the blackboard.
+        /// </summary>
+        public SerializableGUID Guid { get; set; }
 
         public IGraphAssetModel AssetModel { get; set; }
 
+        /// <summary>
+        /// Assign a newly generated GUID to the model.
+        /// </summary>
         public void AssignNewGuid()
         {
-            Guid = GUID.Generate();
+            Guid = SerializableGUID.Generate();
         }
 
         public IReadOnlyList<Capabilities> Capabilities => new List<Capabilities>

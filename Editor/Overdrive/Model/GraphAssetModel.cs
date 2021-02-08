@@ -19,8 +19,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public string FriendlyScriptName => StringExtensions.CodifyString(Name);
 
-        public abstract string SourceFilePath { get; }
-
         protected abstract Type GraphModelType { get; }
 
         public void CreateGraph(string graphName, Type stencilType = null, bool writeOnDisk = true)
@@ -40,9 +38,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             {
                 EditorUtility.SetDirty(this);
             }
-
-            if (writeOnDisk)
-                EditorUtility.SetDirty(this);
         }
 
         protected virtual void OnEnable()

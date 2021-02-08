@@ -18,7 +18,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         GhostEdgeModel m_GhostEdgeModel;
         Edge m_GhostEdge;
         public GraphView GraphView { get; }
-        readonly Store m_Store;
+        readonly CommandDispatcher m_CommandDispatcher;
         readonly EdgeConnectorListener m_Listener;
         readonly Func<IGraphModel, GhostEdgeModel> m_GhostEdgeViewModelCreator;
 
@@ -28,9 +28,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         bool resetPositionOnPan { get; set; }
 
-        public EdgeDragHelper(Store store, GraphView graphView, EdgeConnectorListener listener, Func<IGraphModel, GhostEdgeModel> ghostEdgeViewModelCreator)
+        public EdgeDragHelper(CommandDispatcher commandDispatcher, GraphView graphView, EdgeConnectorListener listener, Func<IGraphModel, GhostEdgeModel> ghostEdgeViewModelCreator)
         {
-            m_Store = store;
+            m_CommandDispatcher = commandDispatcher;
             GraphView = graphView;
             m_Listener = listener;
             m_GhostEdgeViewModelCreator = ghostEdgeViewModelCreator;
@@ -50,7 +50,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             {
                 ghostEdge = new GhostEdgeModel(graphModel);
             }
-            var ui = GraphElementFactory.CreateUI<Edge>(GraphView, m_Store, ghostEdge);
+            var ui = GraphElementFactory.CreateUI<Edge>(GraphView, m_CommandDispatcher, ghostEdge);
             return ui;
         }
 
@@ -158,7 +158,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (portUI != null)
                 portUI.WillConnect = true;
 
-            m_CompatiblePorts = m_Store.State.GraphModel.GetCompatiblePorts(draggedPort);
+            m_CompatiblePorts = m_CommandDispatcher.GraphToolState.GraphModel.GetCompatiblePorts(draggedPort);
 
             // Only light compatible anchors when dragging an edge.
             GraphView.Ports.ForEach((p) =>
@@ -333,7 +333,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             if (endPort == null && m_Listener != null)
             {
-                m_Listener.OnDropOutsidePort(m_Store, m_EdgeCandidate, mousePosition, originalEdge);
+                m_Listener.OnDropOutsidePort(m_CommandDispatcher, m_EdgeCandidate, mousePosition, originalEdge);
             }
 
             m_EdgeCandidate.SetEnabled(true);
@@ -375,7 +375,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                         edgeCandidateModel.ToPort = endPort.PortModel;
                 }
 
-                m_Listener.OnDrop(m_Store, m_EdgeCandidate, originalEdge);
+                m_Listener.OnDrop(m_CommandDispatcher, m_EdgeCandidate, originalEdge);
                 didConnect = true;
             }
             else if (edgeCandidateModel != null)

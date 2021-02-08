@@ -3,13 +3,13 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public class SinglePortContainerPart : BaseGraphElementPart
+    public class SinglePortContainerPart : BaseModelUIPart
     {
-        public static SinglePortContainerPart Create(string name, IGraphElementModel model, IGraphElement graphElement, string parentClassName)
+        public static SinglePortContainerPart Create(string name, IGraphElementModel model, IModelUI modelUI, string parentClassName)
         {
             if (model is IPortModel)
             {
-                return new SinglePortContainerPart(name, model, graphElement, parentClassName);
+                return new SinglePortContainerPart(name, model, modelUI, parentClassName);
             }
 
             return null;
@@ -19,7 +19,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public override VisualElement Root => m_PortContainer;
 
-        protected SinglePortContainerPart(string name, IGraphElementModel model, IGraphElement ownerElement, string parentClassName)
+        protected SinglePortContainerPart(string name, IGraphElementModel model, IModelUI ownerElement, string parentClassName)
             : base(name, model, ownerElement, parentClassName) {}
 
         protected override void BuildPartUI(VisualElement container)
@@ -35,7 +35,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         protected override void UpdatePartFromModel()
         {
             if (m_Model is IPortModel portModel)
-                m_PortContainer?.UpdatePorts(new[] { portModel }, m_OwnerElement.GraphView, m_OwnerElement.Store);
+                m_PortContainer?.UpdatePorts(new[] { portModel }, m_OwnerElement.GraphView, m_OwnerElement.CommandDispatcher);
         }
     }
 }

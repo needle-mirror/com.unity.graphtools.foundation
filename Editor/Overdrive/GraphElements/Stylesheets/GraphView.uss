@@ -90,7 +90,7 @@ Layer {
     flex: 1 1 auto;
 }
 
-.ge-graph-view #contentViewContainer {
+.ge-graph-view #content-view-container {
     position: absolute;
     left: 0;
     right: 0;
@@ -98,6 +98,6 @@ Layer {
     bottom: 0;
 }
 
-.ge-graph-view #iconsParent {
+.ge-graph-view #badge-container {
     overflow: visible;
 }

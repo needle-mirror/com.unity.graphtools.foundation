@@ -10,92 +10,20 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
 {
-    class TestGraphView : GtfoGraphView
-    {
-        public TestGraphView(GraphViewEditorWindow window, Store store)
-            : base(window, store, "TestGraphView") {}
-
-        public override bool CanAcceptDrop(List<ISelectableGraphElement> dragSelection)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override bool DragUpdated(DragUpdatedEvent evt, IEnumerable<ISelectableGraphElement> dragSelection, IDropTarget dropTarget, ISelection dragSource)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override bool DragPerform(DragPerformEvent evt, IEnumerable<ISelectableGraphElement> dragSelection, IDropTarget dropTarget, ISelection dragSource)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override bool DragEnter(DragEnterEvent evt, IEnumerable<ISelectableGraphElement> dragSelection, IDropTarget enteredTarget, ISelection dragSource)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override bool DragLeave(DragLeaveEvent evt, IEnumerable<ISelectableGraphElement> dragSelection, IDropTarget leftTarget, ISelection dragSource)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override bool DragExited()
-        {
-            throw new NotImplementedException();
-        }
-    }
-
-    class TestBlankPage : BlankPage
-    {
-        public TestBlankPage(Store store)
-            : base(store) {}
-    }
-
-    class GtfoWindowTest : GtfoWindow
+    class GtfoWindowTest : GraphViewEditorWindow
     {
         public GtfoWindowTest()
         {
             WithSidePanel = false;
         }
 
-        protected override bool CanHandleAssetType(GraphAssetModel asset)
+        protected override GraphToolState CreateInitialState()
         {
-            return true;
-        }
-
-        protected override State CreateInitialState()
-        {
-            var prefs = TestPreferences.CreatePreferences();
+            var state = base.CreateInitialState();
+            var prefs = state.Preferences;
             prefs.SetBoolNoEditorUpdate(BoolPref.ErrorOnRecursiveDispatch, false);
             prefs.SetBoolNoEditorUpdate(BoolPref.ErrorOnMultipleDispatchesPerFrame, false);
-
-            return new State(GUID, prefs);
-        }
-
-        protected override BlankPage CreateBlankPage()
-        {
-            return new TestBlankPage(Store);
-        }
-
-        protected override MainToolbar CreateMainToolbar()
-        {
-            return new MainToolbar(Store, GraphView);
-        }
-
-        protected override ErrorToolbar CreateErrorToolbar()
-        {
-            return new ErrorToolbar(Store, GraphView);
-        }
-
-        protected override GtfoGraphView CreateGraphView()
-        {
-            return new TestGraphView(this, Store);
-        }
-
-        protected override Dictionary<Event, ShortcutDelegate> GetShortcutDictionary()
-        {
-            return new Dictionary<Event, ShortcutDelegate>();
+            return state;
         }
     }
 
@@ -106,11 +34,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         protected const string k_GraphPath = "Assets/test.asset";
         const int k_PanAreaWidth = 100;
         static readonly Rect k_WindowRect = new Rect(Vector2.zero, new Vector2(k_PanAreaWidth * 8, k_PanAreaWidth * 6));
-        protected GtfoWindow Window { get; set; }
-        protected GtfoGraphView GraphView { get; private set; }
+        protected GraphViewEditorWindow Window { get; set; }
+        protected GraphView GraphView { get; private set; }
         protected TestEventHelpers Helpers { get; set; }
-        protected Store Store => Window.Store;
-        protected GraphModel GraphModel => (GraphModel)Store.State.GraphModel;
+        protected CommandDispatcher CommandDispatcher => Window.CommandDispatcher;
+        protected GraphModel GraphModel => (GraphModel)CommandDispatcher.GraphToolState.GraphModel;
 
         protected abstract bool CreateGraphOnStartup { get; }
         protected virtual Type CreatedGraphType => typeof(ClassStencil);
@@ -126,7 +54,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             if (CreateGraphOnStartup)
             {
                 var graphAsset = GraphAssetCreationHelpers<TestGraphAssetModel>.CreateInMemoryGraphAsset(CreatedGraphType, "Test", k_GraphPath);
-                Store.Dispatch(new LoadGraphAssetAction(graphAsset));
+                CommandDispatcher.Dispatch(new LoadGraphAssetCommand(graphAsset));
             }
         }
 
@@ -167,7 +95,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         IList<INodeModel> GetNodeModels()
         {
             return GetGraphElements()
-                .Where(x => x is IGraphElement model && model.Model is INodeModel)
+                .Where(x => x is IModelUI model && model.Model is INodeModel)
                 .Select(x => x.Model)
                 .Cast<INodeModel>()
                 .ToList();
@@ -183,7 +111,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             WaitForNextFrame,
             Done,
         }
-        protected IEnumerator TestPrereqActionPostreq(TestingMode mode, Action checkReqs, Func<int, TestPhase> doUndoableStuff, Action checkPostReqs, int framesToWait = 1)
+        protected IEnumerator TestPrereqCommandPostreq(TestingMode mode, Action checkReqs, Func<int, TestPhase> doUndoableStuff, Action checkPostReqs, int framesToWait = 1)
         {
             yield return null;
 
@@ -196,7 +124,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             int currentFrame;
             switch (mode)
             {
-                case TestingMode.Action:
+                case TestingMode.Command:
                     BaseFixture.AssumePreviousTest(checkReqs);
 
                     currentFrame = 0;

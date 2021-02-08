@@ -36,8 +36,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIToolkitTests
             Assert.AreEqual(DisplayStyle.Flex, label.resolvedStyle.display);
             Assert.AreEqual(DisplayStyle.None, textField.resolvedStyle.display);
 
-            var center = label.layout.center;
-            Click(label, center);
+            var center = label.parent.LocalToWorld(label.layout.center);
+            EventHelper.Click(center);
 
             Assert.AreEqual(DisplayStyle.Flex, label.resolvedStyle.display);
             Assert.AreEqual(DisplayStyle.None, textField.resolvedStyle.display);
@@ -52,12 +52,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIToolkitTests
 
             var label = editableLabel.Q(EditableLabel.labelName);
             var textField = editableLabel.Q(EditableLabel.textFieldName);
-            var center = label.layout.center;
+            var center = label.parent.LocalToWorld(label.layout.center);
 
             Assert.AreEqual(DisplayStyle.Flex, label.resolvedStyle.display);
             Assert.AreEqual(DisplayStyle.None, textField.resolvedStyle.display);
 
-            DoubleClick(label, center);
+            EventHelper.Click(center, clickCount: 2);
 
             Assert.AreEqual(DisplayStyle.None, label.resolvedStyle.display);
             Assert.AreEqual(DisplayStyle.Flex, textField.resolvedStyle.display);
@@ -76,16 +76,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIToolkitTests
 
             var label = editableLabel.Q(EditableLabel.labelName);
             var textField = editableLabel.Q(EditableLabel.textFieldName);
-            var center = label.layout.center;
+            var center = label.parent.LocalToWorld(label.layout.center);
 
             // Activate text field
-            DoubleClick(label, center);
+            EventHelper.Click(center, clickCount: 2);
 
             // Type some text
-            Type(textField, k_SomeText);
+            EventHelper.Type(k_SomeText);
 
             // Type Escape
-            Type(textField, KeyCode.Escape);
+            EventHelper.KeyPressed(KeyCode.Escape);
 
             Assert.IsNull(newValue);
             Assert.AreEqual(DisplayStyle.Flex, label.resolvedStyle.display);
@@ -105,15 +105,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIToolkitTests
 
             var label = editableLabel.Q(EditableLabel.labelName);
             var textField = editableLabel.Q(EditableLabel.textFieldName);
-            var center = label.layout.center;
+            var center = label.parent.LocalToWorld(label.layout.center);
 
             // Activate text field
-            DoubleClick(label, center);
+            EventHelper.Click(center, clickCount: 2);
 
             // Type some text
-            Type(textField, k_SomeText);
+            EventHelper.Type(k_SomeText);
 
-            Type(textField, KeyCode.Return);
+            EventHelper.KeyPressed(KeyCode.Return);
 
             Assert.AreEqual(k_SomeText, newValue);
         }
@@ -131,15 +131,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIToolkitTests
 
             var label = editableLabel.Q(EditableLabel.labelName);
             var textField = editableLabel.Q(EditableLabel.textFieldName);
-            var center = label.layout.center;
+            var center = label.parent.LocalToWorld(label.layout.center);
 
             // Activate text field
-            DoubleClick(label, center);
+            EventHelper.Click(center, clickCount: 2);
+            yield return null;
 
             // Type some text
-            Type(textField, k_SomeText);
+            EventHelper.Type(k_SomeText);
+            yield return null;
 
-            Click(m_Window.rootVisualElement, m_Window.rootVisualElement.layout.center);
+            // Blur the field
+            EventHelper.Click(Vector2.zero);
 
             Assert.AreEqual(k_SomeText, newValue);
             Assert.AreEqual(DisplayStyle.Flex, label.resolvedStyle.display);

@@ -8,11 +8,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public static new readonly string ussClassName = "ge-icon-title-progress";
         public static readonly string collapseButtonPartName = "collapse-button";
 
-        public static IconTitleProgressPart Create(string name, IGraphElementModel model, IGraphElement graphElement, string parentClassName)
+        public static IconTitleProgressPart Create(string name, IGraphElementModel model, IModelUI modelUI, string parentClassName)
         {
             if (model is INodeModel)
             {
-                return new IconTitleProgressPart(name, model, graphElement, parentClassName);
+                return new IconTitleProgressPart(name, model, modelUI, parentClassName);
             }
 
             return null;
@@ -24,7 +24,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public ProgressBar CoroutineProgressBar;
 
-        protected IconTitleProgressPart(string name, IGraphElementModel model, IGraphElement ownerElement, string parentClassName)
+        protected IconTitleProgressPart(string name, IGraphElementModel model, IModelUI ownerElement, string parentClassName)
             : base(name, model, ownerElement, parentClassName, multiline: false)
         {
             if (model is ICollapsible)

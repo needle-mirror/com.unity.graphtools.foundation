@@ -22,6 +22,10 @@
     --port-color: red;
 }
 
+.ge-port--hidden {
+    display: none;
+}
+
 /* Make this more specific than the data type color. Not super nice. */
 .ge-port.ge-port--will-connect {
     --port-color: #ffff00;

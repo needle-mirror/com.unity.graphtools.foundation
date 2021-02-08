@@ -12,7 +12,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
     public class ClassStencil : Stencil
     {
         ISearcherFilterProvider m_SearcherFilterProvider;
-        ISearcherDatabaseProvider m_SearcherDatabaseProvider;
         List<ITypeMetadata> m_AssembliesTypes;
 
         static readonly string[] k_BlackListedNamespaces =

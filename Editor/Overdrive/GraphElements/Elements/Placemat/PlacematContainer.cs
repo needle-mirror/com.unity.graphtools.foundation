@@ -110,8 +110,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 idx++;
             }
 
-            m_GraphView.Store.Dispatch(
-                new ChangePlacematZOrdersAction(newOrders.ToArray(), changedPlacemats.ToArray()));
+            m_GraphView.CommandDispatcher.Dispatch(
+                new ChangePlacematZOrdersCommand(newOrders.ToArray(), changedPlacemats.ToArray()));
 
             Sort((a, b) => ((Placemat)a).ZOrder.CompareTo(((Placemat)b).ZOrder));
         }

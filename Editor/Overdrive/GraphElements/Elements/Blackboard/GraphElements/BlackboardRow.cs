@@ -73,7 +73,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             if (Model is IVariableDeclarationModel vdm)
             {
-                bool isExpanded = Store.State.BlackboardViewState.GetVariableDeclarationModelExpanded(vdm);
+                bool isExpanded = CommandDispatcher.GraphToolState.BlackboardViewState.GetVariableDeclarationModelExpanded(vdm);
 
                 EnableInClassList(expandedModifierUssClassName, !isExpanded);
                 m_CollapseButton.SetValueWithoutNotify(!isExpanded);
@@ -82,7 +82,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         void OnCollapseButtonChange(ChangeEvent<bool> e)
         {
-            Store.Dispatch(new ExpandOrCollapseBlackboardRowAction(!e.newValue, Model as IVariableDeclarationModel));
+            CommandDispatcher.Dispatch(new ExpandOrCollapseBlackboardRowCommand(!e.newValue, Model as IVariableDeclarationModel));
         }
 
         void OnPromptSearcher(PromptSearcherEvent e)
@@ -97,7 +97,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 e.MenuPosition,
                 (t, i) =>
                 {
-                    Store.Dispatch(new ChangeVariableTypeAction(vdm, t));
+                    CommandDispatcher.Dispatch(new ChangeVariableTypeCommand(vdm, t));
                 });
 
             e.StopPropagation();

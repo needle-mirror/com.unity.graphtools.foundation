@@ -6,6 +6,9 @@ using UnityEngine.Scripting.APIUpdating;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 {
+    /// <summary>
+    /// A model that represents a sticky note in a graph.
+    /// </summary>
     [Serializable]
     //[MovedFrom(false, "UnityEditor.VisualScripting.GraphViewModel", "Unity.GraphTools.Foundation.Overdrive.Editor")]
     [MovedFrom("UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel")]
@@ -115,11 +118,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             set => m_TextSizeName = value;
         }
 
-        public GUID Guid
+        /// <summary>
+        /// The unique identifier of the sticky note.
+        /// </summary>
+        public SerializableGUID Guid
         {
             get
             {
-                if (m_Guid.GUID.Empty())
+                if (!m_Guid.Valid)
                     AssignNewGuid();
                 return m_Guid;
             }
@@ -156,15 +162,22 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             Title = newName;
         }
 
+        /// <summary>
+        /// Assign a newly generated GUID to the model.
+        /// </summary>
         public void AssignNewGuid()
         {
-            m_Guid = GUID.Generate();
+            m_Guid = SerializableGUID.Generate();
         }
 
+        /// <summary>
+        /// Assign a GUID to the model.
+        /// </summary>
+        /// <param name="guidString">A string representation of the guid to be parsed.</param>
         void IGuidUpdate.AssignGuid(string guidString)
         {
-            m_Guid = new GUID(guidString);
-            if (m_Guid.GUID.Empty())
+            m_Guid = new SerializableGUID(guidString);
+            if (!m_Guid.Valid)
                 AssignNewGuid();
         }
 
@@ -178,7 +191,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         public void OnAfterDeserialize()
         {
 #pragma warning disable 612
-            if (m_Guid.GUID.Empty())
+            if (!m_Guid.Valid)
             {
                 if (!String.IsNullOrEmpty(m_Id))
                 {

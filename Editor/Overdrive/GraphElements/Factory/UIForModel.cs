@@ -10,31 +10,31 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     {
         static GraphElementMapping s_UIForModel = new GraphElementMapping();
 
-        public static void AddOrReplaceGraphElement(IGraphElement graphElement)
+        public static void AddOrReplaceGraphElement(IModelUI modelUI)
         {
-            s_UIForModel.AddOrReplaceUIForModel(graphElement);
+            s_UIForModel.AddOrReplaceUIForModel(modelUI);
         }
 
         [CanBeNull]
-        public static T GetUI<T>(this IGraphElementModel model, GraphView graphView, string context = null) where T : class, IGraphElement
+        public static T GetUI<T>(this IGraphElementModel model, GraphView graphView, string context = null) where T : class, IModelUI
         {
             return s_UIForModel.FirstOrDefault(graphView, context, model) as T;
         }
 
         [CanBeNull]
-        internal static IGraphElement GetUI(this IGraphElementModel model, GraphView graphView, string context = null)
+        internal static IModelUI GetUI(this IGraphElementModel model, GraphView graphView, string context = null)
         {
             return s_UIForModel.FirstOrDefault(graphView, context, model);
         }
 
-        internal static IEnumerable<IGraphElement> GetAllUIs(this IGraphElementModel model, GraphView graphView)
+        internal static IEnumerable<IModelUI> GetAllUIs(this IGraphElementModel model, GraphView graphView)
         {
             return s_UIForModel.GetAllUIForModel(model).Where(ui => ui.GraphView == graphView);
         }
 
-        public static void RemoveGraphElement(IGraphElement graphElement)
+        public static void RemoveGraphElement(IModelUI modelUI)
         {
-            s_UIForModel.RemoveGraphElement(graphElement);
+            s_UIForModel.RemoveGraphElement(modelUI);
         }
 
         internal static void Reset()

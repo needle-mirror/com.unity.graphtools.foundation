@@ -8,12 +8,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     public static class GraphElementFactory
     {
         [CanBeNull]
-        public static T CreateUI<T>(GraphView graphView, Store store, IGraphElementModel model) where T : class, IGraphElement
+        public static T CreateUI<T>(GraphView graphView, CommandDispatcher commandDispatcher, IGraphElementModel model) where T : class, IModelUI
         {
-            return CreateUI<T>(graphView, store, model, null);
+            return CreateUI<T>(graphView, commandDispatcher, model, null);
         }
 
-        public static T CreateUI<T>(GraphView graphView, Store store, IGraphElementModel model, string context) where T : class, IGraphElement
+        public static T CreateUI<T>(GraphView graphView, CommandDispatcher commandDispatcher, IGraphElementModel model, string context) where T : class, IModelUI
         {
             if (model == null)
             {
@@ -31,7 +31,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (ext != null)
             {
                 var nodeBuilder = new ElementBuilder { GraphView = graphView, Context = context };
-                newElem = ext.Invoke(null, new object[] { nodeBuilder, store, model }) as T;
+                newElem = ext.Invoke(null, new object[] { nodeBuilder, commandDispatcher, model }) as T;
             }
 
             if (newElem == null)
@@ -50,11 +50,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         internal static bool FilterMethods(MethodInfo x)
         {
-            if (x.ReturnType != typeof(IGraphElement))
+            if (x.ReturnType != typeof(IModelUI))
                 return false;
 
             var parameters = x.GetParameters();
-            return parameters.Length == 3 && parameters[1].ParameterType == typeof(Store);
+            return parameters.Length == 3 && parameters[1].ParameterType == typeof(CommandDispatcher);
         }
     }
 }

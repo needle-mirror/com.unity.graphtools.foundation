@@ -37,7 +37,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels
         }
 
         protected override INodeModel CreateNodeInternal(Type nodeTypeToCreate, string nodeName, Vector2 position,
-            SpawnFlags spawnFlags = SpawnFlags.Default, Action<INodeModel> preDefineSetup = null, GUID? guid = null)
+            SpawnFlags spawnFlags = SpawnFlags.Default, Action<INodeModel> preDefineSetup = null, SerializableGUID guid = default)
         {
             if (nodeTypeToCreate == null)
                 throw new ArgumentNullException(nameof(nodeTypeToCreate));
@@ -49,11 +49,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels
                 throw new ArgumentOutOfRangeException(nameof(nodeTypeToCreate));
 
             nodeModel.Position = position;
-            nodeModel.Guid = guid ?? GUID.Generate();
+            nodeModel.Guid = guid.Valid ? guid : SerializableGUID.Generate();
             nodeModel.Title = nodeName;
             nodeModel.SetGraphModel(this);
             preDefineSetup?.Invoke(nodeModel);
-            nodeModel.DefineNode();
+            nodeModel.OnCreateNode();
             if (!spawnFlags.IsOrphan())
             {
                 AddNode(nodeModel);

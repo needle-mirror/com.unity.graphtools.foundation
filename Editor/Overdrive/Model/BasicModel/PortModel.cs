@@ -6,6 +6,9 @@ using UnityEngine.Scripting.APIUpdating;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 {
+    /// <summary>
+    /// A model that represents a port in a node.
+    /// </summary>
     [Serializable]
     //[MovedFrom(false, "UnityEditor.VisualScripting.GraphViewModel", "Unity.GraphTools.Foundation.Overdrive.Editor")]
     [MovedFrom("UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel")]
@@ -120,11 +123,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
         public virtual bool CreateEmbeddedValueIfNeeded => PortType == PortType.Data;
 
-        public GUID Guid
+        /// <summary>
+        /// The unique identifier of the port.
+        /// </summary>
+        public SerializableGUID Guid
         {
             get
             {
-                if (m_Guid.GUID.Empty())
+                if (!m_Guid.Valid)
                     AssignNewGuid();
                 return m_Guid;
             }
@@ -136,9 +142,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             InternalInitCapabilities();
         }
 
+        /// <summary>
+        /// Assign a newly generated GUID to the model.
+        /// </summary>
         public void AssignNewGuid()
         {
-            m_Guid = GUID.Generate();
+            m_Guid = SerializableGUID.Generate();
         }
 
         public virtual IReadOnlyList<Capabilities> Capabilities => m_Capabilities;

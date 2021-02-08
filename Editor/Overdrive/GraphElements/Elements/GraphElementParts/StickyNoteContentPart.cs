@@ -3,13 +3,13 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public class StickyNoteContentPart : BaseGraphElementPart
+    public class StickyNoteContentPart : BaseModelUIPart
     {
-        public static StickyNoteContentPart Create(string name, IGraphElementModel model, IGraphElement graphElement, string parentClassName)
+        public static StickyNoteContentPart Create(string name, IGraphElementModel model, IModelUI modelUI, string parentClassName)
         {
             if (model is IStickyNoteModel)
             {
-                return new StickyNoteContentPart(name, model, graphElement, parentClassName);
+                return new StickyNoteContentPart(name, model, modelUI, parentClassName);
             }
 
             return null;
@@ -19,7 +19,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public override VisualElement Root => TextLabel;
 
-        protected StickyNoteContentPart(string name, IGraphElementModel model, IGraphElement ownerElement, string parentClassName)
+        protected StickyNoteContentPart(string name, IGraphElementModel model, IModelUI ownerElement, string parentClassName)
             : base(name, model, ownerElement, parentClassName) {}
 
         protected override void BuildPartUI(VisualElement container)
@@ -46,7 +46,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         protected void OnRename(ChangeEvent<string> e)
         {
-            m_OwnerElement.Store.Dispatch(new UpdateStickyNoteAction(m_Model as IStickyNoteModel, null, e.newValue));
+            m_OwnerElement.CommandDispatcher.Dispatch(new UpdateStickyNoteCommand(m_Model as IStickyNoteModel, null, e.newValue));
         }
     }
 }

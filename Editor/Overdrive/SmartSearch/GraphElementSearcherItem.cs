@@ -1,26 +1,48 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEditor.Searcher;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
+    /// <summary>
+    /// Graph node creation data used by the searcher.
+    /// </summary>
     public struct GraphNodeCreationData : IGraphNodeCreationData
     {
+        /// <summary>
+        /// The interface to the graph where we want the node to be created in.
+        /// </summary>
         public IGraphModel GraphModel { get; }
+
+        /// <summary>
+        /// The position at which the node should be created.
+        /// </summary>
         public Vector2 Position { get; }
+
+        /// <summary>
+        /// The flags specifying how the node is to be spawned.
+        /// </summary>
         public SpawnFlags SpawnFlags { get; }
-        public IReadOnlyList<GUID> Guids { get; }
 
-        public GUID Guid => (Guids?.First()).GetValueOrDefault();
+        /// <summary>
+        /// The SerializableGUID to assign to the newly created item.
+        /// </summary>
+        public SerializableGUID Guid { get; }
 
-        public GraphNodeCreationData(IGraphModel graphModel, Vector2 position, SpawnFlags spawnFlags = SpawnFlags.Default, IReadOnlyList<GUID> guids = null)
+        /// <summary>
+        /// Initializes a new GraphNodeCreationData.
+        /// </summary>
+        /// <param name="graphModel">The interface to the graph where we want the node to be created in.</param>
+        /// <param name="position">The position at which the node should be created.</param>
+        /// <param name="spawnFlags">The flags specifying how the node is to be spawned.</param>
+        /// <param name="guid">The SerializableGUID to assign to the newly created item.</param>
+        public GraphNodeCreationData(IGraphModel graphModel, Vector2 position, SpawnFlags spawnFlags = SpawnFlags.Default, SerializableGUID guid = default)
         {
             GraphModel = graphModel;
             Position = position;
             SpawnFlags = spawnFlags;
-            Guids = guids;
+            Guid = guid;
         }
     }
 

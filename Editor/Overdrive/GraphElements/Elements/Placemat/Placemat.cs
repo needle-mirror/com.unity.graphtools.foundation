@@ -6,7 +6,7 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public class Placemat : GraphElement, IResizableGraphElement, IDropTarget
+    public class Placemat : GraphElement, IResizableGraphElement
     {
         public enum MinSizePolicy
         {
@@ -484,7 +484,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     pos.yMax = currentRect.yMax;
 
                 MakeRectAtLeastMinimalSize(ref pos);
-                Store.Dispatch(new ChangePlacematLayoutAction(pos, ResizeFlags.All, PlacematModel));
+                CommandDispatcher.Dispatch(new ChangePlacematLayoutCommand(pos, ResizeFlags.All, PlacematModel));
             }
         }
 
@@ -495,7 +495,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             var pos = new Rect();
             if (elements.Count > 0 && ComputeElementBounds(ref pos, elements))
-                Store.Dispatch(new ChangePlacematLayoutAction(pos, ResizeFlags.All, PlacematModel));
+                CommandDispatcher.Dispatch(new ChangePlacematLayoutCommand(pos, ResizeFlags.All, PlacematModel));
         }
 
         void ResizeToIncludeSelectedNodes()
@@ -522,7 +522,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
                 MakeRectAtLeastMinimalSize(ref pos);
 
-                Store.Dispatch(new ChangePlacematLayoutAction(pos, ResizeFlags.All, PlacematModel));
+                CommandDispatcher.Dispatch(new ChangePlacematLayoutCommand(pos, ResizeFlags.All, PlacematModel));
             }
         }
 
@@ -548,7 +548,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public void OnResized(Rect newRect, ResizeFlags resizeWhat)
         {
-            Store.Dispatch(new ChangePlacematLayoutAction(newRect, resizeWhat, PlacematModel));
+            CommandDispatcher.Dispatch(new ChangePlacematLayoutCommand(newRect, resizeWhat, PlacematModel));
         }
 
         protected override void BuildContextualMenu(ContextualMenuPopulateEvent evt)
@@ -614,7 +614,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         internal void SetCollapsed(bool value)
         {
             var collapsedModels = value ? GatherCollapsedElements() : null;
-            Store.Dispatch(new SetPlacematCollapsedAction(PlacematModel, value, collapsedModels));
+            CommandDispatcher.Dispatch(new SetPlacematCollapsedCommand(PlacematModel, value, collapsedModels));
         }
 
         void OnDetachFromPanel(DetachFromPanelEvent evt)
@@ -690,36 +690,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             if (r.height < k_MinHeight)
                 r.height = k_MinHeight;
-        }
-
-        public bool CanAcceptDrop(List<ISelectableGraphElement> dragSelection)
-        {
-            return (GraphView as IDropTarget)?.CanAcceptDrop(dragSelection) ?? false;
-        }
-
-        public bool DragUpdated(DragUpdatedEvent evt, IEnumerable<ISelectableGraphElement> dragSelection, IDropTarget dropTarget, ISelection dragSource)
-        {
-            return (GraphView as IDropTarget)?.DragUpdated(evt, dragSelection, dropTarget, dragSource) ?? false;
-        }
-
-        public bool DragPerform(DragPerformEvent evt, IEnumerable<ISelectableGraphElement> selection, IDropTarget dropTarget, ISelection dragSource)
-        {
-            return (GraphView as IDropTarget)?.DragPerform(evt, selection, dropTarget, dragSource) ?? false;
-        }
-
-        public bool DragEnter(DragEnterEvent evt, IEnumerable<ISelectableGraphElement> dragSelection, IDropTarget enteredTarget, ISelection dragSource)
-        {
-            return (GraphView as IDropTarget)?.DragEnter(evt, dragSelection, enteredTarget, dragSource) ?? false;
-        }
-
-        public bool DragLeave(DragLeaveEvent evt, IEnumerable<ISelectableGraphElement> dragSelection, IDropTarget leftTarget, ISelection dragSource)
-        {
-            return (GraphView as IDropTarget)?.DragLeave(evt, dragSelection, leftTarget, dragSource) ?? false;
-        }
-
-        public bool DragExited()
-        {
-            return (GraphView as IDropTarget)?.DragExited() ?? false;
         }
     }
 }

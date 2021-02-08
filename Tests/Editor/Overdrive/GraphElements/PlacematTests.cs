@@ -83,7 +83,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 pm2Model.Color = Color.red;
             }
 
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             element = elementModel.GetUI<GraphElement>(graphView);
@@ -103,7 +103,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
                 pm.SetCollapsed(true);
 
-                Store.State.RequestUIRebuild();
+                CommandDispatcher.GraphToolState.RequestUIRebuild();
                 yield return null;
 
                 element = elementModel.GetUI<GraphElement>(graphView);
@@ -182,7 +182,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             var node1Model = AddNode(node1Pos, Direction.Output, orientation);
             var node2Model = AddNode(node2Pos, Direction.Input, orientation);
 
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             var actions = ConnectPorts(node1Model.GetOutputPorts().First(), node2Model.GetInputPorts().First());
@@ -267,7 +267,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             int zOrder = 1;
             var pmModels = positions.Select(p => CreatePlacemat(GraphViewStaticBridge.RoundToPixelGrid(p), "", zOrder++)).ToList();
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             var start = mouseStart;
@@ -323,7 +323,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             var pm3Model = CreatePlacemat(k_DefaultPlacematRect);
             var pm4Model = CreatePlacemat(k_DefaultPlacematRect);
 
-            graphView.RebuildUI(GraphModel, Store);
+            graphView.RebuildUI(GraphModel, CommandDispatcher);
             var pm1 = pm1Model.GetUI<Placemat>(graphView);
             var pm2 = pm2Model.GetUI<Placemat>(graphView);
             var pm3 = pm3Model.GetUI<Placemat>(graphView);
@@ -345,7 +345,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             var pm3Model = CreatePlacemat(k_DefaultPlacematRect);
             var pm4Model = CreatePlacemat(k_DefaultPlacematRect);
 
-            graphView.RebuildUI(GraphModel, Store);
+            graphView.RebuildUI(GraphModel, CommandDispatcher);
             var pm1 = pm1Model.GetUI<Placemat>(graphView);
             var pm2 = pm2Model.GetUI<Placemat>(graphView);
             var pm3 = pm3Model.GetUI<Placemat>(graphView);
@@ -402,7 +402,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             var pm3Model = CreatePlacemat(k_DefaultPlacematRect);
             var pm4Model = CreatePlacemat(k_DefaultPlacematRect);
 
-            graphView.RebuildUI(GraphModel, Store);
+            graphView.RebuildUI(GraphModel, CommandDispatcher);
             var pm1 = pm1Model.GetUI<Placemat>(graphView);
             var pm2 = pm2Model.GetUI<Placemat>(graphView);
             var pm3 = pm3Model.GetUI<Placemat>(graphView);
@@ -436,7 +436,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             var node1Model = CreateNode("", GraphViewStaticBridge.RoundToPixelGrid(pmModel.PositionAndSize.position - Vector2.one * 10));
             var node2Model = CreateNode("", GraphViewStaticBridge.RoundToPixelGrid(pmModel.PositionAndSize.position + pmModel.PositionAndSize.size - Vector2.one * 10));
 
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
             var pm = pmModel.GetUI<Placemat>(graphView);
             var node1 = node1Model.GetUI<Node>(graphView);
@@ -472,7 +472,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             var node1Model = CreateNode("", GraphViewStaticBridge.RoundToPixelGrid(pmModel.PositionAndSize.position + pmModel.PositionAndSize.size + Vector2.one * 10));
             var node2Model = CreateNode("", GraphViewStaticBridge.RoundToPixelGrid(pmModel.PositionAndSize.position + pmModel.PositionAndSize.size + Vector2.one * 60));
 
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             var pm = pmModel.GetUI<Placemat>(graphView);
@@ -509,7 +509,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             var node1Model = CreateNode("", GraphViewStaticBridge.RoundToPixelGrid(baseNodePos));
             var node2Model = CreateNode("", GraphViewStaticBridge.RoundToPixelGrid(baseNodePos + k_DefaultNodeSize * 2));
 
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             var pm = pmModel.GetUI<Placemat>(graphView);
@@ -610,7 +610,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Vector2 startNodePos = k_DefaultPlacematPos + new Vector2(k_DefaultPlacematSize.x + k_DefaultNodeSize.x, k_DefaultNodeSize.y / 2);
             var nodeModel = AddNode(GraphViewStaticBridge.RoundToPixelGrid(startNodePos));
 
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             const int steps = 10;
@@ -806,7 +806,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             pm2Model.Color = Color.red;
             var nodeModel = AddNode(nodePos);
 
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             var pm = pmModel.GetUI<Placemat>(graphView);
@@ -953,7 +953,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             var node1Model = AddNode(node1Pos, Direction.Output);
             var node2Model = AddNode(node2Pos, Direction.Input);
 
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             var actions = ConnectPorts(node1Model.GetOutputPorts().First(), node2Model.GetInputPorts().First());
@@ -1022,7 +1022,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             var pm2Model = CreatePlacemat(new Rect(pm2Pos, k_DefaultPlacematSize));
             pm2Model.Color = Color.green;
 
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             var pm = pmModel.GetUI<Placemat>(graphView);
@@ -1171,7 +1171,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             var nodeModel = AddNode(nodePos);
             yield return null;
 
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             var pm2 = pm2Model.GetUI<Placemat>(graphView);
@@ -1226,7 +1226,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             var node1Model = AddNode(node1Pos, Direction.Output);
             var node2Model = AddNode(node2Pos, Direction.Input);
 
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             var actions = ConnectPorts(node1Model.GetOutputPorts().First(), node2Model.GetInputPorts().First());
@@ -1282,7 +1282,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             var pmModel = CreatePlacemat(k_DefaultPlacematRect);
             pmModel.PositionAndSize = k_DefaultPlacematRect;
 
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             var pm = pmModel.GetUI<Placemat>(graphView);
@@ -1293,13 +1293,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             Assert.AreEqual(newRect, pm.layout);
 
-            Store.BeginStateChange();
+            CommandDispatcher.BeginStateChange();
             pmModel.PositionAndSize = newRect;
             pmModel.Collapsed = true;
-            Store.State.MarkChanged(pmModel);
-            Store.EndStateChange();
+            CommandDispatcher.GraphToolState.MarkChanged(pmModel);
+            CommandDispatcher.EndStateChange();
 
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             pm = pmModel.GetUI<Placemat>(graphView);
@@ -1319,19 +1319,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Vector2 nodePos = k_DefaultPlacematPos + Vector2.down * 2 * Placemat.defaultCollapsedSize;
             var nodeModel = AddNode(nodePos);
 
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             var node = nodeModel.GetUI<Node>(graphView);
             Assert.IsFalse(node.style.visibility == Visibility.Hidden);
 
-            Store.BeginStateChange();
+            CommandDispatcher.BeginStateChange();
             pmModel.Collapsed = true;
             pmModel.HiddenElements = new[] { nodeModel };
-            Store.State.MarkChanged(pmModel);
-            Store.EndStateChange();
+            CommandDispatcher.GraphToolState.MarkChanged(pmModel);
+            CommandDispatcher.EndStateChange();
 
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             node = nodeModel.GetUI<Node>(graphView);

@@ -14,8 +14,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         string Tooltip { get; }
 
         IEnumerable<IEdgeModel> GetConnectedEdges();
-
-        void DefineNode();
+        void OnCreateNode();
         void OnDuplicateNode(INodeModel sourceNode);
+        /// <summary>
+        /// Called after the GraphModel deserializes its AssetModel
+        /// Helps for any deserialization relying on SerializedReferences
+        /// </summary>
+        void OnAfterDeserializeAssetModel();
     }
 }

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -7,7 +8,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     {
         public new static readonly string ussClassName = "ge-searcher-graph-view";
 
-        public SearcherGraphView(GraphViewEditorWindow window, Store store) : base(window, store)
+        public SearcherGraphView(GraphViewEditorWindow window, CommandDispatcher commandDispatcher) : base(window, commandDispatcher)
         {
             styleSheets.Add(AssetDatabase.LoadAssetAtPath<StyleSheet>(AssetHelper.AssetPath +
                 "SmartSearch/Stylesheets/SearcherGraphView.uss"));
@@ -16,14 +17,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             UnregisterCallback<ValidateCommandEvent>(OnValidateCommand);
             UnregisterCallback<ExecuteCommandEvent>(OnExecuteCommand);
-            RegisterCallback<AttachToPanelEvent>(OnEnterPanel);
-        }
 
-        void OnEnterPanel(AttachToPanelEvent e)
-        {
-            base.OnEnterPanel();
-
-            panel.visualTree.UnregisterCallback<KeyDownEvent>(OnKeyDownShortcut);
+            ShortcutHandler = null;
         }
     }
 }

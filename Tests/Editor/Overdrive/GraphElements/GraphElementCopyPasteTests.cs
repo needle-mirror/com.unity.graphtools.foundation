@@ -76,7 +76,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator CopyWithoutSelectedElementsLeavesCopyBufferUntouched()
         {
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             graphView.Clipboard = "Unknown data";
@@ -98,7 +98,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator SelectedElementsCanBeCopyPasted()
         {
-            graphView.RebuildUI(GraphModel, Store);
+            graphView.RebuildUI(GraphModel, CommandDispatcher);
             yield return null;
 
             graphView.Clipboard = "Unknown data";
@@ -121,7 +121,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             yield return null;
 
             helpers.ExecuteCommand("Paste");
-            graphView.RebuildUI(GraphModel, Store);
+            graphView.RebuildUI(GraphModel, CommandDispatcher);
             yield return null;
 
             Assert.AreEqual(k_DefaultNodeCount + m_SelectedNodeCount, graphView.GraphElements.ToList().Count);
@@ -130,7 +130,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator SelectedElementsCanBeCut()
         {
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             graphView.Clipboard = "Unknown data";
@@ -153,7 +153,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator SelectedElementsCanBeDuplicated()
         {
-            graphView.RebuildUI(GraphModel, Store);
+            graphView.RebuildUI(GraphModel, CommandDispatcher);
             yield return null;
 
             graphView.Clipboard = "Unknown data";
@@ -167,7 +167,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             yield return null;
 
             helpers.ExecuteCommand("Duplicate");
-            graphView.RebuildUI(GraphModel, Store);
+            graphView.RebuildUI(GraphModel, CommandDispatcher);
             yield return null;
 
             // Duplicate does not change the copy buffer.
@@ -178,7 +178,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator SelectedElementsCanBeDeleted()
         {
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             SelectThreeElements();

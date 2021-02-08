@@ -8,13 +8,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     class DoCreateAsset : EndNameEditAction
     {
-        Store m_Store;
+        CommandDispatcher m_CommandDispatcher;
         IGraphAssetModel m_AssetModel;
-        ICreatableGraphTemplate m_Template;
+        IGraphTemplate m_Template;
 
-        public void SetUp(Store store, IGraphAssetModel assetModel, ICreatableGraphTemplate template)
+        public void SetUp(CommandDispatcher commandDispatcher, IGraphAssetModel assetModel, IGraphTemplate template)
         {
-            m_Store = store;
+            m_CommandDispatcher = commandDispatcher;
             m_Template = template;
             m_AssetModel = assetModel;
         }
@@ -28,7 +28,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 AssetActionHelper.InitTemplate(m_Template, m_AssetModel.GraphModel);
             }
 
-            m_Store?.Dispatch(new LoadGraphAssetAction(m_AssetModel));
+            m_CommandDispatcher?.Dispatch(new LoadGraphAssetCommand(m_AssetModel));
         }
 
         public override void Action(int instanceId, string pathName, string resourceFile)
@@ -64,12 +64,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
 
             AssetDatabase.SaveAssets();
-            AssetWatcher.Instance.WatchGraphAssetAtPath(assetPath, graphAssetModel);
 
             return graphAssetModel;
         }
 
-        public static IGraphAssetModel PromptToCreate(ICreatableGraphTemplate template, string title, string prompt, string assetExtension)
+        public static IGraphAssetModel PromptToCreate(IGraphTemplate template, string title, string prompt, string assetExtension)
         {
             var path = EditorUtility.SaveFilePanelInProject(title, template.DefaultAssetName, assetExtension, prompt);
 
@@ -82,11 +81,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             return null;
         }
 
-        public static void CreateInProjectWindow(ICreatableGraphTemplate template, Store store, string path)
+        public static void CreateInProjectWindow(IGraphTemplate template, CommandDispatcher commandDispatcher, string path)
         {
             var asset = ScriptableObject.CreateInstance<TGraphAssetModelType>();
             var endAction = ScriptableObject.CreateInstance<DoCreateAsset>();
-            endAction.SetUp(store, asset, template);
+            endAction.SetUp(commandDispatcher, asset, template);
 
             ProjectWindowUtil.StartNameEditingIfProjectWindowExists(
                 asset.GetInstanceID(),

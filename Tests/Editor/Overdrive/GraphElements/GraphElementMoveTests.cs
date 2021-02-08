@@ -45,7 +45,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator MovableElementCanBeDragged()
         {
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             var node = m_NodeModel.GetUI<Node>(graphView);
@@ -73,7 +73,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator LocallyScaledElementMovesAtSameSpeed()
         {
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
             var node = m_NodeModel.GetUI<Node>(graphView);
 
@@ -86,7 +86,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator MovableElementCanBeDraggedAndMoveCancelledByEscapeKey()
         {
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
             var node = m_NodeModel.GetUI<Node>(graphView);
 
@@ -150,7 +150,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator MovableElementCanBeDraggedAtTheBorderToStartPanningInNegativeX()
         {
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
             var node = m_NodeModel.GetUI<Node>(graphView);
 
@@ -226,7 +226,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator MovableElementCanBeDraggedAtTheBorderToStartPanningInPositiveX()
         {
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
             var node = m_NodeModel.GetUI<Node>(graphView);
 
@@ -303,7 +303,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator MovableElementCanBeDraggedAtTheBorderToStartPanningInNegativeY()
         {
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
             var node = m_NodeModel.GetUI<Node>(graphView);
 
@@ -383,7 +383,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator MovableElementCanBeDraggedAtTheBorderToStartPanningInPositiveY()
         {
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
             var node = m_NodeModel.GetUI<Node>(graphView);
 
@@ -460,7 +460,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator DraggingEdgeToOrOverBorderStartsPanningInNegativeX()
         {
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             bool needsMouseUp = false;
@@ -542,7 +542,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator DraggingEdgeToOrOverBorderStartsPanningInPositiveX()
         {
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             bool needsMouseUp = false;
@@ -626,7 +626,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator DraggingEdgeToOrOverBorderStartsPanningInNegativeY()
         {
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             bool needsMouseUp = false;
@@ -710,7 +710,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator DraggingEdgeToOrOverBorderStartsPanningInPositiveY()
         {
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             bool needsMouseUp = false;
@@ -797,7 +797,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator MiniMapElementCanBeDragged()
         {
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             MiniMap minimap = graphView.Q<MiniMap>();
@@ -825,7 +825,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator PanSpeedsAreAsExpected()
         {
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             float minSpeed = SelectionDragger.minSpeedFactor * SelectionDragger.panSpeed;

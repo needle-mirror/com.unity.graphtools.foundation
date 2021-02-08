@@ -61,11 +61,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             intField = null;
             stringField = null;
 
-            intField = GraphView.Blackboard.Highlightables.FirstOrDefault(gv =>
+            intField = GraphView.GetBlackboard().Highlightables.FirstOrDefault(gv =>
                 ReferenceEquals((gv as BlackboardField)?.Model, m_IntVariableModel));
             Assert.IsNotNull(intField);
 
-            stringField = GraphView.Blackboard.Highlightables.FirstOrDefault(gv =>
+            stringField = GraphView.GetBlackboard().Highlightables.FirstOrDefault(gv =>
                 ReferenceEquals((gv as BlackboardField)?.Model, m_StringVariableModel));
             Assert.IsNotNull(stringField);
         }
@@ -73,7 +73,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         [UnityTest]
         public IEnumerator TestHighlightTokenSelection()
         {
-            Store.MarkStateDirty();
+            CommandDispatcher.MarkStateDirty();
             yield return null;
 
             GetUI(out TokenNode intToken1, out TokenNode intToken2, out TokenNode stringToken1, out TokenNode stringToken2,
@@ -103,7 +103,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         [UnityTest]
         public IEnumerator TestHighlightFieldSelection()
         {
-            Store.MarkStateDirty();
+            CommandDispatcher.MarkStateDirty();
             yield return null;
 
             GetUI(out var intToken1, out _, out var stringToken1, out _,

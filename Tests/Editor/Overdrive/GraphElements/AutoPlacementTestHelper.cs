@@ -44,7 +44,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             ThirdNodeModel = CreateNode("Node3", thirdNodePos, 0, 0, 1, 1, orientation);
             FourthNodeModel = CreateNode("Node4", fourthNodePos, 0, 0, 1, 0, orientation);
 
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             IPortModel outputPortFirstNode = FirstNodeModel.OutputsByDisplayOrder[0];
@@ -97,7 +97,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             PlacematModel = CreatePlacemat(new Rect(placematPos, new Vector2(200, smallerSize ? 100 : 200)), "Placemat");
             StickyNoteModel = CreateSticky("Sticky", "", new Rect(stickyNotePos, smallerSize ? new Vector2(100, 100) : new Vector2(200, 200)));
 
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             // Get the UI elements

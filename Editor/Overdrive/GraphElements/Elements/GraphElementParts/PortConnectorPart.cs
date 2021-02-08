@@ -4,18 +4,18 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public class PortConnectorPart : BaseGraphElementPart
+    public class PortConnectorPart : BaseModelUIPart
     {
         public static readonly string ussClassName = "ge-port-connector-part";
         public static readonly string connectorUssName = "connector";
         public static readonly string connectorCapUssName = "cap";
         public static readonly string labelName = "label";
 
-        public static PortConnectorPart Create(string name, IGraphElementModel model, IGraphElement graphElement, string parentClassName)
+        public static PortConnectorPart Create(string name, IGraphElementModel model, IModelUI modelUI, string parentClassName)
         {
             if (model is IPortModel)
             {
-                return new PortConnectorPart(name, model, graphElement, parentClassName);
+                return new PortConnectorPart(name, model, modelUI, parentClassName);
             }
 
             return null;
@@ -33,7 +33,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public override VisualElement Root => m_Root;
 
-        protected PortConnectorPart(string name, IGraphElementModel model, IGraphElement ownerElement, string parentClassName)
+        protected PortConnectorPart(string name, IGraphElementModel model, IModelUI ownerElement, string parentClassName)
             : base(name, model, ownerElement, parentClassName) {}
 
         protected override void BuildPartUI(VisualElement container)

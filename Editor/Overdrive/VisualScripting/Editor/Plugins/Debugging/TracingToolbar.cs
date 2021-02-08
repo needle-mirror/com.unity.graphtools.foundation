@@ -38,7 +38,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
         Label m_TotalFrameLabel;
         Stopwatch m_LastUpdate = Stopwatch.StartNew();
 
-        public TracingToolbar(GraphView graphView, Store store) : base(store, graphView)
+        public TracingToolbar(GraphView graphView, CommandDispatcher commandDispatcher) : base(commandDispatcher, graphView)
         {
             name = "tracingToolbar";
             AddToClassList(ussClassName);
@@ -97,20 +97,20 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
                 m_TracingTimeline.OnGUI(timeRect);
             });
 
-            m_TracingTimeline = new TracingTimeline(m_GraphView, m_Store.State);
+            m_TracingTimeline = new TracingTimeline(m_GraphView, m_CommandDispatcher.GraphToolState);
             Add(imguiContainer);
         }
 
         public void SyncVisible()
         {
-            var tracingDataModel = m_Store.State.TracingState;
+            var tracingDataModel = m_CommandDispatcher.GraphToolState.TracingState;
             if (style.display.value == DisplayStyle.Flex != tracingDataModel.TracingEnabled)
                 style.display = tracingDataModel.TracingEnabled ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         void OnPickTargetButton(EventBase eventBase)
         {
-            var state = m_Store.State;
+            var state = m_CommandDispatcher.GraphToolState;
             IDebugger debugger = state.GraphModel.Stencil.Debugger;
             var targetIndices = debugger.GetDebuggingTargets(state.GraphModel);
             var items = targetIndices == null ? null : targetIndices.Select(x =>
@@ -134,7 +134,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
         {
             if (evt.keyCode == KeyCode.Return || evt.keyCode == KeyCode.KeypadEnter)
             {
-                var tracingDataModel = m_Store.State.TracingState;
+                var tracingDataModel = m_CommandDispatcher.GraphToolState.TracingState;
 
                 int frame = m_CurrentFrameTextField.value;
 
@@ -147,7 +147,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
 
         public void UpdateTracingMenu(bool force = true)
         {
-            var state = m_Store.State;
+            var state = m_CommandDispatcher.GraphToolState;
             var tracingDataModel = state.TracingState;
 
             if (EditorApplication.isPlaying && tracingDataModel.TracingEnabled)
@@ -215,7 +215,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
 
         void OnFirstFrameTracingButton()
         {
-            var tracingDataModel = m_Store.State.TracingState;
+            var tracingDataModel = m_CommandDispatcher.GraphToolState.TracingState;
 
             tracingDataModel.CurrentTracingFrame = 0;
             tracingDataModel.CurrentTracingStep = -1;
@@ -224,7 +224,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
 
         void OnPreviousFrameTracingButton()
         {
-            var tracingDataModel = m_Store.State.TracingState;
+            var tracingDataModel = m_CommandDispatcher.GraphToolState.TracingState;
 
             if (tracingDataModel.CurrentTracingFrame > 0)
             {
@@ -236,7 +236,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
 
         void OnPreviousStepTracingButton()
         {
-            var tracingDataModel = m_Store.State.TracingState;
+            var tracingDataModel = m_CommandDispatcher.GraphToolState.TracingState;
 
             if (tracingDataModel.CurrentTracingStep > 0)
             {
@@ -263,7 +263,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
 
         void OnNextStepTracingButton()
         {
-            var tracingDataModel = m_Store.State.TracingState;
+            var tracingDataModel = m_CommandDispatcher.GraphToolState.TracingState;
 
             if (tracingDataModel.CurrentTracingStep < tracingDataModel.MaxTracingStep && tracingDataModel.CurrentTracingStep >= 0)
             {
@@ -290,7 +290,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
 
         void OnNextFrameTracingButton()
         {
-            var tracingDataModel = m_Store.State.TracingState;
+            var tracingDataModel = m_CommandDispatcher.GraphToolState.TracingState;
 
             if (tracingDataModel.CurrentTracingFrame < Time.frameCount)
             {
@@ -302,7 +302,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
 
         void OnLastFrameTracingButton()
         {
-            var tracingDataModel = m_Store.State.TracingState;
+            var tracingDataModel = m_CommandDispatcher.GraphToolState.TracingState;
 
             tracingDataModel.CurrentTracingFrame = Time.frameCount;
             tracingDataModel.CurrentTracingStep = -1;

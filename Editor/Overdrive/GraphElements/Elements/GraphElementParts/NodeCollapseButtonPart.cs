@@ -6,17 +6,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class NodeCollapseButtonPart : CollapseButtonPart
     {
-        public new static NodeCollapseButtonPart Create(string name, IGraphElementModel model, IGraphElement graphElement, string parentClassName)
+        public new static NodeCollapseButtonPart Create(string name, IGraphElementModel model, IModelUI modelUI, string parentClassName)
         {
             if (model is ICollapsible)
             {
-                return new NodeCollapseButtonPart(name, model, graphElement, parentClassName);
+                return new NodeCollapseButtonPart(name, model, modelUI, parentClassName);
             }
 
             return null;
         }
 
-        protected NodeCollapseButtonPart(string name, IGraphElementModel model, IGraphElement ownerElement, string parentClassName)
+        protected NodeCollapseButtonPart(string name, IGraphElementModel model, IModelUI ownerElement, string parentClassName)
             : base(name, model, ownerElement, parentClassName) {}
 
         protected override void UpdatePartFromModel()

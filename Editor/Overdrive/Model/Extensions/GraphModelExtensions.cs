@@ -32,8 +32,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             return self.NodeModels.OfType<IPortNode>().SelectMany(nodeModel => nodeModel.Ports);
         }
 
+        /// <summary>
+        /// Creates a new node in a graph.
+        /// </summary>
+        /// <param name="self">The graph to add a node to.</param>
+        /// <param name="nodeName">The name of the node to create.</param>
+        /// <param name="position">The position of the node to create.</param>
+        /// <param name="guid">The SerializableGUID to assign to the newly created item.</param>
+        /// <param name="preDefineSetup">A method to be called before the node is created.</param>
+        /// <param name="spawnFlags">The flags specifying how the node is to be spawned.</param>
+        /// <typeparam name="TNodeType">The type of the new node to create.</typeparam>
+        /// <returns>The newly created node.</returns>
         public static TNodeType CreateNode<TNodeType>(this IGraphModel self, string nodeName = "", Vector2 position = default,
-            GUID? guid = null, Action<TNodeType> preDefineSetup = null, SpawnFlags spawnFlags = SpawnFlags.Default)
+            SerializableGUID guid = default, Action<TNodeType> preDefineSetup = null, SpawnFlags spawnFlags = SpawnFlags.Default)
             where TNodeType : class, INodeModel
         {
             Action<INodeModel> setupWrapper = null;
@@ -105,7 +116,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     case IPlacematModel placematModel:
                         placematModels.Add(placematModel);
                         break;
-                    case IVariableDeclarationModel variableDeclarationModel when variableDeclarationModel.VariableType != VariableType.EdgePortal:
+                    case IVariableDeclarationModel variableDeclarationModel:
                         variableDeclarationsModels.Add(variableDeclarationModel);
                         break;
                     case IEdgeModel edgeModel:
@@ -293,7 +304,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         static void CheckNodeList(this IGraphModel self)
         {
-            var existingGuids = new Dictionary<GUID, int>(self.NodeModels.Count * 4); // wild guess of total number of nodes, including stacked nodes
+            var existingGuids = new Dictionary<SerializableGUID, int>(self.NodeModels.Count * 4); // wild guess of total number of nodes, including stacked nodes
             for (var i = 0; i < self.NodeModels.Count; i++)
             {
                 INodeModel node = self.NodeModels[i];
@@ -302,7 +313,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 Assert.IsTrue(node.AssetModel != null, $"Node {i} {node} asset is null");
                 Assert.IsNotNull(node, $"Node {i} is null");
                 Assert.IsTrue(self.AssetModel.GetHashCode() == node.AssetModel?.GetHashCode(), $"Node {i} asset is not matching its actual asset");
-                Assert.IsFalse(node.Guid.Empty(), $"Node {i} ({node.GetType()}) has an empty Guid");
+                Assert.IsFalse(!node.Guid.Valid, $"Node {i} ({node.GetType()}) has an empty Guid");
                 Assert.IsFalse(existingGuids.TryGetValue(node.Guid, out var oldIndex), $"duplicate GUIDs: Node {i} ({node.GetType()}) and Node {oldIndex} have the same guid {node.Guid}");
                 existingGuids.Add(node.Guid, i);
 
@@ -317,14 +328,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
                 if (node is IVariableNodeModel variableNode && variableNode.DeclarationModel != null)
                 {
-                    if (variableNode.VariableDeclarationModel.VariableType == VariableType.GraphVariable)
-                    {
-                        var originalDeclarations = self.VariableDeclarations.Where(d => d.Guid == variableNode.DeclarationModel.Guid).ToList();
-                        Assert.IsTrue(originalDeclarations.Count <= 1);
-                        var originalDeclaration = originalDeclarations.SingleOrDefault();
-                        Assert.IsNotNull(originalDeclaration, $"Variable Node {i} {variableNode.Title} has a declaration model, but it was not present in the graph's variable declaration list");
-                        Assert.IsTrue(ReferenceEquals(originalDeclaration, variableNode.DeclarationModel), $"Variable Node {i} {variableNode.Title} has a declaration model that was not ReferenceEquals() to the matching one in the graph");
-                    }
+                    var originalDeclarations = self.VariableDeclarations.Where(d => d.Guid == variableNode.DeclarationModel.Guid).ToList();
+                    Assert.IsTrue(originalDeclarations.Count <= 1);
+                    var originalDeclaration = originalDeclarations.SingleOrDefault();
+                    Assert.IsNotNull(originalDeclaration, $"Variable Node {i} {variableNode.Title} has a declaration model, but it was not present in the graph's variable declaration list");
+                    Assert.IsTrue(ReferenceEquals(originalDeclaration, variableNode.DeclarationModel), $"Variable Node {i} {variableNode.Title} has a declaration model that was not ReferenceEquals() to the matching one in the graph");
                 }
             }
         }

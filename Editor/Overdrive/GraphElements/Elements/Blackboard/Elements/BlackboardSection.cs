@@ -69,7 +69,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             m_AddButton = new Button(() =>
             {
                 GenericMenu menu = new GenericMenu();
-                (m_Blackboard.Model as IBlackboardGraphModel)?.PopulateCreateMenu(name, menu, m_Blackboard.Store);
+                (m_Blackboard.Model as IBlackboardGraphModel)?.PopulateCreateMenu(name, menu, m_Blackboard.CommandDispatcher);
                 Vector2 menuPosition = new Vector2(m_AddButton.layout.xMin, m_AddButton.layout.yMax);
                 menuPosition = m_AddButton.parent.LocalToWorld(menuPosition);
                 menu.DropDown(new Rect(menuPosition, Vector2.zero));
@@ -179,7 +179,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             else if (index > 0)
                 insertAfterModel = (this[index - 1] as BlackboardRow)?.Model as IVariableDeclarationModel;
 
-            m_Blackboard.Store.Dispatch(new ReorderGraphVariableDeclarationAction(models, insertAfterModel));
+            m_Blackboard.CommandDispatcher.Dispatch(new ReorderGraphVariableDeclarationCommand(models, insertAfterModel));
         }
 
         void OnDragLeaveEvent(DragLeaveEvent evt)

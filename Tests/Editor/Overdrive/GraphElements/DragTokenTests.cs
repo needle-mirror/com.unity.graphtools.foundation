@@ -25,7 +25,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             m_NodeModel = GraphModel.CreateNode<TestNodeModel>("OtherNode", k_NodePos);
             m_TokenModel = GraphModel.CreateConstantNode(TypeHandle.Float, "Constant", k_TokenPos);
-            GraphView.Store.State.RequestUIRebuild();
+            GraphView.CommandDispatcher.GraphToolState.RequestUIRebuild();
             helpers = new TestEventHelpers(Window);
         }
 
@@ -41,7 +41,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Vector2 worldTokenPos = token.worldBound.min + new Vector2(5, 5);
             Vector2 worldPortPos = port.worldBound.center;
 
-            yield return TestPrereqActionPostreq(testingMode,
+            yield return TestPrereqCommandPostreq(testingMode,
                 () =>
                 {
                     Assert.True(m_TokenModel.HasCapability(Capabilities.Movable));

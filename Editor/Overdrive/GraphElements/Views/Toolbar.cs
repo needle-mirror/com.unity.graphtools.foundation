@@ -6,15 +6,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     {
         public new static readonly string ussClassName = "ge-toolbar";
 
-        protected readonly Store m_Store;
+        protected readonly CommandDispatcher m_CommandDispatcher;
         protected readonly GraphView m_GraphView;
 
-        public Toolbar(Store store, GraphView graphView)
+        public Toolbar(CommandDispatcher commandDispatcher, GraphView graphView)
         {
             AddToClassList(ussClassName);
             this.AddStylesheet("Toolbar.uss");
 
-            m_Store = store;
+            m_CommandDispatcher = commandDispatcher;
             m_GraphView = graphView;
         }
     }

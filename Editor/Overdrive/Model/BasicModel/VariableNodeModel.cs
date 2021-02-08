@@ -27,7 +27,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         public IDeclarationModel DeclarationModel
         {
             get => m_DeclarationModel;
-            set => m_DeclarationModel = (VariableDeclarationModel)value;
+            set
+            {
+                m_DeclarationModel = (VariableDeclarationModel)value;
+                DefineNode();
+            }
         }
 
         public IVariableDeclarationModel VariableDeclarationModel => DeclarationModel as IVariableDeclarationModel;

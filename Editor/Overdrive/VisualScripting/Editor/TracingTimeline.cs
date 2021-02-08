@@ -13,23 +13,23 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
         const int k_MinTimeVisibleOnTheRight = 30;
 
         readonly GraphView m_GraphView;
-        readonly State m_WindowState;
+        readonly GraphToolState m_WindowGraphToolState;
         TimeArea m_TimeArea;
         AnimEditorOverlay m_Overlay;
         TimelineState m_State;
 
-        public TracingTimeline(GraphView graphView, State windowState)
+        public TracingTimeline(GraphView graphView, GraphToolState windowGraphToolState)
         {
             m_GraphView = graphView;
-            m_WindowState = windowState;
+            m_WindowGraphToolState = windowGraphToolState;
             m_TimeArea = new TimeArea();
             m_Overlay = new AnimEditorOverlay() {PlayHeadColor = new Color(0.2117647F, 0.6039216F, 0.8F)};
             m_State = new TimelineState(m_TimeArea);
             m_Overlay.state = m_State;
 
-            var debugger = m_WindowState?.GraphModel?.Stencil?.Debugger;
-            IGraphTrace trace = debugger?.GetGraphTrace(m_WindowState?.GraphModel,
-                m_WindowState.TracingState.CurrentTracingTarget);
+            var debugger = m_WindowGraphToolState?.GraphModel?.Stencil?.Debugger;
+            IGraphTrace trace = debugger?.GetGraphTrace(m_WindowGraphToolState?.GraphModel,
+                m_WindowGraphToolState.TracingState.CurrentTracingTarget);
             if (trace?.AllFrames != null && trace.AllFrames.Count > 0)
             {
                 int firstFrame = trace.AllFrames[0].Frame;
@@ -42,7 +42,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
         public void OnGUI(Rect timeRect)
         {
-            var tracingDataModel = m_WindowState.TracingState;
+            var tracingDataModel = m_WindowGraphToolState.TracingState;
 
             // sync timeline and tracing toolbar state both ways
             m_State.CurrentTime = TimelineState.FrameToTime(tracingDataModel.CurrentTracingFrame);
@@ -56,8 +56,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
 
             GUI.BeginGroup(timeRect);
 
-            var debugger = m_WindowState?.GraphModel?.Stencil?.Debugger;
-            IGraphTrace trace = debugger?.GetGraphTrace(m_WindowState?.GraphModel, tracingDataModel.CurrentTracingTarget);
+            var debugger = m_WindowGraphToolState?.GraphModel?.Stencil?.Debugger;
+            IGraphTrace trace = debugger?.GetGraphTrace(m_WindowGraphToolState?.GraphModel, tracingDataModel.CurrentTracingTarget);
             if (trace?.AllFrames != null && trace.AllFrames.Count > 0)
             {
                 float frameDeltaToPixel = m_TimeArea.FrameDeltaToPixel();
@@ -71,7 +71,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                     timeRect.yMax - k_FrameRectangleHeight, width, k_FrameRectangleHeight), k_FrameHasDataColor);
 
                 // draw per-node active ranges
-                var framesPerNode = IndexFramesPerNode(ref s_FramesPerNodeCache, m_WindowState?.GraphModel.Stencil, trace, firstFrame, lastFrame, tracingDataModel.CurrentTracingTarget, out bool invalidated);
+                var framesPerNode = IndexFramesPerNode(ref s_FramesPerNodeCache, m_WindowGraphToolState?.GraphModel.Stencil, trace, firstFrame, lastFrame, tracingDataModel.CurrentTracingTarget, out bool invalidated);
 
                 // while recording in unpaused playmode, adjust the timeline to show all data
                 // same if the cached data changed (eg. Load a trace dump)
@@ -85,7 +85,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
                 if (framesPerNode != null)
                 {
                     INodeModel nodeModelSelected = m_GraphView.Selection
-                        .OfType<IGraphElement>()
+                        .OfType<IModelUI>()
                         .Select(x => x.Model)
                         .OfType<INodeModel>()
                         .FirstOrDefault();

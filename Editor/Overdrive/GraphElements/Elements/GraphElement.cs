@@ -5,7 +5,7 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public abstract class GraphElement : VisualElementBridge, ISelectableGraphElement, IGraphElement
+    public abstract class GraphElement : ModelUI, ISelectableGraphElement
     {
         static readonly CustomStyleProperty<int> s_LayerProperty = new CustomStyleProperty<int>("--layer");
         static readonly Color k_MinimapColor = new Color(0.9f, 0.9f, 0.9f, 0.5f);
@@ -20,16 +20,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         bool m_Selected;
 
         ClickSelector m_ClickSelector;
-
-        ContextualMenuManipulator m_ContextualMenuManipulator;
-
-        protected ContextualMenuManipulator ContextualMenuManipulator
-        {
-            get => m_ContextualMenuManipulator;
-            set => this.ReplaceManipulator(ref m_ContextualMenuManipulator, value);
-        }
-
-        protected UIDependencies Dependencies { get; }
 
         public int Layer
         {
@@ -65,32 +55,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        public GraphElementPartList PartList { get; private set; }
-
         protected ClickSelector ClickSelector
         {
             get => m_ClickSelector;
             set => this.ReplaceManipulator(ref m_ClickSelector, value);
         }
 
-        public IGraphElementModel Model { get; private set; }
-
-        public Store Store { get; private set; }
-
-        public GraphView GraphView { get; protected set; }
-
-        public string Context { get; private set; }
-
         protected GraphElement()
         {
             MinimapColor = k_MinimapColor;
-            RegisterCallback<GeometryChangedEvent>(OnGeometryChanged);
             RegisterCallback<CustomStyleResolvedEvent>(OnCustomStyleResolved);
-            RegisterCallback<DetachFromPanelEvent>(OnDetachedFromPanel);
-
-            ContextualMenuManipulator = new ContextualMenuManipulator(BuildContextualMenu);
-
-            Dependencies = new UIDependencies(this);
         }
 
         public void ResetLayer()
@@ -102,145 +76,31 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             UpdateLayer(prevLayer);
         }
 
-        protected virtual void OnCustomStyleResolved(ICustomStyle resolvedCustomStyle)
-        {
-            int prevLayer = m_Layer;
-            if (!m_LayerIsInline)
-                resolvedCustomStyle.TryGetValue(s_LayerProperty, out m_Layer);
-
-            UpdateLayer(prevLayer);
-        }
-
         void UpdateLayer(int prevLayer)
         {
             if (prevLayer != m_Layer)
                 GraphView?.ChangeLayer(this);
         }
 
-        protected virtual void BuildContextualMenu(ContextualMenuPopulateEvent evt)
-        {
-        }
-
-        public void SetupBuildAndUpdate(IGraphElementModel model, Store store, GraphView graphView, string context = null)
-        {
-            Setup(model, store, graphView, context);
-            BuildUI();
-            UpdateFromModel();
-        }
-
-        public void Setup(IGraphElementModel model, Store store, GraphView graphView, string context)
-        {
-            Model = model;
-            Store = store;
-            GraphView = graphView;
-            Context = context;
-
-            // Used by graph view to restore selection on graph rebuild.
-            viewDataKey = Model != null ? Model.Guid.ToString() : Guid.NewGuid().ToString();
-
-            PartList = new GraphElementPartList();
-            BuildPartList();
-        }
-
-        public void AddToGraphView(GraphView graphView)
-        {
-            GraphView = graphView;
-            UIForModel.AddOrReplaceGraphElement(this);
-        }
-
-        public void RemoveFromGraphView()
-        {
-            Dependencies.ClearDependencyLists();
-            UIForModel.RemoveGraphElement(this);
-            GraphView = null;
-        }
-
-        protected virtual void BuildPartList() {}
-
-        public void BuildUI()
-        {
-            ClearElementUI();
-            BuildElementUI();
-
-            foreach (var component in PartList)
-            {
-                component.BuildUI(this);
-            }
-
-            foreach (var component in PartList)
-            {
-                component.PostBuildUI();
-            }
-
-            PostBuildUI();
-        }
-
-        protected virtual void ClearElementUI()
-        {
-            Clear();
-        }
-
-        protected virtual void BuildElementUI()
+        protected override void PostBuildUI()
         {
             AddToClassList(ussClassName);
         }
 
-        protected virtual void PostBuildUI() {}
-
-        public void UpdateFromModel()
-        {
-            if (Store?.State?.Preferences.GetBool(BoolPref.LogUIUpdate) ?? false)
-            {
-                Debug.LogWarning($"Rebuilding {this}");
-                if (GraphView == null)
-                {
-                    Debug.LogWarning($"Updating a graph element that is not attached to a graph view: {this}");
-                }
-            }
-
-            UpdateElementFromModel();
-
-            foreach (var component in PartList)
-            {
-                component.UpdateFromModel();
-            }
-
-            Dependencies.UpdateDependencyLists();
-        }
-
-        protected virtual void UpdateElementFromModel()
+        protected override void UpdateElementFromModel()
         {
             ClickSelector = IsSelectable() ? new ClickSelector() : null;
 
             EnableInClassList(selectableModifierUssClassName, IsSelectable() && ClickSelector != null);
         }
 
-        public virtual void AddForwardDependencies()
-        {
-        }
-
-        public virtual void AddBackwardDependencies()
-        {
-        }
-
-        public virtual void AddModelDependencies()
-        {
-        }
-
-        void OnGeometryChanged(GeometryChangedEvent evt)
-        {
-            Dependencies.OnGeometryChanged(evt);
-        }
-
         void OnCustomStyleResolved(CustomStyleResolvedEvent evt)
         {
-            OnCustomStyleResolved(evt.customStyle);
-            Dependencies.OnCustomStyleResolved(evt);
-        }
+            int prevLayer = m_Layer;
+            if (!m_LayerIsInline)
+                evt.customStyle.TryGetValue(s_LayerProperty, out m_Layer);
 
-        void OnDetachedFromPanel(DetachFromPanelEvent evt)
-        {
-            Dependencies.OnDetachedFromPanel(evt);
+            UpdateLayer(prevLayer);
         }
 
         public virtual bool IsSelectable()

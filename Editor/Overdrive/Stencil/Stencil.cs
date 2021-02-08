@@ -6,41 +6,52 @@ using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins;
 using UnityEngine;
 using UnityEditor.Searcher;
 using UnityEngine.GraphToolsFoundation.Overdrive;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     [PublicAPI]
-    // Warning: Stencil is only serializable for backward compatibility purposes. It will stop being unserializable in the future
+    // Warning: Stencil is only serializable for backward compatibility purposes. It will stop being serializable in the future
     [Serializable]
     public abstract class Stencil
     {
-        public virtual IEnumerable<Type> EventTypes => Enumerable.Empty<Type>();
+        GraphContext m_GraphContext;
 
         List<ITypeMetadata> m_AssembliesTypes;
 
         protected IToolbarProvider m_ToolbarProvider;
+        protected ISearcherDatabaseProvider m_SearcherDatabaseProvider;
 
         [SerializeReference]
         public IGraphModel GraphModel;
 
-        GraphContext m_GraphContext;
-
-        public virtual IExternalDragNDropHandler DragNDropHandler => null;
+        public virtual IEnumerable<Type> EventTypes => Enumerable.Empty<Type>();
 
         public GraphContext GraphContext => m_GraphContext ?? (m_GraphContext = CreateGraphContext());
+
         protected virtual GraphContext CreateGraphContext()
         {
             return new GraphContext();
         }
 
-        public virtual ITranslator CreateTranslator()
+        public virtual IGraphProcessor CreateGraphProcessor()
         {
-            return new NoOpTranslator();
+            return new NoOpGraphProcessor();
         }
 
         public virtual TypeHandle GetThisType()
         {
             return TypeHandle.Object;
+        }
+
+        /// <summary>
+        /// Extract a Variable Declaration Model from a Graph Element
+        /// </summary>
+        /// <param name="element">Element to test</param>
+        /// <returns>extracted variable</returns>
+        public virtual IVariableDeclarationModel ExtractVariableFromGraphElement(IGraphElement element)
+        {
+            return (element as BlackboardField)?.Model as IVariableDeclarationModel;
         }
 
         public virtual IToolbarProvider GetToolbarProvider()
@@ -76,14 +87,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             return new GraphNodeSearcherAdapter(graphModel, title);
         }
 
-        public abstract ISearcherDatabaseProvider GetSearcherDatabaseProvider();
-        public virtual void OnCompilationStarted(IGraphModel graphModel) {}
-        public virtual void OnCompilationSucceeded(IGraphModel graphModel, CompilationResult results) {}
-        public virtual void OnCompilationFailed(IGraphModel graphModel, CompilationResult results) {}
-
-        public virtual IEnumerable<IPluginHandler> GetCompilationPluginHandlers(CompilationOptions getCompilationOptions)
+        public virtual ISearcherDatabaseProvider GetSearcherDatabaseProvider()
         {
-            if (getCompilationOptions.HasFlag(CompilationOptions.Tracing))
+            return m_SearcherDatabaseProvider ?? (m_SearcherDatabaseProvider = new DefaultSearcherDatabaseProvider(this));
+        }
+
+        public virtual void OnGraphProcessingStarted(IGraphModel graphModel) {}
+        public virtual void OnGraphProcessingSucceeded(IGraphModel graphModel, GraphProcessingResult results) {}
+        public virtual void OnGraphProcessingFailed(IGraphModel graphModel, GraphProcessingResult results) {}
+
+        public virtual IEnumerable<IPluginHandler> GetGraphProcessingPluginHandlers(GraphProcessingOptions getGraphProcessingOptions)
+        {
+            if (getGraphProcessingOptions.HasFlag(GraphProcessingOptions.Tracing))
                 yield return new DebugInstrumentationHandler();
         }
 
@@ -91,11 +106,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public bool RequiresInspectorInitialization(IVariableDeclarationModel decl) => GraphContext.RequiresInspectorInitialization(decl);
 
         // PF: To preference
-        public virtual bool MoveNodeDependenciesByDefault => true;
+        public virtual bool MoveNodeDependenciesByDefault => false;
 
         public virtual IDebugger Debugger => null;
 
-        public abstract Type GetConstantNodeValueType(TypeHandle typeHandle);
+        public virtual Type GetConstantNodeValueType(TypeHandle typeHandle)
+        {
+            return null;
+        }
 
         public virtual IConstant CreateConstantValue(TypeHandle constantTypeHandle)
         {
@@ -105,19 +123,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             return instance;
         }
 
-        public virtual void CreateNodesFromPort(Store store, IPortModel portModel, Vector2 localPosition, Vector2 worldPosition,
+        public virtual void CreateNodesFromPort(CommandDispatcher commandDispatcher, IPortModel portModel, Vector2 localPosition, Vector2 worldPosition,
             IReadOnlyList<IEdgeModel> edgesToDelete)
         {
             switch (portModel.Direction)
             {
                 case Direction.Output:
-                    SearcherService.ShowOutputToGraphNodes(store.State, portModel, worldPosition, item =>
-                        store.Dispatch(new CreateNodeFromPortAction(portModel, localPosition, item, edgesToDelete)));
+                    SearcherService.ShowOutputToGraphNodes(commandDispatcher.GraphToolState, portModel, worldPosition, item =>
+                        commandDispatcher.Dispatch(new CreateNodeFromPortCommand(portModel, localPosition, item, edgesToDelete)));
                     break;
 
                 case Direction.Input:
-                    SearcherService.ShowInputToGraphNodes(store.State, portModel, worldPosition, item =>
-                        store.Dispatch(new CreateNodeFromPortAction(portModel, localPosition, item, edgesToDelete)));
+                    SearcherService.ShowInputToGraphNodes(commandDispatcher.GraphToolState, portModel, worldPosition, item =>
+                        commandDispatcher.Dispatch(new CreateNodeFromPortCommand(portModel, localPosition, item, edgesToDelete)));
                     break;
             }
         }
@@ -166,9 +184,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             return Enumerable.Empty<IEdgePortalModel>();
         }
 
-        public virtual void OnDragAndDropVariableDeclarations(Store store, List<(IVariableDeclarationModel, SerializableGUID, Vector2)> variablesToCreate)
+        public virtual void OnDragAndDropVariableDeclarations(CommandDispatcher commandDispatcher, List<(IVariableDeclarationModel, SerializableGUID, Vector2)> variablesToCreate)
         {
-            store.Dispatch(new CreateVariableNodesAction(variablesToCreate));
+            commandDispatcher.Dispatch(new CreateVariableNodesCommand(variablesToCreate));
         }
 
         /// <summary>

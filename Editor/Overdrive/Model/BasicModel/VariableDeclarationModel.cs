@@ -14,6 +14,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         Hidden = 2,
     }
 
+    /// <summary>
+    /// A model that represents a variable declaration in a graph.
+    /// </summary>
     [Serializable]
     //[MovedFrom(false, "UnityEditor.VisualScripting.Model", "Unity.GraphTools.Foundation.Overdrive.Editor")]
     [MovedFrom("UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting")]
@@ -21,8 +24,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
     {
         [SerializeField]
         TypeHandle m_DataType;
-        [SerializeField]
-        VariableType m_VariableType;
         [SerializeField]
         bool m_IsExposed;
         [SerializeField]
@@ -50,12 +51,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
                 if (Title != value)
                     Title = value;
             }
-        }
-
-        public VariableType VariableType
-        {
-            get => m_VariableType;
-            protected set => m_VariableType = value;
         }
 
         public string VariableString => IsExposed ? "Exposed variable" : "Variable";
@@ -108,12 +103,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
         public void CreateInitializationValue()
         {
-            if (VariableType == VariableType.EdgePortal)
-            {
-                InitializationModel = null;
-                return;
-            }
-
             if (GraphModel.Stencil.GetConstantNodeValueType(DataType) != null)
             {
                 InitializationModel = GraphModel.Stencil.CreateConstantValue(DataType);
@@ -122,22 +111,35 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             }
         }
 
+        /// <summary>
+        /// Creates a new variable declaration.
+        /// </summary>
+        /// <param name="variableName">The name of the new variable declaration to create.</param>
+        /// <param name="dataType">The type of the new variable declaration to create.</param>
+        /// <param name="isExposed">Whether the variable is exposed externally or not.</param>
+        /// <param name="graph">The graph in which to create the variable.</param>
+        /// <param name="modifierFlags">The modifier flags of the new variable declaration to create.</param>
+        /// <param name="variableFlags">The variable flags of the new variable declaration to create.</param>
+        /// <param name="initializationModel">The initialization model of the new variable declaration to create. Can be <code>null</code>.</param>
+        /// <param name="spawnFlags">The flags specifying how the variable declaration is to be spawned.</param>
+        /// <param name="guid">The SerializableGUID to assign to the newly created item. If none is provided, a new
+        /// SerializableGUID will be generated for it.</param>
+        /// <returns></returns>
         public static VariableDeclarationModel Create(string variableName, TypeHandle dataType, bool isExposed,
-            GraphModel graph, VariableType variableType, ModifierFlags modifierFlags,
+            GraphModel graph, ModifierFlags modifierFlags,
             VariableFlags variableFlags = VariableFlags.None, IConstant initializationModel = null,
-            SpawnFlags spawnFlags = SpawnFlags.Default, GUID? guid = null)
+            SpawnFlags spawnFlags = SpawnFlags.Default, SerializableGUID guid = default)
         {
             Assert.IsNotNull(graph);
             Assert.IsNotNull(graph.AssetModel);
 
             var decl = new VariableDeclarationModel
             {
-                Guid = guid ?? GUID.Generate(),
+                Guid = guid.Valid ? guid : SerializableGUID.Generate(),
                 AssetModel = graph.AssetModel,
                 DataType = dataType,
                 VariableName = variableName,
                 IsExposed = isExposed,
-                VariableType = variableType,
                 Modifiers = modifierFlags,
                 variableFlags = variableFlags
             };
@@ -153,7 +155,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         bool Equals(VariableDeclarationModel other)
         {
             // ReSharper disable once BaseObjectEqualsIsObjectEquals
-            return base.Equals(other) && m_DataType.Equals(other.m_DataType) && m_VariableType == other.m_VariableType && m_IsExposed == other.m_IsExposed;
+            return base.Equals(other) && m_DataType.Equals(other.m_DataType) && m_IsExposed == other.m_IsExposed;
         }
 
         public override bool Equals(object obj)
@@ -171,8 +173,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
                 int hashCode = base.GetHashCode();
                 // ReSharper disable once NonReadonlyMemberInGetHashCode
                 hashCode = (hashCode * 397) ^ m_DataType.GetHashCode();
-                // ReSharper disable once NonReadonlyMemberInGetHashCode
-                hashCode = (hashCode * 397) ^ (int)m_VariableType;
                 // ReSharper disable once NonReadonlyMemberInGetHashCode
                 hashCode = (hashCode * 397) ^ m_IsExposed.GetHashCode();
                 return hashCode;

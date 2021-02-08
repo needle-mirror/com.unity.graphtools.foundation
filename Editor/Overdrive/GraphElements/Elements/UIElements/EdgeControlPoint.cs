@@ -96,9 +96,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (m_DraggingControlPoint)
             {
                 var newPosition = m_OriginalElementPosition + pointerDelta;
-                graphView.Store.Dispatch(new MoveEdgeControlPointAction(m_EdgeModel, m_ControlPointIndex, newPosition, m_OriginalTightness));
+                graphView.CommandDispatcher.Dispatch(new MoveEdgeControlPointCommand(m_EdgeModel, m_ControlPointIndex, newPosition, m_OriginalTightness));
 
-                // PF FIXME: action should mark edge model as dirty
+                // PF FIXME: command should mark edge model as dirty
                 using (var evt = GeometryChangedEvent.GetPooled(m_EdgeControl.layout, m_EdgeControl.layout))
                 {
                     evt.target = m_EdgeControl;
@@ -111,9 +111,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             {
                 var tightnessDelta = pointerDelta.x - pointerDelta.y;
                 var newTightness = m_OriginalTightness + tightnessDelta;
-                graphView.Store.Dispatch(new MoveEdgeControlPointAction(m_EdgeModel, m_ControlPointIndex, m_OriginalElementPosition, newTightness));
+                graphView.CommandDispatcher.Dispatch(new MoveEdgeControlPointCommand(m_EdgeModel, m_ControlPointIndex, m_OriginalElementPosition, newTightness));
 
-                // PF FIXME: action should mark edge model as dirty
+                // PF FIXME: command should mark edge model as dirty
                 using (var evt = GeometryChangedEvent.GetPooled(m_EdgeControl.layout, m_EdgeControl.layout))
                 {
                     evt.target = m_EdgeControl;
@@ -153,7 +153,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     return;
 
                 int controlPointIndex = parent.Children().IndexOf(this);
-                graphView.Store.Dispatch(new RemoveEdgeControlPointAction(m_EdgeModel, controlPointIndex));
+                graphView.CommandDispatcher.Dispatch(new RemoveEdgeControlPointCommand(m_EdgeModel, controlPointIndex));
             });
         }
     }

@@ -41,7 +41,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator ElementCanBeSelected()
         {
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
             GetUI(out var node1, out var node2, out var node3);
 
@@ -57,7 +57,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator SelectingNewElementUnselectsPreviousOne()
         {
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
             GetUI(out var node1, out var node2, out var node3);
 
@@ -88,7 +88,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             // Create the node.
             var nodeModel = CreateNode(key, new Vector2(200, 200));
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             var node = nodeModel.GetUI<Node>(graphView);
@@ -117,9 +117,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         EventModifiers modifiers => Application.platform == RuntimePlatform.OSXEditor ? EventModifiers.Command : EventModifiers.Control;
 
         [UnityTest]
-        public IEnumerator SelectingNewElementWithActionAddsToSelection()
+        public IEnumerator SelectingNewElementWithCommandAddsToSelection()
         {
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
             GetUI(out var node1, out var node2, out var node3);
 
@@ -139,9 +139,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         }
 
         [UnityTest]
-        public IEnumerator SelectingSelectedElementWithActionModifierRemovesFromSelection()
+        public IEnumerator SelectingSelectedElementWithCommandModifierRemovesFromSelection()
         {
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
             GetUI(out var node1, out var node2, out var node3);
 
@@ -186,7 +186,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator ClickOnTwoOverlappingElementsSelectsTopOne()
         {
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
             GetUI(out var node1, out var node2, out var node3);
 
@@ -206,7 +206,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator RectangleSelectionWorks()
         {
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
             GetUI(out var node1, out var node2, out var node3);
 
@@ -224,7 +224,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator RectangleSelectionWithActionKeyWorks()
         {
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
             GetUI(out var node1, out var node2, out var node3);
 
@@ -248,7 +248,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator FreehandSelectionWorks()
         {
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
             GetUI(out var node1, out var node2, out var node3);
 
@@ -269,7 +269,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator FreehandDeleteWorks()
         {
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
             GetUI(out var node1, out var node2, out var node3);
 
@@ -289,7 +289,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [Test]
         public void AddingElementToSelectionTwiceDoesNotAddTheSecondTime()
         {
-            graphView.RebuildUI(GraphModel, Store);
+            graphView.RebuildUI(GraphModel, CommandDispatcher);
             GetUI(out var node1, out var node2, out _);
 
             Assert.AreEqual(0, graphView.Selection.Count);
@@ -309,7 +309,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [Test]
         public void RemovingElementFromSelectionTwiceDoesThrowException()
         {
-            graphView.RebuildUI(GraphModel, Store);
+            graphView.RebuildUI(GraphModel, CommandDispatcher);
             GetUI(out var node1, out var node2, out _);
 
             graphView.AddToSelection(node1);

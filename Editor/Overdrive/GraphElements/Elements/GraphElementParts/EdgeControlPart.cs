@@ -4,9 +4,9 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public class EdgeControlPart : BaseGraphElementPart
+    public class EdgeControlPart : BaseModelUIPart
     {
-        public static EdgeControlPart Create(string name, IGraphElementModel model, IGraphElement ownerElement, string parentClassName)
+        public static EdgeControlPart Create(string name, IGraphElementModel model, IModelUI ownerElement, string parentClassName)
         {
             if (model is IEdgeModel)
             {
@@ -20,7 +20,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         EdgeControl m_EdgeControl;
 
-        protected EdgeControlPart(string name, IGraphElementModel model, IGraphElement ownerElement, string parentClassName)
+        protected EdgeControlPart(string name, IGraphElementModel model, IModelUI ownerElement, string parentClassName)
             : base(name, model, ownerElement, parentClassName) {}
 
         protected override void BuildPartUI(VisualElement container)

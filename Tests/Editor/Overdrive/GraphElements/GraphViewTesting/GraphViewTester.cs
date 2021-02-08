@@ -8,11 +8,11 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    class State : Overdrive.State
+    class GraphToolState : Overdrive.GraphToolState
     {
         static Preferences CreatePreferences()
         {
-            var prefs = TestPreferences.CreatePreferences();
+            var prefs = Preferences.CreatePreferences("GraphToolsFoundationTests.");
             prefs.SetBoolNoEditorUpdate(BoolPref.ErrorOnRecursiveDispatch, false);
             prefs.SetBoolNoEditorUpdate(BoolPref.ErrorOnMultipleDispatchesPerFrame, false);
             return prefs;
@@ -21,13 +21,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         IGraphModel m_GraphModel;
         public override IGraphModel GraphModel => m_GraphModel;
 
-        public State(GUID graphViewEditorWindowGUID, IGraphModel graphModel)
+        public GraphToolState(GUID graphViewEditorWindowGUID, IGraphModel graphModel)
             : base(graphViewEditorWindowGUID, CreatePreferences())
         {
             m_GraphModel = graphModel;
         }
 
-        ~State() => Dispose(false);
+        ~GraphToolState() => Dispose(false);
     }
 
     class GraphViewTester
@@ -44,7 +44,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         protected TestGraphView graphView { get; private set; }
         protected TestEventHelpers helpers { get; private set; }
         protected IGraphModel GraphModel => window.GraphModel;
-        protected Store Store => window.Store;
+        protected CommandDispatcher CommandDispatcher => window.CommandDispatcher;
 
         bool m_EnablePersistence;
 
@@ -120,14 +120,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
         protected TNodeModel CreateNode<TNodeModel>(string title, Vector2 position, int inCount = 0, int outCount = 0, int exeInCount = 0, int exeOutCount = 0, Orientation orientation = Orientation.Horizontal) where TNodeModel : IONodeModel, new()
         {
-            var node = GraphModel.CreateNode<TNodeModel>(title);
-            node.Position = position;
-            node.InputCount = inCount;
-            node.OuputCount = outCount;
-            node.ExeInputCount = exeInCount;
-            node.ExeOuputCount = exeOutCount;
-
-            node.DefineNode();
+            var node = GraphModel.CreateNode<TNodeModel>(title, position, preDefineSetup: model =>
+            {
+                model.InputCount = inCount;
+                model.OuputCount = outCount;
+                model.ExeInputCount = exeInCount;
+                model.ExeOuputCount = exeOutCount;
+            });
 
             foreach (var portModel in node.Ports.Cast<PortModel>())
             {

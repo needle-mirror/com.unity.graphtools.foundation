@@ -12,7 +12,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     [MeansImplicitUse(ImplicitUseTargetFlags.WithMembers)]
     public class GraphElementsExtensionMethodsCacheAttribute : Attribute
     {
-        public const int lowestPriority = 0;
+        internal const int lowestPriority = 0;
         public const int toolDefaultPriority = 1;
 
         public int Priority { get; }

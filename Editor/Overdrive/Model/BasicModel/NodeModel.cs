@@ -7,6 +7,25 @@ using Object = UnityEngine.Object;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 {
+    public static class BasicModelReducers
+    {
+        public static void Register(CommandDispatcher dispatcher)
+        {
+            dispatcher.RegisterCommandHandler<UpdateModelPropertyValueCommand>(UpdateModelPropertyValueReducer);
+        }
+
+        static void UpdateModelPropertyValueReducer(GraphToolState state, UpdateModelPropertyValueCommand command)
+        {
+            UpdateModelPropertyValueCommand.DefaultCommandHandler(state, command);
+
+            if (command.GraphElementModel is NodeModel nodeModel)
+                nodeModel.DefineNode();
+        }
+    }
+
+    /// <summary>
+    /// A model that represents a node in a graph.
+    /// </summary>
     [Serializable]
     public abstract class NodeModel : IInOutPortsNode, IHasTitle, IHasProgress, ICollapsible, ISerializationCallbackReceiver, IGuidUpdate
     {
@@ -28,25 +47,28 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         [SerializeField, HideInInspector]
         string m_Title;
 
-        // Serialize m_InputConstantsById dictionary Keys
+        // for backward compatibility, old way to serialize m_InputConstantsById Keys
         [SerializeField, HideInInspector]
         List<string> m_InputConstantKeys;
 
-        // Serialize m_InputConstantsById dictionary Values
+        // for backward compatibility, old way to serialize m_InputConstantsById Values
         [SerializeReference]
         protected List<IConstant> m_InputConstants;
 
         [SerializeField]
         ModelState m_State;
 
-        [SerializeField]
+        [SerializeField, HideInInspector]
         List<string> m_SerializedCapabilities;
 
-        public GUID Guid
+        /// <summary>
+        /// The unique identifier of the node.
+        /// </summary>
+        public SerializableGUID Guid
         {
             get
             {
-                if (m_Guid.GUID.Empty())
+                if (!m_Guid.Valid)
                     AssignNewGuid();
                 return m_Guid;
             }
@@ -129,7 +151,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         protected OrderedPorts m_PreviousInputs;
         protected OrderedPorts m_PreviousOutputs;
 
-        Dictionary<string, IConstant> m_InputConstantsById;
+        [SerializeField]
+        SerializedReferenceDictionary<string, IConstant> m_InputConstantsById;
 
         bool m_Collapsed;
 
@@ -166,6 +189,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             InternalInitCapabilities();
             m_OutputsById = new OrderedPorts();
             m_InputsById = new OrderedPorts();
+            m_InputConstantsById = new SerializedReferenceDictionary<string, IConstant>();
+
             m_Color = new Color(0.776f, 0.443f, 0, 0.5f);
         }
 
@@ -201,10 +226,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         {
         }
 
+        public void OnCreateNode()
+        {
+            DefineNode();
+        }
+
         public virtual void OnDuplicateNode(INodeModel sourceNode)
         {
             Title = (sourceNode as IHasTitle)?.Title ?? "";
-            ReinstantiateInputConstants();
+            DefineNode();
+            CloneInputConstants();
         }
 
         void RemoveUnusedPorts()
@@ -219,12 +250,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
                      .Where<KeyValuePair<string, IPortModel>>(kv => !m_OutputsById.ContainsKey(kv.Key)))
             {
                 DeletePort(kv.Value);
-            }
-
-            if (m_InputConstantsById == null)
-            {
-                m_InputConstantsById = new Dictionary<string, IConstant>();
-                m_InputConstantsById.DeserializeDictionaryFromLists(m_InputConstantKeys, m_InputConstants);
             }
 
             // remove input constants that aren't used
@@ -312,17 +337,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
         protected void UpdateConstantForInput(IPortModel inputPort, Action<IConstant> preDefine = null)
         {
+            InputConstantsBackwardCompatibility();
+
             var id = inputPort.UniqueName;
             if ((inputPort.Options & PortModelOptions.NoEmbeddedConstant) != 0)
             {
-                m_InputConstantsById?.Remove(id);
+                m_InputConstantsById.Remove(id);
                 return;
-            }
-
-            if (m_InputConstantsById == null)
-            {
-                m_InputConstantsById = new Dictionary<string, IConstant>();
-                m_InputConstantsById.DeserializeDictionaryFromLists(m_InputConstantKeys, m_InputConstants);
             }
 
             if (m_InputConstantsById.TryGetValue(id, out var constant))
@@ -366,7 +387,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             return (IConstantNodeModel)clone;
         }
 
-        public void ReinstantiateInputConstants()
+        public void CloneInputConstants()
         {
             foreach (var id in m_InputConstantsById.Keys.ToList())
             {
@@ -421,29 +442,35 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             return NodeModelDefaultImplementations.GetConnectedEdges(this);
         }
 
+        /// <summary>
+        /// Assign a newly generated GUID to the model.
+        /// </summary>
         public void AssignNewGuid()
         {
-            m_Guid = GUID.Generate();
+            m_Guid = SerializableGUID.Generate();
         }
 
+        /// <summary>
+        /// Assign a GUID to the model.
+        /// </summary>
+        /// <param name="guidString">A string representation of the guid to be parsed.</param>
         void IGuidUpdate.AssignGuid(string guidString)
         {
-            m_Guid = new GUID(guidString);
-            if (m_Guid.GUID.Empty())
+            m_Guid = new SerializableGUID(guidString);
+            if (!m_Guid.Valid)
                 AssignNewGuid();
         }
 
-        public void Move(Vector2 position)
+        public void Move(Vector2 delta)
         {
             if (!this.IsMovable())
                 return;
 
-            Position = position;
+            Position += delta;
         }
 
         public virtual void OnBeforeSerialize()
         {
-            m_InputConstantsById.SerializeDictionaryToLists(ref m_InputConstantKeys, ref m_InputConstants);
             m_SerializedCapabilities = m_Capabilities?.Select(c => c.Name).ToList() ?? new List<string>();
         }
 
@@ -457,6 +484,23 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
                 InitCapabilities();
             else
                 m_Capabilities = m_SerializedCapabilities.Select(Overdrive.Capabilities.Get).ToList();
+        }
+
+        public virtual void OnAfterDeserializeAssetModel()
+        {
+            InputConstantsBackwardCompatibility();
+        }
+
+        private void InputConstantsBackwardCompatibility()
+        {
+            // Backward compatibility
+            if (m_InputConstantsById == null || !m_InputConstantsById.IsValid)
+            {
+                Assert.IsNotNull(m_InputConstantKeys);
+                Assert.IsNotNull(m_InputConstants);
+                m_InputConstantsById =
+                    SerializedReferenceDictionary<string, IConstant>.FromLists(m_InputConstantKeys, m_InputConstants);
+            }
         }
 
         protected virtual void InitCapabilities()

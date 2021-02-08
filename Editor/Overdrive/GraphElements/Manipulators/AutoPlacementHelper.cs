@@ -15,10 +15,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         internal Dictionary<INodeModel, HashSet<INodeModel>> NodeDependencies { get; } = new Dictionary<INodeModel, HashSet<INodeModel>>(); // All parent nodes and their children nodes
         Dictionary<INodeModel, INodeModel> m_DependenciesToMerge = new Dictionary<INodeModel, INodeModel>();  // All parent nodes that will merge into another parent node
 
-        protected void SendPlacementAction(List<IGraphElementModel> updatedModels, List<Vector2> updatedDeltas)
+        protected void SendPlacementCommand(List<IGraphElementModel> updatedModels, List<Vector2> updatedDeltas)
         {
             var models = updatedModels.OfType<IMovable>();
-            m_GraphView.Store.Dispatch(new AutoPlaceElementsAction(updatedDeltas, models.ToArray()));
+            m_GraphView.CommandDispatcher.Dispatch(new AutoPlaceElementsCommand(updatedDeltas, models.ToArray()));
         }
 
         protected Dictionary<IGraphElementModel, Vector2> GetElementDeltaResults()

@@ -60,7 +60,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest, Ignore("FIXME EnterPlayMode")]
         public IEnumerator SelectionIsRestoredWhenEnteringPlaymode_AddNodesAfterPersistence()
         {
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
             GetNodesAndSetViewDataKey(out Node node1, out Node node2, out Node node3);
 
@@ -81,7 +81,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             // Allow 1 frame to let the persistence be restored
             yield return null;
 
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
             GetNodesAndSetViewDataKey(out node1, out node2, out node3);
 
@@ -97,7 +97,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest, Ignore("FIXME EnterPlayMode")]
         public IEnumerator SelectionIsRestoredWhenEnteringPlaymode_AddNodesBeforePersistence()
         {
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
             GetNodesAndSetViewDataKey(out Node node1, out Node node2, out Node node3);
 
@@ -114,7 +114,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             node2Model = CreateNode(key2, new Vector2(400, 400));
             node3Model = CreateNode(key3, new Vector2(600, 600));
 
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
             GetNodesAndSetViewDataKey(out node1, out node2, out node3);
 
@@ -129,7 +129,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator CanUndoSelection()
         {
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
             GetNodesAndSetViewDataKey(out Node node1, out Node node2, out Node node3);
 
@@ -146,7 +146,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator CanRedoSelection()
         {
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
             GetNodesAndSetViewDataKey(out Node node1, out Node node2, out Node node3);
 
@@ -166,7 +166,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         {
             // Note: this somewhat complex use case ensure that selection for redo
             // and persisted selection are kep in sync
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
             GetNodesAndSetViewDataKey(out Node node1, out Node node2, out Node node3);
 
@@ -190,7 +190,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             node2Model = CreateNode(key2, new Vector2(400, 400));
             node3Model = CreateNode(key3, new Vector2(600, 600));
 
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
             GetNodesAndSetViewDataKey(out node1, out node2, out node3);
 
@@ -207,7 +207,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         {
             { // Create initial blackboard.
                 var blackboard = new Blackboard();
-                blackboard.SetupBuildAndUpdate(null, Store, graphView);
+                blackboard.SetupBuildAndUpdate(null, CommandDispatcher, graphView);
 
                 var inSection = new BlackboardSection(blackboard, "Section 1");
                 blackboard.Add(inSection);
@@ -236,7 +236,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             { // Add field to blackboard first then add blackboard to graphview.
                 var blackboard = new Blackboard();
-                blackboard.SetupBuildAndUpdate(null, Store, graphView);
+                blackboard.SetupBuildAndUpdate(null, CommandDispatcher, graphView);
 
                 var inSection = new BlackboardSection(blackboard, "Section 1");
                 blackboard.Add(inSection);
@@ -259,7 +259,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         {
             { // Create initial blackboard.
                 var blackboard = new Blackboard();
-                blackboard.SetupBuildAndUpdate(null, Store, graphView);
+                blackboard.SetupBuildAndUpdate(null, CommandDispatcher, graphView);
 
                 var inSection = new BlackboardSection(blackboard, "Section 1");
                 blackboard.Add(inSection);
@@ -288,7 +288,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             { // Add blackboard to graphview first then add field to blackboard.
                 var blackboard = new Blackboard();
-                blackboard.SetupBuildAndUpdate(null, Store, graphView);
+                blackboard.SetupBuildAndUpdate(null, CommandDispatcher, graphView);
 
                 graphView.AddElement(blackboard);
 

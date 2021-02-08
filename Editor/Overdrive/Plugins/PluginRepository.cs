@@ -7,10 +7,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     public class PluginRepository : IDisposable
     {
         List<IPluginHandler> m_PluginHandlers;
+        GraphViewEditorWindow m_Window;
 
-        internal PluginRepository()
+        internal PluginRepository(GraphViewEditorWindow window)
         {
             m_PluginHandlers = new List<IPluginHandler>();
+            m_Window = window;
         }
 
         public IEnumerable<IPluginHandler>  GetPluginHandlers()
@@ -18,12 +20,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             return m_PluginHandlers;
         }
 
-        public void RegisterPlugins(IEnumerable<IPluginHandler> plugins, Store store, GraphViewEditorWindow window)
+        public void RegisterPlugins(IEnumerable<IPluginHandler> plugins)
         {
             UnregisterPlugins(plugins);
             foreach (IPluginHandler handler in plugins)
             {
-                handler.Register(store, window);
+                handler.Register(m_Window);
                 m_PluginHandlers.Add(handler);
             }
         }

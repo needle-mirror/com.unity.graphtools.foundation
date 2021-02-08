@@ -32,8 +32,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         const int k_AlignHorizontalOffset = 30;
 
         readonly GraphView m_GraphView;
-        readonly Dictionary<GUID, Dictionary<GUID, IDependency>> m_DependenciesByNode = new Dictionary<GUID, Dictionary<GUID, IDependency>>();
-        readonly Dictionary<GUID, Dictionary<GUID, IDependency>> m_PortalDependenciesByNode = new Dictionary<GUID, Dictionary<GUID, IDependency>>();
+        readonly Dictionary<SerializableGUID, Dictionary<SerializableGUID, IDependency>> m_DependenciesByNode = new Dictionary<SerializableGUID, Dictionary<SerializableGUID, IDependency>>();
+        readonly Dictionary<SerializableGUID, Dictionary<SerializableGUID, IDependency>> m_PortalDependenciesByNode = new Dictionary<SerializableGUID, Dictionary<SerializableGUID, IDependency>>();
         readonly HashSet<INodeModel> m_ModelsToMove = new HashSet<INodeModel>();
         readonly HashSet<INodeModel> m_TempMovedModels = new HashSet<INodeModel>();
 
@@ -48,8 +48,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         void AddEdgeDependency(INodeModel parent, IDependency child)
         {
-            if (!m_DependenciesByNode.TryGetValue(parent.Guid, out Dictionary<GUID, IDependency> link))
-                m_DependenciesByNode.Add(parent.Guid, new Dictionary<GUID, IDependency> { {child.DependentNode.Guid, child }});
+            if (!m_DependenciesByNode.TryGetValue(parent.Guid, out var link))
+                m_DependenciesByNode.Add(parent.Guid, new Dictionary<SerializableGUID, IDependency> { {child.DependentNode.Guid, child }});
             else
             {
                 if (link.TryGetValue(child.DependentNode.Guid, out IDependency dependency))
@@ -80,10 +80,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             return link.Values.ToList();
         }
 
-        public void Remove(GUID a, GUID b)
+        public void Remove(SerializableGUID a, SerializableGUID b)
         {
-            GUID parent;
-            GUID child;
+            SerializableGUID parent;
+            SerializableGUID child;
             if (m_DependenciesByNode.TryGetValue(a, out var link) &&
                 link.TryGetValue(b, out var dependency))
             {
@@ -113,11 +113,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public void Clear()
         {
-            foreach (KeyValuePair<GUID, Dictionary<GUID, IDependency>> pair in m_DependenciesByNode)
+            foreach (var pair in m_DependenciesByNode)
                 pair.Value.Clear();
             m_DependenciesByNode.Clear();
 
-            foreach (KeyValuePair<GUID, Dictionary<GUID, IDependency>> pair in m_PortalDependenciesByNode)
+            foreach (var pair in m_PortalDependenciesByNode)
                 pair.Value.Clear();
             m_PortalDependenciesByNode.Clear();
         }
@@ -147,10 +147,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             Log($"ProcessDependency {nodeModel}");
 
-            if (!m_DependenciesByNode.TryGetValue(nodeModel.Guid, out Dictionary<GUID, IDependency> link))
+            if (!m_DependenciesByNode.TryGetValue(nodeModel.Guid, out var link))
                 return;
 
-            foreach (KeyValuePair<GUID, IDependency> dependency in link)
+            foreach (var dependency in link)
             {
                 if (m_ModelsToMove.Contains(dependency.Value.DependentNode))
                     continue;
@@ -186,10 +186,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             Log($"ProcessDependencyModel {nodeModel}");
 
-            if (!m_DependenciesByNode.TryGetValue(nodeModel.Guid, out Dictionary<GUID, IDependency> link))
+            if (!m_DependenciesByNode.TryGetValue(nodeModel.Guid, out var link))
                 return;
 
-            foreach (KeyValuePair<GUID, IDependency> dependency in link)
+            foreach (var dependency in link)
             {
                 if (m_ModelsToMove.Contains(dependency.Value.DependentNode))
                     continue;
@@ -217,7 +217,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public void UpdateNodeState()
         {
-            HashSet<GUID> processed = new HashSet<GUID>();
+            var processed = new HashSet<SerializableGUID>();
             void SetNodeState(INodeModel nodeModel, ModelState state)
             {
                 if (nodeModel.State == ModelState.Disabled)
@@ -230,7 +230,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     nodeUI.EnableInClassList(Node.unusedModifierUssClassName, false);
                 }
 
-                Dictionary<GUID, IDependency> dependencies = null;
+                Dictionary<SerializableGUID, IDependency> dependencies = null;
 
                 if (nodeModel is IEdgePortalModel edgePortalModel)
                     m_PortalDependenciesByNode.TryGetValue(edgePortalModel.Guid, out dependencies);
@@ -261,7 +261,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 }
             });
 
-            var graphModel = m_GraphView.Store.State.GraphModel;
+            var graphModel = m_GraphView.CommandDispatcher.GraphToolState.GraphModel;
             foreach (var root in graphModel.Stencil.GetEntryPoints(graphModel))
             {
                 SetNodeState(root, ModelState.Enabled);
@@ -289,7 +289,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             m_ModelsToMove.Clear();
             m_GraphModel = null;
 
-            foreach (var element in selection.OfType<IGraphElement>())
+            foreach (var element in selection.OfType<IModelUI>())
             {
                 if (element.Model is INodeModel nodeModel)
                 {
@@ -366,7 +366,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                         Log($"  pos {position} parent NOT stackNode");
 
                         linked.DependentNode.Position = position;
-                        m_GraphView.Store.State.MarkChanged(linked.DependentNode);
+                        m_GraphView.CommandDispatcher.GraphToolState.MarkChanged(linked.DependentNode);
                     }
                     break;
             }
@@ -405,9 +405,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 // Align each top-most node then move dependencies by the same delta
                 foreach (INodeModel model in topMostModels)
                 {
-                    if (!m_DependenciesByNode.TryGetValue(model.Guid, out Dictionary<GUID, IDependency> dependencies))
+                    if (!m_DependenciesByNode.TryGetValue(model.Guid, out var dependencies))
                         continue;
-                    foreach (KeyValuePair<GUID, IDependency> dependency in dependencies)
+                    foreach (var dependency in dependencies)
                     {
                         AlignDependency(dependency.Value, model);
                     }

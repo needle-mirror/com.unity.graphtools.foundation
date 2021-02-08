@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
@@ -7,13 +6,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     {
         public readonly GraphView GraphView;
         public readonly string Context;
-        public readonly Dictionary<GUID, IGraphElement> GraphElements;
+        public readonly Dictionary<SerializableGUID, IModelUI> GraphElements;
 
         public ContextualizedGraphElements(GraphView graphView, string context)
         {
             GraphView = graphView;
             Context = context;
-            GraphElements = new Dictionary<GUID, IGraphElement>();
+            GraphElements = new Dictionary<SerializableGUID, IModelUI>();
         }
     }
 }

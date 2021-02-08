@@ -20,7 +20,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         [Test]
         public void DeleteNodeDoesRemoveTheDependency()
         {
-            var mgr = new PositionDependenciesManager(GraphView, Store.State.Preferences);
+            var mgr = new PositionDependenciesManager(GraphView, CommandDispatcher.GraphToolState.Preferences);
             var operatorModel = GraphModel.CreateNode<Type0FakeNodeModel>("Node0", new Vector2(-100, -100));
             var intModel = GraphModel.CreateConstantNode(typeof(int).GenerateTypeHandle(), "int", new Vector2(-150, -100));
             var edge = GraphModel.CreateEdge(operatorModel.Input0, intModel.OutputPort);
@@ -36,7 +36,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             var node1 = GraphModel.CreateNode<Type0FakeNodeModel>(string.Empty, new Vector2(100, 100));
             GraphModel.CreateEdge(node1.Input0, node0.Output0);
 
-            Store.MarkStateDirty();
+            CommandDispatcher.MarkStateDirty();
             yield return null;
             GraphView.FrameAll();
             yield return null;
@@ -109,7 +109,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             List<Vector2> initPositions = expectedMovedDependencies.Select(x => x.Position).ToList();
             List<Vector2> initUnmovedPositions = expectedUnmovedDependencies != null ? expectedUnmovedDependencies.Select(x => x.Position).ToList() : new List<Vector2>();
 
-            yield return TestPrereqActionPostreq(mode,
+            yield return TestPrereqCommandPostreq(mode,
                 () =>
                 {
                     for (int i = 0; i < expectedMovedDependencies.Length; i++)

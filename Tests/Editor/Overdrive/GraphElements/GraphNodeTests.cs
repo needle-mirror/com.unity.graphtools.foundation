@@ -33,7 +33,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [Test]
         public void CollapseButtonOnlyEnabledWhenNodeHasUnconnectedPorts()
         {
-            graphView.RebuildUI(GraphModel, Store);
+            graphView.RebuildUI(GraphModel, CommandDispatcher);
             List<Node> nodeList = graphView.Nodes.ToList();
 
             // Nothing is connected. The collapse button should be enabled.
@@ -45,7 +45,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             }
 
             var edge = GraphModel.CreateEdge(m_Node1.GetOutputPorts().First(), m_Node2.GetInputPorts().First());
-            graphView.RebuildUI(GraphModel, Store);
+            graphView.RebuildUI(GraphModel, CommandDispatcher);
             nodeList = graphView.Nodes.ToList();
 
             // Ports are connected. The collapse button should be disabled.
@@ -58,7 +58,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             // Disconnect the ports of the 2 nodes.
             GraphModel.DeleteEdge(edge);
-            graphView.RebuildUI(GraphModel, Store);
+            graphView.RebuildUI(GraphModel, CommandDispatcher);
             nodeList = graphView.Nodes.ToList();
 
             // Once more, nothing is connected. The collapse button should be enabled.
@@ -73,7 +73,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator SelectedNodeCanBeDeleted()
         {
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             int initialCount = graphView.Nodes.ToList().Count;
@@ -91,7 +91,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         public IEnumerator SelectedEdgeCanBeDeleted()
         {
             var edge = GraphModel.CreateEdge(m_Node1.GetOutputPorts().First(), m_Node2.GetInputPorts().First());
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             int initialCount = window.GraphView.Edges.ToList().Count;
@@ -110,7 +110,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             graphView.AddToClassList("EdgeColorsMatchCustomPortColors");
 
             var edge = GraphModel.CreateEdge(m_Node2.GetInputPorts().First(), m_Node1.GetOutputPorts().First());
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             var outputPort = m_Node1.GetOutputPorts().First().GetUI<Port>(graphView);

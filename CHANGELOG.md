@@ -5,11 +5,79 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [0.7.0-preview.2] - 2021-01-18
+## [0.8.0-preview] - 2021-02-08
+
+### Added
+
+- Obsolete names on `Enumeration`
+- `class BasicModel.GraphTemplate<TStencil>` which provides a default `IGraphTemplate` implementation
+- `DefaultSearcherDatabaseProvider` which provides a default `ISearcherDatabaseProvider` implementation
+- `DropTarget` abstract `ModelUI` class handling drag and drop from SelectionDragger
+- `IDragAndDropHandler` interface demonstrating ability to handle drag and drop events
+
+### Removed
+
+- `GtfoGraphView` class was merged into `GraphView`
+- `GtfoEditorWindow` class was merged into `GraphViewEditorWindow`
+- `VariableType` enum
+- `ITranslator.TranslateAndCompile`
+- `ITranslator.CanCompile`
+- `RequestCompilationAction` (moved to Visual Scripting ECS package)
+- `IGraphAssetModel.SourceFilePath`
+- `IDroppable` interface
+- `IDropTarget`. Use new class `DropTarget` to catch `GraphView` mouse drags as drag and drop instead of move.
+
+### Changed
+
+- `GtfoWindow.GetShortcutDictionary()` is no longer abstract. It is a virtual that provides a default dictionary.
+- `IGraphElement` renamed to `IModelUI`
+- `GraphElement` and `Port` now inherits from new class `ModelUI`
+- Renamed `State` to `GraphToolState`
+- Renamed `Store` to `CommandDispatcher`
+- Renamed `StoreHelper` to `CommandDispatcherHelper`
+- Renamed `BaseAction` to `Command` and all *Action* to *Command*
+- Renamed all `DefaultReducer` to `CommandHandler`
+- `Preferences` class is not abstract anymore.
+- `GraphView` class is not abstract anymore.
+- `GraphViewEditorWindow` class is not abstract anymore.
+- `vse-blank-page` USS class name changed to `ge-blank-page`
+- `CompilationResult` renamed to `GraphProcessingResult`
+- `CompilationStatus` renamed to `GraphProcessingStatus`
+- `GraphViewEditorWindow.RecompilationTriggerActions` renamed to `GraphViewEditorWindow.GraphProcessingTriggerActions`
+- `GraphViewEditorWindow.RecompileGraph` renamed to `GraphViewEditorWindow.ProcessGraph`
+- `Stencil.CreateTranslator` renamed to `Stencil.CreateGraphProcessor`
+- `Stencil.OnCompilationStarted` renamed to `Stencil.OnGraphProcessingStarted`
+- `Stencil.OnCompilationSucceeded` renamed to `Stencil.OnGraphProcessingSucceeded`
+- `Stencil.OnCompilationFailed` renamed to `Stencil.OnGraphProcessingFailed`
+- `Stencil.GetCompilationPluginHandlers` renamed to `Stencil.GetGraphProcessingPluginHandlers`
+- `ITranslator` renamed to `IGraphProcessor`
+- `ITranslator.Compile` renamed to `IGraphProcessor.ProcessGraph`
+- `BoolPref.AutoRecompile` renamed to `BoolPref.AutoProcess`
+- `CompilationStateComponent` renamed to `GraphProcessingStateComponent`
+- `CompilationTimer` renamed to `GraphProcessingTimer`
+- `GraphView.RecompilationTriggerActions` renamed to `GraphView.GraphProcessingTriggerActions`
+- `NoOpTranslator` renamed to `NoOpGraphProcessor`
+- `CompilerErrorBadgeModel` renamed to `GraphProcessingErrorBadgeModel`
+- `CompilerError` renamed to `GraphProcessingError`
+- `CompilerQuickFix` renamed to `QuickFix`
+- `CompilationOptions` renamed to `GraphProcessingOptions`
+- `BoolPref.AutoProcess` and `BoolPref.AutoAlignDraggedEdges` are now false by default.
+- `IGraphElementPart`, `BaseGraphElementPart` renamed to `IModelUIPart`, `BaseModelUIPart` respectively.
+- `GraphElementPartList` renamed to `ModelUIPartList`
+- `ICreatableGraphTemplate` merged into `IGraphTemplate`
+- `IOnboardingProvider` interface changed to `OnboardingProvider` abstract class
+- Default title of `GraphViewEditorWindow` is changed from *Visual Script* to *Graph Tool*
+- `Stencil.MoveNodeDependenciesByDefault` is now initialized to `false`
+- `GraphView` and `PlaceMat` no longer implement `IDropTarget`
+- `Stencil.DragNDropHandler` changed to `Stencil.GetExternalDragNDropHandler()`. Allows to dynamically select a drag and drop handler depending on context.
+- `Graphview.ExtractVariablesFromDroppedElements` changed to `Stencil.ExtractVariableFromGraphElement`
+- `SerializableGUID` is now backed by a Hash128 rather than a GUID.
 
 ### Fixed
 
-- Fixed compilation error on Unity 2020.2 and newer.
+- Dragging a node to a port doesn't dispatch 2 actions anymore
+- `IMovable.Move(delta)` correctly uses `delta` parameter for `NodeModel`
+
 
 ## [0.7.0-preview.1] - 2021-01-11
 
@@ -41,6 +109,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `RequestCompilationAction`, sent when the user request a compilation.
 - Polymorphic `AnyConstant`
 - `AnimationClipConstant`, `MeshConstant`, `Texture2DConstant` and `Texture3DConstant`
+- `INodeModel.OnCreateNode()`, called when using `GraphModel.CreateNode`
 
 ### Removed
 
@@ -53,6 +122,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `GraphView.DeleteElements()`. Use `GraphView.RemoveElement()` instead.
 - `GtfoGraphView.UpdateTopology`. Override `GtfoGraphView.UpdateUI` instead.
 - `GraphModel.LastChanges`. Use `State.MarkModelNew`, `State.MarkModelChanged` and `State.MarkModelDeleted` instead.
+- `INodeModel.DefineNode()`. Use `OnCreateNode` instead if you don't implement `BasicModel.NodeModel`
 
 ### Changed
 
@@ -85,14 +155,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   instead of an object representing the value of the constant.
 - `ConstantEditorExtensions.BuildInlineValueEditor()` is now public.
 
-
 ### Fixed
 
 - GTF-126: NRE when itemize or convert variables on a set var node
 - `TypeSerializer` wasn't resolving `TypeHandle` marked with `MovedFromAttribute` when type wasn't in any namespace.
 - Fix a bug where dragging a token on a port would block further dragging
 - Fix a bug where dragging a token to a port wouldn't create an edge
-- GTF-145 Collapsed placemats at launch not hidding edges
+- GTF-145 Collapsed placemats at launch not hiding edges
 - Fix a bug where dragging a blackboard variable to a port wouldn't be allowed
 
 ### Deprecated

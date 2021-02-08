@@ -4,13 +4,13 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public enum EventPropagation
+    public enum ShortcutHandled
     {
-        Stop,
-        Continue
+        NotHandled,
+        Handled
     }
 
-    public delegate EventPropagation ShortcutDelegate(KeyDownEvent evt);
+    public delegate ShortcutHandled ShortcutDelegate(KeyDownEvent evt);
 
     public class ShortcutHandler : Manipulator
     {
@@ -33,20 +33,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         void OnKeyDown(KeyDownEvent evt)
         {
-            IPanel panel = (evt.target as VisualElement)?.panel;
+            var panel = (evt.target as VisualElement)?.panel;
             if (panel.GetCapturingElement(PointerId.mousePointerId) != null)
                 return;
 
             if (m_Dictionary.ContainsKey(evt.imguiEvent))
             {
-                var result = m_Dictionary[evt.imguiEvent](evt);
-                if (result == EventPropagation.Stop)
+                var handled = m_Dictionary[evt.imguiEvent](evt);
+                if (handled == ShortcutHandled.Handled)
                 {
                     evt.StopPropagation();
-                    if (evt.imguiEvent != null)
-                    {
-                        evt.imguiEvent.Use();
-                    }
+                    evt.imguiEvent?.Use();
                 }
             }
         }

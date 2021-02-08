@@ -4,13 +4,13 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public class CollapseButtonPart : BaseGraphElementPart
+    public class CollapseButtonPart : BaseModelUIPart
     {
-        public static CollapseButtonPart Create(string name, IGraphElementModel model, IGraphElement graphElement, string parentClassName)
+        public static CollapseButtonPart Create(string name, IGraphElementModel model, IModelUI modelUI, string parentClassName)
         {
             if (model is ICollapsible)
             {
-                return new CollapseButtonPart(name, model, graphElement, parentClassName);
+                return new CollapseButtonPart(name, model, modelUI, parentClassName);
             }
 
             return null;
@@ -20,7 +20,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         protected CollapseButton CollapseButton { get; set; }
 
-        protected CollapseButtonPart(string name, IGraphElementModel model, IGraphElement ownerElement, string parentClassName)
+        protected CollapseButtonPart(string name, IGraphElementModel model, IModelUI ownerElement, string parentClassName)
             : base(name, model, ownerElement, parentClassName) {}
 
         protected override void BuildPartUI(VisualElement container)

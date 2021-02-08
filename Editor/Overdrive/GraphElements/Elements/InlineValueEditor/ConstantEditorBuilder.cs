@@ -8,16 +8,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     public class ConstantEditorBuilder : IConstantEditorBuilder
     {
         public Action<IChangeEvent> OnValueChanged { get; }
-        public Store Store { get; }
+        public CommandDispatcher CommandDispatcher { get; }
         public bool ConstantIsLocked { get; }
         public IPortModel PortModel { get; }
 
         public ConstantEditorBuilder(Action<IChangeEvent> onValueChanged,
-                                     Store store,
+                                     CommandDispatcher commandDispatcher,
                                      bool constantIsLocked, IPortModel portModel)
         {
             OnValueChanged = onValueChanged;
-            Store = store;
+            CommandDispatcher = commandDispatcher;
             ConstantIsLocked = constantIsLocked;
             PortModel = portModel;
         }

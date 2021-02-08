@@ -8,7 +8,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     {
         string Name { get; set; }
         string FriendlyScriptName { get; }
-        string SourceFilePath { get; }
         IGraphModel GraphModel { get; }
         IBlackboardGraphModel BlackboardGraphModel { get; }
         void CreateGraph(string graphName, Type stencilType = null, bool writeOnDisk = true);

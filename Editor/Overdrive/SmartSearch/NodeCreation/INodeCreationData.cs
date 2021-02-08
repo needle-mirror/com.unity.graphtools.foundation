@@ -8,6 +8,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         SpawnFlags SpawnFlags { get; }
         IGraphModel GraphModel { get; }
         Vector2 Position { get; }
-        GUID Guid { get; }
+        SerializableGUID Guid { get; }
     }
 }

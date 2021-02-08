@@ -14,15 +14,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             m_GraphView = graphView;
         }
 
-        public void SendSpacingAction(Orientation orientation)
+        public void SendSpacingCommand(Orientation orientation)
         {
             m_Orientation = orientation;
 
             // Get spacing delta for each element
             Dictionary<IGraphElementModel, Vector2> results = GetElementDeltaResults();
 
-            // Dispatch action
-            SendPlacementAction(results.Keys.ToList(), results.Values.ToList());
+            // Dispatch command
+            SendPlacementCommand(results.Keys.ToList(), results.Values.ToList());
         }
 
         protected override float GetStartingPosition(List<Tuple<Rect, List<IGraphElementModel>>> boundingRects)

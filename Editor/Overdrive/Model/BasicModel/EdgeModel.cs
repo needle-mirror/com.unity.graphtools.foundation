@@ -7,6 +7,9 @@ using UnityEngine.Serialization;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 {
+    /// <summary>
+    /// A model that represents an edge in a graph.
+    /// </summary>
     [Serializable]
     //[MovedFrom(false, "UnityEditor.VisualScripting.GraphViewModel", "Unity.GraphTools.Foundation.Overdrive.Editor")]
     [MovedFrom("UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel")]
@@ -88,9 +91,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
         public string ToPortId => m_ToPortReference.UniqueId;
 
-        public GUID FromNodeGuid => m_FromPortReference.NodeModelGuid;
+        /// <summary>
+        /// The unique identifier of the input node of the edge.
+        /// </summary>
+        public SerializableGUID FromNodeGuid => m_FromPortReference.NodeModelGuid;
 
-        public GUID ToNodeGuid => m_ToPortReference.NodeModelGuid;
+        /// <summary>
+        /// The unique identifier of the output node of the edge.
+        /// </summary>
+        public SerializableGUID ToNodeGuid => m_ToPortReference.NodeModelGuid;
 
         public virtual string EdgeLabel
         {
@@ -168,49 +177,81 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             }
         }
 
-        public bool TryMigratePorts()
+        public (PortMigrationResult, PortMigrationResult) TryMigratePorts(out INodeModel inputNode, out INodeModel outputNode)
         {
-            bool result = true;
-            if (ToPort == null && !PortReference.TryMigratePorts(ref m_ToPortReference, Direction.Input, ref m_ToPortModelCache))
-                result = false;
-            if (FromPort == null && !PortReference.TryMigratePorts(ref m_FromPortReference, Direction.Output, ref m_FromPortModelCache))
-                result = false;
-            return result;
+            bool addPlaceholderPort = false;
+
+            inputNode = outputNode = null;
+
+            if (ToPort == null &&
+                !PortReference.TryMigratePorts(ref m_ToPortReference, Direction.Input, ref m_ToPortModelCache))
+                addPlaceholderPort = true;
+
+            if (FromPort == null &&
+                !PortReference.TryMigratePorts(ref m_FromPortReference, Direction.Output, ref m_FromPortModelCache))
+                addPlaceholderPort = true;
+
+            if (addPlaceholderPort)
+            {
+                return AddPlaceHolderPorts(out inputNode, out outputNode);
+            }
+
+            return (PortMigrationResult.PlaceholderNotNeeded, PortMigrationResult.PlaceholderNotNeeded);
         }
 
-        public bool AddPlaceHolderPorts(out INodeModel inputNode, out INodeModel outputNode)
+        (PortMigrationResult, PortMigrationResult) AddPlaceHolderPorts(out INodeModel inputNode, out INodeModel outputNode)
         {
-            bool result = true;
+            PortMigrationResult inputResult = PortMigrationResult.None;
+            PortMigrationResult outputResult = PortMigrationResult.None;
+
             inputNode = outputNode = null;
             if (ToPort == null)
             {
-                result &= m_ToPortReference.AddPlaceHolderPort(Direction.Input);
+                inputResult = m_ToPortReference.AddPlaceHolderPort(Direction.Input) ?
+                    PortMigrationResult.PlaceholderPortAdded : PortMigrationResult.PlaceholderPortFailure;
+
                 inputNode = m_ToPortReference.NodeModel;
+            }
+            else
+            {
+                inputResult = PortMigrationResult.PlaceholderNotNeeded;
             }
 
             if (FromPort == null)
             {
-                result &= m_FromPortReference.AddPlaceHolderPort(Direction.Output);
+                outputResult = m_FromPortReference.AddPlaceHolderPort(Direction.Output) ?
+                    PortMigrationResult.PlaceholderPortAdded : PortMigrationResult.PlaceholderPortFailure;
+
                 outputNode = m_FromPortReference.NodeModel;
             }
+            else
+            {
+                outputResult = PortMigrationResult.PlaceholderNotNeeded;
+            }
 
-            return result;
+            return (inputResult, outputResult);
         }
 
-        public GUID Guid
+        /// <summary>
+        /// The unique identifier of the edge.
+        /// </summary>
+        public SerializableGUID Guid
         {
             get
             {
-                if (m_Guid.GUID.Empty())
+                if (!m_Guid.Valid)
                     AssignNewGuid();
                 return m_Guid;
             }
             set => m_Guid = value;
         }
 
+        /// <summary>
+        /// Assign a newly generated GUID to the model.
+        /// </summary>
         public void AssignNewGuid()
         {
-            m_Guid = GUID.Generate();
+            m_Guid = SerializableGUID.Generate();
         }
 
         public void OnBeforeSerialize()

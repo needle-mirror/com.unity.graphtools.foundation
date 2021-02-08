@@ -9,7 +9,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
     {
         static readonly string k_AssemblyRelativePath = Path.Combine("Assets", "Runtime", "Tests");
         protected override Type GraphModelType => typeof(TestGraphModel);
-        public override string SourceFilePath => Path.Combine(k_AssemblyRelativePath, FriendlyScriptName + ".asset");
         public override IBlackboardGraphModel BlackboardGraphModel { get; }
 
         public TestGraphAssetModel()

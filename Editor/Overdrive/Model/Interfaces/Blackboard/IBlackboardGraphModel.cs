@@ -10,6 +10,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         string GetBlackboardSubTitle();
         IEnumerable<string> SectionNames { get; }
         IEnumerable<IVariableDeclarationModel> GetSectionRows(string sectionName);
-        void PopulateCreateMenu(string sectionName, GenericMenu menu, Store store);
+        void PopulateCreateMenu(string sectionName, GenericMenu menu, CommandDispatcher commandDispatcher);
     }
 }

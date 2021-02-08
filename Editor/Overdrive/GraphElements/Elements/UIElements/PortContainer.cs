@@ -19,7 +19,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             this.AddStylesheet("PortContainer.uss");
         }
 
-        public void UpdatePorts(IEnumerable<IPortModel> ports, GraphView graphView, Store store)
+        public void UpdatePorts(IEnumerable<IPortModel> ports, GraphView graphView, CommandDispatcher commandDispatcher)
         {
             var uiPorts = this.Query<Port>().ToList();
             var portViewModels = ports?.ToList() ?? new List<IPortModel>();
@@ -59,7 +59,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
                 foreach (var portModel in portViewModels)
                 {
-                    var ui = GraphElementFactory.CreateUI<Port>(graphView, store, portModel);
+                    var ui = GraphElementFactory.CreateUI<Port>(graphView, commandDispatcher, portModel);
                     Debug.Assert(ui != null, "GraphElementFactory does not know how to create UI for " + portModel.GetType());
                     Add(ui);
 

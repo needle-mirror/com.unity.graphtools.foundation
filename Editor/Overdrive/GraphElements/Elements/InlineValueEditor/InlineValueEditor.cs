@@ -9,13 +9,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     public static class InlineValueEditor
     {
         public static VisualElement CreateEditorForNodeModel(IConstantNodeModel model,
-            Action<IChangeEvent, object> onValueChanged, Store store)
+            Action<IChangeEvent, object> onValueChanged, CommandDispatcher commandDispatcher)
         {
-            return CreateEditorForConstant(model.AssetModel, null, model.Value, onValueChanged, store, model.IsLocked);
+            return CreateEditorForConstant(model.AssetModel, null, model.Value, onValueChanged, commandDispatcher, model.IsLocked);
         }
 
         public static VisualElement CreateEditorForConstant(IGraphAssetModel graphAsset, IPortModel portModel, IConstant constant,
-            Action<IChangeEvent, object> onValueChanged, Store store, bool modelIsLocked)
+            Action<IChangeEvent, object> onValueChanged, CommandDispatcher commandDispatcher, bool modelIsLocked)
         {
             Action<IChangeEvent> myValueChanged = evt =>
             {
@@ -34,7 +34,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             if (ext != null)
             {
-                var constantBuilder = new ConstantEditorBuilder(myValueChanged, store, modelIsLocked, portModel);
+                var constantBuilder = new ConstantEditorBuilder(myValueChanged, commandDispatcher, modelIsLocked, portModel);
                 return (VisualElement)ext.Invoke(null, new object[] { constantBuilder, constant });
             }
 

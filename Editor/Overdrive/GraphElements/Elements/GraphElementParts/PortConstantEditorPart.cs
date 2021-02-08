@@ -3,16 +3,16 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public class PortConstantEditorPart : BaseGraphElementPart
+    public class PortConstantEditorPart : BaseModelUIPart
     {
         public static readonly string constantEditorUssName = "constant-editor";
 
         public static PortConstantEditorPart Create(string name, IGraphElementModel model,
-            IGraphElement graphElement, string parentClassName)
+            IModelUI modelUI, string parentClassName)
         {
             if (model is IPortModel)
             {
-                return new PortConstantEditorPart(name, model, graphElement, parentClassName);
+                return new PortConstantEditorPart(name, model, modelUI, parentClassName);
             }
 
             return null;
@@ -26,7 +26,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public override VisualElement Root => m_Root;
 
-        protected PortConstantEditorPart(string name, IGraphElementModel model, IGraphElement ownerElement,
+        protected PortConstantEditorPart(string name, IGraphElementModel model, IModelUI ownerElement,
                                          string parentClassName)
             : base(name, model, ownerElement, parentClassName)
         {
@@ -76,7 +76,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     if (portModel.Direction == Direction.Input && portModel.EmbeddedValue != null)
                     {
                         m_EditorDataType = portModel.EmbeddedValue.Type;
-                        m_Editor = InlineValueEditor.CreateEditorForConstant(m_Model.AssetModel, portModel, portModel.EmbeddedValue, OnValueChanged, m_OwnerElement.Store, false);
+                        m_Editor = InlineValueEditor.CreateEditorForConstant(m_Model.AssetModel, portModel, portModel.EmbeddedValue, OnValueChanged, m_OwnerElement.CommandDispatcher, false);
                         if (m_Editor != null)
                         {
                             m_Editor.AddToClassList(m_ParentClassName.WithUssElement(constantEditorUssName));
@@ -91,7 +91,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             if (m_Model is IPortModel portModel)
             {
-                m_OwnerElement.Store.Dispatch(new UpdatePortConstantAction(portModel, newValue));
+                m_OwnerElement.CommandDispatcher.Dispatch(new UpdatePortConstantCommand(portModel, newValue));
             }
         }
     }

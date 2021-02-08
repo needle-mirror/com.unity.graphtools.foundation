@@ -13,13 +13,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             m_ContextualizedGraphElements = new List<ContextualizedGraphElements>();
         }
 
-        public void AddOrReplaceUIForModel(IGraphElement graphElement)
+        public void AddOrReplaceUIForModel(IModelUI modelUI)
         {
-            if (graphElement.Model == null)
+            if (modelUI.Model == null)
                 return;
 
-            var graphView = graphElement.GraphView;
-            var context = graphElement.Context;
+            var graphView = modelUI.GraphView;
+            var context = modelUI.Context;
 
             var contextualizedGraphElement = m_ContextualizedGraphElements.FirstOrDefault(cge
                 => cge.GraphView == graphView && cge.Context == context);
@@ -30,32 +30,32 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 m_ContextualizedGraphElements.Add(contextualizedGraphElement);
             }
 
-            contextualizedGraphElement.GraphElements[graphElement.Model.Guid] = graphElement;
+            contextualizedGraphElement.GraphElements[modelUI.Model.Guid] = modelUI;
         }
 
-        public void RemoveGraphElement(IGraphElement graphElement)
+        public void RemoveGraphElement(IModelUI modelUI)
         {
-            if (graphElement.Model == null)
+            if (modelUI.Model == null)
                 return;
 
-            var contextualizedGraphElements = m_ContextualizedGraphElements.FirstOrDefault(cge => cge.GraphView == graphElement.GraphView && cge.Context == graphElement.Context);
+            var contextualizedGraphElements = m_ContextualizedGraphElements.FirstOrDefault(cge => cge.GraphView == modelUI.GraphView && cge.Context == modelUI.Context);
 
-            contextualizedGraphElements?.GraphElements.Remove(graphElement.Model.Guid);
+            contextualizedGraphElements?.GraphElements.Remove(modelUI.Model.Guid);
         }
 
-        public IGraphElement FirstOrDefault(GraphView graphView, string context, IGraphElementModel model)
+        public IModelUI FirstOrDefault(GraphView graphView, string context, IGraphElementModel model)
         {
             if (model == null)
                 return null;
 
             var contextualizedGraphElement = m_ContextualizedGraphElements.FirstOrDefault(gel => gel.GraphView == graphView && gel.Context == context);
 
-            IGraphElement graphElement = null;
-            contextualizedGraphElement?.GraphElements.TryGetValue(model.Guid, out graphElement);
-            return graphElement;
+            IModelUI modelUI = null;
+            contextualizedGraphElement?.GraphElements.TryGetValue(model.Guid, out modelUI);
+            return modelUI;
         }
 
-        public IEnumerable<IGraphElement> GetAllUIForModel(IGraphElementModel model)
+        public IEnumerable<IModelUI> GetAllUIForModel(IGraphElementModel model)
         {
             if (model == null)
                 yield break;

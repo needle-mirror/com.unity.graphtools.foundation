@@ -14,22 +14,22 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         internal const float connectionDistanceThreshold = 10f;
 
-        public EdgeConnector(Store store, GraphView graphView, EdgeConnectorListener listener, Func<IGraphModel, GhostEdgeModel> ghostEdgeViewModelCreator = null)
+        public EdgeConnector(CommandDispatcher commandDispatcher, GraphView graphView, EdgeConnectorListener listener, Func<IGraphModel, GhostEdgeModel> ghostEdgeViewModelCreator = null)
         {
             m_EdgeConnectorListener = listener;
-            m_EdgeDragHelper = new EdgeDragHelper(store, graphView, listener, ghostEdgeViewModelCreator);
+            m_EdgeDragHelper = new EdgeDragHelper(commandDispatcher, graphView, listener, ghostEdgeViewModelCreator);
             m_Active = false;
             activators.Add(new ManipulatorActivationFilter { button = MouseButton.LeftMouse });
         }
 
         public virtual EdgeDragHelper edgeDragHelper => m_EdgeDragHelper;
 
-        public void SetDropOutsideDelegate(Action<Store, Edge, Vector2> action)
+        public void SetDropOutsideDelegate(Action<CommandDispatcher, Edge, Vector2> action)
         {
             m_EdgeConnectorListener.SetDropOutsideDelegate(action);
         }
 
-        public void SetDropDelegate(Action<Store, Edge> action)
+        public void SetDropDelegate(Action<CommandDispatcher, Edge> action)
         {
             m_EdgeConnectorListener.SetDropDelegate(action);
         }

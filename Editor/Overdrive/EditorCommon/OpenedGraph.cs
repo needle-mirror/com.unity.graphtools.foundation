@@ -14,6 +14,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         string m_GraphAssetModelPath;
 
         [SerializeField]
+        long m_FileId;
+
+        [SerializeField]
         string m_GraphName;
 
         [SerializeField]
@@ -40,12 +43,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public GameObject BoundObject => m_BoundObject;
 
-        public OpenedGraph(IGraphAssetModel graphAssetModel, GameObject boundObject)
+        public long FileId => m_FileId;
+
+        public OpenedGraph(IGraphAssetModel graphAssetModel, GameObject boundObject, long fileId = 0L)
         {
             m_GraphAssetModel = graphAssetModel;
             m_GraphAssetModelPath = graphAssetModel == null ? null : AssetDatabase.GetAssetPath(graphAssetModel as Object);
             m_GraphName = graphAssetModel?.FriendlyScriptName;
             m_BoundObject = boundObject;
+            m_FileId = fileId;
         }
     }
 }

@@ -1,5 +1,18 @@
+using System;
+
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
+    public enum PortMigrationResult
+    {
+        None,
+        PlaceholderNotNeeded,
+        PlaceholderPortAdded,
+        PlaceholderPortFailure,
+    }
+
+    /// <summary>
+    /// Interface for a model that represents an edge in a graph.
+    /// </summary>
     public interface IEdgeModel : IGraphElementModel
     {
         IPortModel FromPort { get; set; }
@@ -9,9 +22,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         string FromPortId { get; }
         string ToPortId { get; }
-        GUID ToNodeGuid { get; }
-        GUID FromNodeGuid { get; }
+
+        /// <summary>
+        /// The unique identifier of the output node of the edge.
+        /// </summary>
+        SerializableGUID ToNodeGuid { get; }
+
+        /// <summary>
+        /// The unique identifier of the input node of the edge.
+        /// </summary>
+        SerializableGUID FromNodeGuid { get; }
 
         string EdgeLabel { get; set; }
+
+        (PortMigrationResult, PortMigrationResult) TryMigratePorts(out INodeModel inputNode, out INodeModel outputNode);
     }
 }

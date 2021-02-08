@@ -6,9 +6,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
     [GraphElementsExtensionMethodsCache]
     public static class TestGraphElementFactoryExtensions
     {
-        static IGraphElement CreateCollapsiblePortNode(this ElementBuilder elementBuilder, Store store, NodeModel model)
+        static IModelUI CreateCollapsiblePortNode(this ElementBuilder elementBuilder, CommandDispatcher commandDispatcher, NodeModel model)
         {
-            IGraphElement ui;
+            IModelUI ui;
 
             switch (model)
             {
@@ -24,35 +24,35 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                     break;
             }
 
-            ui.SetupBuildAndUpdate(model, store, elementBuilder.GraphView, elementBuilder.Context);
+            ui.SetupBuildAndUpdate(model, commandDispatcher, elementBuilder.GraphView, elementBuilder.Context);
             return ui;
         }
 
-        static IGraphElement CreatePort(this ElementBuilder elementBuilder, Store store, PortModel model)
+        static IModelUI CreatePort(this ElementBuilder elementBuilder, CommandDispatcher commandDispatcher, PortModel model)
         {
             var ui = new Port();
-            ui.SetupBuildAndUpdate(model, store, elementBuilder.GraphView, elementBuilder.Context);
+            ui.SetupBuildAndUpdate(model, commandDispatcher, elementBuilder.GraphView, elementBuilder.Context);
             return ui;
         }
 
-        static IGraphElement CreateEdge(this ElementBuilder elementBuilder, Store store, EdgeModel model)
+        static IModelUI CreateEdge(this ElementBuilder elementBuilder, CommandDispatcher commandDispatcher, EdgeModel model)
         {
             var ui = new Edge();
-            ui.SetupBuildAndUpdate(model, store, elementBuilder.GraphView, elementBuilder.Context);
+            ui.SetupBuildAndUpdate(model, commandDispatcher, elementBuilder.GraphView, elementBuilder.Context);
             return ui;
         }
 
-        static IGraphElement CreateStickyNote(this ElementBuilder elementBuilder, Store store, StickyNoteModel model)
+        static IModelUI CreateStickyNote(this ElementBuilder elementBuilder, CommandDispatcher commandDispatcher, StickyNoteModel model)
         {
             var ui = new StickyNote();
-            ui.SetupBuildAndUpdate(model, store, elementBuilder.GraphView, elementBuilder.Context);
+            ui.SetupBuildAndUpdate(model, commandDispatcher, elementBuilder.GraphView, elementBuilder.Context);
             return ui;
         }
 
-        static IGraphElement CreatePlacemat(this ElementBuilder elementBuilder, Store store, PlacematModel model)
+        static IModelUI CreatePlacemat(this ElementBuilder elementBuilder, CommandDispatcher commandDispatcher, PlacematModel model)
         {
             var ui = new Placemat();
-            ui.SetupBuildAndUpdate(model, store, elementBuilder.GraphView, elementBuilder.Context);
+            ui.SetupBuildAndUpdate(model, commandDispatcher, elementBuilder.GraphView, elementBuilder.Context);
             return ui;
         }
     }

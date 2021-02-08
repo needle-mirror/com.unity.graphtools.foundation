@@ -6,7 +6,7 @@ using Object = UnityEngine.Object;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Graph
 {
-    class TestGraph : ICreatableGraphTemplate
+    class TestGraph : IGraphTemplate
     {
         public Type StencilType => typeof(ClassStencil);
         public string GraphTypeName => "Test Graph";
@@ -23,14 +23,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Graph
         protected override bool CreateGraphOnStartup => false;
 
         [Test]
-        public void LoadGraphActionLoadsCorrectGraph()
+        public void LoadGraphCommandLoadsCorrectGraph()
         {
             GraphAssetCreationHelpers<TestGraphAssetModel>.CreateGraphAsset(typeof(ClassStencil), "test", k_GraphPath);
             AssumeIntegrity();
 
             AssetDatabase.SaveAssets();
-            Resources.UnloadAsset(m_Store.State.AssetModel as Object);
-            m_Store.Dispatch(new LoadGraphAssetAction(k_GraphPath));
+            Resources.UnloadAsset(m_CommandDispatcher.GraphToolState.AssetModel as Object);
+            m_CommandDispatcher.Dispatch(new LoadGraphAssetCommand(k_GraphPath));
             Assert.AreEqual(k_GraphPath, AssetDatabase.GetAssetPath((Object)GraphModel.AssetModel));
             AssertIntegrity();
 
@@ -60,7 +60,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Graph
 
             GraphModel graph = AssetDatabase.LoadAssetAtPath<GraphAssetModel>(k_GraphPath)?.GraphModel as GraphModel;
             Resources.UnloadAsset((Object)graph?.AssetModel);
-            m_Store.Dispatch(new LoadGraphAssetAction(k_GraphPath));
+            m_CommandDispatcher.Dispatch(new LoadGraphAssetCommand(k_GraphPath));
 
             AssertIntegrity();
 

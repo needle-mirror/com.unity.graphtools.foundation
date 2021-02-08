@@ -75,7 +75,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [Test]
         public void UnparentingElementDuringSelectionDragDoesntThrow()
         {
-            graphView.RebuildUI(GraphModel, Store);
+            graphView.RebuildUI(GraphModel, CommandDispatcher);
             var node1 = m_NodeModel1.GetUI<Node>(graphView);
 
             graphView.Focus();
@@ -104,9 +104,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             VisualElement vc = window.GraphView.contentViewContainer;
             Matrix4x4 transform = vc.transform.matrix;
 
+            yield return null;
+
             Assert.AreEqual(Matrix4x4.identity, vc.transform.matrix);
 
-            var testMousePosition = new Vector2(15, 30);
+            var testMousePosition = window.position.center - window.position.position;
             int delta = 10;
 
             Vector2 localMousePosition = vc.WorldToLocal(testMousePosition);
@@ -134,7 +136,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             yield return null;
 
             //Can't use AreEquals because we need the kEpsilon from ==
-            Assert.IsTrue(transform == vc.transform.matrix);
+            Assert.IsTrue(transform == vc.transform.matrix, vc.transform.matrix + " is different from expected " + transform);
             yield return null;
         }
     }

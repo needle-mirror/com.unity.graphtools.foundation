@@ -4,7 +4,7 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public class CollapsibleInOutNode : Node, IDroppable, ICustomSearcherHandler
+    public class CollapsibleInOutNode : Node, ICustomSearcherHandler
     {
         public static readonly string collapsedUssClassName = ussClassName.WithUssModifier("collapsed");
         public static readonly string collapseButtonPartName = "collapse-button";
@@ -47,14 +47,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         protected void OnCollapseChangeEvent(ChangeEvent<bool> evt)
         {
-            Store.Dispatch(new SetNodeCollapsedAction(new[] { NodeModel}, evt.newValue));
+            CommandDispatcher.Dispatch(new SetNodeCollapsedCommand(new[] { NodeModel}, evt.newValue));
         }
 
-        public Func<Node, Store, Vector2, SearcherFilter, bool> CustomSearcherHandler { get; set; }
+        public Func<Node, CommandDispatcher, Vector2, SearcherFilter, bool> CustomSearcherHandler { get; set; }
 
         public bool HandleCustomSearcher(Vector2 mousePosition, SearcherFilter filter = null)
         {
-            return CustomSearcherHandler == null || CustomSearcherHandler(this, Store, mousePosition, filter);
+            return CustomSearcherHandler == null || CustomSearcherHandler(this, CommandDispatcher, mousePosition, filter);
         }
     }
 }

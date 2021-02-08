@@ -13,7 +13,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
         IEnumerator AlignElements(AutoAlignmentHelper.AlignmentReference reference)
         {
-            m_AlignmentHelper.SendAlignAction(reference);
+            m_AlignmentHelper.SendAlignCommand(reference);
             yield return null;
 
             // Get the UI elements
@@ -740,7 +740,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             FourthNodeModel = CreateNode("Node4", fourthNodePos, 0, 0, 1, 1);
             var fifthNodeModel = CreateNode("Node5", fifthNodePos, 0, 0, 1);
 
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             IPortModel outputPortFirstNode = FirstNodeModel.OutputsByDisplayOrder[0];
@@ -866,7 +866,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             FourthNodeModel = CreateNode("Node4", fourthNodePos, 0, 0, 1, 1);
             var fifthNodeModel = CreateNode("Node5", fifthNodePos, 0, 0, 1);
 
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             IPortModel outputPortFirstNode = FirstNodeModel.OutputsByDisplayOrder[0];
@@ -987,7 +987,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             FourthNodeModel = CreateNode("Node4", fourthNodePos, 0, 0, 1, 1);
             var fifthNodeModel = CreateNode("Node5", fifthNodePos, 0, 0, 1);
 
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             IPortModel outputPortFirstNode = FirstNodeModel.OutputsByDisplayOrder[0];

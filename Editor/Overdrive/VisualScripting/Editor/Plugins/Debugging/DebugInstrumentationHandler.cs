@@ -17,9 +17,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
         const int k_UpdateIntervalMs = 10;
 
         VisualElement m_IconsParent;
-        Store m_Store;
+        CommandDispatcher m_CommandDispatcher;
         GraphView m_GraphView;
-        List<TracingStep> GraphDebuggingData => m_Store.State.TracingState.DebuggingData;
+        List<TracingStep> GraphDebuggingData => m_CommandDispatcher.GraphToolState.TracingState.DebuggingData;
         PauseState m_PauseState = PauseState.Unpaused;
         PlayModeStateChange m_PlayState = PlayModeStateChange.EnteredEditMode;
         int? m_CurrentFrame;
@@ -30,14 +30,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
         TracingToolbar m_TimelineToolbar;
         uint m_StateVersionCounter;
 
-        public void Register(Store store, GraphViewEditorWindow window)
+        public void Register(GraphViewEditorWindow window)
         {
-            m_Store = store;
+            m_CommandDispatcher = window.CommandDispatcher;
             m_GraphView = window.GraphViews.First();
             EditorApplication.update += OnUpdate;
             EditorApplication.pauseStateChanged += OnEditorPauseStateChanged;
             EditorApplication.playModeStateChanged += OnEditorPlayModeStateChanged;
-            m_Store.State.GraphModel?.Stencil?.Debugger?.Start(m_Store.State.GraphModel, m_Store.State.TracingState.TracingEnabled);
+            m_CommandDispatcher.GraphToolState.GraphModel?.Stencil?.Debugger?.Start(m_CommandDispatcher.GraphToolState.GraphModel, m_CommandDispatcher.GraphToolState.TracingState.TracingEnabled);
 
             var root = window.rootVisualElement;
             if (m_TimelineToolbar == null)
@@ -45,7 +45,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
                 m_TimelineToolbar = root.Q<TracingToolbar>();
                 if (m_TimelineToolbar == null)
                 {
-                    m_TimelineToolbar = new TracingToolbar(m_GraphView, m_Store);
+                    m_TimelineToolbar = new TracingToolbar(m_GraphView, m_CommandDispatcher);
                 }
             }
 
@@ -60,7 +60,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
             EditorApplication.update -= OnUpdate;
             EditorApplication.pauseStateChanged -= OnEditorPauseStateChanged;
             EditorApplication.playModeStateChanged -= OnEditorPlayModeStateChanged;
-            m_Store.State.GraphModel?.Stencil?.Debugger?.Stop();
+            m_CommandDispatcher.GraphToolState.GraphModel?.Stencil?.Debugger?.Stop();
             m_TimelineToolbar?.RemoveFromHierarchy();
         }
 
@@ -71,7 +71,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
 
         void DumpFrameTrace()
         {
-            var state = m_Store.State;
+            var state = m_CommandDispatcher.GraphToolState;
             var currentGraphModel = state?.GraphModel;
             var debugger = currentGraphModel?.Stencil?.Debugger;
             if (state == null || debugger == null)
@@ -129,7 +129,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
                 return;
             if (EditorApplication.isPlaying && !EditorApplication.isPaused)
             {
-                m_Store.State.TracingState.CurrentTracingFrame = Time.frameCount;
+                m_CommandDispatcher.GraphToolState.TracingState.CurrentTracingFrame = Time.frameCount;
             }
 
             m_TimelineToolbar.UpdateTracingMenu();
@@ -174,7 +174,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
             if (needUpdate)
                 ClearHighlights();
 
-            var state = m_Store.State;
+            var state = m_CommandDispatcher.GraphToolState;
             var currentGraphModel = state?.GraphModel;
             var debugger = currentGraphModel?.Stencil?.Debugger;
             if (state == null || debugger == null)
@@ -193,7 +193,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
 
         void ClearHighlights()
         {
-            var state = m_Store.State;
+            var state = m_CommandDispatcher.GraphToolState;
             var currentGraphModel = state?.GraphModel;
             currentGraphModel?.DeleteBadgesOfType<DebuggingErrorBadgeModel>();
             currentGraphModel?.DeleteBadgesOfType<DebuggingValueBadgeModel>();
@@ -218,10 +218,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
         {
             if (GraphDebuggingData != null)
             {
-                var currentTracingStep = m_Store.State.TracingState.CurrentTracingStep;
+                var currentTracingStep = m_CommandDispatcher.GraphToolState.TracingState.CurrentTracingStep;
                 if (currentTracingStep < 0 || currentTracingStep >= GraphDebuggingData.Count)
                 {
-                    m_Store.State.TracingState.CurrentTracingStep = -1;
+                    m_CommandDispatcher.GraphToolState.TracingState.CurrentTracingStep = -1;
                     foreach (TracingStep step in GraphDebuggingData)
                     {
                         AddStyleClassToModel(step, k_TraceHighlight);
@@ -297,17 +297,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins
 
         bool IsDirty()
         {
-            var tracingDataModel = m_Store.State.TracingState;
+            var tracingDataModel = m_CommandDispatcher.GraphToolState.TracingState;
 
             bool dirty = m_CurrentFrame != tracingDataModel.CurrentTracingFrame
                 || m_CurrentStep != tracingDataModel.CurrentTracingStep
                 || m_CurrentTarget != tracingDataModel.CurrentTracingTarget
-                || m_StateVersionCounter != m_Store.State.Version;
+                || m_StateVersionCounter != m_CommandDispatcher.GraphToolState.Version;
 
             m_CurrentFrame = tracingDataModel.CurrentTracingFrame;
             m_CurrentStep = tracingDataModel.CurrentTracingStep;
             m_CurrentTarget = tracingDataModel.CurrentTracingTarget;
-            m_StateVersionCounter = m_Store.State.Version;
+            m_StateVersionCounter = m_CommandDispatcher.GraphToolState.Version;
 
             return dirty;
         }

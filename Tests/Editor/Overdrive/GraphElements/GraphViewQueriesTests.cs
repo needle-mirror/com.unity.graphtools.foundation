@@ -52,7 +52,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [Test]
         public void QueryAllElements()
         {
-            graphView.RebuildUI(GraphModel, Store);
+            graphView.RebuildUI(GraphModel, CommandDispatcher);
             List<GraphElement> allElements = graphView.GraphElements.ToList();
 
             Assert.AreEqual(6, allElements.Count);
@@ -67,7 +67,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [Test]
         public void QueryAllNodes()
         {
-            graphView.RebuildUI(GraphModel, Store);
+            graphView.RebuildUI(GraphModel, CommandDispatcher);
             List<Node> allNodes = graphView.Nodes.ToList();
 
             Assert.AreEqual(4, allNodes.Count);
@@ -81,7 +81,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [Test]
         public void QueryAllEdges()
         {
-            graphView.RebuildUI(GraphModel, Store);
+            graphView.RebuildUI(GraphModel, CommandDispatcher);
             List<Edge> allEdges = graphView.Edges.ToList();
 
             Assert.AreEqual(2, allEdges.Count);
@@ -95,7 +95,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [Test]
         public void QueryAllPorts()
         {
-            graphView.RebuildUI(GraphModel, Store);
+            graphView.RebuildUI(GraphModel, CommandDispatcher);
             Assert.AreEqual(8, graphView.Ports.ToList().Count);
         }
     }

@@ -4,20 +4,20 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public class ConstantNodeEditorPart : BaseGraphElementPart
+    public class ConstantNodeEditorPart : BaseModelUIPart
     {
         public static ConstantNodeEditorPart Create(string name, IGraphElementModel model,
-            IGraphElement graphElement, string parentClassName)
+            IModelUI modelUI, string parentClassName)
         {
             if (model is IConstantNodeModel)
             {
-                return new ConstantNodeEditorPart(name, model, graphElement, parentClassName);
+                return new ConstantNodeEditorPart(name, model, modelUI, parentClassName);
             }
 
             return null;
         }
 
-        protected ConstantNodeEditorPart(string name, IGraphElementModel model, IGraphElement ownerElement,
+        protected ConstantNodeEditorPart(string name, IGraphElementModel model, IModelUI ownerElement,
                                          string parentClassName)
             : base(name, model, ownerElement, parentClassName)
         {
@@ -42,7 +42,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 m_Label.AddToClassList(m_ParentClassName.WithUssElement(labelUssName));
                 m_Root.Add(m_Label);
 
-                var tokenEditor = InlineValueEditor.CreateEditorForNodeModel(constantNodeModel, OnValueChanged, m_OwnerElement.Store);
+                var tokenEditor = InlineValueEditor.CreateEditorForNodeModel(constantNodeModel, OnValueChanged, m_OwnerElement.CommandDispatcher);
                 if (tokenEditor != null)
                 {
                     tokenEditor.AddToClassList(m_ParentClassName.WithUssElement(constantEditorElementUssClassName));
@@ -94,7 +94,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 {
                     var p = evt.GetType().GetProperty("newValue");
                     var newValue = p.GetValue(evt);
-                    m_OwnerElement.Store.Dispatch(new UpdateConstantNodeValueAction(constantNodeModel.Value, newValue, constantNodeModel));
+                    m_OwnerElement.CommandDispatcher.Dispatch(new UpdateConstantNodeValueCommand(constantNodeModel.Value, newValue, constantNodeModel));
                 }
             }
         }

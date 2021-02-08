@@ -4,6 +4,9 @@ using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 {
+    /// <summary>
+    /// A model that represents a badge in a graph.
+    /// </summary>
     [Serializable]
     public class BadgeModel : IBadgeModel
     {
@@ -18,11 +21,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         protected List<Capabilities> m_Capabilities;
         public IReadOnlyList<Capabilities> Capabilities => m_Capabilities ?? (m_Capabilities = new List<Capabilities> {Overdrive.Capabilities.NoCapabilities});
 
-        public GUID Guid
+        /// <summary>
+        /// The unique identifier of the badge.
+        /// </summary>
+        public SerializableGUID Guid
         {
             get
             {
-                if (m_Guid.GUID.Empty())
+                if (!m_Guid.Valid)
                     AssignNewGuid();
                 return m_Guid;
             }
@@ -31,9 +37,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
         public IGraphElementModel ParentModel { get; }
 
+        /// <summary>
+        /// Assign a newly generated GUID to the model.
+        /// </summary>
         public void AssignNewGuid()
         {
-            m_Guid = GUID.Generate();
+            m_Guid = SerializableGUID.Generate();
         }
 
         public IGraphAssetModel AssetModel

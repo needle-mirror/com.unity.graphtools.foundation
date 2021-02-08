@@ -7,23 +7,23 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
     public class PlacematUICreationTests
     {
         GraphView m_GraphView;
-        Store m_Store;
+        CommandDispatcher m_CommandDispatcher;
         GraphModel m_GraphModel;
 
         [SetUp]
         public void SetUp()
         {
             m_GraphModel = new GraphModel();
-            m_Store = new Store(new TestState(default, m_GraphModel));
-            StoreHelper.RegisterDefaultReducers(m_Store);
-            m_GraphView = new TestGraphView(null, m_Store);
+            m_CommandDispatcher = new CommandDispatcher(new TestGraphToolState(default, m_GraphModel));
+            CommandDispatcherHelper.RegisterDefaultCommandHandlers(m_CommandDispatcher);
+            m_GraphView = new GraphView(null, m_CommandDispatcher);
         }
 
         [TearDown]
         public void TearDown()
         {
             m_GraphModel = null;
-            m_Store = null;
+            m_CommandDispatcher = null;
             m_GraphView = null;
         }
 
@@ -32,7 +32,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         {
             var placematModel = m_GraphModel.CreatePlacemat();
             var placemat = new Placemat();
-            placemat.SetupBuildAndUpdate(placematModel, m_Store, m_GraphView);
+            placemat.SetupBuildAndUpdate(placematModel, m_CommandDispatcher, m_GraphView);
 
             Assert.IsNotNull(placemat.Q<VisualElement>(Placemat.titleContainerPartName));
             Assert.IsNotNull(placemat.Q<VisualElement>(Placemat.collapseButtonPartName));

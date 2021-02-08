@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
@@ -22,9 +21,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting
             styleSheets.Add(AssetDatabase.LoadAssetAtPath<StyleSheet>(AssetHelper.VSTemplatePath + "Port.uss"));
         }
 
-        public override bool CanAcceptDrop(List<ISelectableGraphElement> dragSelection)
+        public override bool CanAcceptSelectionDrop(IReadOnlyList<ISelectableGraphElement> dragSelection)
         {
-            return base.CanAcceptDrop(dragSelection)
+            return base.CanAcceptSelectionDrop(dragSelection)
                 || (dragSelection.Count == 1 && PortModel.PortType != PortType.Execution
                     && (dragSelection[0] is BlackboardField));
         }

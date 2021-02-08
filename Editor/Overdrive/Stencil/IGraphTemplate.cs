@@ -7,10 +7,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     {
         Type StencilType { get; }
         void InitBasicGraph(IGraphModel graphModel);
-    }
-
-    public interface ICreatableGraphTemplate : IGraphTemplate
-    {
         string GraphTypeName { get; }
         string DefaultAssetName { get; }
     }

@@ -21,7 +21,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             var model1 = creator(declarationModel, Vector2.zero);
             var model2 = creator(declarationModel, Vector2.one * 50);
 
-            Store.MarkStateDirty();
+            CommandDispatcher.MarkStateDirty();
             yield return null;
 
             var token1 = model1.GetUI<E>(GraphView);
@@ -42,7 +42,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             GraphView.AddToSelection(token1);
 
-            Store.MarkStateDirty();
+            CommandDispatcher.MarkStateDirty();
             yield return null;
 
             token1 = model1.GetUI<E>(GraphView);

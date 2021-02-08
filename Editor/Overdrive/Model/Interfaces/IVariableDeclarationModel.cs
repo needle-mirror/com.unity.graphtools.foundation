@@ -2,12 +2,6 @@ using System;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public enum VariableType
-    {
-        GraphVariable,
-        EdgePortal
-    }
-
     [Flags]
     public enum ModifierFlags
     {
@@ -21,7 +15,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
     public interface IVariableDeclarationModel : IDeclarationModel
     {
-        VariableType VariableType { get; }
         TypeHandle DataType { get; set; }
         ModifierFlags Modifiers { get; }
         string VariableName { get; }

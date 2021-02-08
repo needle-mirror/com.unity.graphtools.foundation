@@ -23,7 +23,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             foreach (var element in elements)
             {
-                var hasGraphElementModel = element as IGraphElement;
+                var hasGraphElementModel = element as IModelUI;
                 if (hasGraphElementModel == null)
                 {
                     continue;
@@ -51,7 +51,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             // Exception: If the graphElement is selected, do not highlight it
             foreach (ISelectableGraphElement selectable in graphView.Selection)
             {
-                if (!(selectable is IGraphElement hasGraphElementModel))
+                if (!(selectable is IModelUI hasGraphElementModel))
                 {
                     continue;
                 }

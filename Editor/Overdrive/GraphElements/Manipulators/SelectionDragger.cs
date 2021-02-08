@@ -8,7 +8,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class SelectionDragger : Dragger
     {
-        IDropTarget m_CurrentDropTarget;
+        DropTarget m_CurrentDropTarget;
         bool m_Dragging;
         readonly Snapper m_Snapper = new Snapper();
 
@@ -20,7 +20,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         GraphElement clickedElement { get; set; }
 
         private List<VisualElement> m_DropTargetPickList = new List<VisualElement>();
-        IDropTarget GetDropTargetAt(Vector2 mousePosition, IEnumerable<VisualElement> exclusionList)
+        DropTarget GetDropTargetAt(Vector2 mousePosition, IEnumerable<VisualElement> exclusionList)
         {
             Vector2 pickPoint = mousePosition;
 
@@ -29,7 +29,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             pickList.Clear();
             target.panel.PickAll(pickPoint, pickList);
 
-            IDropTarget dropTarget = null;
+            DropTarget dropTarget = null;
 
             for (int i = 0; i < pickList.Count; i++)
             {
@@ -38,7 +38,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
                 VisualElement picked = pickList[i];
 
-                dropTarget = picked as IDropTarget;
+                dropTarget = picked as DropTarget;
 
                 if (dropTarget != null)
                 {
@@ -118,51 +118,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         private Vector2 m_originalMouse;
         List<Edge> m_EdgesToUpdate = new List<Edge>();
 
-        static void SendDragAndDropEvent(IDragAndDropEvent evt, List<ISelectableGraphElement> selection, IDropTarget dropTarget, ISelection dragSource)
-        {
-            if (dropTarget == null)
-            {
-                return;
-            }
-
-            EventBase e = evt as EventBase;
-            if (e.eventTypeId == DragExitedEvent.TypeId())
-            {
-                dropTarget.DragExited();
-            }
-            else if (e.eventTypeId == DragEnterEvent.TypeId())
-            {
-                dropTarget.DragEnter(evt as DragEnterEvent, selection, dropTarget, dragSource);
-            }
-            else if (e.eventTypeId == DragLeaveEvent.TypeId())
-            {
-                dropTarget.DragLeave(evt as DragLeaveEvent, selection, dropTarget, dragSource);
-            }
-
-            if (!dropTarget.CanAcceptDrop(selection))
-            {
-                return;
-            }
-
-            if (e.eventTypeId == DragPerformEvent.TypeId())
-            {
-                dropTarget.DragPerform(evt as DragPerformEvent, selection, dropTarget, dragSource);
-            }
-            else if (e.eventTypeId == DragUpdatedEvent.TypeId())
-            {
-                dropTarget.DragUpdated(evt as DragUpdatedEvent, selection, dropTarget, dragSource);
-            }
-        }
-
         private void OnMouseCaptureOutEvent(MouseCaptureOutEvent e)
         {
             if (m_Active)
             {
                 if (m_CurrentDropTarget != null && m_GraphView != null)
                 {
-                    if (m_CurrentDropTarget.CanAcceptDrop(m_GraphView.Selection))
+                    using (DragExitedEvent eExit = DragExitedEvent.GetPooled())
                     {
-                        m_CurrentDropTarget.DragExited();
+                        eExit.target = m_CurrentDropTarget as VisualElement;
+                        m_GraphView.SendEvent(eExit);
                     }
                 }
 
@@ -373,7 +338,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             // TODO: Replace with a temp drawing or something...maybe manipulator could fake position
             // all this to let operation know which element sits under cursor...or is there another way to draw stuff that is being dragged?
 
-            IDropTarget previousDropTarget = m_CurrentDropTarget;
+            var previousDropTarget = m_CurrentDropTarget;
             m_CurrentDropTarget = GetDropTargetAt(e.mousePosition, selection.OfType<VisualElement>());
 
             if (m_CurrentDropTarget != previousDropTarget)
@@ -382,19 +347,28 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 {
                     using (DragLeaveEvent eLeave = DragLeaveEvent.GetPooled(e))
                     {
-                        SendDragAndDropEvent(eLeave, selection, previousDropTarget, m_GraphView);
+                        eLeave.target = previousDropTarget as VisualElement;
+                        m_GraphView.SendEvent(eLeave);
                     }
                 }
 
-                using (DragEnterEvent eEnter = DragEnterEvent.GetPooled(e))
+                if (m_CurrentDropTarget != null)
                 {
-                    SendDragAndDropEvent(eEnter, selection, m_CurrentDropTarget, m_GraphView);
+                    using (DragEnterEvent eEnter = DragEnterEvent.GetPooled(e))
+                    {
+                        eEnter.target = m_CurrentDropTarget as VisualElement;
+                        m_GraphView.SendEvent(eEnter);
+                    }
                 }
             }
 
-            using (DragUpdatedEvent eUpdated = DragUpdatedEvent.GetPooled(e))
+            if (m_CurrentDropTarget != null)
             {
-                SendDragAndDropEvent(eUpdated, selection, m_CurrentDropTarget, m_GraphView);
+                using (DragUpdatedEvent eUpdated = DragUpdatedEvent.GetPooled(e))
+                {
+                    eUpdated.target = m_CurrentDropTarget as VisualElement;
+                    m_GraphView.SendEvent(eUpdated);
+                }
             }
 
             m_Dragging = true;
@@ -525,12 +499,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                             graphView.PositionDependenciesManager.StopNotifyMove();
                         }
 
-                        if (m_GraphView != null)
+                        // if we stop dragging on something else than a DropTarget, just move elements
+                        if (m_GraphView != null && (m_CurrentDropTarget == null || !m_CurrentDropTarget.CanAcceptSelectionDrop(m_GraphView.Selection)))
                         {
-                            var movedElements = new HashSet<GraphElement>();
-
-                            movedElements.Clear();
-                            movedElements.AddRange(m_OriginalPos.Keys);
+                            var movedElements = new HashSet<GraphElement>(m_OriginalPos.Keys);
                             movedElements.AddRange(m_EdgesToUpdate);
 
                             KeyValuePair<GraphElement, OriginalPos> firstPos = m_OriginalPos.First();
@@ -540,7 +512,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                                 .Where(e => !(e.Model is INodeModel) || e.IsMovable())
                                 .Select(e => e.Model)
                                 .OfType<IMovable>();
-                            m_GraphView.Store.Dispatch(new MoveElementsAction(delta, models.ToArray()));
+                            m_GraphView.CommandDispatcher.Dispatch(new MoveElementsCommand(delta, models.ToArray()));
                         }
                     }
 
@@ -561,18 +533,20 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
                     if (selection.Count > 0 && m_CurrentDropTarget != null)
                     {
-                        if (m_CurrentDropTarget.CanAcceptDrop(selection))
+                        if (m_CurrentDropTarget.CanAcceptSelectionDrop(selection))
                         {
                             using (DragPerformEvent ePerform = DragPerformEvent.GetPooled(evt))
                             {
-                                SendDragAndDropEvent(ePerform, selection, m_CurrentDropTarget, m_GraphView);
+                                ePerform.target = m_CurrentDropTarget as VisualElement;
+                                m_GraphView.SendEvent(ePerform);
                             }
                         }
                         else
                         {
                             using (DragExitedEvent eExit = DragExitedEvent.GetPooled(evt))
                             {
-                                SendDragAndDropEvent(eExit, selection, m_CurrentDropTarget, m_GraphView);
+                                eExit.target = m_CurrentDropTarget as VisualElement;
+                                m_GraphView.SendEvent(eExit);
                             }
                         }
                     }
@@ -617,8 +591,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             using (DragExitedEvent eExit = DragExitedEvent.GetPooled())
             {
-                List<ISelectableGraphElement> selection = m_GraphView.Selection;
-                SendDragAndDropEvent(eExit, selection, m_CurrentDropTarget, m_GraphView);
+                eExit.target = m_CurrentDropTarget as VisualElement;
+                m_GraphView.SendEvent(eExit);
             }
 
             target.ReleaseMouse();

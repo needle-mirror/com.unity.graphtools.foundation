@@ -16,15 +16,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (decl == null)
                 return false;
 
-            VariableType variableType = decl.VariableType;
             Type dataType = TypeSerializer.ResolveType(decl.DataType);
 
-            return (variableType == VariableType.GraphVariable) && (dataType.IsValueType || dataType == typeof(string));
+            return dataType.IsValueType || dataType == typeof(string);
         }
 
         public bool RequiresInspectorInitialization(IVariableDeclarationModel decl)
         {
-            Type dataType = TypeSerializer.ResolveType(decl.DataType);
             return RequiresInitialization(decl);
         }
     }

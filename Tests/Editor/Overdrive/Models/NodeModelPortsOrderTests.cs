@@ -18,9 +18,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
         [Test]
         public void DefinePortsInNewOrderReusesExistingPorts()
         {
-            var node = GraphModel.CreateNode<PortOrderTestNodeModel>("test", Vector2.zero);
-            node.MakePortsFromNames(new List<string> { "A", "B", "C" });
-            node.DefineNode();
+            var node = GraphModel.CreateNode<PortOrderTestNodeModel>("test", Vector2.zero,
+                preDefineSetup: model => model.MakePortsFromNames(new List<string> { "A", "B", "C" }));
             Assert.That(node.InputsById.Count, Is.EqualTo(3));
 
             var A = node.InputsById["A"];
@@ -45,9 +44,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
         [Test]
         public void RemovingAndAddingPortsPreservesExistingPorts()
         {
-            var node = GraphModel.CreateNode<PortOrderTestNodeModel>("test", Vector2.zero);
-            node.MakePortsFromNames(new List<string> { "A", "B", "C" });
-            node.DefineNode();
+            var node = GraphModel.CreateNode<PortOrderTestNodeModel>("test", Vector2.zero,
+                preDefineSetup: model => model.MakePortsFromNames(new List<string> { "A", "B", "C" }));
             Assert.That(node.InputsById.Count, Is.EqualTo(3));
 
             var A = node.InputsById["A"];
@@ -66,9 +64,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
         [Test]
         public void ShufflingPortsPreserveConnections()
         {
-            var node = GraphModel.CreateNode<PortOrderTestNodeModel>("test", Vector2.zero);
-            node.MakePortsFromNames(new List<string> { "A", "B", "C" });
-            node.DefineNode();
+            var node = GraphModel.CreateNode<PortOrderTestNodeModel>("test", Vector2.zero,
+                preDefineSetup: model => model.MakePortsFromNames(new List<string> { "A", "B", "C" }));
 
             var decl = GraphModel.CreateGraphVariableDeclaration(TypeHandle.Int, "myInt", ModifierFlags.None, true);
             var nodeA = GraphModel.CreateVariableNode(decl, Vector2.up);
@@ -115,7 +112,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
                 GraphModel.CreateEdge(log2.Input0, getProperty.Output1);
             }
 
-            TestPrereqActionPostreq(mode,
+            TestPrereqCommandPostreq(mode,
                 () =>
                 {
                     var log1 = GraphModel.NodeModels[3] as Type0FakeNodeModel;
@@ -126,7 +123,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
                     Assert.That(myInt.OutputPort.IsConnected, Is.False);
                     Assert.That(log1?.Input0, Is.ConnectedTo(getProperty.Output0));
                     Assert.That(log2?.Input0, Is.ConnectedTo(getProperty.Output1));
-                    return new CreateEdgeAction(log1?.Input0, myInt.OutputPort, new List<IEdgeModel> { GraphModel.GetEdgesConnections(log1?.Input0).Single() });
+                    return new CreateEdgeCommand(log1?.Input0, myInt.OutputPort, new List<IEdgeModel> { GraphModel.GetEdgesConnections(log1?.Input0).Single() });
                 },
                 () =>
                 {

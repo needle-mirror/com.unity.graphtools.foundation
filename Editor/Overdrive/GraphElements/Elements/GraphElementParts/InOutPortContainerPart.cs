@@ -3,17 +3,17 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public class InOutPortContainerPart : BaseGraphElementPart
+    public class InOutPortContainerPart : BaseModelUIPart
     {
         public static readonly string ussClassName = "ge-in-out-port-container-part";
         public static readonly string inputPortsUssName = "inputs";
         public static readonly string outputPortsUssName = "outputs";
 
-        public static InOutPortContainerPart Create(string name, IGraphElementModel model, IGraphElement graphElement, string parentClassName)
+        public static InOutPortContainerPart Create(string name, IGraphElementModel model, IModelUI modelUI, string parentClassName)
         {
             if (model is IPortNode)
             {
-                return new InOutPortContainerPart(name, model, graphElement, parentClassName);
+                return new InOutPortContainerPart(name, model, modelUI, parentClassName);
             }
 
             return null;
@@ -27,7 +27,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public override VisualElement Root => m_Root;
 
-        protected InOutPortContainerPart(string name, IGraphElementModel model, IGraphElement ownerElement, string parentClassName)
+        protected InOutPortContainerPart(string name, IGraphElementModel model, IModelUI ownerElement, string parentClassName)
             : base(name, model, ownerElement, parentClassName) {}
 
         protected override void BuildPartUI(VisualElement container)
@@ -62,14 +62,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             {
                 // TODO: Reinstate.
                 // case ISingleInputPortNode inputPortHolder:
-                //     m_InputPortContainer?.UpdatePorts(new[] { inputPortHolder.InputPort }, m_OwnerElement.GraphView, m_OwnerElement.Store);
+                //     m_InputPortContainer?.UpdatePorts(new[] { inputPortHolder.InputPort }, m_OwnerElement.GraphView, m_OwnerElement.CommandDispatcher);
                 //     break;
                 // case ISingleOutputPortNode outputPortHolder:
-                //     m_OutputPortContainer?.UpdatePorts(new[] { outputPortHolder.OutputPort }, m_OwnerElement.GraphView, m_OwnerElement.Store);
+                //     m_OutputPortContainer?.UpdatePorts(new[] { outputPortHolder.OutputPort }, m_OwnerElement.GraphView, m_OwnerElement.CommandDispatcher);
                 //     break;
                 case IInOutPortsNode portHolder:
-                    m_InputPortContainer?.UpdatePorts(portHolder.GetInputPorts(), m_OwnerElement.GraphView, m_OwnerElement.Store);
-                    m_OutputPortContainer?.UpdatePorts(portHolder.GetOutputPorts(), m_OwnerElement.GraphView, m_OwnerElement.Store);
+                    m_InputPortContainer?.UpdatePorts(portHolder.GetInputPorts(), m_OwnerElement.GraphView, m_OwnerElement.CommandDispatcher);
+                    m_OutputPortContainer?.UpdatePorts(portHolder.GetOutputPorts(), m_OwnerElement.GraphView, m_OwnerElement.CommandDispatcher);
                     break;
             }
         }

@@ -6,6 +6,9 @@ using UnityEngine.Serialization;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 {
+    /// <summary>
+    /// A model that represents a declaration (e.g. a variable) in a graph.
+    /// </summary>
     [Serializable]
     public class DeclarationModel : IDeclarationModel, IRenamable, ISerializationCallbackReceiver, IGuidUpdate
     {
@@ -35,31 +38,29 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
         public IGraphModel GraphModel => m_AssetModel ? m_AssetModel.GraphModel : null;
 
-        public GUID Guid
+        /// <summary>
+        /// The unique identifier of the declaration.
+        /// </summary>
+        public SerializableGUID Guid
         {
             get
             {
-                if (m_Guid.GUID.Empty())
+                if (!m_Guid.Valid)
                     AssignNewGuid();
                 return m_Guid;
             }
             set => m_Guid = value;
         }
 
+        /// <summary>
+        /// Assign a newly generated GUID to the model.
+        /// </summary>
         public void AssignNewGuid()
         {
             if (!String.IsNullOrEmpty(m_Id))
-            {
-                if (GUID.TryParse(m_Id.Replace("-", null), out var migratedGuid))
-                    m_Guid = migratedGuid;
-                else
-                {
-                    Debug.Log("FAILED PARSING " + m_Id);
-                    m_Guid = GUID.Generate();
-                }
-            }
+                m_Guid = Hash128.Parse(m_Id.Replace("-", null));
             else
-                m_Guid = GUID.Generate();
+                m_Guid = SerializableGUID.Generate();
         }
 
         public IReadOnlyList<Capabilities> Capabilities => m_Capabilities;
@@ -92,7 +93,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
         public void OnAfterDeserialize()
         {
-            if (m_Guid.GUID.Empty())
+            if (!m_Guid.Valid)
             {
                 if (!String.IsNullOrEmpty(m_Id))
                 {
@@ -109,8 +110,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
         public void AssignGuid(string guidString)
         {
-            m_Guid = new GUID(guidString);
-            if (m_Guid.GUID.Empty())
+            m_Guid = Hash128.Parse(guidString);
+            if (!m_Guid.Valid)
                 AssignNewGuid();
         }
 

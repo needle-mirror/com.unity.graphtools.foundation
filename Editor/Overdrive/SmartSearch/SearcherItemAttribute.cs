@@ -14,7 +14,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             Assert.IsTrue(
                 stencilType.IsSubclassOf(typeof(Stencil)),
-                $"Parameter stencilType is type of {stencilType} which is not a subclass of UnityEditor.VisualScripting.Model.Stencils.Stencil");
+                $"Parameter stencilType is type of {stencilType.FullName} which is not a subclass of {typeof(Stencil).FullName}");
 
             StencilType = stencilType;
             Path = path;

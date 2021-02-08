@@ -617,7 +617,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Vector2 secondElementPos = new Vector2(m_SnappingNodePos.x + k_HalfSpacing, m_SnappingNodePos.y + 10);
             var secondElementModel = CreatePlacemat(new Rect(secondElementPos, new Vector2(k_HalfSpacing, k_HalfSpacing)), "Placemat");
 
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             // Get the UI nodes

@@ -1,16 +1,14 @@
 {
   "name": "com.unity.graphtools.foundation",
   "displayName": "Graph Tools Foundation",
-  "version": "0.7.0-preview.2",
+  "version": "0.8.0-preview",
   "unity": "2020.1",
-  "description": "A framework for node based tools including a graph data model, a UI foundation and graph-to-asset pipeline. It is not meant to be used by itself, but as a dependency of public-facing packages",
+  "description": "A framework for node based tools including a graph data model, a UI foundation and graph-to-asset pipeline. Use this package to speed up the development of graph based tools for the Unity Editor that adhere to Unity UI and UX guidelines.",
   "keywords": [
-    "scripting",
-    "visualscripting",
-    "visual",
+    "framework",
+    "ui",
     "graph",
-    "node",
-    "edge"
+    "node"
   ],
   "dependencies": {
     "com.unity.searcher": "4.7.0-preview",
@@ -22,11 +20,18 @@
     "com.unity.ext.nunit": "1.0.6"
   },
   "upmCi": {
-    "footprint": "45a153b0f81d90df347b00b89a90ac9663771773"
+    "footprint": "bf8d7eb447c1ae55273ccafdf671ff46c5168fb3"
   },
   "repository": {
     "url": "https://github.com/Unity-Technologies/visualscripting-dev.git",
     "type": "git",
-    "revision": "2d03feaa431543012db6195ad28717678aed1ed6"
-  }
+    "revision": "c157d6967c54ca31d0d3c61bef14d0692abdf010"
+  },
+  "samples": [
+    {
+      "displayName": "Recipe Editor Sample",
+      "description": "A simple example to get started with Graph Tools Foundation.",
+      "path": "Samples~/Recipes"
+    }
+  ]
 }

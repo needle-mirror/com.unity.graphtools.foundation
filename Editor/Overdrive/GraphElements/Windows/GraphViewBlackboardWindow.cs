@@ -37,7 +37,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             if (m_SelectedGraphView != null)
             {
-                m_Blackboard = m_SelectedGraphView.Blackboard;
+                m_Blackboard = m_SelectedGraphView.GetBlackboard();
                 if (m_Blackboard != null)
                 {
                     m_Blackboard.Windowed = true;

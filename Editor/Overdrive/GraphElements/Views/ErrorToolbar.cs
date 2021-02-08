@@ -11,7 +11,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         ToolbarButton m_NextErrorButton;
         Label m_ErrorCounterLabel;
 
-        public ErrorToolbar(Store store, GraphView graphView) : base(store, graphView)
+        public ErrorToolbar(CommandDispatcher commandDispatcher, GraphView graphView) : base(commandDispatcher, graphView)
         {
             name = "errorToolbar";
             this.AddStylesheet("ErrorToolbar.uss");
@@ -49,14 +49,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public void UpdateUI()
         {
-            bool enabled = m_Store.State.GraphModel != null;
+            bool enabled = m_CommandDispatcher.GraphToolState.GraphModel != null;
 
             int errorCount = 0;
 
-            IGraphModel graphModel = m_Store.State.GraphModel;
+            IGraphModel graphModel = m_CommandDispatcher.GraphToolState.GraphModel;
             if (graphModel != null)
             {
-                errorCount = (m_Store.State.CompilationStateComponent.GetLastResult()?.errors?.Count).GetValueOrDefault(0);
+                errorCount = (m_CommandDispatcher.GraphToolState.GraphProcessingStateComponent.GetLastResult()?.Errors?.Count).GetValueOrDefault(0);
             }
 
             enabled &= errorCount > 0;

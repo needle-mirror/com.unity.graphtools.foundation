@@ -11,7 +11,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
     public class IHasPortsTests : BaseTestFixture
     {
         GraphView m_GraphView;
-        Store m_Store;
+        CommandDispatcher m_CommandDispatcher;
         GraphModel m_GraphModel;
         Node m_SourceNode;
         Node m_DestinationNode1;
@@ -27,9 +27,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         public new void SetUp()
         {
             m_GraphModel = new GraphModel();
-            m_Store = new Store(new TestState(m_Window.GUID, m_GraphModel));
-            StoreHelper.RegisterDefaultReducers(m_Store);
-            m_GraphView = new TestGraphView(m_Window, m_Store) {name = "theView", viewDataKey = "theView"};
+            m_CommandDispatcher = new CommandDispatcher(new TestGraphToolState(m_Window.GUID, m_GraphModel));
+            CommandDispatcherHelper.RegisterDefaultCommandHandlers(m_CommandDispatcher);
+            m_GraphView = new GraphView(m_Window, m_CommandDispatcher) {name = "theView", viewDataKey = "theView"};
 
             m_GraphView.StretchToParentSize();
 
@@ -57,18 +57,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         {
             m_Window.rootVisualElement.Remove(m_GraphView);
             m_GraphModel = null;
-            m_Store = null;
+            m_CommandDispatcher = null;
             m_GraphView = null;
         }
 
         Node CreateNode(int inputPortCount, int outputPortCount)
         {
-            var nodeModel = m_GraphModel.CreateNode<IONodeModel>();
-            nodeModel.InputCount = inputPortCount;
-            nodeModel.OuputCount = outputPortCount;
-            nodeModel.DefineNode();
+            var nodeModel = m_GraphModel.CreateNode<IONodeModel>(preDefineSetup: model =>
+            {
+                model.InputCount = inputPortCount;
+                model.OuputCount = outputPortCount;
+            });
             var sourceNode = new CollapsibleInOutNode();
-            sourceNode.SetupBuildAndUpdate(nodeModel, m_Store, m_GraphView);
+            sourceNode.SetupBuildAndUpdate(nodeModel, m_CommandDispatcher, m_GraphView);
             return sourceNode;
         }
 
@@ -76,7 +77,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         {
             var model = m_GraphModel.CreateEdge(from, to);
             var edge = new Edge();
-            edge.SetupBuildAndUpdate(model, m_Store, m_GraphView);
+            edge.SetupBuildAndUpdate(model, m_CommandDispatcher, m_GraphView);
             return edge;
         }
 

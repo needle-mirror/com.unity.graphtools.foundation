@@ -49,7 +49,7 @@
     height: 20px;
 }
 
-#gtfRoot > Label#compilationPendingLabel {
+#gtfRoot > #graph-processing-pending-label {
     display: none;
     position: absolute;
     bottom: 5px;
@@ -60,11 +60,11 @@
 }
 
 
-#gtfRoot > Label#compilationPendingLabel.compilation-pending {
+#gtfRoot > #graph-processing-pending-label.graph-processing-pending {
     display: flex;
 }
 
-.vse-blank-page {
+.ge-blank-page {
     position: absolute;
     left: 0;
     right: 0;

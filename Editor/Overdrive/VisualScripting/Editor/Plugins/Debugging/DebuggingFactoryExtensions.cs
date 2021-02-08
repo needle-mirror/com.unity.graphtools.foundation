@@ -8,14 +8,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     [GraphElementsExtensionMethodsCache]
     public static class DebuggingFactoryExtensions
     {
-        public static IGraphElement CreateCompileErrorBadgeModelUI(this ElementBuilder elementBuilder, Store store, CompilerErrorBadgeModel model)
+        public static IModelUI CreateGraphProcessingErrorBadgeModelUI(this ElementBuilder elementBuilder, CommandDispatcher commandDispatcher, GraphProcessingErrorBadgeModel model)
         {
-            var ui = elementBuilder.CreateErrorBadgeModelUI(store, model) as GraphElement;
+            var ui = elementBuilder.CreateErrorBadgeModelUI(commandDispatcher, model) as GraphElement;
             Assert.IsNotNull(ui);
-            if (model.QuickFix != null)
+            if (model.Fix != null)
             {
-                Assert.IsNotNull(store);
-                ui.RegisterCallback<MouseDownEvent>(e => model.QuickFix.quickFix(store));
+                Assert.IsNotNull(commandDispatcher);
+                ui.RegisterCallback<MouseDownEvent>(e => model.Fix.QuickFixAction(commandDispatcher));
             }
             return ui;
         }

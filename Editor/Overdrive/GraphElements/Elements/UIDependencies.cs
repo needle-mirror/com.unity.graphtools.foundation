@@ -6,16 +6,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class UIDependencies
     {
-        IGraphElement m_Owner;
+        IModelUI m_Owner;
 
         // Graph elements that we affect when we change.
-        HashSet<(IGraphElement, DependencyType)> m_ForwardDependencies;
+        HashSet<(IModelUI, DependencyType)> m_ForwardDependencies;
         // Graph elements that affect us when they change.
-        HashSet<(IGraphElement, DependencyType)> m_BackwardDependencies;
+        HashSet<(IModelUI, DependencyType)> m_BackwardDependencies;
         // Additional models that influence us.
         HashSet<IGraphElementModel> m_ModelDependencies;
 
-        public UIDependencies(IGraphElement owner)
+        public UIDependencies(IModelUI owner)
         {
             m_Owner = owner;
         }
@@ -80,18 +80,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        public void AddForwardDependency(IGraphElement dependency, DependencyType dependencyType)
+        public void AddForwardDependency(IModelUI dependency, DependencyType dependencyType)
         {
             if (m_ForwardDependencies == null)
-                m_ForwardDependencies = new HashSet<(IGraphElement, DependencyType)>();
+                m_ForwardDependencies = new HashSet<(IModelUI, DependencyType)>();
 
             m_ForwardDependencies.Add((dependency, dependencyType));
         }
 
-        public void AddBackwardDependency(IGraphElement dependency, DependencyType dependencyType)
+        public void AddBackwardDependency(IModelUI dependency, DependencyType dependencyType)
         {
             if (m_BackwardDependencies == null)
-                m_BackwardDependencies = new HashSet<(IGraphElement, DependencyType)>();
+                m_BackwardDependencies = new HashSet<(IModelUI, DependencyType)>();
 
             m_BackwardDependencies.Add((dependency, dependencyType));
         }

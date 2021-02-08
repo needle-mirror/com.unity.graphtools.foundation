@@ -8,23 +8,26 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class BlankPage : VisualElement
     {
-        readonly Store m_Store;
+        public static readonly string ussClassName = "ge-blank-page";
 
-        public IEnumerable<IOnboardingProvider> OnboardingProviders { get; protected set; }
+        readonly CommandDispatcher m_CommandDispatcher;
 
-        public BlankPage(Store store)
+        public IEnumerable<OnboardingProvider> OnboardingProviders { get; protected set; }
+
+        public BlankPage(CommandDispatcher commandDispatcher, IEnumerable<OnboardingProvider> onboardingProviders)
         {
-            m_Store = store;
-            OnboardingProviders = Enumerable.Empty<IOnboardingProvider>();
+            m_CommandDispatcher = commandDispatcher;
+            OnboardingProviders = onboardingProviders;
         }
 
         public virtual void CreateUI()
         {
             Clear();
 
+            AddToClassList(ussClassName);
             foreach (var provider in OnboardingProviders)
             {
-                Add(provider.CreateOnboardingElement(m_Store));
+                Add(provider.CreateOnboardingElements(m_CommandDispatcher));
             }
         }
 

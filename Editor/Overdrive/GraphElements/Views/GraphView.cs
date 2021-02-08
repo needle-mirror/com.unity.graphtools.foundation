@@ -3,127 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEngine;
-using UnityEngine.Scripting.APIUpdating;
 using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
+using Random = System.Random;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    interface IGraphViewSelection
+    /// <summary>
+    /// The <see cref="VisualElement"/> in which graphs are drawn.
+    /// </summary>
+    public class GraphView : GraphViewBridge, ISelection, IDragAndDropHandler
     {
-        int Version { get; set; }
-
-        HashSet<string> SelectedElements { get; }
-    }
-
-    class GraphViewUndoRedoSelection : ScriptableObject, IGraphViewSelection, ISerializationCallbackReceiver
-    {
-        [SerializeField]
-        int m_Version;
-
-        [SerializeField]
-        string[] m_SelectedElementsArray;
-
-        [NonSerialized]
-        HashSet<string> m_SelectedElements = new HashSet<string>();
-
-        public int Version
-        {
-            get => m_Version;
-            set => m_Version = value;
-        }
-
-        public HashSet<string> SelectedElements => m_SelectedElements;
-
-        public void OnBeforeSerialize()
-        {
-            if (m_SelectedElements.Count == 0)
-                return;
-
-            m_SelectedElementsArray = new string[m_SelectedElements.Count];
-
-            m_SelectedElements.CopyTo(m_SelectedElementsArray);
-        }
-
-        public void OnAfterDeserialize()
-        {
-            m_SelectedElements.Clear();
-
-            if (m_SelectedElementsArray == null || m_SelectedElementsArray.Length == 0)
-                return;
-
-            foreach (string guid in m_SelectedElementsArray)
-            {
-                m_SelectedElements.Add(guid);
-            }
-        }
-    }
-
-    public abstract class GraphView : GraphViewBridge, ISelection
-    {
-        public static readonly string ussClassName = "ge-graph-view";
-
-        // Layer class. Used for queries below.
         public class Layer : VisualElement {}
-
-        public delegate void ViewTransformChanged(GraphView graphView);
-        public delegate string SerializeGraphElementsDelegate(IEnumerable<GraphElement> elements);
-        public delegate bool CanPasteSerializedDataDelegate(string data);
-        public delegate void UnserializeAndPasteDelegate(string operationName, string data);
-
-        [Serializable]
-        [MovedFrom(false, "Unity.GraphElements", "Unity.GraphTools.Foundation.Overdrive.Editor")]
-        class PersistedSelection : IGraphViewSelection, ISerializationCallbackReceiver
-        {
-            [SerializeField]
-            int m_Version;
-
-            [SerializeField]
-            string[] m_SelectedElementsArray;
-
-            [NonSerialized]
-            HashSet<string> m_SelectedElements = new HashSet<string>();
-
-            public int Version
-            {
-                get => m_Version;
-                set => m_Version = value;
-            }
-
-            public HashSet<string> SelectedElements => m_SelectedElements;
-
-            public void OnBeforeSerialize()
-            {
-                if (m_SelectedElements.Count == 0)
-                    return;
-
-                m_SelectedElementsArray = new string[m_SelectedElements.Count];
-
-                m_SelectedElements.CopyTo(m_SelectedElementsArray);
-            }
-
-            public void OnAfterDeserialize()
-            {
-                if (m_SelectedElementsArray == null || m_SelectedElementsArray.Length == 0)
-                    return;
-
-                m_SelectedElements.Clear();
-
-                foreach (string guid in m_SelectedElementsArray)
-                {
-                    m_SelectedElements.Add(guid);
-                }
-            }
-        }
-
-        [Serializable]
-        //[MovedFrom(false, "Unity.GraphElements", "Unity.GraphTools.Foundation.Overdrive.Editor")]
-        [MovedFrom(false, "UnityEditor.GraphToolsFoundation.Overdrive.GraphElements")]
-        class PersistedViewTransform
-        {
-            public Vector3 position = Vector3.zero;
-            public Vector3 scale = Vector3.one;
-        }
 
         class ContentViewContainer : VisualElement
         {
@@ -133,6 +24,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
+        [Serializable]
+        class PersistedViewTransform
+        {
+            public Vector3 position = Vector3.zero;
+            public Vector3 scale = Vector3.one;
+        }
+
         enum FrameType
         {
             All = 0,
@@ -140,16 +38,20 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             Origin = 2
         }
 
-        static readonly string k_SelectionUndoRedoLabel = "Change GraphView Selection";
+        public delegate void ViewTransformChanged(GraphView graphView);
+        public delegate string SerializeGraphElementsDelegate(IEnumerable<GraphElement> elements);
+        public delegate bool CanPasteSerializedDataDelegate(string data);
+        public delegate void UnserializeAndPasteDelegate(string operationName, string data);
 
-        static readonly int k_FrameBorder = 30;
+        public event Action<List<ISelectableGraphElement>> OnSelectionChangedCallback;
 
+        public const float DragDropSpacer = 5f;
+
+        public static readonly string ussClassName = "ge-graph-view";
+
+        const string k_SelectionUndoRedoLabel = "Change GraphView Selection";
+        const int k_FrameBorder = 30;
         const string k_SerializedDataMimeType = "application/vnd.unity.graphview.elements";
-
-        Store m_Store;
-
-        // PF FIXME: we should be able to remove this.
-        GraphViewEditorWindow m_Window;
 
         int m_SavedSelectionVersion;
 
@@ -157,11 +59,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         GraphViewUndoRedoSelection m_GraphViewUndoRedoSelection;
 
-        bool m_FrameAnimate = false;
-
         readonly Dictionary<int, Layer> m_ContainerLayers = new Dictionary<int, Layer>();
-
-        PlacematContainer m_PlacematContainer;
 
         IVisualElementScheduledItem m_OnTimerTicker;
 
@@ -171,6 +69,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         ContextualMenuManipulator m_ContextualMenuManipulator;
         ContentZoomer m_Zoomer;
+        ShortcutHandler m_ShortcutHandler;
 
         AutoSpacingHelper m_AutoSpacingHelper;
         AutoAlignmentHelper m_AutoAlignmentHelper;
@@ -182,6 +81,55 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         float m_ReferenceScale = ContentZoomer.DefaultReferenceScale;
 
         Blackboard m_Blackboard;
+        readonly VisualElement m_GraphViewContainer;
+        readonly VisualElement m_BadgesParent;
+
+        SelectionDragger m_SelectionDragger;
+        ContentDragger m_ContentDragger;
+        Clickable m_Clickable;
+        RectangleSelector m_RectangleSelector;
+        FreehandSelector m_FreehandSelector;
+
+        // Cache for INodeModelProxies
+        Dictionary<Type, INodeModelProxy> m_ModelProxies;
+
+        string m_Clipboard = string.Empty;
+
+        IDragAndDropHandler m_CurrentDragAndDropHandler;
+        BlackboardDragAndDropHandler m_BlackboardDragAndDropHandler;
+
+        protected bool m_SelectionDraggerWasActive;
+        protected Vector2 m_LastMousePosition;
+
+        protected SelectionDragger SelectionDragger
+        {
+            get => m_SelectionDragger;
+            set => this.ReplaceManipulator(ref m_SelectionDragger, value);
+        }
+
+        protected ContentDragger ContentDragger
+        {
+            get => m_ContentDragger;
+            set => this.ReplaceManipulator(ref m_ContentDragger, value);
+        }
+
+        protected Clickable Clickable
+        {
+            get => m_Clickable;
+            set => this.ReplaceManipulator(ref m_Clickable, value);
+        }
+
+        protected RectangleSelector RectangleSelector
+        {
+            get => m_RectangleSelector;
+            set => this.ReplaceManipulator(ref m_RectangleSelector, value);
+        }
+
+        public FreehandSelector FreehandSelector
+        {
+            get => m_FreehandSelector;
+            set => this.ReplaceManipulator(ref m_FreehandSelector, value);
+        }
 
         protected ContextualMenuManipulator ContextualMenuManipulator
         {
@@ -195,21 +143,21 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             set => this.ReplaceManipulator(ref m_Zoomer, value);
         }
 
-        float MinScale => m_MinScale;
+        public ShortcutHandler ShortcutHandler
+        {
+            get => m_ShortcutHandler;
+            set => this.ReplaceManipulator(ref m_ShortcutHandler, value);
+        }
 
-        float MaxScale => m_MaxScale;
+        public CommandDispatcher CommandDispatcher { get; }
 
-        string m_Clipboard = string.Empty;
-
-        public Store Store => m_Store;
-
-        public GraphViewEditorWindow Window => m_Window;
+        public GraphViewEditorWindow Window { get; }
 
         public UQueryState<GraphElement> GraphElements { get; }
 
         public UQueryState<Node> Nodes { get; }
 
-        public UQueryState<Port> Ports;
+        public UQueryState<Port> Ports { get; }
 
         public UQueryState<Edge> Edges { get; }
 
@@ -219,27 +167,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public virtual bool SupportsWindowedBlackboard => false;
 
-        protected bool PersistedSelectionRestoreEnabled { get; private set; }
+        public override VisualElement contentContainer => m_GraphViewContainer; // Contains full content, potentially partially visible
 
-        public override VisualElement contentContainer => GraphViewContainer; // Contains full content, potentially partially visible
-
-        public PlacematContainer PlacematContainer
-        {
-            get
-            {
-                if (m_PlacematContainer == null)
-                {
-                    m_PlacematContainer = CreatePlacematContainer();
-                    AddLayer(m_PlacematContainer, PlacematContainer.PlacematsLayer);
-                }
-
-                return m_PlacematContainer;
-            }
-        }
+        public PlacematContainer PlacematContainer { get; }
 
         public List<ISelectableGraphElement> Selection { get; }
 
-        public virtual bool CanCopySelection => Selection.Cast<GraphElement>().Any(ge => ge.IsCopiable());
+        public virtual bool CanCopySelection => Selection.OfType<GraphElement>().Any(ge => ge.IsCopiable());
 
         public virtual bool CanCutSelection => Selection.Any(s => s is Node || s is Placemat);
 
@@ -247,13 +181,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public virtual bool CanDuplicateSelection => CanCopySelection;
 
-        public virtual bool CanDeleteSelection
-        {
-            get
-            {
-                return Selection.Cast<GraphElement>().Any(e => e != null && e.IsDeletable());
-            }
-        }
+        public virtual bool CanDeleteSelection => Selection.OfType<GraphElement>().Any(e => e.IsDeletable());
 
         public SerializeGraphElementsDelegate SerializeGraphElementsCallback { get; set; }
 
@@ -265,7 +193,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             get
             {
-                IEnumerable<IHighlightable> elements = GraphElements.ToList().OfType<IHighlightable>();
+                var elements = GraphElements.ToList().OfType<IHighlightable>();
 
                 // PF: FIX this comment by @joce
                 // This assumes that:
@@ -278,28 +206,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 // and add a Distinct after the Concat call.
                 //
                 // We could add a Highlightables property to the Blackboard.
-                return elements.Concat(Blackboard?.Highlightables ?? Enumerable.Empty<IHighlightable>());
+                return elements.Concat(GetBlackboard()?.Highlightables ?? Enumerable.Empty<IHighlightable>());
             }
         }
 
-        // The system clipboard is unreliable, at least on Windows.
-        // For testing clipboard operations on GraphView,
-        // set useInternalClipboard to true.
+        // For tests only
         internal bool UseInternalClipboard { get; set; }
 
+        // Internal access for tests.
         internal string Clipboard
         {
-            get
-            {
-                if (UseInternalClipboard)
-                {
-                    return m_Clipboard;
-                }
-                else
-                {
-                    return EditorGUIUtility.systemCopyBuffer;
-                }
-            }
+            get => UseInternalClipboard ? m_Clipboard : EditorGUIUtility.systemCopyBuffer;
 
             set
             {
@@ -314,33 +231,32 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        VisualElement GraphViewContainer { get; }
-        public VisualElement BadgesParent { get; }
-
-        bool IsReframable { get; }
-
-        public Blackboard Blackboard
+        public Blackboard GetBlackboard()
         {
-            get
+            if (m_Blackboard == null && CommandDispatcher?.GraphToolState?.BlackboardGraphModel != null)
             {
-                if (m_Blackboard == null && m_Store.State?.BlackboardGraphModel != null)
-                {
-                    m_Blackboard = GraphElementFactory.CreateUI<Blackboard>(this, m_Store, m_Store.State?.BlackboardGraphModel);
-                    m_Blackboard?.AddToGraphView(this);
-                }
-
-                return m_Blackboard;
+                m_Blackboard = GraphElementFactory.CreateUI<Blackboard>(this, CommandDispatcher, CommandDispatcher.GraphToolState.BlackboardGraphModel);
+                m_Blackboard?.AddToGraphView(this);
             }
+
+            return m_Blackboard;
         }
 
         internal PositionDependenciesManager PositionDependenciesManager { get; }
 
-        protected GraphView(GraphViewEditorWindow window, Store store)
+        public GraphView(GraphViewEditorWindow window, CommandDispatcher commandDispatcher, string uniqueGraphViewName = null)
         {
-            m_Window = window;
-            m_Store = store;
+            if (uniqueGraphViewName == null)
+                uniqueGraphViewName = "GraphView_" + new Random().Next();
 
-            PersistedSelectionRestoreEnabled = true;
+            focusable = true;
+
+            // This is needed for selection persistence.
+            viewDataKey = uniqueGraphViewName;
+            name = uniqueGraphViewName;
+
+            Window = window;
+            CommandDispatcher = commandDispatcher;
 
             AddToClassList(ussClassName);
 
@@ -348,21 +264,24 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             Selection = new List<ISelectableGraphElement>();
 
-            GraphViewContainer = new VisualElement() {name = "graph-view-container"};
-            GraphViewContainer.pickingMode = PickingMode.Ignore;
-            hierarchy.Add(GraphViewContainer);
+            m_GraphViewContainer = new VisualElement() {name = "graph-view-container"};
+            m_GraphViewContainer.pickingMode = PickingMode.Ignore;
+            hierarchy.Add(m_GraphViewContainer);
 
             contentViewContainer = new ContentViewContainer
             {
-                name = "contentViewContainer",
+                name = "content-view-container",
                 pickingMode = PickingMode.Ignore,
                 usageHints = UsageHints.GroupTransform
             };
 
             // make it absolute and 0 sized so it acts as a transform to move children to and fro
-            GraphViewContainer.Add(contentViewContainer);
+            m_GraphViewContainer.Add(contentViewContainer);
+
+            m_BadgesParent = new VisualElement { name = "badge-container"};
 
             this.AddStylesheet("GraphView.uss");
+
             GraphElements = contentViewContainer.Query<GraphElement>().Build();
             m_AllGraphElements = this.Query<GraphElement>().Build();
             Nodes = contentViewContainer.Query<Node>().Build();
@@ -370,39 +289,67 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             Stickies = this.Query<Layer>().Children<StickyNote>().Build();
             Ports = contentViewContainer.Query().Children<Layer>().Descendents<Port>().Build();
 
-            IsReframable = true;
-            focusable = true;
+            PositionDependenciesManager = new PositionDependenciesManager(this, CommandDispatcher?.GraphToolState?.Preferences);
+            m_AutoAlignmentHelper = new AutoAlignmentHelper(this);
+            m_AutoSpacingHelper = new AutoSpacingHelper(this);
+
+            m_ModelProxies = new Dictionary<Type, INodeModelProxy>();
+
+            ContextualMenuManipulator = new ContextualMenuManipulator(BuildContextualMenu);
+
+            Clickable = new Clickable(OnDoubleClick);
+            Clickable.activators.Clear();
+            Clickable.activators.Add(
+                new ManipulatorActivationFilter { button = MouseButton.LeftMouse, clickCount = 2 });
+
+            ContentDragger = new ContentDragger();
+            SelectionDragger = new SelectionDragger(this);
+            RectangleSelector = new RectangleSelector();
+            FreehandSelector = new FreehandSelector();
+
+            SetupZoom(ContentZoomer.DefaultMinScale, ContentZoomer.DefaultMaxScale, 1.0f);
 
             RegisterCallback<ValidateCommandEvent>(OnValidateCommand);
             RegisterCallback<ExecuteCommandEvent>(OnExecuteCommand);
             RegisterCallback<AttachToPanelEvent>(OnEnterPanel);
             RegisterCallback<DetachFromPanelEvent>(OnLeavePanel);
 
-            ContextualMenuManipulator = new ContextualMenuManipulator(BuildContextualMenu);
+            RegisterCallback<MouseOverEvent>(OnMouseOver);
+            RegisterCallback<MouseMoveEvent>(OnMouseMove);
 
-            PositionDependenciesManager = new PositionDependenciesManager(this, Store?.State?.Preferences);
-            m_AutoAlignmentHelper = new AutoAlignmentHelper(this);
-            m_AutoSpacingHelper = new AutoSpacingHelper(this);
+            // TODO: Until GraphView.SelectionDragger is used widely in VS, we must register to drag events ON TOP of
+            // using the VisualScripting.Editor.SelectionDropper, just to deal with drags from the Blackboard
+            RegisterCallback<DragEnterEvent>(OnDragEnter);
+            RegisterCallback<DragLeaveEvent>(OnDragLeave);
+            RegisterCallback<DragUpdatedEvent>(OnDragUpdated);
+            RegisterCallback<DragExitedEvent>(OnDragExited);
+            RegisterCallback<DragPerformEvent>(OnDragPerform);
+            RegisterCallback<CustomStyleResolvedEvent>(OnCustomStyleResolved);
 
-            BadgesParent = new VisualElement { name = "iconsParent"};
+            Insert(0, new GridBackground());
+
+            PlacematContainer = new PlacematContainer(this);
+            AddLayer(PlacematContainer, PlacematContainer.PlacematsLayer);
+
+            SerializeGraphElementsCallback = OnSerializeGraphElements;
+            UnserializeAndPasteCallback = UnserializeAndPaste;
         }
 
-        public bool PersistentSelectionContainsElement(GraphElement element)
+        internal void UnloadGraph()
         {
-            if (string.IsNullOrEmpty(element.viewDataKey))
-                return false;
-
-            return m_PersistedSelection?.SelectedElements?.Contains(element.viewDataKey) ?? false;
+            GetBlackboard()?.Clear();
+            ClearGraph();
         }
 
-        public void EnablePersistedSelectionRestore()
+        void ClearGraph()
         {
-            PersistedSelectionRestoreEnabled = true;
-        }
+            List<GraphElement> elements = GraphElements.ToList();
 
-        public void DisablePersistedSelectionRestore()
-        {
-            PersistedSelectionRestoreEnabled = false;
+            PositionDependenciesManager.Clear();
+            foreach (var element in elements)
+            {
+                RemoveElement(element);
+            }
         }
 
         public void UpdateViewTransform(Vector3 newPosition, Vector3 newScale)
@@ -420,6 +367,29 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             UpdatePersistedViewTransform();
 
             ViewTransformChangedCallback?.Invoke(this);
+        }
+
+        protected virtual BlackboardDragAndDropHandler GetBlackboardDragAndDropHandler()
+        {
+            return m_BlackboardDragAndDropHandler ??
+                (m_BlackboardDragAndDropHandler = new BlackboardDragAndDropHandler(this));
+        }
+
+        /// <summary>
+        /// Find an appropriate Drag-and-drop handler for the DragEnter event
+        /// </summary>
+        /// <param name="evt">current DragEnter event</param>
+        /// <param name="graphView">graphview where the event happens</param>
+        /// <returns>handler or null if nothing appropriate was found</returns>
+        protected virtual IDragAndDropHandler GetExternalDragNDropHandler(DragEnterEvent evt)
+        {
+            var blackboardDragAndDropHandler = GetBlackboardDragAndDropHandler();
+            if (DragAndDrop.objectReferences.Length == 0 && Selection.OfType<BlackboardField>().Any())
+            {
+                return blackboardDragAndDropHandler;
+            }
+
+            return null;
         }
 
         public bool GetPortCenterOverride(Port port, out Vector2 overriddenPosition)
@@ -482,7 +452,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        internal void RestorePersitentSelectionForElement(GraphElement element)
+        void RestorePersistentSelectionForElement(GraphElement element)
         {
             if (m_PersistedSelection == null)
                 return;
@@ -611,6 +581,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             UpdateViewTransform(m_PersistedViewTransform.position, m_PersistedViewTransform.scale);
             RestoreSavedSelection(m_PersistedSelection);
+
+            if (Window != null)
+            {
+                if (Selection.OfType<Node>().Any())
+                {
+                    Window.ShowNodeInSidePanel(Selection.OfType<Node>().Last(), true);
+                }
+                else
+                {
+                    Window.ShowNodeInSidePanel(null, false);
+                }
+            }
         }
 
         void UpdateContentZoomer()
@@ -639,8 +621,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 return;
             Vector3 transformScale = viewTransform.scale;
 
-            transformScale.x = Mathf.Clamp(transformScale.x, MinScale, MaxScale);
-            transformScale.y = Mathf.Clamp(transformScale.y, MinScale, MaxScale);
+            transformScale.x = Mathf.Clamp(transformScale.x, m_MinScale, m_MaxScale);
+            transformScale.y = Mathf.Clamp(transformScale.y, m_MinScale, m_MaxScale);
 
             viewTransform.scale = transformScale;
         }
@@ -664,6 +646,43 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 m_PersistedSelection.SelectedElements.Add(graphElement.viewDataKey);
                 RecordSelectionUndoPost();
             }
+
+            // m_PersistedSelectionRestoreEnabled check: when clicking on a GO with the same graph while a token/node/
+            // ... is selected, GraphView's selection restoration used to set the Selection.activeObject back to the item
+            // !m_PersistedSelectionRestoreEnabled implies we're restoring the selection right now and should not set it
+            if (selectable is IModelUI hasModel)
+            {
+                if (!m_ModelProxies.TryGetValue(hasModel.Model.GetType(), out var currentProxy))
+                {
+                    var genericType = typeof(NodeModelProxy<>).MakeGenericType(hasModel.Model.GetType());
+                    var derivedTypes = TypeCache.GetTypesDerivedFrom(genericType);
+                    if (derivedTypes.Any())
+                    {
+                        var type = derivedTypes.FirstOrDefault();
+                        currentProxy = (INodeModelProxy)ScriptableObject.CreateInstance(type);
+                        m_ModelProxies.Add(hasModel.Model.GetType(), currentProxy);
+                    }
+                }
+                currentProxy?.SetModel(hasModel.Model);
+                var scriptableObject = currentProxy?.ScriptableObject();
+                if (scriptableObject)
+                    UnityEditor.Selection.activeObject = scriptableObject;
+            }
+
+            if (Window != null)
+            {
+                Window.ShowNodeInSidePanel(selectable, true);
+            }
+
+            // TODO: convince UIElements to add proper support for Z Order as this won't survive a refresh
+            // alternative: reorder models or store our own z order in models
+            if (selectable is VisualElement visualElement)
+            {
+                if (visualElement is Node)
+                    visualElement.BringToFront();
+            }
+
+            OnSelectionChangedCallback?.Invoke(Selection);
         }
 
         void AddToSelectionNoUndoRecord(GraphElement graphElement)
@@ -714,6 +733,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 m_PersistedSelection.SelectedElements.Remove(graphElement.viewDataKey);
                 RecordSelectionUndoPost();
             }
+
+            if (Window != null)
+            {
+                Window.ShowNodeInSidePanel(selectable, false);
+            }
+
+            OnSelectionChangedCallback?.Invoke(Selection);
         }
 
         bool ClearSelectionNoUndoRecord()
@@ -737,22 +763,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public virtual void ClearSelection()
         {
-            if (PersistedSelectionRestoreEnabled)
-            {
-                bool selectionWasNotEmpty = ClearSelectionNoUndoRecord();
+            Window.ClearNodeInSidePanel();
 
-                if (ShouldRecordUndo() && selectionWasNotEmpty)
-                {
-                    RecordSelectionUndoPre();
-                    m_GraphViewUndoRedoSelection.SelectedElements.Clear();
-                    m_PersistedSelection.SelectedElements.Clear();
-                    RecordSelectionUndoPost();
-                }
-            }
-            else
+            bool selectionWasNotEmpty = ClearSelectionNoUndoRecord();
+
+            if (ShouldRecordUndo() && selectionWasNotEmpty)
             {
-                Selection.Clear();
-                this.HighlightGraphElements();
+                RecordSelectionUndoPre();
+                m_GraphViewUndoRedoSelection.SelectedElements.Clear();
+                m_PersistedSelection.SelectedElements.Clear();
+                RecordSelectionUndoPost();
             }
 
             UnityEditor.Selection.activeObject = null;
@@ -763,8 +783,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             RemoveFromSelectionNoUndoRecord(evt.target as ISelectableGraphElement);
         }
 
-        public virtual void BuildContextualMenu(ContextualMenuPopulateEvent evt)
+        protected virtual void BuildContextualMenu(ContextualMenuPopulateEvent evt)
         {
+            if (CommandDispatcher == null)
+                return;
+
             if (evt.menu.MenuItems().Count > 0)
                 evt.menu.AppendSeparator();
 
@@ -779,7 +802,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 Vector2 mousePosition = menuAction?.eventInfo?.mousePosition ?? Event.current.mousePosition;
                 Vector2 graphPosition = contentViewContainer.WorldToLocal(mousePosition);
 
-                m_Store.Dispatch(new CreatePlacematAction(new Rect(graphPosition.x, graphPosition.y, 200, 200)));
+                CommandDispatcher.Dispatch(new CreatePlacematCommand(new Rect(graphPosition.x, graphPosition.y, 200, 200)));
             });
 
             if (Selection.Any())
@@ -790,7 +813,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     Rect bounds = new Rect();
                     if (Placemat.ComputeElementBounds(ref bounds, nodesAndNotes))
                     {
-                        m_Store.Dispatch(new CreatePlacematAction(bounds));
+                        CommandDispatcher.Dispatch(new CreatePlacematCommand(bounds));
                     }
                 }, nodesAndNotes.Count == 0 ? DropdownMenuAction.Status.Disabled : DropdownMenuAction.Status.Normal);
 
@@ -800,39 +823,39 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
                 evt.menu.AppendAction("Align Elements/Align Items", _ =>
                 {
-                    m_Store.Dispatch(new AlignNodesAction(this, false));
+                    CommandDispatcher.Dispatch(new AlignNodesCommand(this, false));
                 });
 
                 evt.menu.AppendAction("Align Elements/Align Hierarchy", _ =>
                 {
-                    m_Store.Dispatch(new AlignNodesAction(this, true));
+                    CommandDispatcher.Dispatch(new AlignNodesCommand(this, true));
                 });
 
                 if (Selection.OfType<GraphElement>().Count(elem => !(elem is Edge) && elem.visible) > 1)
                 {
                     evt.menu.AppendAction("Align Elements/Top",
-                        _ => m_AutoAlignmentHelper.SendAlignAction(AutoAlignmentHelper.AlignmentReference.Top));
+                        _ => m_AutoAlignmentHelper.SendAlignCommand(AutoAlignmentHelper.AlignmentReference.Top));
 
                     evt.menu.AppendAction("Align Elements/Bottom",
-                        _ => m_AutoAlignmentHelper.SendAlignAction(AutoAlignmentHelper.AlignmentReference.Bottom));
+                        _ => m_AutoAlignmentHelper.SendAlignCommand(AutoAlignmentHelper.AlignmentReference.Bottom));
 
                     evt.menu.AppendAction("Align Elements/Left",
-                        _ => m_AutoAlignmentHelper.SendAlignAction(AutoAlignmentHelper.AlignmentReference.Left));
+                        _ => m_AutoAlignmentHelper.SendAlignCommand(AutoAlignmentHelper.AlignmentReference.Left));
 
                     evt.menu.AppendAction("Align Elements/Right",
-                        _ => m_AutoAlignmentHelper.SendAlignAction(AutoAlignmentHelper.AlignmentReference.Right));
+                        _ => m_AutoAlignmentHelper.SendAlignCommand(AutoAlignmentHelper.AlignmentReference.Right));
 
                     evt.menu.AppendAction("Align Elements/Horizontal Center",
-                        _ => m_AutoAlignmentHelper.SendAlignAction(AutoAlignmentHelper.AlignmentReference.HorizontalCenter));
+                        _ => m_AutoAlignmentHelper.SendAlignCommand(AutoAlignmentHelper.AlignmentReference.HorizontalCenter));
 
                     evt.menu.AppendAction("Align Elements/Vertical Center",
-                        _ => m_AutoAlignmentHelper.SendAlignAction(AutoAlignmentHelper.AlignmentReference.VerticalCenter));
+                        _ => m_AutoAlignmentHelper.SendAlignCommand(AutoAlignmentHelper.AlignmentReference.VerticalCenter));
 
                     evt.menu.AppendAction("Space Elements/Horizontal",
-                        _ => m_AutoSpacingHelper.SendSpacingAction(Orientation.Horizontal));
+                        _ => m_AutoSpacingHelper.SendSpacingCommand(Orientation.Horizontal));
 
                     evt.menu.AppendAction("Space Elements/Vertical",
-                        _ => m_AutoSpacingHelper.SendSpacingAction(Orientation.Vertical));
+                        _ => m_AutoSpacingHelper.SendSpacingCommand(Orientation.Vertical));
                 }
 
                 var nodes = Selection.OfType<Node>().Select(e => e.NodeModel).ToArray();
@@ -844,7 +867,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
                     evt.menu.AppendAction("Disconnect Nodes", _ =>
                     {
-                        m_Store.Dispatch(new DisconnectNodeAction(connectedNodes));
+                        CommandDispatcher.Dispatch(new DisconnectNodeCommand(connectedNodes));
                     }, connectedNodes.Length == 0 ? DropdownMenuAction.Status.Disabled : DropdownMenuAction.Status.Normal);
 
                     var ioConnectedNodes = connectedNodes.OfType<IInOutPortsNode>()
@@ -853,13 +876,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
                     evt.menu.AppendAction("Bypass Nodes", _ =>
                     {
-                        m_Store.Dispatch(new BypassNodesAction(ioConnectedNodes, nodes));
+                        CommandDispatcher.Dispatch(new BypassNodesCommand(ioConnectedNodes, nodes));
                     }, ioConnectedNodes.Length == 0 ? DropdownMenuAction.Status.Disabled : DropdownMenuAction.Status.Normal);
 
                     var willDisable = nodes.Any(n => n.State == ModelState.Enabled);
                     evt.menu.AppendAction(willDisable ? "Disable Nodes" : "Enable Nodes", _ =>
                     {
-                        m_Store.Dispatch(new SetNodeEnabledStateAction(nodes, willDisable ? ModelState.Disabled : ModelState.Enabled));
+                        CommandDispatcher.Dispatch(new SetNodeEnabledStateCommand(nodes, willDisable ? ModelState.Disabled : ModelState.Enabled));
                     });
                 }
 
@@ -870,7 +893,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     if (graphElementModels.FirstOrDefault(x => x is IEdgeModel) is IEdgeModel edgeModel &&
                         graphElementModels.FirstOrDefault(x => x is IInOutPortsNode) is IInOutPortsNode nodeModel)
                     {
-                        evt.menu.AppendAction("Insert Node on Edge", _ => m_Store.Dispatch(new SplitEdgeAndInsertExistingNodeAction(edgeModel, nodeModel)),
+                        evt.menu.AppendAction("Insert Node on Edge", _ => CommandDispatcher.Dispatch(new SplitEdgeAndInsertExistingNodeCommand(edgeModel, nodeModel)),
                             eventBase => DropdownMenuAction.Status.Normal);
                     }
                 }
@@ -880,11 +903,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 {
                     // TODO JOCE We might want to bring the concept of Get/Set variable from VS down to GTF
                     evt.menu.AppendAction("Variable/Convert",
-                        _ => m_Store.Dispatch(new ConvertVariableNodesToConstantNodesAction(variableNodes)),
+                        _ => CommandDispatcher.Dispatch(new ConvertVariableNodesToConstantNodesCommand(variableNodes)),
                         variableNodes.Any(v => v.OutputsByDisplayOrder.Any(o => o.PortType == PortType.Data)) ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
 
                     evt.menu.AppendAction("Variable/Itemize",
-                        _ => m_Store.Dispatch(new ItemizeNodeAction(variableNodes)),
+                        _ => CommandDispatcher.Dispatch(new ItemizeNodeCommand(variableNodes.OfType<ISingleOutputPortNode>().ToArray())),
                         variableNodes.Any(v => v.OutputsByDisplayOrder.Any(o => o.PortType == PortType.Data && o.GetConnectedPorts().Count() > 1)) ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
                 }
 
@@ -892,14 +915,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 if (constants.Length > 0)
                 {
                     evt.menu.AppendAction("Constant/Convert",
-                        _ => m_Store.Dispatch(new ConvertConstantNodesToVariableNodesAction(constants)), x => DropdownMenuAction.Status.Normal);
+                        _ => CommandDispatcher.Dispatch(new ConvertConstantNodesToVariableNodesCommand(constants)), x => DropdownMenuAction.Status.Normal);
 
                     evt.menu.AppendAction("Constant/Itemize",
-                        _ => m_Store.Dispatch(new ItemizeNodeAction(constants)),
+                        _ => CommandDispatcher.Dispatch(new ItemizeNodeCommand(constants.OfType<ISingleOutputPortNode>().ToArray())),
                         constants.Any(v => v.OutputsByDisplayOrder.Any(o => o.PortType == PortType.Data && o.GetConnectedPorts().Count() > 1)) ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
 
                     evt.menu.AppendAction("Constant/Lock",
-                        _ => m_Store.Dispatch(new ToggleLockConstantNodeAction(constants)), x => DropdownMenuAction.Status.Normal);
+                        _ => CommandDispatcher.Dispatch(new ToggleLockConstantNodeCommand(constants)), x => DropdownMenuAction.Status.Normal);
                 }
 
                 var portals = nodes.OfType<IEdgePortalModel>().ToArray();
@@ -909,7 +932,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     evt.menu.AppendAction("Create Opposite Portal",
                         _ =>
                         {
-                            m_Store.Dispatch(new CreateOppositePortalAction(canCreate));
+                            CommandDispatcher.Dispatch(new CreateOppositePortalCommand(canCreate));
                         }, canCreate.Length > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
                 }
 
@@ -922,7 +945,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     {
                         void ChangeNodesColor(Color pickedColor)
                         {
-                            m_Store.Dispatch(new ChangeElementColorAction(pickedColor, nodes, placemats));
+                            CommandDispatcher.Dispatch(new ChangeElementColorCommand(pickedColor, nodes, placemats));
                         }
 
                         var defaultColor = new Color(0.5f, 0.5f, 0.5f);
@@ -940,7 +963,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
                     evt.menu.AppendAction("Color/Reset", _ =>
                     {
-                        m_Store.Dispatch(new ResetElementColorAction(nodes, placemats));
+                        CommandDispatcher.Dispatch(new ResetElementColorCommand(nodes, placemats));
                     });
                 }
                 else
@@ -954,21 +977,25 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     evt.menu.AppendSeparator();
 
                     var edgeData = edges.Select(
-                        s =>
+                        edgeModel =>
                         {
-                            var e = s.GetUI<Edge>(this);
-                            var outputPort = s.FromPort.GetUI<Port>(this);
-                            var inputPort = s.ToPort.GetUI<Port>(this);
-                            var outputNode = s.FromPort.NodeModel.GetUI<Node>(this);
-                            var inputNode = s.ToPort.NodeModel.GetUI<Node>(this);
-                            return (s,
+                            var outputPort = edgeModel.FromPort.GetUI<Port>(this);
+                            var inputPort = edgeModel.ToPort.GetUI<Port>(this);
+                            var outputNode = edgeModel.FromPort.NodeModel.GetUI<Node>(this);
+                            var inputNode = edgeModel.ToPort.NodeModel.GetUI<Node>(this);
+
+                            if (outputNode == null || inputNode == null || outputPort == null || inputPort == null)
+                                return (null, Vector2.zero, Vector2.zero);
+
+                            return (edgeModel,
                                 outputPort.ChangeCoordinatesTo(outputNode.parent, outputPort.layout.center),
                                 inputPort.ChangeCoordinatesTo(inputNode.parent, inputPort.layout.center));
-                        }).ToList();
+                        }
+                        ).Where(tuple => tuple.Item1 != null).ToList();
 
                     evt.menu.AppendAction("Create Portals", _ =>
                     {
-                        m_Store.Dispatch(new ConvertEdgesToPortalsAction(edgeData));
+                        CommandDispatcher.Dispatch(new ConvertEdgesToPortalsCommand(edgeData));
                     });
                 }
 
@@ -1003,14 +1030,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     foreach (var value in StickyNote.GetThemes())
                     {
                         evt.menu.AppendAction("Sticky Note Theme/" + value,
-                            menuAction => m_Store.Dispatch(new UpdateStickyNoteThemeAction(stickyNotes, menuAction.userData as string)),
+                            menuAction => CommandDispatcher.Dispatch(new UpdateStickyNoteThemeCommand(stickyNotes, menuAction.userData as string)),
                             GetThemeStatus, value);
                     }
 
                     foreach (var value in StickyNote.GetSizes())
                     {
                         evt.menu.AppendAction("Sticky Note Text Size/" + value,
-                            menuAction => m_Store.Dispatch(new UpdateStickyNoteTextSizeAction(stickyNotes, menuAction.userData as string)),
+                            menuAction => CommandDispatcher.Dispatch(new UpdateStickyNoteTextSizeCommand(stickyNotes, menuAction.userData as string)),
                             GetSizeStatus, value);
                     }
                 }
@@ -1020,32 +1047,32 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             var models = Selection.OfType<GraphElement>().Select(e => e.Model).ToArray();
 
-            // PF: FIXME use an Action.
+            // PF: FIXME use a Command.
             evt.menu.AppendAction("Cut", (a) => { CutSelectionCallback(); },
                 CanCutSelection ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
 
             evt.menu.AppendAction("Copy", (a) => { CopySelectionCallback(); },
                 CanCopySelection ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
 
-            // PF: FIXME use an Action.
+            // PF: FIXME use a Command.
             evt.menu.AppendAction("Paste", (a) => { PasteCallback(); },
                 CanPaste ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
 
             evt.menu.AppendSeparator();
 
-            // PF: FIXME use an Action.
+            // PF: FIXME use a Command.
             evt.menu.AppendAction("Duplicate", (a) => { DuplicateSelectionCallback(); },
                 CanDuplicateSelection ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
 
             evt.menu.AppendAction("Delete", _ =>
             {
-                m_Store.Dispatch(new DeleteElementsAction(models));
+                CommandDispatcher.Dispatch(new DeleteElementsCommand(models));
             }, CanDeleteSelection ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
 
             if (Unsupported.IsDeveloperBuild())
             {
                 evt.menu.AppendSeparator();
-                evt.menu.AppendAction("Internal/Refresh All UI", _ => m_Store.MarkStateDirty());
+                evt.menu.AppendAction("Internal/Refresh All UI", _ => CommandDispatcher.MarkStateDirty());
 
                 if (Selection.Any())
                 {
@@ -1054,18 +1081,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     evt.menu.AppendAction("Internal/Refresh Selected Element(s)",
                         _ =>
                         {
-                            m_Store.State.MarkChanged(selectedModels);
+                            CommandDispatcher.GraphToolState.MarkChanged(selectedModels);
                         });
-
-                    if (selectedModels.OfType<INodeModel>().Any())
-                    {
-                        evt.menu.AppendAction("Internal/Redefine Node",
-                            action =>
-                            {
-                                foreach (var model in selectedModels.OfType<INodeModel>())
-                                    model.DefineNode();
-                            });
-                    }
                 }
             }
         }
@@ -1073,20 +1090,20 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public virtual void DisplaySmartSearch(Vector2 mousePosition)
         {
             var graphPosition = contentViewContainer.WorldToLocal(mousePosition);
-            var element = panel.Pick(mousePosition).GetFirstOfType<IGraphElement>();
+            var element = panel.Pick(mousePosition).GetFirstOfType<IModelUI>();
             switch (element)
             {
                 case Edge edge:
-                    SearcherService.ShowEdgeNodes(Store.State, edge.EdgeModel, mousePosition, item =>
+                    SearcherService.ShowEdgeNodes(CommandDispatcher.GraphToolState, edge.EdgeModel, mousePosition, item =>
                     {
-                        Store.Dispatch(new CreateNodeOnEdgeAction(edge.EdgeModel, graphPosition, item));
+                        CommandDispatcher.Dispatch(new CreateNodeOnEdgeCommand(edge.EdgeModel, graphPosition, item));
                     });
                     break;
 
                 default:
-                    SearcherService.ShowGraphNodes(Store.State, mousePosition, item =>
+                    SearcherService.ShowGraphNodes(CommandDispatcher.GraphToolState, mousePosition, item =>
                     {
-                        Store.Dispatch(new CreateNodeFromSearcherAction(graphPosition, item, new[] {GUID.Generate() }));
+                        CommandDispatcher.Dispatch(new CreateNodeFromSearcherCommand(graphPosition, item));
                     });
                     break;
             }
@@ -1125,15 +1142,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        void OnEnterPanel(AttachToPanelEvent e)
+        protected void OnEnterPanel(AttachToPanelEvent e)
         {
             base.OnEnterPanel();
-            panel?.visualTree.RegisterCallback<KeyDownEvent>(OnKeyDownShortcut);
+            ShortcutHandler = new ShortcutHandler(GetShortcutDictionary());
         }
 
-        void OnLeavePanel(DetachFromPanelEvent e)
+        protected void OnLeavePanel(DetachFromPanelEvent e)
         {
-            panel.visualTree.UnregisterCallback<KeyDownEvent>(OnKeyDownShortcut);
+            ShortcutHandler = null;
             base.OnLeavePanel();
         }
 
@@ -1148,60 +1165,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 FrameSelection();
         }
 
-        protected void OnKeyDownShortcut(KeyDownEvent evt)
-        {
-            if ((evt.keyCode == KeyCode.F2 && Application.platform != RuntimePlatform.OSXEditor) ||
-                ((evt.keyCode == KeyCode.Return || evt.keyCode == KeyCode.KeypadEnter) && Application.platform == RuntimePlatform.OSXEditor))
-            {
-                var renamableSelection = Selection.OfType<GraphElement>().Where(x => x.IsRenamable()).ToList();
-                var lastSelectedItem = renamableSelection.LastOrDefault();
-                if (lastSelectedItem != null)
-                {
-                    if (renamableSelection.Count > 1)
-                    {
-                        ClearSelection();
-                        AddToSelection(lastSelectedItem);
-                    }
-
-                    FrameSelectionIfNotVisible();
-                    lastSelectedItem.Rename();
-
-                    evt.StopPropagation();
-                    return;
-                }
-            }
-
-            if (!IsReframable)
-                return;
-
-            if (panel.GetCapturingElement(PointerId.mousePointerId) != null)
-                return;
-
-            switch (evt.character)
-            {
-                case 'a':
-                    FrameAll();
-                    evt.StopPropagation();
-                    break;
-
-                case 'o':
-                    FrameOrigin();
-                    evt.StopPropagation();
-                    break;
-
-                case '[':
-                    if (FramePrev())
-                        evt.StopPropagation();
-                    break;
-
-                case ']':
-                    if (FrameNext())
-                        evt.StopPropagation();
-                    break;
-            }
-        }
-
-        internal void OnValidateCommand(ValidateCommandEvent evt)
+        protected void OnValidateCommand(ValidateCommandEvent evt)
         {
             if (panel.GetCapturingElement(PointerId.mousePointerId) != null)
                 return;
@@ -1222,7 +1186,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        internal void OnExecuteCommand(ExecuteCommandEvent evt)
+        protected void OnExecuteCommand(ExecuteCommandEvent evt)
         {
             if (panel.GetCapturingElement(PointerId.mousePointerId) != null)
                 return;
@@ -1279,10 +1243,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         protected virtual void CollectCopyableGraphElements(IEnumerable<GraphElement> elements, HashSet<GraphElement> elementsToCopySet)
         {
-            CollectElements(elements, elementsToCopySet, e => e.IsCopiable());
+            var elementList = elements.ToList();
+            CollectElements(elementList, elementsToCopySet, e => e.IsCopiable());
 
             // Also collect hovering list of nodes
-            foreach (var placemat in elements.OfType<Placemat>())
+            foreach (var placemat in elementList.OfType<Placemat>())
             {
                 placemat.ActOnGraphElementsOver(
                     el =>
@@ -1296,7 +1261,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        public void CopySelectionCallback()
+        protected void CopySelectionCallback()
         {
             var elementsToCopySet = new HashSet<GraphElement>();
 
@@ -1310,18 +1275,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        public void CutSelectionCallback()
+        protected void CutSelectionCallback()
         {
             CopySelectionCallback();
             DeleteSelection("Cut");
         }
 
-        public void PasteCallback()
+        protected void PasteCallback()
         {
             UnserializeAndPasteOperation("Paste", Clipboard);
         }
 
-        public void DuplicateSelectionCallback()
+        protected void DuplicateSelectionCallback()
         {
             var elementsToCopySet = new HashSet<GraphElement>();
 
@@ -1388,7 +1353,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             if (graphElement is Badge)
             {
-                BadgesParent.Add(graphElement);
+                m_BadgesParent.Add(graphElement);
             }
             else if (!(graphElement is Placemat))
             {
@@ -1403,15 +1368,50 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 GetLayer(newLayer).Add(graphElement);
             }
 
-            // Attempt to restore selection on the new element if it
-            // was previously selected (same GUID).
-            RestorePersitentSelectionForElement(graphElement);
+            try
+            {
+                // Attempt to restore selection on the new element if it
+                // was previously selected (same GUID).
+                RestorePersistentSelectionForElement(graphElement);
 
-            graphElement.AddToGraphView(this);
+                graphElement.AddToGraphView(this);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(e);
+            }
+
+            if (graphElement.Model != null && CommandDispatcher?.GraphToolState != null &&
+                CommandDispatcher.GraphToolState.SelectionStateComponent.ShouldSelectElementUponCreation(graphElement.Model))
+            {
+                graphElement.Select(this, true);
+            }
+
+            if (graphElement is Node || graphElement is Edge)
+                graphElement.RegisterCallback<MouseOverEvent>(OnMouseOver);
+
+            if (graphElement.Model is IEdgePortalModel portalModel)
+            {
+                AddPortalDependency(portalModel);
+            }
         }
 
         public virtual void RemoveElement(GraphElement graphElement, bool unselectBeforeRemove = false)
         {
+            var graphElementModel = graphElement.Model;
+            switch (graphElementModel)
+            {
+                case IEdgeModel e:
+                    RemovePositionDependency(e);
+                    break;
+                case IEdgePortalModel portalModel:
+                    RemovePortalDependency(portalModel);
+                    break;
+            }
+
+            if (graphElement is Node || graphElement is Edge)
+                graphElement.UnregisterCallback<MouseOverEvent>(OnMouseOver);
+
             if (unselectBeforeRemove)
             {
                 graphElement.Unselect(this);
@@ -1419,7 +1419,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             if (graphElement is Placemat placemat)
             {
-                m_PlacematContainer.RemovePlacemat(placemat);
+                PlacematContainer.RemovePlacemat(placemat);
             }
             else
             {
@@ -1434,7 +1434,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             IGraphElementModel[] elementsToRemove = Selection.Cast<GraphElement>()
                 .Select(x => x.Model)
                 .Where(m => m != null).ToArray(); // 'this' has no model
-            m_Store.Dispatch(new DeleteElementsAction(elementsToRemove) { UndoString = operationName });
+            CommandDispatcher.Dispatch(new DeleteElementsCommand(elementsToRemove) { UndoString = operationName });
         }
 
         public void FrameAll()
@@ -1452,24 +1452,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             Frame(FrameType.Origin);
         }
 
-        public bool FramePrev()
+        public void FramePrev()
         {
-            if (contentViewContainer.childCount == 0)
-                return false;
-
             List<GraphElement> childrenList = GraphElements.ToList().Where(e => e.IsSelectable() && !(e is Edge)).OrderByDescending(e => e.controlid).ToList();
             FramePrevNext(childrenList);
-            return true;
         }
 
-        public bool FrameNext()
+        public void FrameNext()
         {
-            if (contentViewContainer.childCount == 0)
-                return false;
-
             List<GraphElement> childrenList = GraphElements.ToList().Where(e => e.IsSelectable() && !(e is Edge)).OrderBy(e => e.controlid).ToList();
             FramePrevNext(childrenList);
-            return true;
         }
 
         public void FramePrev(Func<GraphElement, bool> predicate)
@@ -1486,9 +1478,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             FramePrevNext(GraphElements.ToList().Where(predicate).ToList());
         }
 
-        // TODO: Do we limit to GraphElements or can we tab through ISelectable's?
         void FramePrevNext(List<GraphElement> childrenList)
         {
+            if (childrenList.Count == 0)
+                return;
+
             GraphElement graphElement = null;
 
             // Start from current selection, if any
@@ -1547,21 +1541,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 CalculateFrameTransform(rectToFit, layout, k_FrameBorder, out frameTranslation, out frameScaling);
             } // else keep going if (frameType == FrameType.Origin)
 
-            if (m_FrameAnimate)
-            {
-                // TODO Animate framing
-                // RMAnimation animation = new RMAnimation();
-                // parent.Animate(parent)
-                //       .Lerp(new string[] {"m_Scale", "m_Translation"},
-                //             new object[] {parent.scale, parent.translation},
-                //             new object[] {frameScaling, frameTranslation}, 0.08f);
-            }
-            else
-            {
-                Matrix4x4.TRS(frameTranslation, Quaternion.identity, frameScaling);
-
-                UpdateViewTransform(frameTranslation, frameScaling);
-            }
+            Matrix4x4.TRS(frameTranslation, Quaternion.identity, frameScaling);
+            UpdateViewTransform(frameTranslation, frameScaling);
 
             contentViewContainer.MarkDirtyRepaint();
 
@@ -1613,9 +1594,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             float zoomLevel = Math.Min(identity.width / rectToFit.width, identity.height / rectToFit.height);
 
             // clamp
-            zoomLevel = Mathf.Clamp(zoomLevel, MinScale, Math.Min(MaxScale, m_MaxScaleOnFrame));
+            zoomLevel = Mathf.Clamp(zoomLevel, m_MinScale, Math.Min(m_MaxScale, m_MaxScaleOnFrame));
 
-            var transform = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(zoomLevel, zoomLevel, 1.0f));
+            var trs = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(zoomLevel, zoomLevel, 1.0f));
 
             var edge = new Vector2(clientRect.width, clientRect.height);
             var origin = new Vector2(0, 0);
@@ -1626,9 +1607,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 max = edge
             };
 
-            var parentScale = new Vector3(transform.GetColumn(0).magnitude,
-                transform.GetColumn(1).magnitude,
-                transform.GetColumn(2).magnitude);
+            var parentScale = new Vector3(trs.GetColumn(0).magnitude,
+                trs.GetColumn(1).magnitude,
+                trs.GetColumn(2).magnitude);
             Vector2 offset = r.center - (rectToFit.center * parentScale.x);
 
             // Update output values before leaving
@@ -1638,14 +1619,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             GUI.matrix = m;
         }
 
-        protected virtual PlacematContainer CreatePlacematContainer()
+        /// <summary>
+        /// Pan the graph view to get the node referred in parameter in the center of the display.
+        /// </summary>
+        /// <param name="nodeGuid">The GUID of the node to pan to.</param>
+        public void PanToNode(SerializableGUID nodeGuid)
         {
-            return new PlacematContainer(this);
-        }
-
-        public void PanToNode(GUID nodeGuid)
-        {
-            var graphModel = Store.State.GraphModel;
+            var graphModel = CommandDispatcher.GraphToolState.GraphModel;
 
             if (!graphModel.NodesByGuid.TryGetValue(nodeGuid, out var nodeModel))
                 return;
@@ -1658,40 +1638,508 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             FrameSelection();
         }
 
-        public virtual IEnumerable<(IVariableDeclarationModel, SerializableGUID, Vector2)> ExtractVariablesFromDroppedElements(
-            IReadOnlyCollection<GraphElement> dropElements, Vector2 initialPosition)
-        {
-            return Enumerable.Empty<(IVariableDeclarationModel, SerializableGUID, Vector2)>();
-        }
-
-        public void AddPositionDependency(IEdgeModel model)
+        protected void AddPositionDependency(IEdgeModel model)
         {
             PositionDependenciesManager.AddPositionDependency(model);
         }
 
-        public void RemovePositionDependency(IEdgeModel edgeModel)
+        protected void RemovePositionDependency(IEdgeModel edgeModel)
         {
             PositionDependenciesManager.Remove(edgeModel.FromNodeGuid, edgeModel.ToNodeGuid);
             PositionDependenciesManager.LogDependencies();
         }
 
-        public void AddPortalDependency(IEdgePortalModel model)
+        protected void AddPortalDependency(IEdgePortalModel model)
         {
             PositionDependenciesManager.AddPortalDependency(model);
         }
 
-        public void RemovePortalDependency(IEdgePortalModel model)
+        protected void RemovePortalDependency(IEdgePortalModel model)
         {
             PositionDependenciesManager.RemovePortalDependency(model);
             PositionDependenciesManager.LogDependencies();
         }
 
-        public EventPropagation AlignSelection(bool follow)
+        public virtual void StopSelectionDragger()
         {
-            Store.Dispatch(new AlignNodesAction(this, follow));
-            return EventPropagation.Stop;
+            // cancellation is handled in the MoveMove callback
+            m_SelectionDraggerWasActive = false;
         }
 
-        public virtual void StopSelectionDragger() {}
+        protected virtual Dictionary<Event, ShortcutDelegate> GetShortcutDictionary()
+        {
+            if (CommandDispatcher == null)
+            {
+                return new Dictionary<Event, ShortcutDelegate>();
+            }
+
+            var shortcuts = new Dictionary<Event, ShortcutDelegate>
+            {
+                {
+                    Event.KeyboardEvent("F5"), _ =>
+                    {
+                        CommandDispatcher.MarkStateDirty();
+                        return ShortcutHandled.Handled;
+                    }
+                },
+                {
+                    Event.KeyboardEvent("backspace"), _ =>
+                    {
+                        var selectedNodes = Selection.OfType<IModelUI>()
+                            .Select(x => x.Model).OfType<IInOutPortsNode>().ToArray();
+
+                        if (!selectedNodes.Any())
+                            return ShortcutHandled.NotHandled;
+
+                        var connectedNodes = selectedNodes.Where(x => x.InputsById.Values
+                            .Any(y => y.IsConnected()) && x.OutputsById.Values.Any(y => y.IsConnected()))
+                            .ToArray();
+
+                        var canSelectionBeBypassed = connectedNodes.Any();
+                        if (canSelectionBeBypassed)
+                            CommandDispatcher.Dispatch(new BypassNodesCommand(connectedNodes, selectedNodes.ToArray<INodeModel>()));
+                        else
+                            CommandDispatcher.Dispatch(new DeleteElementsCommand(selectedNodes.Cast<IGraphElementModel>().ToArray()));
+
+                        return ShortcutHandled.Handled;
+                    }
+                },
+                {
+                    Event.KeyboardEvent("space"), e =>
+                    {
+                        DisplaySmartSearch(e.originalMousePosition);
+                        return ShortcutHandled.Handled;
+                    }
+                },
+                {
+                    Event.KeyboardEvent("C"), _ =>
+                    {
+                        var selectedModels = Selection
+                            .OfType<IModelUI>()
+                            .Select(x => x.Model)
+                            .ToArray();
+
+                        // Convert variable -> constant if selection contains at least one item that satisfies conditions
+                        var variableModels = selectedModels.OfType<IVariableNodeModel>().ToArray();
+                        if (variableModels.Any())
+                        {
+                            CommandDispatcher.Dispatch(new ConvertVariableNodesToConstantNodesCommand(variableModels));
+                        }
+                        else
+                        {
+                            var constantModels = selectedModels.OfType<IConstantNodeModel>().ToArray();
+                            if (constantModels.Any())
+                                CommandDispatcher.Dispatch(new ConvertConstantNodesToVariableNodesCommand(constantModels));
+                        }
+
+                        return ShortcutHandled.Handled;
+                    }
+                },
+                {
+                    Event.KeyboardEvent("Q"), _ =>
+                    {
+                        CommandDispatcher.Dispatch(new AlignNodesCommand(this, false));
+                        return ShortcutHandled.Handled;
+                    }
+                },
+                {
+                    Event.KeyboardEvent("#Q"), _ =>
+                    {
+                        CommandDispatcher.Dispatch(new AlignNodesCommand(this, true));
+                        return ShortcutHandled.Handled;
+                    }
+                },
+                {
+                    Event.KeyboardEvent("`"), e =>
+                    {
+                        var atPosition = new Rect(this.ChangeCoordinatesTo(contentViewContainer, this.WorldToLocal(e.originalMousePosition)), StickyNote.defaultSize);
+                        CommandDispatcher.Dispatch(new CreateStickyNoteCommand(atPosition));
+                        return ShortcutHandled.Handled;
+                    }
+                },
+                {
+                    Event.KeyboardEvent("a"), e =>
+                    {
+                        if (panel.GetCapturingElement(PointerId.mousePointerId) == null)
+                        {
+                            FrameAll();
+                            return ShortcutHandled.Handled;
+                        }
+
+                        return ShortcutHandled.NotHandled;
+                    }
+                },
+                {
+                    Event.KeyboardEvent("o"), e =>
+                    {
+                        if (panel.GetCapturingElement(PointerId.mousePointerId) == null)
+                        {
+                            FrameOrigin();
+                            return ShortcutHandled.Handled;
+                        }
+
+                        return ShortcutHandled.NotHandled;
+                    }
+                },
+                {
+                    Event.KeyboardEvent("["), e =>
+                    {
+                        if (panel.GetCapturingElement(PointerId.mousePointerId) == null)
+                        {
+                            FramePrev();
+                            return ShortcutHandled.Handled;
+                        }
+
+                        return ShortcutHandled.NotHandled;
+                    }
+                },
+                {
+                    Event.KeyboardEvent("]"), e =>
+                    {
+                        if (panel.GetCapturingElement(PointerId.mousePointerId) == null)
+                        {
+                            FrameNext();
+                            return ShortcutHandled.Handled;
+                        }
+
+                        return ShortcutHandled.NotHandled;
+                    }
+                },
+            };
+
+            if (Application.platform != RuntimePlatform.OSXEditor)
+            {
+                shortcuts.Add(Event.KeyboardEvent("F2"), BeginEditSelection);
+            }
+            else
+            {
+                shortcuts.Add(Event.KeyboardEvent("[enter]"), BeginEditSelection);
+                shortcuts.Add(Event.KeyboardEvent("return"), BeginEditSelection);
+            }
+
+            return shortcuts;
+        }
+
+        ShortcutHandled BeginEditSelection(KeyDownEvent e)
+        {
+            var renamableSelection = Selection.OfType<GraphElement>().Where(x => x.IsRenamable()).ToList();
+            var lastSelectedItem = renamableSelection.LastOrDefault();
+            if (lastSelectedItem != null)
+            {
+                if (renamableSelection.Count > 1)
+                {
+                    ClearSelection();
+                    AddToSelection(lastSelectedItem);
+                }
+
+                FrameSelectionIfNotVisible();
+                lastSelectedItem.Rename();
+
+                return ShortcutHandled.Handled;
+            }
+
+            return ShortcutHandled.NotHandled;
+        }
+
+        protected void OnCustomStyleResolved(CustomStyleResolvedEvent evt)
+        {
+            if (Window != null)
+            {
+                // Set the window min size from the graphView
+                Window.AdjustWindowMinSize(new Vector2(resolvedStyle.minWidth.value, resolvedStyle.minHeight.value));
+            }
+        }
+
+        protected void OnMouseOver(MouseOverEvent evt)
+        {
+            // Disregard the event if we're moving the mouse over the SmartSearch window.
+            if (Children().Any(x =>
+            {
+                var fullName = x.GetType().FullName;
+                return fullName?.Contains("SmartSearch") == true;
+            }))
+            {
+                return;
+            }
+
+            evt.StopPropagation();
+        }
+
+        protected void OnDoubleClick()
+        {
+            // Display graph in inspector when clicking on background
+            // TODO: displayed on double click ATM as this method overrides the Token.Select() which does not stop propagation
+            UnityEditor.Selection.activeObject = CommandDispatcher?.GraphToolState?.AssetModel as Object;
+        }
+
+        protected void OnMouseMove(MouseMoveEvent evt)
+        {
+            if (m_SelectionDraggerWasActive && !SelectionDragger.IsActive) // cancelled
+            {
+                m_SelectionDraggerWasActive = false;
+                PositionDependenciesManager.CancelMove();
+            }
+            else if (!m_SelectionDraggerWasActive && SelectionDragger.IsActive) // started
+            {
+                m_SelectionDraggerWasActive = true;
+
+                GraphElement elem = (GraphElement)Selection.FirstOrDefault(x => x is IModelUI hasModel && hasModel.Model is INodeModel);
+                if (elem == null)
+                    return;
+
+                INodeModel elemModel = (INodeModel)elem.Model;
+                Vector2 elemPos = elemModel.Position;
+                Vector2 startPos = contentViewContainer.ChangeCoordinatesTo(elem.hierarchy.parent, elemPos);
+
+                bool requireShiftToMoveDependencies = !(elemModel.GraphModel?.Stencil?.MoveNodeDependenciesByDefault).GetValueOrDefault();
+                bool hasShift = evt.modifiers.HasFlag(EventModifiers.Shift);
+                bool moveNodeDependencies = requireShiftToMoveDependencies == hasShift;
+
+                if (moveNodeDependencies)
+                    PositionDependenciesManager.StartNotifyMove(Selection, startPos);
+
+                // schedule execute because the mouse won't be moving when the graph view is panning
+                schedule.Execute(() =>
+                {
+                    if (SelectionDragger.IsActive && moveNodeDependencies) // processed
+                    {
+                        Vector2 pos = contentViewContainer.ChangeCoordinatesTo(elem.hierarchy.parent, elem.GetPosition().position);
+                        PositionDependenciesManager.ProcessMovedNodes(pos);
+                    }
+                }).Until(() => !m_SelectionDraggerWasActive);
+            }
+
+            m_LastMousePosition = this.ChangeCoordinatesTo(contentViewContainer, evt.localMousePosition);
+        }
+
+        public virtual void OnDragEnter(DragEnterEvent evt)
+        {
+            var stencil = CommandDispatcher.GraphToolState.GraphModel.Stencil;
+            var e = GetExternalDragNDropHandler(evt);
+            if (e != null)
+            {
+                m_CurrentDragAndDropHandler = e;
+                e.OnDragEnter(evt);
+            }
+        }
+
+        public virtual void OnDragLeave(DragLeaveEvent evt)
+        {
+            m_CurrentDragAndDropHandler?.OnDragLeave(evt);
+            m_CurrentDragAndDropHandler = null;
+        }
+
+        public virtual void OnDragUpdated(DragUpdatedEvent e)
+        {
+            m_CurrentDragAndDropHandler?.OnDragUpdated(e);
+            e.StopPropagation();
+        }
+
+        public virtual void OnDragPerform(DragPerformEvent e)
+        {
+            m_CurrentDragAndDropHandler?.OnDragPerform(e);
+            m_CurrentDragAndDropHandler = null;
+            e.StopPropagation();
+        }
+
+        public virtual void OnDragExited(DragExitedEvent e)
+        {
+            m_CurrentDragAndDropHandler?.OnDragExited(e);
+            m_CurrentDragAndDropHandler = null;
+        }
+
+        protected static string OnSerializeGraphElements(IEnumerable<GraphElement> elements)
+        {
+            CopyPasteData.s_LastCopiedData = CopyPasteData.GatherCopiedElementsData(elements
+                .Select(x => x.Model)
+                .ToList());
+            return CopyPasteData.s_LastCopiedData.IsEmpty() ? string.Empty : "data";
+        }
+
+        void UnserializeAndPaste(string operationName, string data)
+        {
+            if (CopyPasteData.s_LastCopiedData == null || CopyPasteData.s_LastCopiedData.IsEmpty())//string.IsNullOrEmpty(data))
+                return;
+
+
+            var delta = m_LastMousePosition - CopyPasteData.s_LastCopiedData.topLeftNodePosition;
+
+            TargetInsertionInfo info;
+            info.OperationName = operationName;
+            info.Delta = delta;
+
+            CommandDispatcher.Dispatch(new PasteSerializedDataCommand(info, CopyPasteData.s_LastCopiedData));
+        }
+
+        public virtual void UpdateUI(UIRebuildType rebuildType)
+        {
+            if (CommandDispatcher?.GraphToolState == null)
+                return;
+
+            if (rebuildType == UIRebuildType.Complete || CommandDispatcher.GraphToolState.NewModels.Any())
+            {
+                RebuildAll(CommandDispatcher.GraphToolState);
+
+                // PF FIXME: This should not be necessary
+                this.HighlightGraphElements();
+            }
+            else if (rebuildType == UIRebuildType.Partial)
+            {
+                foreach (var model in CommandDispatcher.GraphToolState.DeletedModels)
+                {
+                    foreach (var ui in model.GetAllUIs(this).ToList())
+                    {
+                        RemoveElement(ui as GraphElement, true);
+                    }
+
+                    foreach (var ui in model.GetDependencies().ToList())
+                    {
+                        ui.UpdateFromModel();
+                    }
+                }
+
+                foreach (var model in CommandDispatcher.GraphToolState.ChangedModels)
+                {
+                    foreach (var ui in model.GetAllUIs(this).ToList())
+                    {
+                        ui.UpdateFromModel();
+                    }
+
+                    foreach (var ui in model.GetDependencies().ToList())
+                    {
+                        ui.UpdateFromModel();
+                    }
+                }
+
+                // PF FIXME: This should not be necessary
+                this.HighlightGraphElements();
+            }
+
+            // PF FIXME: node state (enable/disabled, used/unused) should be part of the State.
+            if (CommandDispatcher.GraphToolState.Preferences.GetBool(BoolPref.ShowUnusedNodes))
+                PositionDependenciesManager.UpdateNodeState();
+
+            if (CommandDispatcher.GraphToolState.ModelsToAutoAlign.Any())
+            {
+                // Auto placement relies on UI layout to compute node positions, so we need to
+                // schedule it to execute after the next layout pass.
+                // Furthermore, it will modify the model position, hence it must be
+                // done inside a Store.BeginStateChange block.
+                var elementsToAlign = CommandDispatcher.GraphToolState.ModelsToAutoAlign.ToList();
+                schedule.Execute(() =>
+                {
+                    CommandDispatcher.BeginStateChange();
+                    PositionDependenciesManager.AlignNodes(true, elementsToAlign);
+                    CommandDispatcher.EndStateChange();
+                });
+            }
+        }
+
+        void RebuildAll(GraphToolState state)
+        {
+            ClearGraph();
+
+            var graphModel = state.GraphModel;
+            if (graphModel == null)
+                return;
+
+            PlacematContainer.RemoveAllPlacemats();
+
+            foreach (var nodeModel in graphModel.NodeModels)
+            {
+                var node = GraphElementFactory.CreateUI<GraphElement>(this, CommandDispatcher, nodeModel);
+                if (node != null)
+                    AddElement(node);
+            }
+
+            foreach (var stickyNoteModel in graphModel.StickyNoteModels)
+            {
+                var stickyNote = GraphElementFactory.CreateUI<GraphElement>(this, CommandDispatcher, stickyNoteModel);
+                if (stickyNote != null)
+                    AddElement(stickyNote);
+            }
+
+            int index = 0;
+            foreach (var edge in graphModel.EdgeModels)
+            {
+                if (!CreateEdgeUI(edge))
+                {
+                    Debug.LogWarning($"Edge {index} cannot be restored: {edge}");
+                }
+                index++;
+            }
+
+            foreach (var placematModel in state.GraphModel.PlacematModels.OrderBy(e => e.ZOrder))
+            {
+                var placemat = GraphElementFactory.CreateUI<GraphElement>(this, CommandDispatcher, placematModel);
+                if (placemat != null)
+                    AddElement(placemat);
+            }
+
+            contentViewContainer.Add(m_BadgesParent);
+
+            m_BadgesParent.Clear();
+            foreach (var badgeModel in graphModel.BadgeModels)
+            {
+                if (badgeModel.ParentModel == null)
+                    continue;
+
+                var badge = GraphElementFactory.CreateUI<Badge>(this, CommandDispatcher, badgeModel);
+                if (badge != null)
+                {
+                    AddElement(badge);
+                }
+            }
+
+            // We need to do this after all graph elements are created.
+            foreach (var placemat in PlacematContainer.Placemats)
+            {
+                placemat.UpdateFromModel();
+            }
+
+            m_Blackboard?.SetupBuildAndUpdate(state.BlackboardGraphModel, CommandDispatcher, this);
+        }
+
+        bool CreateEdgeUI(IEdgeModel edge)
+        {
+            if (edge.ToPort != null && edge.FromPort != null)
+            {
+                AddEdgeUI(edge);
+                return true;
+            }
+
+            if (edge is IEdgeModel e)
+            {
+                var(inputResult, outputResult) = e.TryMigratePorts(out var inputNode, out var outputNode);
+
+                if (inputResult == PortMigrationResult.PlaceholderPortAdded && inputNode != null)
+                {
+                    var inputNodeUi = inputNode.GetUI(this);
+                    inputNodeUi?.UpdateFromModel();
+                }
+
+                if (outputResult == PortMigrationResult.PlaceholderPortAdded && outputNode != null)
+                {
+                    var outputNodeUi = outputNode.GetUI(this);
+                    outputNodeUi?.UpdateFromModel();
+                }
+
+                if (inputResult != PortMigrationResult.PlaceholderPortFailure &&
+                    outputResult != PortMigrationResult.PlaceholderPortFailure)
+                {
+                    AddEdgeUI(edge);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        void AddEdgeUI(IEdgeModel edgeModel)
+        {
+            var edge = GraphElementFactory.CreateUI<GraphElement>(this, CommandDispatcher, edgeModel);
+            AddElement(edge);
+            AddPositionDependency(edgeModel);
+        }
     }
 }

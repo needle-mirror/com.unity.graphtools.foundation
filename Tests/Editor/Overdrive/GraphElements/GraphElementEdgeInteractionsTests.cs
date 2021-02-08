@@ -24,15 +24,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         {
             base.SetUp();
 
-            firstNode = CreateNode("First Node", new Vector2(0, 0));
-            firstNode.OuputCount = 2;
-            firstNode.DefineNode();
+            firstNode = CreateNode("First Node", new Vector2(0, 0), outCount: 2);
             startPort = firstNode.OutputsByDisplayOrder[0];
             startPortTwo = firstNode.OutputsByDisplayOrder[1];
 
-            secondNode = CreateNode("Second Node", new Vector2(400, 0));
-            secondNode.InputCount = 2;
-            secondNode.DefineNode();
+            secondNode = CreateNode("Second Node", new Vector2(400, 0), inCount: 2);
             endPort = secondNode.InputsByDisplayOrder[0];
             endPortTwo = secondNode.InputsByDisplayOrder[1];
         }
@@ -48,7 +44,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             var vInPort = verticalNode.InputsByDisplayOrder[0];
             var vOutPort = verticalNode.OutputsByDisplayOrder[0];
 
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             var actions = ConnectPorts(hOutPort, vInPort);
@@ -97,7 +93,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator EdgeConnectOnSinglePortOutputToInputWorks()
         {
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             // We start without any connection
@@ -130,7 +126,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator EdgeConnectOnSinglePortInputToOutputWorks()
         {
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             // We start without any connection
@@ -162,7 +158,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             bool searcherInvoked = false;
             (GraphModel.Stencil as TestStencil)?.SetOnGetSearcherDatabaseProviderCallback(() => searcherInvoked = true);
 
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             var actions = ConnectPorts(startPort, endPort);
@@ -212,7 +208,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             bool searcherInvoked = false;
             (GraphModel.Stencil as TestStencil)?.SetOnGetSearcherDatabaseProviderCallback(() => searcherInvoked = true);
 
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             var startPortUI = startPort.GetUI<Port>(graphView);
@@ -257,7 +253,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator EdgeReconnectInputWorks()
         {
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             var endPortUI = endPort.GetUI<Port>(graphView);
@@ -312,7 +308,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator EdgeReconnectOutputWorks()
         {
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             var startPortUI = startPort.GetUI<Port>(graphView);
@@ -360,7 +356,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator CanCancelEdgeManipulationOnInput()
         {
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             var startPortUI = startPort.GetUI<Port>(graphView);
@@ -421,7 +417,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator CanCancelEdgeManipulationOnOutput()
         {
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             var startPortUI = startPort.GetUI<Port>(graphView);
@@ -482,7 +478,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator EdgeConnectionUnderThresholdDistanceNotEffective()
         {
-            Store.State.RequestUIRebuild();
+            CommandDispatcher.GraphToolState.RequestUIRebuild();
             yield return null;
 
             Port startPortUI = startPort.GetUI<Port>(graphView);

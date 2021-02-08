@@ -28,6 +28,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public static bool IsOrphan(this SpawnFlags f) => (f & SpawnFlags.Orphan) != 0;
     }
 
+    /// <summary>
+    /// Interface for a model that represents a graph.
+    /// </summary>
     public interface IGraphModel : IDisposable
     {
         Stencil Stencil { get; }
@@ -49,9 +52,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         IReadOnlyList<IVariableDeclarationModel> VariableDeclarations { get; }
         IReadOnlyList<IDeclarationModel> PortalDeclarations { get; }
 
-
         IVariableDeclarationModel CreateGraphVariableDeclaration(TypeHandle variableDataType,
-            string variableName, ModifierFlags modifierFlags, bool isExposed, IConstant initializationModel = null, GUID? guid = null);
+            string variableName, ModifierFlags modifierFlags, bool isExposed, IConstant initializationModel = null, SerializableGUID guid = default);
         IReadOnlyCollection<IGraphElementModel> DeleteVariableDeclarations(IReadOnlyCollection<IVariableDeclarationModel> variableModels, bool deleteUsages);
         IVariableDeclarationModel DuplicateGraphVariableDeclaration(IVariableDeclarationModel sourceModel);
 
@@ -59,16 +61,47 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         IEdgePortalModel CreateOppositePortal(IEdgePortalModel edgePortalModel, Vector2 position, SpawnFlags spawnFlags = SpawnFlags.Default);
         IEdgePortalEntryModel CreateEntryPortalFromEdge(IEdgeModel edgeModel);
         IEdgePortalExitModel CreateExitPortalFromEdge(IEdgeModel edgeModel);
+
+        /// <summary>
+        /// Creates a new variable node in the graph.
+        /// </summary>
+        /// <param name="declarationModel">The declaration for the variable.</param>
+        /// <param name="position">The position of the node to create.</param>
+        /// <param name="guid">The SerializableGUID to assign to the newly created item.</param>
+        /// <param name="spawnFlags">The flags specifying how the node is to be spawned.</param>
+        /// <returns>The newly created variable node.</returns>
         IVariableNodeModel CreateVariableNode(IVariableDeclarationModel declarationModel, Vector2 position,
-            GUID? guid = null, SpawnFlags spawnFlags = SpawnFlags.Default);
+            SerializableGUID guid = default, SpawnFlags spawnFlags = SpawnFlags.Default);
+
+        /// <summary>
+        /// Creates a new constant node in the graph.
+        /// </summary>
+        /// <param name="constantTypeHandle">The type of the new constant node to create.</param>
+        /// <param name="constantName">The name of the constant node to create.</param>
+        /// <param name="position">The position of the node to create.</param>
+        /// <param name="guid">The SerializableGUID to assign to the newly created item.</param>
+        /// <param name="preDefine">A method to be called before the constant node is created.</param>
+        /// <param name="spawnFlags">The flags specifying how the node is to be spawned.</param>
+        /// <returns>The newly created constant node.</returns>
         IConstantNodeModel CreateConstantNode(TypeHandle constantTypeHandle, string constantName, Vector2 position,
-            GUID? guid = null, Action<IConstantNodeModel> preDefine = null, SpawnFlags spawnFlags = SpawnFlags.Default);
+            SerializableGUID guid = default, Action<IConstantNodeModel> preDefine = null, SpawnFlags spawnFlags = SpawnFlags.Default);
+
+        /// <summary>
+        /// Creates a new node in the graph.
+        /// </summary>
+        /// <param name="nodeTypeToCreate">The type of the new node to create.</param>
+        /// <param name="nodeName">The name of the node to create.</param>
+        /// <param name="position">The position of the node to create.</param>
+        /// <param name="guid">The SerializableGUID to assign to the newly created item.</param>
+        /// <param name="preDefine">A method to be called before the node is created.</param>
+        /// <param name="spawnFlags">The flags specifying how the node is to be spawned.</param>
+        /// <returns>The newly created node.</returns>
         INodeModel CreateNode(Type nodeTypeToCreate, string nodeName, Vector2 position,
-            GUID? guid = null, Action<INodeModel> preDefine = null, SpawnFlags spawnFlags = SpawnFlags.Default);
+            SerializableGUID guid = default, Action<INodeModel> preDefine = null, SpawnFlags spawnFlags = SpawnFlags.Default);
         INodeModel DuplicateNode(INodeModel sourceNode, Vector2 delta);
         IReadOnlyCollection<IGraphElementModel> DeleteNodes(IReadOnlyCollection<INodeModel> nodeModels, bool deleteConnections);
         // TODO JOCE: Would be worth attempting to extract this from VS.
-        void CreateItemizedNode(State state, int nodeOffset, ref IPortModel outputPortModel);
+        void CreateItemizedNode(GraphToolState graphToolState, int nodeOffset, ref IPortModel outputPortModel);
 
         IEdgeModel CreateEdge(IPortModel toPort, IPortModel fromPort);
         IEdgeModel DuplicateEdge(IEdgeModel sourceEdge, INodeModel targetInputNode, INodeModel targetOutputNode);
@@ -88,8 +121,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         bool CheckIntegrity(Verbosity errors);
 
+        /// <summary>
+        /// A dictionary that associates node models present in the graph to their GUIDs.
+        /// </summary>
         // PF FIXME: this looks like to be a hack support for PanToNode.
-        IReadOnlyDictionary<GUID, INodeModel> NodesByGuid { get; }
+        IReadOnlyDictionary<SerializableGUID, INodeModel> NodesByGuid { get; }
 
         void UndoRedoPerformed();
         void CloneGraph(IGraphModel sourceGraphModel);

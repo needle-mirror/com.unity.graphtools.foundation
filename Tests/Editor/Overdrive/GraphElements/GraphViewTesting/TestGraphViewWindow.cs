@@ -1,17 +1,10 @@
-using System.Collections.Generic;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    class TestBlankPage : BlankPage
-    {
-        public TestBlankPage(Store store)
-            : base(store) {}
-    }
-
-    class TestGraphViewWindow : GtfoWindow
+    class TestGraphViewWindow : GraphViewEditorWindow
     {
         public IGraphModel GraphModel { get; private set; }
 
@@ -21,40 +14,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             WithSidePanel = false;
         }
 
-        protected override bool CanHandleAssetType(GraphAssetModel asset)
-        {
-            return true;
-        }
-
-        protected override Overdrive.State CreateInitialState()
+        protected override Overdrive.GraphToolState CreateInitialState()
         {
             GraphModel = new GraphModel {StencilType = typeof(TestStencil)};
-            return new State(GUID, GraphModel);
+            return new GraphToolState(GUID, GraphModel);
         }
 
-        protected override BlankPage CreateBlankPage()
+        protected override GraphView CreateGraphView()
         {
-            return new TestBlankPage(Store);
-        }
-
-        protected override MainToolbar CreateMainToolbar()
-        {
-            return null;
-        }
-
-        protected override ErrorToolbar CreateErrorToolbar()
-        {
-            return null;
-        }
-
-        protected override GtfoGraphView CreateGraphView()
-        {
-            return new TestGraphView(this, Store);
-        }
-
-        protected override Dictionary<Event, ShortcutDelegate> GetShortcutDictionary()
-        {
-            return new Dictionary<Event, ShortcutDelegate>();
+            return new TestGraphView(this, CommandDispatcher);
         }
     }
 }

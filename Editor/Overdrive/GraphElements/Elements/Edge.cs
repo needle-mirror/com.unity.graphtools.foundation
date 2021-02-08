@@ -172,7 +172,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public override void OnSelected()
         {
-            // PF FIXME: model modification should occur as part of a SelectElementAction.
+            // PF FIXME: model modification should occur as part of a SelectElementCommand.
             // Then the UpdateFromModel at the end would not be necessary.
 
             base.OnSelected();
@@ -191,7 +191,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public override void OnUnselected()
         {
-            // PF FIXME: model modification should occur as part of a SelectElementAction
+            // PF FIXME: model modification should occur as part of a SelectElementCommand
             // Then the UpdateFromModel at the end would not be necessary.
 
             base.OnUnselected();
@@ -230,13 +230,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 {
                     evt.menu.AppendAction("Add Control Point", menuAction =>
                     {
-                        Store.Dispatch(new AddControlPointOnEdgeAction(editableEdge, controlPointIndex, p));
+                        CommandDispatcher.Dispatch(new AddControlPointOnEdgeCommand(editableEdge, controlPointIndex, p));
                     });
                 }
 
                 evt.menu.AppendAction("Stop Editing Edge", menuAction =>
                 {
-                    Store.Dispatch(new SetEdgeEditModeAction(editableEdge, false));
+                    CommandDispatcher.Dispatch(new SetEdgeEditModeCommand(editableEdge, false));
                 });
             }
             else
@@ -254,7 +254,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
                     evt.menu.AppendAction("Edit Edge", menuAction =>
                     {
-                        Store.Dispatch(new SetEdgeEditModeAction(editableEdge, true));
+                        CommandDispatcher.Dispatch(new SetEdgeEditModeCommand(editableEdge, true));
                     });
                 }
 
@@ -268,21 +268,21 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
                     var index = siblingEdges.IndexOf(edge.EdgeModel);
                     evt.menu.AppendAction("Reorder Edge/Move First",
-                        a => ReorderEdges(ReorderEdgeAction.ReorderType.MoveFirst),
+                        a => ReorderEdges(ReorderEdgeCommand.ReorderType.MoveFirst),
                         siblingEdgesCount > 1 && index > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
                     evt.menu.AppendAction("Reorder Edge/Move Up",
-                        a => ReorderEdges(ReorderEdgeAction.ReorderType.MoveUp),
+                        a => ReorderEdges(ReorderEdgeCommand.ReorderType.MoveUp),
                         siblingEdgesCount > 1 && index > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
                     evt.menu.AppendAction("Reorder Edge/Move Down",
-                        a => ReorderEdges(ReorderEdgeAction.ReorderType.MoveDown),
+                        a => ReorderEdges(ReorderEdgeCommand.ReorderType.MoveDown),
                         siblingEdgesCount > 1 && index < siblingEdgesCount - 1 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
                     evt.menu.AppendAction("Reorder Edge/Move Last",
-                        a => ReorderEdges(ReorderEdgeAction.ReorderType.MoveLast),
+                        a => ReorderEdges(ReorderEdgeCommand.ReorderType.MoveLast),
                         siblingEdgesCount > 1 && index < siblingEdgesCount - 1 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
 
-                    void ReorderEdges(ReorderEdgeAction.ReorderType reorderType)
+                    void ReorderEdges(ReorderEdgeCommand.ReorderType reorderType)
                     {
-                        Store.Dispatch(new ReorderEdgeAction(edge.EdgeModel, reorderType));
+                        CommandDispatcher.Dispatch(new ReorderEdgeCommand(edge.EdgeModel, reorderType));
                     }
                 }
             }

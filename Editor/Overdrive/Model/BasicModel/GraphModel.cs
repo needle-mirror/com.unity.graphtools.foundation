@@ -8,6 +8,9 @@ using Object = UnityEngine.Object;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 {
+    /// <summary>
+    /// A model that represents a graph.
+    /// </summary>
     [Serializable]
     public abstract class GraphModel : IGraphModel, ISerializationCallbackReceiver
     {
@@ -49,7 +52,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         protected List<IDeclarationModel> m_GraphPortalModels;
 
         [SerializeField]
-        private string m_StencilTypeName; // serialized as string, resolved as type by ISerializationCallbackReceiver
+        string m_StencilTypeName; // serialized as string, resolved as type by ISerializationCallbackReceiver
 
         public virtual Type DefaultStencilType => null;
 
@@ -79,7 +82,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         [SerializeField, FormerlySerializedAs("name")]
         string m_Name;
 
-        Dictionary<GUID, INodeModel> m_NodesByGuid;
+        Dictionary<SerializableGUID, INodeModel> m_NodesByGuid;
 
         public IGraphAssetModel AssetModel
         {
@@ -101,7 +104,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
         public IReadOnlyList<IDeclarationModel> PortalDeclarations => m_GraphPortalModels;
 
-        public IReadOnlyDictionary<GUID, INodeModel> NodesByGuid => m_NodesByGuid ?? (m_NodesByGuid = new Dictionary<GUID, INodeModel>());
+        /// <summary>
+        /// A dictionary that associates node models present in the graph to their GUIDs.
+        /// </summary>
+        public IReadOnlyDictionary<SerializableGUID, INodeModel> NodesByGuid => m_NodesByGuid ?? (m_NodesByGuid = new Dictionary<SerializableGUID, INodeModel>());
 
         Dictionary<string, IGuidUpdate> m_OldToNewGuids;
 
@@ -161,14 +167,25 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
                 .ToList();
         }
 
+        /// <summary>
+        /// Creates a new node in the graph.
+        /// </summary>
+        /// <param name="nodeTypeToCreate">The type of the new node to create.</param>
+        /// <param name="nodeName">The name of the node to create.</param>
+        /// <param name="position">The position of the node to create.</param>
+        /// <param name="guid">The SerializableGUID to assign to the newly created item.</param>
+        /// <param name="preDefineSetup">A method to be called before the node is created.</param>
+        /// <param name="spawnFlags">The flags specifying how the node is to be spawned.</param>
+        /// <returns>The newly created node.</returns>
         public INodeModel CreateNode(Type nodeTypeToCreate, string nodeName, Vector2 position,
-            GUID? guid = null, Action<INodeModel> preDefineSetup = null, SpawnFlags spawnFlags = SpawnFlags.Default)
+            SerializableGUID guid = default, Action<INodeModel> preDefineSetup = null, SpawnFlags spawnFlags = SpawnFlags.Default)
         {
             return CreateNodeInternal(nodeTypeToCreate, nodeName, position, spawnFlags, preDefineSetup, guid);
         }
 
+        // TODO JOCE: to internal? Seems to be protected only for tests.
         protected virtual INodeModel CreateNodeInternal(Type nodeTypeToCreate, string nodeName, Vector2 position,
-            SpawnFlags spawnFlags = SpawnFlags.Default, Action<INodeModel> preDefineSetup = null, GUID? guid = null)
+            SpawnFlags spawnFlags = SpawnFlags.Default, Action<INodeModel> preDefineSetup = null, SerializableGUID guid = default)
         {
             if (nodeTypeToCreate == null)
                 throw new ArgumentNullException(nameof(nodeTypeToCreate));
@@ -184,10 +201,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
                 titled.Title = nodeName ?? nodeTypeToCreate.Name;
 
             nodeModel.Position = position;
-            nodeModel.Guid = guid ?? GUID.Generate();
+            nodeModel.Guid = guid.Valid ? guid : SerializableGUID.Generate();
             nodeModel.AssetModel = AssetModel;
             preDefineSetup?.Invoke(nodeModel);
-            nodeModel.DefineNode();
+            nodeModel.OnCreateNode();
             if (!spawnFlags.IsOrphan())
             {
                 AddNode(nodeModel);
@@ -197,14 +214,32 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             return nodeModel;
         }
 
+        /// <summary>
+        /// Creates a new variable node in the graph.
+        /// </summary>
+        /// <param name="declarationModel">The declaration for the variable.</param>
+        /// <param name="position">The position of the node to create.</param>
+        /// <param name="guid">The SerializableGUID to assign to the newly created item.</param>
+        /// <param name="spawnFlags">The flags specifying how the node is to be spawned.</param>
+        /// <returns>The newly created variable node.</returns>
         public virtual IVariableNodeModel CreateVariableNode(IVariableDeclarationModel declarationModel,
-            Vector2 position, GUID? guid = null, SpawnFlags spawnFlags = SpawnFlags.Default)
+            Vector2 position, SerializableGUID guid = default, SpawnFlags spawnFlags = SpawnFlags.Default)
         {
             return this.CreateNode<VariableNodeModel>(declarationModel.DisplayTitle, position, guid, v => v.DeclarationModel = declarationModel, spawnFlags);
         }
 
+        /// <summary>
+        /// Creates a new constant node in the graph.
+        /// </summary>
+        /// <param name="constantTypeHandle">The type of the new constant node to create.</param>
+        /// <param name="constantName">The name of the constant node to create.</param>
+        /// <param name="position">The position of the node to create.</param>
+        /// <param name="guid">The SerializableGUID to assign to the newly created item.</param>
+        /// <param name="preDefine">A method to be called before the constant node is created.</param>
+        /// <param name="spawnFlags">The flags specifying how the node is to be spawned.</param>
+        /// <returns>The newly created constant node.</returns>
         public virtual IConstantNodeModel CreateConstantNode(TypeHandle constantTypeHandle, string constantName,
-            Vector2 position, GUID? guid = null, Action<IConstantNodeModel> preDefine = null, SpawnFlags spawnFlags = SpawnFlags.Default)
+            Vector2 position, SerializableGUID guid = default, Action<IConstantNodeModel> preDefine = null, SpawnFlags spawnFlags = SpawnFlags.Default)
         {
             var nodeType = Stencil.GetConstantNodeValueType(constantTypeHandle);
 
@@ -260,7 +295,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             nodeModel.AssetModel = AssetModel;
             m_GraphNodeModels.Add(nodeModel);
             if (m_NodesByGuid == null)
-                m_NodesByGuid = new Dictionary<GUID, INodeModel>();
+                m_NodesByGuid = new Dictionary<SerializableGUID, INodeModel>();
             m_NodesByGuid.Add(nodeModel.Guid, nodeModel);
         }
 
@@ -271,7 +306,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             // Set graphmodel BEFORE define node as it is commonly use during Define
             pastedNodeModel.AssetModel = AssetModel;
             pastedNodeModel.AssignNewGuid();
-            pastedNodeModel.DefineNode();
             pastedNodeModel.OnDuplicateNode(sourceNode);
 
             AddNode(pastedNodeModel);
@@ -314,7 +348,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             return null;
         }
 
-        public virtual void CreateItemizedNode(State state, int nodeOffset, ref IPortModel outputPortModel)
+        public virtual void CreateItemizedNode(GraphToolState graphToolState, int nodeOffset, ref IPortModel outputPortModel)
         {
             if (!outputPortModel.IsConnected())
                 return;
@@ -498,7 +532,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             return deletedModels;
         }
 
-        private Stencil InstantiateStencil(Type stencilType)
+        Stencil InstantiateStencil(Type stencilType)
         {
             Debug.Assert(typeof(Stencil).IsAssignableFrom(stencilType));
             var stencil = (Stencil)Activator.CreateInstance(stencilType);
@@ -507,19 +541,26 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             return stencil;
         }
 
+        /// <summary>
+        /// Creates a new variable declaration in the graph.
+        /// </summary>
+        /// <param name="variableDataType">The type of the new variable declaration to create.</param>
+        /// <param name="variableName">The name of the new variable declaration to create.</param>
+        /// <param name="modifierFlags">The modifier flags of the new variable declaration to create.</param>
+        /// <param name="isExposed">Whether the variable is exposed externally or not.</param>
+        /// <param name="initializationModel">The initialization model of the new variable declaration to create. Can be <code>null</code>.</param>
+        /// <param name="guid">The SerializableGUID to assign to the newly created item.</param>
+        /// <returns>The newly created variable declaration.</returns>
         public IVariableDeclarationModel CreateGraphVariableDeclaration(TypeHandle variableDataType, string variableName,
-            ModifierFlags modifierFlags, bool isExposed, IConstant initializationModel = null, GUID? guid = null)
+            ModifierFlags modifierFlags, bool isExposed, IConstant initializationModel = null, SerializableGUID guid = default)
         {
-            var field = VariableDeclarationModel.Create(variableName, variableDataType, isExposed, this,
-                VariableType.GraphVariable, modifierFlags, initializationModel: initializationModel, guid: guid);
+            var field = VariableDeclarationModel.Create(variableName, variableDataType, isExposed, this, modifierFlags, initializationModel: initializationModel, guid: guid);
             m_GraphVariableModels.Add(field);
             return field;
         }
 
         public virtual IVariableDeclarationModel DuplicateGraphVariableDeclaration(IVariableDeclarationModel sourceModel)
         {
-            if (sourceModel.VariableType != VariableType.GraphVariable)
-                return null;
             string uniqueName = sourceModel.Title;
             VariableDeclarationModel copy = ((VariableDeclarationModel)sourceModel).Clone();
             copy.Title = uniqueName;
@@ -542,11 +583,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
             foreach (var variableModel in variableModels.Where(v => v.IsDeletable()))
             {
-                if (variableModel.VariableType == VariableType.GraphVariable)
-                {
-                    m_GraphVariableModels.Remove(variableModel);
-                    deletedModels.Add(variableModel);
-                }
+                m_GraphVariableModels.Remove(variableModel);
+                deletedModels.Add(variableModel);
 
                 if (deleteUsages)
                 {
@@ -695,24 +733,23 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             if (m_GraphNodeModels == null)
                 m_GraphNodeModels = new List<INodeModel>();
 
-            m_NodesByGuid = new Dictionary<GUID, INodeModel>(m_GraphNodeModels.Count);
+            m_NodesByGuid = new Dictionary<SerializableGUID, INodeModel>(m_GraphNodeModels.Count);
 
             foreach (var model in NodeModels)
             {
                 if (model is null)
                     continue;
                 model.AssetModel = AssetModel;
-                Debug.Assert(!model.Guid.Empty());
+                Debug.Assert(model.Guid.Valid);
                 m_NodesByGuid.Add(model.Guid, model);
             }
 
-            MigrateNodes();
-
-            // needed now that nodemodels are not in separate node assets that got OnEnable() before the graph itself would
             foreach (var nodeModel in NodeModels)
             {
                 (nodeModel as NodeModel)?.DefineNode();
             }
+
+            MigrateNodes();
         }
 
         protected virtual void MigrateNodes()
@@ -737,9 +774,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
                 StencilType = OldSerializedStencil.GetType();
             }
             UpgradePortalModels();
+
+            // TODO: Vlad Kill when .9 is done
+            foreach (var nodeModel in NodeModels)
+            {
+                nodeModel.OnAfterDeserializeAssetModel();
+            }
         }
 
         // TODO: JOCE Remove before the GTF goes public. Should no longer en needed at that point.
+        // kill when .8 is done
         void UpgradePortalModels()
         {
             var oldPortalDeclarations = PortalDeclarations.OfType<VariableDeclarationModel>().ToList();
@@ -771,7 +815,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             return GraphModelExtensions.CheckIntegrity(this, errors);
         }
 
-        public void OnBeforeSerialize()
+        public virtual void OnBeforeSerialize()
         {
             // Stencil shouldn't be serialized in graphmodels, this is only kept for backward compatibility with older graphs
             m_SerializedStencil = null;
@@ -780,7 +824,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
                 m_StencilTypeName = StencilType.AssemblyQualifiedName;
         }
 
-        public void OnAfterDeserialize()
+        public virtual void OnAfterDeserialize()
         {
             if (!string.IsNullOrEmpty(m_StencilTypeName))
             {
@@ -830,18 +874,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
                 elementMapping.TryGetValue(sourceEdge.FromNodeGuid.ToString(), out var newOutput);
 
                 DuplicateEdge(sourceEdge, newInput as INodeModel, newOutput as INodeModel);
-                if (sourceEdge != null)
-                {
-                    elementMapping.Add(sourceEdge.Guid.ToString(), sourceEdge);
-                }
+                elementMapping.Add(sourceEdge.Guid.ToString(), sourceEdge);
             }
 
             foreach (var sourceVariableNode in sourceGraphModel.NodeModels.Where(model => model is VariableNodeModel))
             {
                 elementMapping.TryGetValue(sourceVariableNode.Guid.ToString(), out var newNode);
 
-                ((VariableNodeModel)newNode).DeclarationModel =
-                    variableMapping[((VariableNodeModel)sourceVariableNode).VariableDeclarationModel];
+                if (newNode != null)
+                    ((VariableNodeModel)newNode).DeclarationModel =
+                        variableMapping[((VariableNodeModel)sourceVariableNode).VariableDeclarationModel];
             }
 
             foreach (var stickyNote in sourceGraphModel.StickyNoteModels)

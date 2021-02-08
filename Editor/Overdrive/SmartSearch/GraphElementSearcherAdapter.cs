@@ -59,7 +59,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             var elements = CreateGraphElements(searcherItem).ToList();
             foreach (var element in elements.Where(element => element is INodeModel || element is IStickyNoteModel))
             {
-                var node = GraphElementFactory.CreateUI<GraphElement>(graphView, graphView.Store, element);
+                var node = GraphElementFactory.CreateUI<GraphElement>(graphView, graphView.CommandDispatcher, element);
                 if (node != null)
                 {
                     node.style.position = Position.Relative;

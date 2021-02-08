@@ -14,7 +14,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
         IEnumerator SpaceElements(Orientation orientation)
         {
-            m_AutoSpacingHelper.SendSpacingAction(orientation);
+            m_AutoSpacingHelper.SendSpacingCommand(orientation);
             yield return null;
 
             // Get the UI elements

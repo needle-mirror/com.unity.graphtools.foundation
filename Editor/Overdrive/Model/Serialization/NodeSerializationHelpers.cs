@@ -1,22 +1,25 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 using UnityEngine.Assertions;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public static class NodeSerializationHelpers
     {
-        public static void SerializeDictionaryToLists<K, V>(this IReadOnlyDictionary<K, V> dic, ref List<K> keys, ref List<V> values)
+        public static void SerializeDictionaryToLists<K, V>(this IReadOnlyDictionary<K, V> dic, out List<K> keys, out List<V> values)
         {
             if (dic == null)
+            {
+                keys = new List<K>();
+                values = new List<V>();
                 return;
+            }
+
             keys = dic.Keys.ToList();
             values = dic.Values.ToList();
         }
 
-        public static void DeserializeDictionaryFromLists<K, V>(this Dictionary<K, V> dic, IList<K> keys, IList<V> values)
+        public static void DeserializeDictionaryFromLists<K, V>(this Dictionary<K, V> dic, IReadOnlyList<K> keys, IReadOnlyList<V> values)
         {
             int numKeys = keys?.Count ?? 0;
 

@@ -1,22 +1,7 @@
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public interface IGraphElement
+    // Any UI based on a model that is a graph element: Node, Edge, etc.
+    public interface IGraphElement : IModelUI
     {
-        IGraphElementModel Model { get; }
-        Store Store { get; }
-        GraphView GraphView { get; }
-        string Context { get; }
-
-        void AddToGraphView(GraphView graphView);
-        void RemoveFromGraphView();
-
-        void Setup(IGraphElementModel model, Store store, GraphView graphView, string context);
-        void BuildUI();
-        void UpdateFromModel();
-        void SetupBuildAndUpdate(IGraphElementModel model, Store store, GraphView graphView, string context);
-
-        void AddBackwardDependencies();
-        void AddForwardDependencies();
-        void AddModelDependencies();
     }
 }

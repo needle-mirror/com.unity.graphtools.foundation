@@ -8,23 +8,23 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
     public class StickyNoteModelUpdateTests
     {
         GraphView m_GraphView;
-        Store m_Store;
+        CommandDispatcher m_CommandDispatcher;
         GraphModel m_GraphModel;
 
         [SetUp]
         public void SetUp()
         {
             m_GraphModel = new GraphModel();
-            m_Store = new Store(new TestState(default, m_GraphModel));
-            StoreHelper.RegisterDefaultReducers(m_Store);
-            m_GraphView = new TestGraphView(null, m_Store);
+            m_CommandDispatcher = new CommandDispatcher(new TestGraphToolState(default, m_GraphModel));
+            CommandDispatcherHelper.RegisterDefaultCommandHandlers(m_CommandDispatcher);
+            m_GraphView = new GraphView(null, m_CommandDispatcher);
         }
 
         [TearDown]
         public void TearDown()
         {
             m_GraphModel = null;
-            m_Store = null;
+            m_CommandDispatcher = null;
             m_GraphView = null;
         }
 
@@ -37,7 +37,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             var stickyNoteModel = m_GraphModel.CreateStickyNote();
             stickyNoteModel.Title = initialTitle;
             var stickyNote = new StickyNote();
-            stickyNote.SetupBuildAndUpdate(stickyNoteModel, m_Store, m_GraphView);
+            stickyNote.SetupBuildAndUpdate(stickyNoteModel, m_CommandDispatcher, m_GraphView);
 
             var titleLabel = stickyNote.Q(StickyNote.titleContainerPartName).Q<Label>(EditableLabel.labelName);
             Assert.AreEqual(initialTitle, titleLabel.text);
@@ -56,7 +56,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             var stickyNoteModel = m_GraphModel.CreateStickyNote();
             stickyNoteModel.Contents = initialContent;
             var stickyNote = new StickyNote();
-            stickyNote.SetupBuildAndUpdate(stickyNoteModel, m_Store, m_GraphView);
+            stickyNote.SetupBuildAndUpdate(stickyNoteModel, m_CommandDispatcher, m_GraphView);
 
             var contentLabel = stickyNote.Q(StickyNote.contentContainerPartName).Q<Label>(EditableLabel.labelName);
             Assert.AreEqual(initialContent, contentLabel.text);
@@ -75,7 +75,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             var stickyNoteModel = m_GraphModel.CreateStickyNote();
             stickyNoteModel.PositionAndSize = initialRect;
             var stickyNote = new StickyNote();
-            stickyNote.SetupBuildAndUpdate(stickyNoteModel, m_Store, m_GraphView);
+            stickyNote.SetupBuildAndUpdate(stickyNoteModel, m_CommandDispatcher, m_GraphView);
 
             Assert.AreEqual(initialRect, new Rect(stickyNote.style.left.value.value, stickyNote.style.top.value.value, stickyNote.style.width.value.value, stickyNote.style.height.value.value));
 

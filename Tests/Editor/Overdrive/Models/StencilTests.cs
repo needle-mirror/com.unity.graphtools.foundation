@@ -13,19 +13,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
 
     class StencilTests
     {
-        class TestStencil : Stencil
-        {
-            public override Type GetConstantNodeValueType(TypeHandle typeHandle)
-            {
-                return TypeToConstantMapper.GetConstantNodeType(typeHandle);
-            }
-
-            public override ISearcherDatabaseProvider GetSearcherDatabaseProvider()
-            {
-                return new ClassSearcherDatabaseProvider(this);
-            }
-        }
-
         [Test]
         public void TestCanLoadAllTypesFromAssemblies()
         {
