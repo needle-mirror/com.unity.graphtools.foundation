@@ -3971,7 +3971,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
     {
         protected System.Collections.Generic.List<UnityEditor.GraphToolsFoundation.Overdrive.Capabilities> m_Capabilities;
         [UnityEngine.HideInInspector] [UnityEngine.SerializeField] protected UnityEditor.GraphToolsFoundation.Overdrive.GraphAssetModel m_GraphAssetModel;
-        [UnityEngine.SerializeReference] protected System.Collections.Generic.List<UnityEditor.GraphToolsFoundation.Overdrive.IConstant> m_InputConstants;
         protected UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.OrderedPorts m_PreviousInputs;
         protected UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.OrderedPorts m_PreviousOutputs;
         public virtual bool AllowSelfConnect { get; }

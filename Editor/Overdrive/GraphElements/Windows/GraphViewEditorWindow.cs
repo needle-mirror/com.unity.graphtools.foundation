@@ -327,6 +327,21 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (CommandDispatcher == null)
                 return;
 
+            // PF: FIXME find a better solution for this.
+            // Prevent UI update while the mouse is captured.
+            // Mouse is typically captured on manipulation that span mouseDown/mouseMove/mouseUp events (like drags).
+            // Since UI rebuilding may replace VisualElements by new ones (this is what RebuildAll() does)
+            // the manipulation loses the VisualElements it was acting upon.
+            //
+            // Case when this happens: with autorecompilation, a compilation can finish while we are in a manipulation.
+            // Then, badges are added to signal errors. Since these are new models, a RebuildAll() is triggered.
+            //
+            // A better solution would be to avoid all calls to RebuildAll().
+            if (rootVisualElement.panel.GetCapturingElement(PointerId.mousePointerId) != null)
+            {
+                return;
+            }
+
             Profiler.BeginSample("GtfoWindow.Update");
             Stopwatch sw = new Stopwatch();
             sw.Start();

@@ -48,12 +48,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         string m_Title;
 
         // for backward compatibility, old way to serialize m_InputConstantsById Keys
-        [SerializeField, HideInInspector]
+        [SerializeField, HideInInspector, Obsolete]
         List<string> m_InputConstantKeys;
 
         // for backward compatibility, old way to serialize m_InputConstantsById Values
-        [SerializeReference]
-        protected List<IConstant> m_InputConstants;
+        [SerializeReference, HideInInspector, Obsolete]
+        List<IConstant> m_InputConstants;
+
+        [SerializeField, HideInInspector]
+        SerializedReferenceDictionary<string, IConstant> m_InputConstantsById;
 
         [SerializeField]
         ModelState m_State;
@@ -150,9 +153,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         OrderedPorts m_OutputsById;
         protected OrderedPorts m_PreviousInputs;
         protected OrderedPorts m_PreviousOutputs;
-
-        [SerializeField]
-        SerializedReferenceDictionary<string, IConstant> m_InputConstantsById;
 
         bool m_Collapsed;
 
@@ -337,8 +337,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
         protected void UpdateConstantForInput(IPortModel inputPort, Action<IConstant> preDefine = null)
         {
-            InputConstantsBackwardCompatibility();
-
             var id = inputPort.UniqueName;
             if ((inputPort.Options & PortModelOptions.NoEmbeddedConstant) != 0)
             {
@@ -350,7 +348,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             {
                 // Destroy existing constant if not compatible
                 var embeddedConstantType = Stencil.GetConstantNodeValueType(inputPort.DataTypeHandle);
-                Type portDefinitionType = null;
+                Type portDefinitionType;
                 if (embeddedConstantType != null)
                 {
                     var instance = (IConstant)Activator.CreateInstance(embeddedConstantType);
@@ -488,19 +486,29 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
         public virtual void OnAfterDeserializeAssetModel()
         {
-            InputConstantsBackwardCompatibility();
-        }
+#pragma warning disable 612
+            // Migrate m_InputConstantKeys and m_InputConstantKeys to m_InputConstantsById
+            const string migratedValue = "_ _ _ m_InputConstantKeys was migrated to m_InputConstants _ _ _";
 
-        private void InputConstantsBackwardCompatibility()
-        {
-            // Backward compatibility
-            if (m_InputConstantsById == null || !m_InputConstantsById.IsValid)
+            // If obsolete fields contains data (except special migrated value)
+            if (m_InputConstantKeys != null && m_InputConstants != null &&
+                m_InputConstantKeys.Count > 0 && m_InputConstants.Count > 0 &&
+                m_InputConstantKeys[0] != migratedValue)
             {
-                Assert.IsNotNull(m_InputConstantKeys);
-                Assert.IsNotNull(m_InputConstants);
-                m_InputConstantsById =
-                    SerializedReferenceDictionary<string, IConstant>.FromLists(m_InputConstantKeys, m_InputConstants);
+                // And if new field is empty, migrate old data in new field.
+                // If new field is not empty, we consider that data in new field is supersedes data in obsolete fields.
+                if (m_InputConstantsById == null || m_InputConstantsById.Count == 0)
+                {
+                    m_InputConstantsById =
+                        SerializedReferenceDictionary<string, IConstant>.FromLists(m_InputConstantKeys, m_InputConstants);
+                }
+
+                // Clear obsolete fields.
+                m_InputConstantKeys.Clear();
+                m_InputConstantKeys.Add(migratedValue);
+                m_InputConstants = null;
             }
+#pragma warning restore 612
         }
 
         protected virtual void InitCapabilities()

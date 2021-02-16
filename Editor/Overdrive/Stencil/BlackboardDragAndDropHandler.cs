@@ -44,11 +44,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             var dropElements = dragSelectionList.OfType<GraphElement>().ToList();
 
+            var contentViewContainer = (e.target as GraphView)?.contentViewContainer ?? e.target as VisualElement;
+
             var variablesToCreate = dropElements
                 .Select((e1, i) => (
                     Stencil.ExtractVariableFromGraphElement(e1),
                     (SerializableGUID)GUID.Generate(),
-                    e.localMousePosition + i * GraphView.DragDropSpacer * Vector2.down))
+                    contentViewContainer.WorldToLocal(e.mousePosition) + i * GraphView.DragDropSpacer * Vector2.down))
                 .ToList();
 
             var droppedNodes = dropElements.OfType<CollapsibleInOutNode>().ToList();

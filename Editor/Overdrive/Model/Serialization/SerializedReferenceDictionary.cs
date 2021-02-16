@@ -14,7 +14,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     /// <typeparam name="TKey">Type of key</typeparam>
     /// <typeparam name="TValue">Type of value</typeparam>
     [Serializable]
-    internal class SerializedReferenceDictionary<TKey, TValue>: IDictionary<TKey, TValue>, IReadOnlyDictionary<TKey, TValue>, ISerializationCallbackReceiver
+    class SerializedReferenceDictionary<TKey, TValue>: IDictionary<TKey, TValue>, IReadOnlyDictionary<TKey, TValue>, ISerializationCallbackReceiver
     {
         [SerializeField]
         List<TKey> m_KeyList;
@@ -22,7 +22,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         [SerializeReference]
         List<TValue> m_ValueList;
 
-        private Dictionary<TKey, TValue> m_Dictionary;
+        Dictionary<TKey, TValue> m_Dictionary;
 
         public bool IsValid => m_KeyList != null && m_ValueList != null;
 
@@ -38,13 +38,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             return new SerializedReferenceDictionary<TKey, TValue>(keys ?? new List<TKey>(), values);
         }
 
-        private SerializedReferenceDictionary(IReadOnlyList<TKey> keys, IReadOnlyList<TValue> values)
+        SerializedReferenceDictionary(IReadOnlyList<TKey> keys, IReadOnlyList<TValue> values)
             : this(keys.Count)
         {
             m_Dictionary.DeserializeDictionaryFromLists(keys, values);
         }
 
-        private Dictionary<TKey, TValue> GetSafeDictionary()
+        Dictionary<TKey, TValue> GetSafeDictionary()
         {
             if (m_Dictionary == null)
             {
@@ -60,7 +60,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             return m_Dictionary;
         }
 
-        #region ISerializationCallbackReceiver implementation
         public void OnBeforeSerialize()
         {
             m_Dictionary?.SerializeDictionaryToLists(out m_KeyList, out m_ValueList);
@@ -71,9 +70,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             m_Dictionary = null; // force rebuild dictionary, as references in Values will be lost
         }
 
-        #endregion ISerializationCallbackReceiver implementation
-
-        #region IDictionary<TKey, TValue> implementation
         public TValue this[TKey key]
         {
             get => GetSafeDictionary()[key];
@@ -111,12 +107,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public int Count => GetSafeDictionary().Count;
 
         public bool IsReadOnly => false;
-        #endregion IDictionary<TKey, TValue> implementation
 
-        #region IReadOnlyDictionary<TKey, TValue> implementation
         IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys => Keys;
 
         IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values => Values;
-        #endregion IReadOnlyDictionary<TKey, TValue> implementation
     }
 }
