@@ -1556,7 +1556,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             GraphElements.ForEach(ge =>
             {
-                if (ge is Edge)
+                if (ge.Model is IEdgeModel)
                 {
                     return;
                 }
@@ -2033,6 +2033,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     CommandDispatcher.EndStateChange();
                 });
             }
+
+            CommandDispatcher.GraphToolState.SelectionStateComponent.ClearElementsToSelectUponCreation();
         }
 
         void RebuildAll(GraphToolState state)
