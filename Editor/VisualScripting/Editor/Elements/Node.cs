@@ -86,7 +86,7 @@ namespace UnityEditor.VisualScripting.Editor
                 style.overflow = Overflow.Visible;
                 AddToClassList("insertLoopNode");
 
-                m_InsertLoopPortContainer = new VisualElement {name = "insertLoopPortContainer"};
+                m_InsertLoopPortContainer = new VisualElement { name = "insertLoopPortContainer" };
                 m_InsertLoopPortContainer.style.overflow = Overflow.Visible;
                 m_InsertLoopPortContainer.pickingMode = PickingMode.Ignore;
 
@@ -100,8 +100,8 @@ namespace UnityEditor.VisualScripting.Editor
 
                 titleElement.Add(m_InsertLoopPortContainer);
 
-                var loopIconContainer = new VisualElement {name = "loopIconContainer"};
-                loopIconContainer.Add(new VisualElement {name = "loopIcon"});
+                var loopIconContainer = new VisualElement { name = "loopIconContainer" };
+                loopIconContainer.Add(new VisualElement { name = "loopIcon" });
                 titleContainer.Add(loopIconContainer);
             }
 
@@ -120,7 +120,7 @@ namespace UnityEditor.VisualScripting.Editor
             else
             {
                 var titleParent = titleLabel.parent;
-                TitleContainer = new VisualElement {name = "titleContainer"};
+                TitleContainer = new VisualElement { name = "titleContainer" };
 
                 var nodeIcon = new Image { name = "nodeIcon" };
                 nodeIcon.AddToClassList(((NodeModel)model).IconTypeString);

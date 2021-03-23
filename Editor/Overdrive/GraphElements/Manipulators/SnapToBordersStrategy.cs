@@ -107,8 +107,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         List<Rect> GetNotSelectedElementRectsInView(GraphElement selectedElement)
         {
-            List<Rect> notSelectedElementRects = new List<Rect>();
-            List<GraphElement> ignoredElements = m_GraphView.Selection.OfType<GraphElement>().ToList();
+            var notSelectedElementRects = new List<Rect>();
+            var ignoredModels = m_GraphView.GetSelection().ToList();
 
             // Consider only the visible nodes.
             Rect rectToFit = m_GraphView.layout;
@@ -118,24 +118,24 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 if (selectedElement is Placemat placemat && element.layout.Overlaps(placemat.layout))
                 {
                     // If the selected element is a placemat, we do not consider the elements under it
-                    ignoredElements.Add(element);
+                    ignoredModels.Add(element.Model);
                 }
                 else if (element is Edge)
                 {
                     // Don't consider edges
-                    ignoredElements.Add(element);
+                    ignoredModels.Add(element.Model);
                 }
                 else if (!element.visible)
                 {
                     // Don't consider not visible elements
-                    ignoredElements.Add(element);
+                    ignoredModels.Add(element.Model);
                 }
-                else if (!element.IsSelected(m_GraphView) && !(ignoredElements.Contains(element)))
+                else if (!element.IsSelected() && !(ignoredModels.Contains(element.Model)))
                 {
                     var localSelRect = m_GraphView.ChangeCoordinatesTo(element, rectToFit);
                     if (element.Overlaps(localSelRect))
                     {
-                        Rect geometryInContentViewContainerSpace = (element).parent.ChangeCoordinatesTo(m_GraphView.contentViewContainer, (element).GetPosition());
+                        Rect geometryInContentViewContainerSpace = (element).parent.ChangeCoordinatesTo(m_GraphView.ContentViewContainer, (element).GetPosition());
                         notSelectedElementRects.Add(geometryInContentViewContainerSpace);
                     }
                 }

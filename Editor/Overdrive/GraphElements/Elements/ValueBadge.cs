@@ -31,8 +31,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 s_ValueTemplate = GraphElementHelper.LoadUXML("ValueBadge.uxml");
 
             s_ValueTemplate.CloneTree(this);
-            m_TextElement = this.Q<Label>("desc");
-            m_Image = this.Q<Image>();
+            m_TextElement = this.SafeQ<Label>("desc");
+            m_Image = this.SafeQ<Image>();
         }
 
         protected override void PostBuildUI()
@@ -63,7 +63,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             var valueModel = Model as IValueBadgeModel;
             var portModel = valueModel?.ParentPortModel;
             var port = portModel?.GetUI<Port>(GraphView);
-            var cap = port?.Q(className: "ge-port__cap") ?? port;
+            var cap = port?.SafeQ(className: "ge-port__cap") ?? port;
             if (cap != null)
             {
                 var alignment = portModel.Direction == Direction.Output ? SpriteAlignment.BottomRight : SpriteAlignment.BottomLeft;

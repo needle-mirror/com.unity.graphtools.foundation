@@ -14,7 +14,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
     public class ResizableElement : VisualElement
     {
-        public new class UxmlFactory : UxmlFactory<ResizableElement> {}
+        public new class UxmlFactory : UxmlFactory<ResizableElement> { }
 
         public static readonly string ussClassName = "ge-resizable-element";
 
@@ -34,7 +34,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             foreach (ResizerDirection value in Enum.GetValues(typeof(ResizerDirection)))
             {
-                VisualElement resizer = this.Q(value.ToString().ToLower() + "-resize");
+                VisualElement resizer = this.SafeQ(value.ToString().ToLower() + "-resize");
                 if (resizer != null)
                     resizer.AddManipulator(new ElementResizer(this, value));
             }
@@ -42,7 +42,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             foreach (ResizerDirection vertical in new[] { ResizerDirection.Top, ResizerDirection.Bottom })
                 foreach (ResizerDirection horizontal in new[] { ResizerDirection.Left, ResizerDirection.Right })
                 {
-                    VisualElement resizer = this.Q(vertical.ToString().ToLower() + "-" + horizontal.ToString().ToLower() + "-resize");
+                    VisualElement resizer = this.SafeQ(vertical.ToString().ToLower() + "-" + horizontal.ToString().ToLower() + "-resize");
                     if (resizer != null)
                         resizer.AddManipulator(new ElementResizer(this, vertical | horizontal));
                 }

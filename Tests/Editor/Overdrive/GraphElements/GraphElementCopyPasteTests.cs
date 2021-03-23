@@ -11,12 +11,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
     class GraphElementCopyPasteTests : GraphViewTester
     {
-        readonly Rect k_NodePosition = new Rect(10, 30, 50, 50);
         const int k_DefaultNodeCount = 4;
 
         int m_SelectedNodeCount;
 
-        static string SerializeGraphElementsImplementation(IEnumerable<GraphElement> elements)
+        static string SerializeGraphElementsImplementation(IEnumerable<IGraphElementModel> elements)
         {
             // A real implementation would serialize all necessary GraphElement data.
             var count = elements.Count();
@@ -49,10 +48,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         {
             List<GraphElement> list = graphView.GraphElements.ToList();
             m_SelectedNodeCount = 3;
-            for (int i = 0; i < m_SelectedNodeCount; i++)
-            {
-                graphView.AddToSelection(list[i]);
-            }
+            CommandDispatcher.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Add, list[0].Model, list[1].Model, list[2].Model));
         }
 
         [SetUp]
@@ -76,11 +72,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator CopyWithoutSelectedElementsLeavesCopyBufferUntouched()
         {
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
 
             graphView.Clipboard = "Unknown data";
-            graphView.ClearSelection();
+            CommandDispatcher.Dispatch(new ClearSelectionCommand());
             graphView.Focus();
             yield return null;
 
@@ -130,7 +126,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator SelectedElementsCanBeCut()
         {
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
 
             graphView.Clipboard = "Unknown data";
@@ -178,7 +174,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator SelectedElementsCanBeDeleted()
         {
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
 
             SelectThreeElements();

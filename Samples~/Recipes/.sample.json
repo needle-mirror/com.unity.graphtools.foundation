@@ -1,5 +1,5 @@
 {
-  "displayName":"Recipe Editor Sample",
-  "description": "A simple example to get started with Graph Tools Foundation.",
-  "createSeparatePackage": false
+    "displayName": "Recipes GTF example",
+    "description": "A simple example from a graph editor made with Graph Foundation Tools",
+    "createSeparatePackage": false
 }

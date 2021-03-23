@@ -18,18 +18,12 @@
 
 .ge-node__title-icon-container {
     padding: 0 6px;
-    border-radius: var(--border-radius) var(--border-radius) 0 0;
     background-color: rgba(63,63,63,0.8);
 }
 
 .ge-node__title-container {
     padding: 10px 0;
-    border-radius: var(--border-radius) var(--border-radius) 0 0;
     background-color: transparent;
-}
-
-.ge-node--collapsed.ge-node--not-connected .ge-node__title-container {
-    border-radius: var(--border-radius);
 }
 
 .ge-node--disabled #disabled-overlay {
@@ -71,11 +65,10 @@
     display: none;
 }
 
-.ge-node__port-top-container {
+.ge-node__port-container {
     background-color: rgba(63,63,63,0.8);
     border-top-width: 1px;
     border-top-color: rgba(35,35,35,0.8);
-    border-radius: 0 0 var(--border-radius) var(--border-radius);
 }
 
 .ge-node__progress-bar {

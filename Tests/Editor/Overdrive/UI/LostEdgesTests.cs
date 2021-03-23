@@ -29,7 +29,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
 
             edge.ResetPorts(); // get rid of cached port models
 
-            CommandDispatcher.MarkStateDirty();
+            MarkGraphViewStateDirty();
             yield return null;
 
             var lostPortsAdded = GraphView.Query(className: "ge-port--data-type-missing-port").Build().ToList().Count;

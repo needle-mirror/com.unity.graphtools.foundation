@@ -43,7 +43,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             yield return null;
         }
 
-        protected IEnumerator SetUpUIElements(Vector2 snappingNodePos, Vector2 referenceNode1Pos = default,  Vector2 referenceNode2Pos = default, bool isVerticalPort = false, bool isPortSnapping = false)
+        protected IEnumerator SetUpUIElements(Vector2 snappingNodePos, Vector2 referenceNode1Pos = default, Vector2 referenceNode2Pos = default, bool isVerticalPort = false, bool isPortSnapping = false)
         {
             m_SnappingNodePos = snappingNodePos;
             m_ReferenceNode1Pos = referenceNode1Pos;
@@ -63,7 +63,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 Assert.IsNotNull(m_OutputPort);
                 Assert.IsNotNull(m_InputPort);
 
-                CommandDispatcher.GraphToolState.RequestUIRebuild();
+                MarkGraphViewStateDirty();
                 yield return null;
 
                 // Connect the ports together
@@ -74,7 +74,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 }
             }
 
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
 
             // Get the UI nodes
@@ -93,7 +93,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
         protected IEnumerator MoveElementWithOffset(Vector2 offset)
         {
-            Vector2 worldNodePos = graphView.contentViewContainer.LocalToWorld(m_SnappingNodePos);
+            Vector2 worldNodePos = graphView.ContentViewContainer.LocalToWorld(m_SnappingNodePos);
             Vector2 start = worldNodePos + m_SelectionOffset;
 
             // Move the snapping node.

@@ -9,7 +9,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
     class GraphViewSelectionPersistenceTests : GraphViewTester
     {
-        public GraphViewSelectionPersistenceTests() : base(enablePersistence: true) {}
+        public GraphViewSelectionPersistenceTests() : base(enablePersistence: true) { }
 
         const string key1 = "node1";
         const string key2 = "node2";
@@ -60,7 +60,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest, Ignore("FIXME EnterPlayMode")]
         public IEnumerator SelectionIsRestoredWhenEnteringPlaymode_AddNodesAfterPersistence()
         {
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
             GetNodesAndSetViewDataKey(out Node node1, out Node node2, out Node node3);
 
@@ -69,8 +69,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Assert.IsNotNull(node3);
 
             // Add two nodes to selection.
-            graphView.AddToSelection(node1);
-            graphView.AddToSelection(node3);
+            CommandDispatcher.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Add, node1Model, node3Model));
 
             // Allow 1 frame to let the persistent data get saved
             yield return null;
@@ -81,7 +80,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             // Allow 1 frame to let the persistence be restored
             yield return null;
 
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
             GetNodesAndSetViewDataKey(out node1, out node2, out node3);
 
@@ -89,20 +88,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Assert.IsNotNull(node2);
             Assert.IsNotNull(node3);
 
-            Assert.True(node1.Selected);
-            Assert.False(node2.Selected);
-            Assert.True(node3.Selected);
+            Assert.True(node1.IsSelected());
+            Assert.False(node2.IsSelected());
+            Assert.True(node3.IsSelected());
         }
 
         [UnityTest, Ignore("FIXME EnterPlayMode")]
         public IEnumerator SelectionIsRestoredWhenEnteringPlaymode_AddNodesBeforePersistence()
         {
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
             GetNodesAndSetViewDataKey(out Node node1, out Node node2, out Node node3);
 
-            graphView.AddToSelection(node1);
-            graphView.AddToSelection(node3);
+            CommandDispatcher.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Add, node1Model, node3Model));
 
             // Allow 1 frame to let the persistent data get saved
             yield return null;
@@ -114,51 +112,49 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             node2Model = CreateNode(key2, new Vector2(400, 400));
             node3Model = CreateNode(key3, new Vector2(600, 600));
 
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
             GetNodesAndSetViewDataKey(out node1, out node2, out node3);
 
             // Allow 1 frame to let the persistence be restored
             yield return null;
 
-            Assert.True(node1.Selected);
-            Assert.False(node2.Selected);
-            Assert.True(node3.Selected);
+            Assert.True(node1.IsSelected());
+            Assert.False(node2.IsSelected());
+            Assert.True(node3.IsSelected());
         }
 
         [UnityTest]
         public IEnumerator CanUndoSelection()
         {
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
             GetNodesAndSetViewDataKey(out Node node1, out Node node2, out Node node3);
 
-            graphView.AddToSelection(node1);
-            graphView.AddToSelection(node3);
+            CommandDispatcher.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Add, node1Model, node3Model));
 
             Undo.PerformUndo();
 
-            Assert.False(node1.Selected);
-            Assert.False(node2.Selected);
-            Assert.False(node3.Selected);
+            Assert.False(node1.IsSelected());
+            Assert.False(node2.IsSelected());
+            Assert.False(node3.IsSelected());
         }
 
         [UnityTest]
         public IEnumerator CanRedoSelection()
         {
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
             GetNodesAndSetViewDataKey(out Node node1, out Node node2, out Node node3);
 
-            graphView.AddToSelection(node1);
-            graphView.AddToSelection(node3);
+            CommandDispatcher.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Add, node1Model, node3Model));
 
             Undo.PerformUndo();
             Undo.PerformRedo();
 
-            Assert.True(node1.Selected);
-            Assert.False(node2.Selected);
-            Assert.True(node3.Selected);
+            Assert.True(node1.IsSelected());
+            Assert.False(node2.IsSelected());
+            Assert.True(node3.IsSelected());
         }
 
         [UnityTest, Ignore("FIXME EnterPlayMode")]
@@ -166,19 +162,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         {
             // Note: this somewhat complex use case ensure that selection for redo
             // and persisted selection are kep in sync
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
             GetNodesAndSetViewDataKey(out Node node1, out Node node2, out Node node3);
 
-            graphView.AddToSelection(node1);
-            graphView.AddToSelection(node3);
+            CommandDispatcher.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Add, node1Model, node3Model));
 
             Undo.PerformUndo();
             Undo.PerformRedo();
 
-            Assert.True(node1.Selected);
-            Assert.False(node2.Selected);
-            Assert.True(node3.Selected);
+            Assert.True(node1.IsSelected());
+            Assert.False(node2.IsSelected());
+            Assert.True(node3.IsSelected());
 
             // Allow 1 frame to let the persistence be saved
             yield return null;
@@ -190,16 +185,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             node2Model = CreateNode(key2, new Vector2(400, 400));
             node3Model = CreateNode(key3, new Vector2(600, 600));
 
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
             GetNodesAndSetViewDataKey(out node1, out node2, out node3);
 
             // Allow 1 frame to let the persistence be restored
             yield return null;
 
-            Assert.True(node1.Selected);
-            Assert.False(node2.Selected);
-            Assert.True(node3.Selected);
+            Assert.True(node1.IsSelected());
+            Assert.False(node2.IsSelected());
+            Assert.True(node3.IsSelected());
         }
 
         [UnityTest, Ignore("FIXME EnterPlayMode needs backing asset.")]
@@ -221,8 +216,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
                 graphView.AddElement(blackboard);
 
-                graphView.AddToSelection(row);
-                Assert.True(row.Selected);
+                CommandDispatcher.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Add, row.Model));
+
+                Assert.True(row.IsSelected());
             }
 
             // Allow 1 frame to let the persistent data get saved
@@ -250,7 +246,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
                 graphView.AddElement(blackboard);
 
-                Assert.True(row.Selected);
+                Assert.True(row.IsSelected());
             }
         }
 
@@ -273,8 +269,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
                 graphView.AddElement(blackboard);
 
-                graphView.AddToSelection(row);
-                Assert.True(row.Selected);
+                CommandDispatcher.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Add, row.Model));
+
+                Assert.True(row.IsSelected());
             }
 
             // Allow 1 frame to let the persistent data get saved
@@ -302,7 +299,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 row.Add(propertyView);
                 inSection.Add(row);
 
-                Assert.True(row.Selected);
+                Assert.True(row.IsSelected());
             }
         }
     }

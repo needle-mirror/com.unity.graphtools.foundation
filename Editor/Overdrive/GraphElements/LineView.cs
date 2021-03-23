@@ -26,7 +26,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             {
                 return;
             }
-            var container = m_GraphView.contentViewContainer;
+            var container = m_GraphView.ContentViewContainer;
             foreach (var line in lines)
             {
                 var start = container.ChangeCoordinatesTo(m_GraphView, line.Start);

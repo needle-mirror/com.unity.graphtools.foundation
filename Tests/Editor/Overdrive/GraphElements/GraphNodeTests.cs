@@ -11,8 +11,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
     class GraphNodeTests : GraphViewTester
     {
-        IInOutPortsNode m_Node1;
-        IInOutPortsNode m_Node2;
+        IInputOutputPortsNodeModel m_Node1;
+        IInputOutputPortsNodeModel m_Node2;
 
         [SetUp]
         public override void SetUp()
@@ -40,7 +40,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Assert.AreEqual(2, nodeList.Count);
             foreach (Node node in nodeList)
             {
-                VisualElement collapseButton = node.Q<VisualElement>(name: "collapse-button");
+                VisualElement collapseButton = node.SafeQ<VisualElement>(name: "collapse-button");
                 Assert.False(collapseButton.GetDisabledPseudoState());
             }
 
@@ -52,7 +52,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Assert.AreEqual(2, nodeList.Count);
             foreach (Node node in nodeList)
             {
-                VisualElement collapseButton = node.Q<VisualElement>(name: "collapse-button");
+                VisualElement collapseButton = node.SafeQ<VisualElement>(name: "collapse-button");
                 Assert.True(collapseButton.GetDisabledPseudoState());
             }
 
@@ -65,7 +65,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Assert.AreEqual(2, nodeList.Count);
             foreach (Node node in nodeList)
             {
-                VisualElement collapseButton = node.Q<VisualElement>(name: "collapse-button");
+                VisualElement collapseButton = node.SafeQ<VisualElement>(name: "collapse-button");
                 Assert.False(collapseButton.GetDisabledPseudoState());
             }
         }
@@ -73,15 +73,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator SelectedNodeCanBeDeleted()
         {
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
 
             int initialCount = graphView.Nodes.ToList().Count;
             Assert.Greater(initialCount, 0);
 
             Node node = graphView.Nodes.First();
-            graphView.AddToSelection(node);
-            graphView.DeleteSelection();
+            CommandDispatcher.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Add, node.Model));
+            yield return null;
+
+            var elementsToRemove = graphView.GetSelection();
+            CommandDispatcher.Dispatch(new DeleteElementsCommand(elementsToRemove.ToList()));
             yield return null;
 
             Assert.AreEqual(initialCount - 1, graphView.Nodes.ToList().Count);
@@ -91,14 +94,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         public IEnumerator SelectedEdgeCanBeDeleted()
         {
             var edge = GraphModel.CreateEdge(m_Node1.GetOutputPorts().First(), m_Node2.GetInputPorts().First());
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
 
             int initialCount = window.GraphView.Edges.ToList().Count;
             Assert.Greater(initialCount, 0);
 
-            window.GraphView.AddToSelection(edge.GetUI<Edge>(graphView));
-            window.GraphView.DeleteSelection();
+            CommandDispatcher.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Add, edge));
+            yield return null;
+
+            var elementsToRemove = graphView.GetSelection();
+            CommandDispatcher.Dispatch(new DeleteElementsCommand(elementsToRemove.ToList()));
             yield return null;
 
             Assert.AreEqual(initialCount - 1, window.GraphView.Edges.ToList().Count);
@@ -110,7 +116,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             graphView.AddToClassList("EdgeColorsMatchCustomPortColors");
 
             var edge = GraphModel.CreateEdge(m_Node2.GetInputPorts().First(), m_Node1.GetOutputPorts().First());
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
 
             var outputPort = m_Node1.GetOutputPorts().First().GetUI<Port>(graphView);

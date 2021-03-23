@@ -14,6 +14,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         string m_GraphAssetModelPath;
 
         [SerializeField]
+        int m_GraphAssetInstanceID;
+
+        [SerializeField]
         long m_FileId;
 
         [SerializeField]
@@ -28,11 +31,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             get
             {
+                // Try to retrieve object from its instance id (memory based asset or loaded disk based asset).
+                if (m_GraphAssetModel == null && m_GraphAssetInstanceID != 0)
+                {
+                    m_GraphAssetModel = EditorUtility.InstanceIDToObject(m_GraphAssetInstanceID) as IGraphAssetModel;
+                }
+
+                // Try to load object from disk, if it is a disk based asset.
                 if (m_GraphAssetModel == null && !string.IsNullOrEmpty(m_GraphAssetModelPath))
                 {
                     m_GraphAssetModel = AssetDatabase.LoadAssetAtPath(m_GraphAssetModelPath, typeof(Object)) as IGraphAssetModel;
                     m_GraphName = m_GraphAssetModel?.FriendlyScriptName;
                 }
+
                 return m_GraphAssetModel;
             }
         }
@@ -48,6 +59,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public OpenedGraph(IGraphAssetModel graphAssetModel, GameObject boundObject, long fileId = 0L)
         {
             m_GraphAssetModel = graphAssetModel;
+            m_GraphAssetInstanceID = (graphAssetModel as Object)?.GetInstanceID() ?? 0;
             m_GraphAssetModelPath = graphAssetModel == null ? null : AssetDatabase.GetAssetPath(graphAssetModel as Object);
             m_GraphName = graphAssetModel?.FriendlyScriptName;
             m_BoundObject = boundObject;

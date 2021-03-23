@@ -137,7 +137,7 @@ namespace UnityEditor.VisualScriptingTests.Models
                     Assert.That(myInt.OutputPort.Connected, Is.False);
                     Assert.That(log1.InputPort, Is.ConnectedTo(portX));
                     Assert.That(log2.InputPort, Is.ConnectedTo(portY));
-                    return new CreateEdgeAction(log1.InputPort, myInt.OutputPort, new List<IEdgeModel> {GraphModel.GetEdgesConnections(log1.InputPort).Single()});
+                    return new CreateEdgeAction(log1.InputPort, myInt.OutputPort, new List<IEdgeModel> { GraphModel.GetEdgesConnections(log1.InputPort).Single() });
                 },
                 () =>
                 {

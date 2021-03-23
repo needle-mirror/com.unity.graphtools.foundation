@@ -23,10 +23,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 }
 
                 container.AddStylesheet(name + ".uss");
-
-#if !UNITY_2020_1_OR_NEWER
-                container.AddToClassList(rootClassName);
-#endif
             }
         }
 

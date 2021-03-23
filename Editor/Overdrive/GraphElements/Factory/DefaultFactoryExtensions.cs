@@ -9,9 +9,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             IModelUI ui;
 
-            if (model is ISingleInputPortNode || model is ISingleOutputPortNode)
+            if (model is ISingleInputPortNodeModel || model is ISingleOutputPortNodeModel)
                 ui = new TokenNode();
-            else if (model is IPortNode)
+            else if (model is IPortNodeModel)
                 ui = new CollapsibleInOutNode();
             else
                 ui = new Node();

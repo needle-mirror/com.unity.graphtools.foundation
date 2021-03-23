@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -8,14 +9,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class FreehandSelector : MouseManipulator
     {
-        private readonly FreehandElement m_FreehandElement;
-        private bool m_Active;
-        private GraphView m_GraphView;
+        readonly FreehandElement m_FreehandElement;
+        bool m_Active;
+        GraphView m_GraphView;
 
         public FreehandSelector()
         {
-            activators.Add(new ManipulatorActivationFilter {button = MouseButton.LeftMouse, modifiers = EventModifiers.Shift});
-            activators.Add(new ManipulatorActivationFilter {button = MouseButton.LeftMouse, modifiers = EventModifiers.Shift | EventModifiers.Alt});
+            activators.Add(new ManipulatorActivationFilter { button = MouseButton.LeftMouse, modifiers = EventModifiers.Shift });
+            activators.Add(new ManipulatorActivationFilter { button = MouseButton.LeftMouse, modifiers = EventModifiers.Shift | EventModifiers.Alt });
             m_FreehandElement = new FreehandElement();
             m_FreehandElement.StretchToParentSize();
         }
@@ -44,7 +45,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             m_GraphView = null;
         }
 
-        private void OnMouseDown(MouseDownEvent e)
+        /// <summary>
+        /// Callback for the MouseDown event.
+        /// </summary>
+        /// <param name="e">The event.</param>
+        protected void OnMouseDown(MouseDownEvent e)
         {
             if (m_Active)
             {
@@ -54,7 +59,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             if (CanStartManipulation(e))
             {
-                m_GraphView.ClearSelection();
+                m_GraphView.CommandDispatcher.Dispatch(new ClearSelectionCommand());
 
                 m_GraphView.Add(m_FreehandElement);
 
@@ -68,7 +73,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        private void OnMouseUp(MouseUpEvent e)
+        /// <summary>
+        /// Callback for the MouseUp event.
+        /// </summary>
+        /// <param name="e">The event.</param>
+        protected void OnMouseUp(MouseUpEvent e)
         {
             if (!m_Active || !CanStopManipulation(e))
                 return;
@@ -77,13 +86,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             m_FreehandElement.points.Add(e.localMousePosition);
 
-            List<ISelectableGraphElement> selection = m_GraphView.Selection;
-
             // a copy is necessary because Add To selection might cause a SendElementToFront which will change the order.
-            List<ISelectableGraphElement> newSelection = new List<ISelectableGraphElement>();
+            List<IGraphElement> newSelection = new List<IGraphElement>();
             m_GraphView.GraphElements.ForEach(element =>
             {
-                if (element.IsSelectable())
+                if (element.Model.IsSelectable())
                 {
                     for (int i = 1; i < m_FreehandElement.points.Count; i++)
                     {
@@ -105,19 +112,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 }
             });
 
-            foreach (ISelectableGraphElement selectable in newSelection)
-            {
-                if (selectable is Placemat && e.altKey)
-                    continue;
-
-                if (!selection.Contains(selectable))
-                    m_GraphView.AddToSelection(selectable);
-            }
+            var selectedModels = newSelection.Where(elem => !(elem is Placemat)).Select(elem => elem.Model).ToList();
 
             if (e.altKey)
             {
-                // Delete instead
-                m_GraphView.DeleteSelection();
+                m_GraphView.CommandDispatcher.Dispatch(new DeleteElementsCommand(selectedModels));
+            }
+            else
+            {
+                m_GraphView.CommandDispatcher.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Add, selectedModels));
             }
 
             m_Active = false;
@@ -125,7 +128,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             e.StopPropagation();
         }
 
-        private void OnMouseMove(MouseMoveEvent e)
+        /// <summary>
+        /// Callback for the MouseMove event.
+        /// </summary>
+        /// <param name="e">The event.</param>
+        protected void OnMouseMove(MouseMoveEvent e)
         {
             if (!m_Active)
                 return;
@@ -136,21 +143,29 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             e.StopPropagation();
         }
 
-        private void OnKeyDown(KeyDownEvent e)
+        /// <summary>
+        /// Callback for the KeyDown event.
+        /// </summary>
+        /// <param name="e">The event.</param>
+        protected void OnKeyDown(KeyDownEvent e)
         {
             if (m_Active)
                 m_FreehandElement.deleteModifier = e.altKey;
         }
 
-        private void OnKeyUp(KeyUpEvent e)
+        /// <summary>
+        /// Callback for the KeyUp event.
+        /// </summary>
+        /// <param name="e">The event.</param>
+        protected void OnKeyUp(KeyUpEvent e)
         {
             if (m_Active)
                 m_FreehandElement.deleteModifier = e.altKey;
         }
 
-        private class FreehandElement : ImmediateModeElement
+        class FreehandElement : ImmediateModeElement
         {
-            private List<Vector2> m_Points = new List<Vector2>();
+            List<Vector2> m_Points = new List<Vector2>();
             public List<Vector2> points { get { return m_Points; } }
 
             public FreehandElement()
@@ -158,7 +173,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 RegisterCallback<CustomStyleResolvedEvent>(OnCustomStyleResolved);
             }
 
-            private bool m_DeleteModifier;
+            bool m_DeleteModifier;
             public bool deleteModifier
             {
                 private get { return m_DeleteModifier; }
@@ -171,9 +186,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 }
             }
 
-            private static CustomStyleProperty<float> s_SegmentSizeProperty = new CustomStyleProperty<float>("--segment-size");
-            private static CustomStyleProperty<Color> s_SegmentColorProperty = new CustomStyleProperty<Color>("--segment-color");
-            private static CustomStyleProperty<Color> s_DeleteSegmentColorProperty = new CustomStyleProperty<Color>("--delete-segment-color");
+            static CustomStyleProperty<float> s_SegmentSizeProperty = new CustomStyleProperty<float>("--segment-size");
+            static CustomStyleProperty<Color> s_SegmentColorProperty = new CustomStyleProperty<Color>("--segment-color");
+            static CustomStyleProperty<Color> s_DeleteSegmentColorProperty = new CustomStyleProperty<Color>("--delete-segment-color");
 
             float m_SegmentSize = 5f;
             public float segmentSize { get { return m_SegmentSize; } }
@@ -184,14 +199,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             Color m_DeleteSegmentColor = new Color(1f, 0f, 0f);
             public Color deleteSegmentColor { get { return m_DeleteSegmentColor; } }
 
-            private void OnCustomStyleResolved(CustomStyleResolvedEvent e)
+            void OnCustomStyleResolved(CustomStyleResolvedEvent e)
             {
                 ICustomStyle styles = e.customStyle;
-                float segmentSizeValue = 0f;
-                Color segmentColorValue = Color.clear;
-                Color deleteColorValue = Color.clear;
+                Color segmentColorValue;
+                Color deleteColorValue;
 
-                if (styles.TryGetValue(s_SegmentSizeProperty, out segmentSizeValue))
+                if (styles.TryGetValue(s_SegmentSizeProperty, out var segmentSizeValue))
                     m_SegmentSize = segmentSizeValue;
 
                 if (styles.TryGetValue(s_SegmentColorProperty, out segmentColorValue))
@@ -226,7 +240,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 GL.End();
             }
 
-            private void DrawDottedLine(Vector3 p1, Vector3 p2, float segmentsLength)
+            void DrawDottedLine(Vector3 p1, Vector3 p2, float segmentsLength)
             {
                 float length = Vector3.Distance(p1, p2); // ignore z component
                 int count = Mathf.CeilToInt(length / segmentsLength);

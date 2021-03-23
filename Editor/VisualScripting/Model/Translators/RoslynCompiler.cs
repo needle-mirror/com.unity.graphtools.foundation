@@ -32,7 +32,7 @@ namespace UnityEditor.VisualScripting.Model.Compilation
 
             if (sourceFiles.Length == 0)
             {
-                OnBuildFinished(string.Empty, new CompilerMessage[] {});
+                OnBuildFinished(string.Empty, new CompilerMessage[] { });
                 return;
             }
 
@@ -41,13 +41,13 @@ namespace UnityEditor.VisualScripting.Model.Compilation
             m_AssemblyBuilder = new AssemblyBuilder(assemblyOutputPath, sourceFiles);
             var defaultReferences = new HashSet<string>(m_AssemblyBuilder.defaultReferences);
             var assemblies = (from domainAssembly in AppDomain.CurrentDomain.GetAssemblies()
-                where !domainAssembly.IsDynamic &&
-                domainAssembly.Location != "" &&
-                ((domainAssembly.Location.Contains("UnityEngine") && !domainAssembly.Location.Contains("Module.dll")) ||
-                    domainAssembly.Location.Contains("Unity.GraphTools.Foundation.dll")) &&
-                !domainAssembly.Location.Contains("Tests") &&
-                !defaultReferences.Contains(domainAssembly.Location)
-                select domainAssembly).ToArray();
+                              where !domainAssembly.IsDynamic &&
+                              domainAssembly.Location != "" &&
+                              ((domainAssembly.Location.Contains("UnityEngine") && !domainAssembly.Location.Contains("Module.dll")) ||
+                                  domainAssembly.Location.Contains("Unity.GraphTools.Foundation.dll")) &&
+                              !domainAssembly.Location.Contains("Tests") &&
+                              !defaultReferences.Contains(domainAssembly.Location)
+                              select domainAssembly).ToArray();
 
             HashSet<string> additionalReferences = new HashSet<string>();
 

@@ -29,7 +29,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public static IEnumerable<IPortModel> GetPortModels(this IGraphModel self)
         {
-            return self.NodeModels.OfType<IPortNode>().SelectMany(nodeModel => nodeModel.Ports);
+            return self.NodeModels.OfType<IPortNodeModel>().SelectMany(nodeModel => nodeModel.Ports);
         }
 
         /// <summary>
@@ -39,21 +39,45 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         /// <param name="nodeName">The name of the node to create.</param>
         /// <param name="position">The position of the node to create.</param>
         /// <param name="guid">The SerializableGUID to assign to the newly created item.</param>
-        /// <param name="preDefineSetup">A method to be called before the node is created.</param>
+        /// <param name="initializationCallback">An initialization method to be called right after the node is created.</param>
         /// <param name="spawnFlags">The flags specifying how the node is to be spawned.</param>
         /// <typeparam name="TNodeType">The type of the new node to create.</typeparam>
         /// <returns>The newly created node.</returns>
         public static TNodeType CreateNode<TNodeType>(this IGraphModel self, string nodeName = "", Vector2 position = default,
-            SerializableGUID guid = default, Action<TNodeType> preDefineSetup = null, SpawnFlags spawnFlags = SpawnFlags.Default)
+            SerializableGUID guid = default, Action<TNodeType> initializationCallback = null, SpawnFlags spawnFlags = SpawnFlags.Default)
             where TNodeType : class, INodeModel
         {
             Action<INodeModel> setupWrapper = null;
-            if (preDefineSetup != null)
+            if (initializationCallback != null)
             {
-                setupWrapper = n => preDefineSetup.Invoke(n as TNodeType);
+                setupWrapper = n => initializationCallback.Invoke(n as TNodeType);
             }
 
             return (TNodeType)self.CreateNode(typeof(TNodeType), nodeName, position, guid, setupWrapper, spawnFlags);
+        }
+
+        /// <summary>
+        /// Creates a new variable declaration in the graph.
+        /// </summary>
+        /// <param name="self">The graph to add a variable declaration to.</param>
+        /// <param name="variableDataType">The type of data the new variable declaration to create represents.</param>
+        /// <param name="variableName">The name of the new variable declaration to create.</param>
+        /// <param name="modifierFlags">The modifier flags of the new variable declaration to create.</param>
+        /// <param name="isExposed">Whether the variable is exposed externally or not.</param>
+        /// <param name="initializationModel">The initialization model of the new variable declaration to create. Can be <code>null</code>.</param>
+        /// <param name="guid">The SerializableGUID to assign to the newly created item.</param>
+        /// <param name="initializationCallback">An initialization method to be called right after the variable declaration is created.</param>
+        /// <param name="spawnFlags">The flags specifying how the variable declaration is to be spawned.</param>
+        /// <typeparam name="TDeclType">The type of variable declaration to create.</typeparam>
+        /// <returns>The newly created variable declaration.</returns>
+        public static TDeclType CreateGraphVariableDeclaration<TDeclType>(this IGraphModel self, TypeHandle variableDataType,
+            string variableName, ModifierFlags modifierFlags, bool isExposed, IConstant initializationModel = null,
+            SerializableGUID guid = default, Action<TDeclType, IConstant> initializationCallback = null,
+            SpawnFlags spawnFlags = SpawnFlags.Default)
+            where TDeclType : class, IVariableDeclarationModel
+        {
+            return (TDeclType)self.CreateGraphVariableDeclaration(typeof(TDeclType), variableDataType, variableName,
+                modifierFlags, isExposed, initializationModel, guid, (d, c) => initializationCallback?.Invoke((TDeclType)d, c), spawnFlags);
         }
 
         public static IEdgePortalModel CreateOppositePortal(this IGraphModel self, IEdgePortalModel edgePortalModel, SpawnFlags spawnFlags = SpawnFlags.Default)
@@ -75,27 +99,27 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public static IReadOnlyCollection<IGraphElementModel> DeleteVariableDeclaration(this IGraphModel self,
             IVariableDeclarationModel variableDeclarationToDelete, bool deleteUsages)
         {
-            return self.DeleteVariableDeclarations(new[] {variableDeclarationToDelete}, deleteUsages);
+            return self.DeleteVariableDeclarations(new[] { variableDeclarationToDelete }, deleteUsages);
         }
 
         public static IReadOnlyCollection<IGraphElementModel> DeleteNode(this IGraphModel self, INodeModel nodeToDelete, bool deleteConnections)
         {
-            return self.DeleteNodes(new[] {nodeToDelete}, deleteConnections);
+            return self.DeleteNodes(new[] { nodeToDelete }, deleteConnections);
         }
 
         public static IReadOnlyCollection<IGraphElementModel> DeleteEdge(this IGraphModel self, IEdgeModel edgeToDelete)
         {
-            return self.DeleteEdges(new[] {edgeToDelete});
+            return self.DeleteEdges(new[] { edgeToDelete });
         }
 
         public static IReadOnlyCollection<IGraphElementModel> DeleteStickyNote(this IGraphModel self, IStickyNoteModel stickyNoteToDelete)
         {
-            return self.DeleteStickyNotes(new[] {stickyNoteToDelete});
+            return self.DeleteStickyNotes(new[] { stickyNoteToDelete });
         }
 
         public static IReadOnlyCollection<IGraphElementModel> DeletePlacemat(this IGraphModel self, IPlacematModel placematToDelete)
         {
-            return self.DeletePlacemats(new[] {placematToDelete});
+            return self.DeletePlacemats(new[] { placematToDelete });
         }
 
         public static IEnumerable<IGraphElementModel> DeleteElements(this IGraphModel self, IReadOnlyCollection<IGraphElementModel> graphElementModels)
@@ -132,7 +156,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             nodeModels.AddRange(variableDeclarationsModels.SelectMany(d => self.FindReferencesInGraph<IHasDeclarationModel>(d).OfType<INodeModel>()));
 
             // Add edges connected to the deleted nodes.
-            foreach (var portModel in nodeModels.OfType<IPortNode>().SelectMany(n => n.Ports))
+            foreach (var portModel in nodeModels.OfType<IPortNodeModel>().SelectMany(n => n.Ports))
                 edgeModels.AddRange(self.EdgeModels.Where(e => e.ToPort == portModel || e.FromPort == portModel));
 
             return self.DeleteStickyNotes(stickyNoteModels)
@@ -258,6 +282,33 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             return self.EdgeModels.FirstOrDefault(e => e.ToPort == toPort && e.FromPort == output);
         }
 
+        /// <summary>
+        /// Get the smallest Z order for the placemats in the graph.
+        /// </summary>
+        /// <returns>The smallest Z order for the placemats in the graph; 0 if the graph has no placemats.</returns>
+        public static int GetPlacematMinZOrder(this IGraphModel self)
+        {
+            return self.PlacematModels.Any() ? self.PlacematModels.Min(m => m.ZOrder) : 0;
+        }
+
+        /// <summary>
+        /// Get the largest Z order for the placemats in the graph.
+        /// </summary>
+        /// <returns>The largest Z order for the placemats in the graph; 0 if the graph has no placemats.</returns>
+        public static int GetPlacematMaxZOrder(this IGraphModel self)
+        {
+            return self.PlacematModels.Any() ? self.PlacematModels.Max(m => m.ZOrder) : 0;
+        }
+
+        /// <summary>
+        /// Get a list of placemats sorted by their Z order.
+        /// </summary>
+        /// <returns>A list of placemats sorted by their Z order.</returns>
+        public static IReadOnlyList<IPlacematModel> GetSortedPlacematModels(this IGraphModel self)
+        {
+            return self.PlacematModels.OrderBy(p => p.ZOrder).ToList();
+        }
+
         public static void QuickCleanup(this IGraphModel self)
         {
             var toRemove = self.EdgeModels.Where(e => e?.ToPort == null || e.FromPort == null).Cast<IGraphElementModel>()
@@ -320,7 +371,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 if (node.Destroyed)
                     continue;
 
-                if (node is IInOutPortsNode portHolder)
+                if (node is IInputOutputPortsNodeModel portHolder)
                 {
                     CheckNodePorts(portHolder.InputsById);
                     CheckNodePorts(portHolder.OutputsById);

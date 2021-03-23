@@ -84,7 +84,7 @@ namespace UnityEditor.VisualScriptingTests.Actions
 
             var newMember = new TypeMember
             {
-                Path = new List<string> {propertyToAdd?.Name},
+                Path = new List<string> { propertyToAdd?.Name },
                 Type = propertyToAdd.GetUnderlyingType().GenerateTypeHandle(Stencil)
             };
 
@@ -134,7 +134,7 @@ namespace UnityEditor.VisualScriptingTests.Actions
 
             var newMember = new TypeMember
             {
-                Path = new List<string> {propertyInfo?.Name},
+                Path = new List<string> { propertyInfo?.Name },
                 Type = typeof(Transform).GenerateTypeHandle(Stencil)
             };
 
@@ -171,7 +171,7 @@ namespace UnityEditor.VisualScriptingTests.Actions
             MemberInfo memberInfo = type.GetMembers()[0];
             var newMember = new TypeMember
             {
-                Path = new List<string> {memberInfo.Name},
+                Path = new List<string> { memberInfo.Name },
                 Type = memberInfo.GetUnderlyingType().GenerateTypeHandle(Stencil)
             };
 

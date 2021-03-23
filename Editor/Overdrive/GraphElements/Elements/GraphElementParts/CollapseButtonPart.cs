@@ -21,7 +21,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         protected CollapseButton CollapseButton { get; set; }
 
         protected CollapseButtonPart(string name, IGraphElementModel model, IModelUI ownerElement, string parentClassName)
-            : base(name, model, ownerElement, parentClassName) {}
+            : base(name, model, ownerElement, parentClassName) { }
 
         protected override void BuildPartUI(VisualElement container)
         {

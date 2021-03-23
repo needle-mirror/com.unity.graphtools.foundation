@@ -2,11 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.Plugins;
+using UnityEditor.GraphToolsFoundation.Overdrive.Plugins.Debugging;
 using UnityEngine;
 using UnityEditor.Searcher;
 using UnityEngine.GraphToolsFoundation.Overdrive;
-using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
@@ -25,6 +24,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         [SerializeReference]
         public IGraphModel GraphModel;
 
+        /// <summary>
+        /// The tool name, unique and human readable.
+        /// </summary>
+        public abstract string ToolName { get; }
+
         public virtual IEnumerable<Type> EventTypes => Enumerable.Empty<Type>();
 
         public GraphContext GraphContext => m_GraphContext ?? (m_GraphContext = CreateGraphContext());
@@ -37,21 +41,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public virtual IGraphProcessor CreateGraphProcessor()
         {
             return new NoOpGraphProcessor();
-        }
-
-        public virtual TypeHandle GetThisType()
-        {
-            return TypeHandle.Object;
-        }
-
-        /// <summary>
-        /// Extract a Variable Declaration Model from a Graph Element
-        /// </summary>
-        /// <param name="element">Element to test</param>
-        /// <returns>extracted variable</returns>
-        public virtual IVariableDeclarationModel ExtractVariableFromGraphElement(IGraphElement element)
-        {
-            return (element as BlackboardField)?.Model as IVariableDeclarationModel;
         }
 
         public virtual IToolbarProvider GetToolbarProvider()
@@ -82,7 +71,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         }
 
         [CanBeNull]
-        public virtual ISearcherAdapter GetSearcherAdapter(IGraphModel graphModel, string title, IPortModel contextPortModel = null)
+        public virtual ISearcherAdapter GetSearcherAdapter(IGraphModel graphModel, string title, IEnumerable<IPortModel> contextPortModel = null)
         {
             return new GraphNodeSearcherAdapter(graphModel, title);
         }
@@ -92,9 +81,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             return m_SearcherDatabaseProvider ?? (m_SearcherDatabaseProvider = new DefaultSearcherDatabaseProvider(this));
         }
 
-        public virtual void OnGraphProcessingStarted(IGraphModel graphModel) {}
-        public virtual void OnGraphProcessingSucceeded(IGraphModel graphModel, GraphProcessingResult results) {}
-        public virtual void OnGraphProcessingFailed(IGraphModel graphModel, GraphProcessingResult results) {}
+        public virtual void OnGraphProcessingStarted(IGraphModel graphModel) { }
+        public virtual void OnGraphProcessingSucceeded(IGraphModel graphModel, GraphProcessingResult results) { }
+        public virtual void OnGraphProcessingFailed(IGraphModel graphModel, GraphProcessingResult results) { }
 
         public virtual IEnumerable<IPluginHandler> GetGraphProcessingPluginHandlers(GraphProcessingOptions getGraphProcessingOptions)
         {
@@ -130,12 +119,29 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             {
                 case Direction.Output:
                     SearcherService.ShowOutputToGraphNodes(commandDispatcher.GraphToolState, portModel, worldPosition, item =>
-                        commandDispatcher.Dispatch(new CreateNodeFromPortCommand(portModel, localPosition, item, edgesToDelete)));
+                        commandDispatcher.Dispatch(new CreateNodeFromPortCommand(new[] { portModel }, localPosition, item, edgesToDelete)));
                     break;
 
                 case Direction.Input:
-                    SearcherService.ShowInputToGraphNodes(commandDispatcher.GraphToolState, portModel, worldPosition, item =>
-                        commandDispatcher.Dispatch(new CreateNodeFromPortCommand(portModel, localPosition, item, edgesToDelete)));
+                    SearcherService.ShowInputToGraphNodes(commandDispatcher.GraphToolState, Enumerable.Repeat(portModel, 1), worldPosition, item =>
+                        commandDispatcher.Dispatch(new CreateNodeFromPortCommand(new[] { portModel }, localPosition, item, edgesToDelete)));
+                    break;
+            }
+        }
+
+        public virtual void CreateNodesFromPort(CommandDispatcher commandDispatcher, IReadOnlyList<IPortModel> portModels, Vector2 localPosition, Vector2 worldPosition,
+            IReadOnlyList<IEdgeModel> edgesToDelete)
+        {
+            switch (portModels.First().Direction)
+            {
+                case Direction.Output:
+                    SearcherService.ShowOutputToGraphNodes(commandDispatcher.GraphToolState, portModels, worldPosition, item =>
+                        commandDispatcher.Dispatch(new CreateNodeFromPortCommand(portModels, localPosition, item, edgesToDelete)));
+                    break;
+
+                case Direction.Input:
+                    SearcherService.ShowInputToGraphNodes(commandDispatcher.GraphToolState, portModels, worldPosition, item =>
+                        commandDispatcher.Dispatch(new CreateNodeFromPortCommand(portModels, localPosition, item, edgesToDelete)));
                     break;
             }
         }
@@ -150,7 +156,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         }
 
         public virtual void OnInspectorGUI()
-        {}
+        { }
 
         public virtual bool CreateDependencyFromEdge(IEdgeModel model, out LinkedNodesDependency linkedNodesDependency, out INodeModel parent)
         {
@@ -184,6 +190,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             return Enumerable.Empty<IEdgePortalModel>();
         }
 
+        // PF FIXME: instead of having this virtual on the Stencil, tools (VS) should replace the command
+        // handler for CreateVariableNodesCommand
         public virtual void OnDragAndDropVariableDeclarations(CommandDispatcher commandDispatcher, List<(IVariableDeclarationModel, SerializableGUID, Vector2)> variablesToCreate)
         {
             commandDispatcher.Dispatch(new CreateVariableNodesCommand(variablesToCreate));
@@ -206,7 +214,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         /// </summary>
         /// <param name="originalModel"></param>
         /// <param name="graph"></param>
-        /// <returns>If the node can be pasted/duplicated</returns>
+        /// <returns>If the node can be pasted/duplicated.</returns>
         public virtual bool CanPasteNode(INodeModel originalModel, IGraphModel graph) => true;
 
         public virtual bool MigrateNode(INodeModel nodeModel, out INodeModel migrated)
@@ -217,5 +225,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public virtual string GetNodeDocumentation(SearcherItem node, IGraphElementModel model) =>
             null;
+
+        /// <summary>
+        /// Converts a <see cref="GraphProcessingError"/> to a <see cref="IGraphProcessingErrorModel"/>.
+        /// </summary>
+        /// <param name="error">The error to convert.</param>
+        /// <returns>The converted error.</returns>
+        public abstract IGraphProcessingErrorModel CreateProcessingErrorModel(GraphProcessingError error);
     }
 }

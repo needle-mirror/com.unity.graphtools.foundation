@@ -11,10 +11,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     /// Done so by waiting for access before deserializing Values
     /// This solves issues with SerializeReference not being ready to be accessed during OnAfterDeserialize()
     /// </summary>
-    /// <typeparam name="TKey">Type of key</typeparam>
-    /// <typeparam name="TValue">Type of value</typeparam>
+    /// <typeparam name="TKey">Type of key.</typeparam>
+    /// <typeparam name="TValue">Type of value.</typeparam>
     [Serializable]
-    class SerializedReferenceDictionary<TKey, TValue>: IDictionary<TKey, TValue>, IReadOnlyDictionary<TKey, TValue>, ISerializationCallbackReceiver
+    class SerializedReferenceDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IReadOnlyDictionary<TKey, TValue>, ISerializationCallbackReceiver
     {
         [SerializeField]
         List<TKey> m_KeyList;

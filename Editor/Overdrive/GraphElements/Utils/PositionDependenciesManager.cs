@@ -5,7 +5,6 @@ using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Profiling;
 using UnityEngine.UIElements;
-using Object = UnityEngine.Object;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
@@ -30,6 +29,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     class PositionDependenciesManager
     {
         const int k_AlignHorizontalOffset = 30;
+        const int k_AlignVerticalOffset = 30;
 
         readonly GraphView m_GraphView;
         readonly Dictionary<SerializableGUID, Dictionary<SerializableGUID, IDependency>> m_DependenciesByNode = new Dictionary<SerializableGUID, Dictionary<SerializableGUID, IDependency>>();
@@ -49,7 +49,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         void AddEdgeDependency(INodeModel parent, IDependency child)
         {
             if (!m_DependenciesByNode.TryGetValue(parent.Guid, out var link))
-                m_DependenciesByNode.Add(parent.Guid, new Dictionary<SerializableGUID, IDependency> { {child.DependentNode.Guid, child }});
+                m_DependenciesByNode.Add(parent.Guid, new Dictionary<SerializableGUID, IDependency> { { child.DependentNode.Guid, child } });
             else
             {
                 if (link.TryGetValue(child.DependentNode.Guid, out IDependency dependency))
@@ -172,7 +172,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         void ProcessMovedNodes(Vector2 lastMousePosition, Action<GraphElement, IDependency, Vector2, INodeModel> dependencyCallback)
         {
-            Profiler.BeginSample("VS.ProcessMovedNodes");
+            Profiler.BeginSample("GTF.ProcessMovedNodes");
 
             m_TempMovedModels.Clear();
             Vector2 delta = lastMousePosition - m_StartPos;
@@ -206,7 +206,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         void ProcessMovedNodeModels(Action<IDependency, INodeModel> dependencyCallback)
         {
-            Profiler.BeginSample("VS.ProcessMovedNodeModel");
+            Profiler.BeginSample("GTF.ProcessMovedNodeModel");
 
             m_TempMovedModels.Clear();
             foreach (INodeModel nodeModel in m_ModelsToMove)
@@ -261,7 +261,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 }
             });
 
-            var graphModel = m_GraphView.CommandDispatcher.GraphToolState.GraphModel;
+            var graphModel = m_GraphView.CommandDispatcher.GraphToolState.GraphViewState.GraphModel;
             foreach (var root in graphModel.Stencil.GetEntryPoints(graphModel))
             {
                 SetNodeState(root, ModelState.Enabled);
@@ -283,15 +283,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         IGraphModel m_GraphModel;
 
-        public void StartNotifyMove(List<ISelectableGraphElement> selection, Vector2 lastMousePosition)
+        public void StartNotifyMove(IReadOnlyList<IGraphElementModel> selection, Vector2 lastMousePosition)
         {
             m_StartPos = lastMousePosition;
             m_ModelsToMove.Clear();
             m_GraphModel = null;
 
-            foreach (var element in selection.OfType<IModelUI>())
+            foreach (var element in selection)
             {
-                if (element.Model is INodeModel nodeModel)
+                if (element is INodeModel nodeModel)
                 {
                     if (m_GraphModel == null)
                         m_GraphModel = nodeModel.GraphModel;
@@ -317,16 +317,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (m_GraphModel == null)
                 return;
 
-            if (m_GraphModel?.AssetModel != null)
+            using (var graphUpdater = m_GraphView.CommandDispatcher.GraphToolState.GraphViewState.Updater)
             {
-                Undo.RegisterCompleteObjectUndo((Object)m_GraphModel.AssetModel, "Move dependency");
-                EditorUtility.SetDirty((Object)m_GraphModel.AssetModel);
+                ProcessMovedNodes(Vector2.zero, (element, model, _, __) =>
+                {
+                    model.DependentNode.Position = element.GetPosition().position;
+                    // ReSharper disable once AccessToDisposedClosure
+                    graphUpdater.U.MarkChanged(model.DependentNode);
+                });
             }
-
-            ProcessMovedNodes(Vector2.zero, (element, model, _, __) =>
-            {
-                model.DependentNode.Position = element.GetPosition().position;
-            });
 
             m_ModelsToMove.Clear();
         }
@@ -348,25 +347,40 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
                     Vector2 position;
 
-                    VisualElement input = linked.ParentPort.GetUI<Port>(m_GraphView);
-                    VisualElement output = linked.DependentPort.GetUI<Port>(m_GraphView);
+                    var input = linked.ParentPort.GetUI<Port>(m_GraphView);
+                    var output = linked.DependentPort.GetUI<Port>(m_GraphView);
 
-                    if (input != null && output != null)
+                    if (input?.Model != null && output?.Model != null &&
+                        ((IPortModel)input.Model).Orientation == ((IPortModel)output.Model).Orientation)
                     {
                         Vector2 inputPortPos = input.parent.ChangeCoordinatesTo(parentUI, input.layout.center);
                         Vector2 inputPos = prev.Position;
                         Vector2 outputPortPos = output.parent.ChangeCoordinatesTo(depUI, output.layout.center);
 
-                        position = new Vector2(
-                            prev.Position.x + (linked.ParentPort.Direction == Direction.Output
-                                ? parentUI.layout.width + k_AlignHorizontalOffset
-                                : -k_AlignHorizontalOffset - depUI.layout.width),
-                            inputPos.y + inputPortPos.y - outputPortPos.y
-                        );
-                        Log($"  pos {position} parent NOT stackNode");
+                        if (((IPortModel)input.Model).Orientation == Orientation.Horizontal)
+                        {
+                            position = new Vector2(
+                                prev.Position.x + (linked.ParentPort.Direction == Direction.Output
+                                    ? parentUI.layout.width + k_AlignHorizontalOffset
+                                    : -k_AlignHorizontalOffset - depUI.layout.width),
+                                inputPos.y + inputPortPos.y - outputPortPos.y
+                            );
+                        }
+                        else
+                        {
+                            position = new Vector2(
+                                inputPos.x + inputPortPos.x - outputPortPos.x,
+                                prev.Position.y + (linked.ParentPort.Direction == Direction.Output
+                                    ? parentUI.layout.height + k_AlignVerticalOffset
+                                    : -k_AlignVerticalOffset - depUI.layout.height)
+                            );
+                        }
 
                         linked.DependentNode.Position = position;
-                        m_GraphView.CommandDispatcher.GraphToolState.MarkChanged(linked.DependentNode);
+                        using (var graphUpdater = m_GraphView.CommandDispatcher.GraphToolState.GraphViewState.Updater)
+                        {
+                            graphUpdater.U.MarkChanged(linked.DependentNode);
+                        }
                     }
                     break;
             }
@@ -426,7 +440,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public void AddPositionDependency(IEdgeModel model)
         {
-            if (!model.GraphModel.Stencil.CreateDependencyFromEdge(model, out var dependency, out INodeModel parent))
+            if (model.GraphModel.Stencil == null ||
+                !model.GraphModel.Stencil.CreateDependencyFromEdge(model, out var dependency, out INodeModel parent))
                 return;
             AddEdgeDependency(parent, dependency);
             LogDependencies();
@@ -441,7 +456,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             {
                 m_PortalDependenciesByNode[portalModel.Guid] =
                     stencil.GetPortalDependencies(portalModel)
-                        .ToDictionary(p => p.Guid, p => (IDependency) new PortalNodesDependency {DependentNode = p});
+                        .ToDictionary(p => p.Guid, p => (IDependency)new PortalNodesDependency { DependentNode = p });
             }
             LogDependencies();
         }

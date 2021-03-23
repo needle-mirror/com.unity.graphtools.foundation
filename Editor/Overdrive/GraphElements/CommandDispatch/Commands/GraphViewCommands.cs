@@ -11,10 +11,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         const string k_UndoStringPlural = "Move Elements";
 
         public MoveElementsCommand()
-            : base(k_UndoStringSingular) {}
+            : base(k_UndoStringSingular) { }
 
         public MoveElementsCommand(Vector2 delta, IReadOnlyList<IMovable> models)
-            : base(k_UndoStringSingular, k_UndoStringPlural, models, delta) {}
+            : base(k_UndoStringSingular, k_UndoStringPlural, models, delta) { }
 
         public static void DefaultCommandHandler(GraphToolState graphToolState, MoveElementsCommand command)
         {
@@ -23,18 +23,22 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             graphToolState.PushUndo(command);
 
-            var movingNodes = command.Models.OfType<INodeModel>().ToList();
-
-            foreach (var movable in command.Models
-                     // Only move an edge if it is connected on both ends to a moving node.
-                     .Where(m => !(m is IEditableEdge e)
-                         || movingNodes.Contains(e.FromPort.NodeModel)
-                         && movingNodes.Contains(e.ToPort.NodeModel)))
+            using (var graphUpdater = graphToolState.GraphViewState.Updater)
             {
-                movable.Move(command.Value);
-            }
+                var movingNodes = command.Models.OfType<INodeModel>().ToList();
 
-            graphToolState.MarkChanged(command.Models.OfType<IGraphElementModel>());
+                foreach (var movable in command.Models
+
+                    // Only move an edge if it is connected on both ends to a moving node.
+                    .Where(m => !(m is IEditableEdge e)
+                        || movingNodes.Contains(e.FromPort.NodeModel)
+                        && movingNodes.Contains(e.ToPort.NodeModel)))
+                {
+                    movable.Move(command.Value);
+                }
+
+                graphUpdater.U.MarkChanged(command.Models.OfType<IGraphElementModel>());
+            }
         }
     }
 
@@ -46,7 +50,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public IReadOnlyList<Vector2> Deltas;
 
         public AutoPlaceElementsCommand()
-            : base(k_UndoStringSingular) {}
+            : base(k_UndoStringSingular) { }
 
         public AutoPlaceElementsCommand(IReadOnlyList<Vector2> delta, IReadOnlyList<IMovable> models)
             : base(k_UndoStringSingular, k_UndoStringPlural, models)
@@ -61,14 +65,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             graphToolState.PushUndo(command);
 
-            for (int i = 0; i < command.Models.Count; ++i)
+            using (var graphUpdater = graphToolState.GraphViewState.Updater)
             {
-                IMovable model = command.Models[i];
-                Vector2 delta = command.Deltas[i];
-                model.Move(delta);
-            }
+                for (int i = 0; i < command.Models.Count; ++i)
+                {
+                    IMovable model = command.Models[i];
+                    Vector2 delta = command.Deltas[i];
+                    model.Move(delta);
+                }
 
-            graphToolState.MarkChanged(command.Models.OfType<IGraphElementModel>());
+                graphUpdater.U.MarkChanged(command.Models.OfType<IGraphElementModel>());
+            }
         }
     }
 
@@ -78,7 +85,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         const string k_UndoStringPlural = "Delete Elements";
 
         public DeleteElementsCommand()
-            : base(k_UndoStringSingular) {}
+            : base(k_UndoStringSingular) { }
 
         public DeleteElementsCommand(IReadOnlyList<IGraphElementModel> elementsToRemove)
             : base(k_UndoStringSingular, k_UndoStringPlural, elementsToRemove)
@@ -92,8 +99,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             graphToolState.PushUndo(command);
 
-            var deletedModels = graphToolState.GraphModel.DeleteElements(command.Models);
-            graphToolState.MarkDeleted(deletedModels);
+            using (var selectionUpdater = graphToolState.SelectionState.Updater)
+            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            {
+                var deletedModels = graphToolState.GraphViewState.GraphModel.DeleteElements(command.Models).ToList();
+
+                var selectedModels = deletedModels.Where(m => graphToolState.SelectionState.IsSelected(m)).ToList();
+                if (selectedModels.Any())
+                {
+                    selectionUpdater.U.SelectElements(selectedModels, false);
+                }
+
+                graphUpdater.U.MarkDeleted(deletedModels);
+            }
         }
     }
 
@@ -134,11 +152,81 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public static void DefaultCommandHandler(GraphToolState graphToolState, PasteSerializedDataCommand command)
         {
-            graphToolState.PushUndo(command);
-            CopyPasteData.PasteSerializedData(graphToolState.GraphModel, command.Info, graphToolState.SelectionStateComponent, command.Data);
             if (!command.Data.IsEmpty())
             {
-                graphToolState.RequestUIRebuild();
+                graphToolState.PushUndo(command);
+
+                using (var graphViewUpdater = graphToolState.GraphViewState.Updater)
+                using (var selectionUpdater = graphToolState.SelectionState.Updater)
+                {
+                    selectionUpdater.U.ClearSelection(graphToolState.GraphViewState.GraphModel);
+
+                    CopyPasteData.PasteSerializedData(graphToolState.GraphViewState.GraphModel, command.Info, graphViewUpdater.U, selectionUpdater.U, command.Data);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// A command to change the graph view position and zoom and optionally change the selection.
+    /// </summary>
+    public class ReframeGraphViewCommand : Command
+    {
+        /// <summary>
+        /// The new position.
+        /// </summary>
+        public Vector3 Position;
+        /// <summary>
+        /// The new zoom factor.
+        /// </summary>
+        public Vector3 Scale;
+        /// <summary>
+        /// The elements to select, in replacement of the current selection.
+        /// </summary>
+        public List<IGraphElementModel> NewSelection;
+
+        /// <summary>
+        /// Initializes a new instance of the ReframeGraphViewCommand class.
+        /// </summary>
+        public ReframeGraphViewCommand()
+        {
+            UndoString = "Reframe View";
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the ReframeGraphViewCommand class.
+        /// </summary>
+        /// <param name="position">The new position.</param>
+        /// <param name="scale">The new zoom factor.</param>
+        /// <param name="newSelection">If not null, the elements to select, in replacement of the current selection.
+        /// If null, the selection is not changed.</param>
+        public ReframeGraphViewCommand(Vector3 position, Vector3 scale, List<IGraphElementModel> newSelection = null) : this()
+        {
+            Position = position;
+            Scale = scale;
+            NewSelection = newSelection;
+        }
+
+        /// <summary>
+        /// Default command handler.
+        /// </summary>
+        /// <param name="state">The state to modify.</param>
+        /// <param name="command">The command to apply to the state.</param>
+        public static void DefaultCommandHandler(GraphToolState state, ReframeGraphViewCommand command)
+        {
+            state.PushUndo(command);
+
+            using (var selectionUpdater = state.SelectionState.Updater)
+            using (var graphUpdater = state.GraphViewState.Updater)
+            {
+                graphUpdater.U.Position = command.Position;
+                graphUpdater.U.Scale = command.Scale;
+
+                if (command.NewSelection != null)
+                {
+                    selectionUpdater.U.ClearSelection(state.GraphViewState.GraphModel);
+                    selectionUpdater.U.SelectElements(command.NewSelection, true);
+                }
             }
         }
     }

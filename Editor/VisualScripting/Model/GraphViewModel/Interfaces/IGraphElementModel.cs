@@ -51,8 +51,8 @@ namespace UnityEditor.VisualScripting.GraphViewModel
             h.model = element;
 
             // TODO: wait for CopySerializedManagedFieldsOnly to be able to copy plain c# objects with [SerializeReference] fields
-//            var clone = (T)Activator.CreateInstance(element.GetType());
-//            EditorUtility.CopySerializedManagedFieldsOnly(element, clone);
+            //            var clone = (T)Activator.CreateInstance(element.GetType());
+            //            EditorUtility.CopySerializedManagedFieldsOnly(element, clone);
             var h2 = ScriptableObject.Instantiate(h);
             var clone = h2.model;
 

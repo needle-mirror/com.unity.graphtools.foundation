@@ -153,9 +153,9 @@ namespace UnityEditor.VisualScripting.Model.Stencils
             m_StaticTypesSearcherDatabase = null;
         }
 
-        public virtual void ClearTypeMembersSearcherDatabases() {}
+        public virtual void ClearTypeMembersSearcherDatabases() { }
 
-        public virtual void ClearGraphVariablesSearcherDatabases() {}
+        public virtual void ClearGraphVariablesSearcherDatabases() { }
 
         protected IEnumerable<Type> GetCustomTypeMembers()
         {
@@ -171,7 +171,7 @@ namespace UnityEditor.VisualScripting.Model.Stencils
                 })
                 .Concat(TypeCache.GetMethodsWithAttribute<TypeMembersNodeAttribute>()
                     .Where(FilterMethodsByStencil<TypeMembersNodeAttribute>)
-                    .SelectMany(m => (IEnumerable<Type>)m.Invoke(null, new object[] {}))
+                    .SelectMany(m => (IEnumerable<Type>)m.Invoke(null, new object[] { }))
                     .Where(t => !t.IsInterface));
         }
 
@@ -179,28 +179,28 @@ namespace UnityEditor.VisualScripting.Model.Stencils
         {
             return TypeCache.GetMethodsWithAttribute<MethodNodeAttribute>()
                 .Where(FilterMethodsByStencil<MethodNodeAttribute>)
-                .SelectMany(m => (IEnumerable<MethodInfo>)m.Invoke(null, new object[] {}));
+                .SelectMany(m => (IEnumerable<MethodInfo>)m.Invoke(null, new object[] { }));
         }
 
         protected IEnumerable<PropertyInfo> GetCustomProperties()
         {
             return TypeCache.GetMethodsWithAttribute<PropertyNodeAttribute>()
                 .Where(FilterMethodsByStencil<PropertyNodeAttribute>)
-                .SelectMany(m => (IEnumerable<PropertyInfo>)m.Invoke(null, new object[] {}));
+                .SelectMany(m => (IEnumerable<PropertyInfo>)m.Invoke(null, new object[] { }));
         }
 
         protected IEnumerable<FieldInfo> GetCustomFields()
         {
             return TypeCache.GetMethodsWithAttribute<FieldNodeAttribute>()
                 .Where(FilterMethodsByStencil<FieldNodeAttribute>)
-                .SelectMany(m => (IEnumerable<FieldInfo>)m.Invoke(null, new object[] {}));
+                .SelectMany(m => (IEnumerable<FieldInfo>)m.Invoke(null, new object[] { }));
         }
 
         protected IEnumerable<Type> GetCustomConstantVariables()
         {
             return TypeCache.GetMethodsWithAttribute<ConstantVariableNodeAttribute>()
                 .Where(FilterMethodsByStencil<ConstantVariableNodeAttribute>)
-                .SelectMany(m => (IEnumerable<Type>)m.Invoke(null, new object[] {}));
+                .SelectMany(m => (IEnumerable<Type>)m.Invoke(null, new object[] { }));
         }
 
         bool FilterMethodsByStencil<T>(MemberInfo methodInfo) where T : AbstractNodeAttribute

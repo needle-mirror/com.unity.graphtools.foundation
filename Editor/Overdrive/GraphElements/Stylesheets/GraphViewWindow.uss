@@ -45,7 +45,7 @@
     min-width: 40%;
 }
 
-#gtfRoot > #vseMenu.unity-toolbar {
+#gtfRoot > .ge-main-toolbar {
     height: 20px;
 }
 

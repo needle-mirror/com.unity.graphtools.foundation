@@ -13,12 +13,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         const string k_ExpandUndoStringPlural = "Expand Nodes";
 
         public SetNodeCollapsedCommand()
-            : base("Collapse Or Expand Node") {}
+            : base("Collapse Or Expand Node") { }
 
         public SetNodeCollapsedCommand(IReadOnlyList<INodeModel> models, bool value)
             : base(value ? k_CollapseUndoStringSingular : k_ExpandUndoStringSingular,
                    value ? k_CollapseUndoStringPlural : k_ExpandUndoStringPlural,
-                   models, value) {}
+                   models, value)
+        { }
 
         public static void DefaultCommandHandler(GraphToolState graphToolState, SetNodeCollapsedCommand command)
         {
@@ -27,12 +28,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             graphToolState.PushUndo(command);
 
-            foreach (var model in command.Models.OfType<ICollapsible>())
+            using (var graphUpdater = graphToolState.GraphViewState.Updater)
             {
-                model.Collapsed = command.Value;
-            }
+                foreach (var model in command.Models.OfType<ICollapsible>())
+                {
+                    model.Collapsed = command.Value;
+                }
 
-            graphToolState.MarkChanged(command.Models.OfType<ICollapsible>().OfType<IGraphElementModel>());
+                graphUpdater.U.MarkChanged(command.Models.OfType<ICollapsible>().OfType<IGraphElementModel>());
+            }
         }
     }
 
@@ -56,36 +60,39 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             graphToolState.PushUndo(command);
 
-            command.RenamableModel.Rename(command.ElementName);
-
-            var graphModel = graphToolState.GraphModel;
-
-            if (command.RenamableModel is IVariableDeclarationModel variableDeclarationModel)
+            using (var graphUpdater = graphToolState.GraphViewState.Updater)
             {
-                var references = graphModel.FindReferencesInGraph<IVariableNodeModel>(variableDeclarationModel);
+                command.RenamableModel.Rename(command.ElementName);
 
-                graphToolState.MarkChanged(references);
-                graphToolState.MarkChanged(variableDeclarationModel);
-            }
-            else if (command.RenamableModel is IVariableNodeModel variableModel)
-            {
-                variableDeclarationModel = variableModel.VariableDeclarationModel;
-                var references = graphModel.FindReferencesInGraph<IVariableNodeModel>(variableDeclarationModel);
+                var graphModel = graphToolState.GraphViewState.GraphModel;
 
-                graphToolState.MarkChanged(references);
-                graphToolState.MarkChanged(variableDeclarationModel);
-            }
-            else if (command.RenamableModel is IEdgePortalModel edgePortalModel)
-            {
-                var declarationModel = edgePortalModel.DeclarationModel as IGraphElementModel;
-                var references = graphModel.FindReferencesInGraph<IEdgePortalModel>(edgePortalModel.DeclarationModel);
+                if (command.RenamableModel is IVariableDeclarationModel variableDeclarationModel)
+                {
+                    var references = graphModel.FindReferencesInGraph<IVariableNodeModel>(variableDeclarationModel);
 
-                graphToolState.MarkChanged(references);
-                graphToolState.MarkChanged(declarationModel);
-            }
-            else
-            {
-                graphToolState.MarkChanged(command.RenamableModel as IGraphElementModel);
+                    graphUpdater.U.MarkChanged(references);
+                    graphUpdater.U.MarkChanged(variableDeclarationModel);
+                }
+                else if (command.RenamableModel is IVariableNodeModel variableModel)
+                {
+                    variableDeclarationModel = variableModel.VariableDeclarationModel;
+                    var references = graphModel.FindReferencesInGraph<IVariableNodeModel>(variableDeclarationModel);
+
+                    graphUpdater.U.MarkChanged(references);
+                    graphUpdater.U.MarkChanged(variableDeclarationModel);
+                }
+                else if (command.RenamableModel is IEdgePortalModel edgePortalModel)
+                {
+                    var declarationModel = edgePortalModel.DeclarationModel as IGraphElementModel;
+                    var references = graphModel.FindReferencesInGraph<IEdgePortalModel>(edgePortalModel.DeclarationModel);
+
+                    graphUpdater.U.MarkChanged(references);
+                    graphUpdater.U.MarkChanged(declarationModel);
+                }
+                else
+                {
+                    graphUpdater.U.MarkChanged(command.RenamableModel as IGraphElementModel);
+                }
             }
         }
     }
@@ -112,10 +119,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             graphToolState.PushUndo(command);
 
-            command.Constant.ObjectValue = command.Value;
-            if (command.OwnerModel != null)
+            using (var graphUpdater = graphToolState.GraphViewState.Updater)
             {
-                graphToolState.MarkChanged(command.OwnerModel);
+                command.Constant.ObjectValue = command.Value;
+                if (command.OwnerModel != null)
+                {
+                    graphUpdater.U.MarkChanged(command.OwnerModel);
+                }
             }
         }
     }
@@ -140,12 +150,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             graphToolState.PushUndo(command);
 
-            if (command.PortModel.EmbeddedValue is IStringWrapperConstantModel stringWrapperConstantModel)
-                stringWrapperConstantModel.StringValue = (string)command.NewValue;
-            else
-                command.PortModel.EmbeddedValue.ObjectValue = command.NewValue;
+            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            {
+                if (command.PortModel.EmbeddedValue is IStringWrapperConstantModel stringWrapperConstantModel)
+                    stringWrapperConstantModel.StringValue = (string)command.NewValue;
+                else
+                    command.PortModel.EmbeddedValue.ObjectValue = command.NewValue;
 
-            graphToolState.MarkChanged(command.PortModel);
+                graphUpdater.U.MarkChanged(command.PortModel);
+            }
         }
     }
 
@@ -155,10 +168,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         const string k_UndoStringPlural = "Disconnect Nodes";
 
         public DisconnectNodeCommand()
-            : base(k_UndoStringSingular) {}
+            : base(k_UndoStringSingular) { }
 
         public DisconnectNodeCommand(params INodeModel[] nodeModels)
-            : base(k_UndoStringSingular, k_UndoStringPlural, nodeModels) {}
+            : base(k_UndoStringSingular, k_UndoStringPlural, nodeModels) { }
 
         public static void DefaultCommandHandler(GraphToolState graphToolState, DisconnectNodeCommand command)
         {
@@ -167,13 +180,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             graphToolState.PushUndo(command);
 
-            var graphModel = graphToolState.GraphModel;
-
-            foreach (var nodeModel in command.Models)
+            using (var graphUpdater = graphToolState.GraphViewState.Updater)
             {
-                var edgeModels = graphModel.GetEdgesConnections(nodeModel).ToList();
-                graphModel.DeleteEdges(edgeModels);
-                graphToolState.MarkDeleted(edgeModels);
+                var graphModel = graphToolState.GraphViewState.GraphModel;
+
+                foreach (var nodeModel in command.Models)
+                {
+                    var edgeModels = graphModel.GetEdgesConnections(nodeModel).ToList();
+                    graphModel.DeleteEdges(edgeModels);
+                    graphUpdater.U.MarkDeleted(edgeModels);
+                }
             }
         }
     }
@@ -183,12 +199,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         const string k_UndoStringSingular = "Delete Element";
         const string k_UndoStringPlural = "Delete Elements";
 
-        public readonly IInOutPortsNode[] NodesToBypass;
+        public readonly IInputOutputPortsNodeModel[] NodesToBypass;
 
         public BypassNodesCommand()
-            : base(k_UndoStringSingular) {}
+            : base(k_UndoStringSingular) { }
 
-        public BypassNodesCommand(IInOutPortsNode[] nodesToBypass, INodeModel[] elementsToRemove)
+        public BypassNodesCommand(IInputOutputPortsNodeModel[] nodesToBypass, INodeModel[] elementsToRemove)
             : base(k_UndoStringSingular, k_UndoStringPlural, elementsToRemove)
         {
             NodesToBypass = nodesToBypass;
@@ -198,40 +214,43 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             graphToolState.PushUndo(command);
 
-            var graphModel = graphToolState.GraphModel;
+            var graphModel = graphToolState.GraphViewState.GraphModel;
 
-            foreach (var model in command.NodesToBypass)
+            using (var graphUpdater = graphToolState.GraphViewState.Updater)
             {
-                var inputEdgeModels = new List<IEdgeModel>();
-                foreach (var portModel in model.InputsByDisplayOrder)
+                foreach (var model in command.NodesToBypass)
                 {
-                    inputEdgeModels.AddRange(graphModel.GetEdgesConnections(portModel));
+                    var inputEdgeModels = new List<IEdgeModel>();
+                    foreach (var portModel in model.InputsByDisplayOrder)
+                    {
+                        inputEdgeModels.AddRange(graphModel.GetEdgesConnections(portModel));
+                    }
+
+                    if (!inputEdgeModels.Any())
+                        continue;
+
+                    var outputEdgeModels = new List<IEdgeModel>();
+                    foreach (var portModel in model.OutputsByDisplayOrder)
+                    {
+                        outputEdgeModels.AddRange(graphModel.GetEdgesConnections(portModel));
+                    }
+
+                    if (!outputEdgeModels.Any())
+                        continue;
+
+                    graphModel.DeleteEdges(inputEdgeModels);
+                    graphModel.DeleteEdges(outputEdgeModels);
+
+                    var edge = graphModel.CreateEdge(outputEdgeModels[0].ToPort, inputEdgeModels[0].FromPort);
+
+                    graphUpdater.U.MarkDeleted(inputEdgeModels);
+                    graphUpdater.U.MarkDeleted(outputEdgeModels);
+                    graphUpdater.U.MarkNew(edge);
                 }
 
-                if (!inputEdgeModels.Any())
-                    continue;
-
-                var outputEdgeModels = new List<IEdgeModel>();
-                foreach (var portModel in model.OutputsByDisplayOrder)
-                {
-                    outputEdgeModels.AddRange(graphModel.GetEdgesConnections(portModel));
-                }
-
-                if (!outputEdgeModels.Any())
-                    continue;
-
-                graphModel.DeleteEdges(inputEdgeModels);
-                graphModel.DeleteEdges(outputEdgeModels);
-
-                var edge = graphModel.CreateEdge(outputEdgeModels[0].ToPort, inputEdgeModels[0].FromPort);
-
-                graphToolState.MarkDeleted(inputEdgeModels);
-                graphToolState.MarkDeleted(outputEdgeModels);
-                graphToolState.MarkNew(edge);
+                var deletedModels = graphModel.DeleteNodes(command.Models, deleteConnections: false);
+                graphUpdater.U.MarkDeleted(deletedModels);
             }
-
-            var deletedModels = graphModel.DeleteNodes(command.Models, deleteConnections: false);
-            graphToolState.MarkDeleted(deletedModels);
         }
     }
 
@@ -241,10 +260,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         const string k_UndoStringPlural = "Change Nodes State";
 
         public SetNodeEnabledStateCommand()
-            : base(k_UndoStringSingular) {}
+            : base(k_UndoStringSingular) { }
 
         public SetNodeEnabledStateCommand(INodeModel[] nodeModel, ModelState state)
-            : base(k_UndoStringSingular, k_UndoStringPlural, nodeModel, state) {}
+            : base(k_UndoStringSingular, k_UndoStringPlural, nodeModel, state) { }
 
         public static void DefaultCommandHandler(GraphToolState graphToolState, SetNodeEnabledStateCommand command)
         {
@@ -253,11 +272,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             graphToolState.PushUndo(command);
 
-            foreach (var nodeModel in command.Models)
+            using (var graphUpdater = graphToolState.GraphViewState.Updater)
             {
-                nodeModel.State = command.Value;
+                foreach (var nodeModel in command.Models)
+                {
+                    nodeModel.State = command.Value;
+                }
+
+                graphUpdater.U.MarkChanged(command.Models);
             }
-            graphToolState.MarkChanged(command.Models);
         }
     }
 
@@ -283,16 +306,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             graphToolState.PushUndo(command);
 
-            if (command.GraphElementModel is IPropertyVisitorNodeTarget target)
+            using (var graphUpdater = graphToolState.GraphViewState.Updater)
             {
-                var targetTarget = target.Target;
-                PropertyContainer.SetValue(ref targetTarget,  new PropertyPath(command.Path), command.NewValue);
-                target.Target = targetTarget;
-            }
-            else
-                PropertyContainer.SetValue(ref command.GraphElementModel,  new PropertyPath(command.Path), command.NewValue);
+                if (command.GraphElementModel is IPropertyVisitorNodeTarget target)
+                {
+                    var targetTarget = target.Target;
+                    PropertyContainer.SetValue(ref targetTarget, new PropertyPath(command.Path), command.NewValue);
+                    target.Target = targetTarget;
+                }
+                else
+                    PropertyContainer.SetValue(ref command.GraphElementModel, new PropertyPath(command.Path), command.NewValue);
 
-            graphToolState.MarkChanged(command.GraphElementModel);
+                graphUpdater.U.MarkChanged(command.GraphElementModel);
+            }
         }
     }
 }

@@ -4,5 +4,5 @@ using UnityEngine;
 namespace UnityEditor.VisualScripting.Model
 {
     [Serializable]
-    public class Vector2ConstantModel : ConstantNodeModel<Vector2> {}
+    public class Vector2ConstantModel : ConstantNodeModel<Vector2> { }
 }

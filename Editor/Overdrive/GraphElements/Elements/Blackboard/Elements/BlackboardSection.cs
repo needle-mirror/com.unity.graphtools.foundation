@@ -22,6 +22,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         Blackboard m_Blackboard;
         Button m_AddButton;
 
+        UQueryState<BlackboardField> m_Fields;
+
         int InsertionIndex(Vector2 pos)
         {
             int index = -1;
@@ -73,7 +75,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 Vector2 menuPosition = new Vector2(m_AddButton.layout.xMin, m_AddButton.layout.yMax);
                 menuPosition = m_AddButton.parent.LocalToWorld(menuPosition);
                 menu.DropDown(new Rect(menuPosition, Vector2.zero));
-            }) { text = "+" };
+            })
+            { text = "+" };
             m_AddButton.AddToClassList(addButtonUssClassName);
             header.Add(m_AddButton);
 
@@ -86,6 +89,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             m_DragIndicator = new VisualElement { name = "drag-indicator" };
             m_DragIndicator.AddToClassList(dragIndicatorUssClassName);
             hierarchy.Add(m_DragIndicator);
+
+            m_Fields = m_RowsContainer.Query<BlackboardField>().Build();
 
             AddToClassList(ussClassName);
         }
@@ -105,14 +110,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             m_DragIndicator.style.width = layout.width;
         }
 
-        bool CanAcceptDrop(List<ISelectableGraphElement> draggedObjects)
+        bool ContainsVariable(IVariableDeclarationModel model)
         {
-            return draggedObjects?.OfType<BlackboardField>().Any(Contains) ?? false;
+            return m_Fields.ToList().Any(field => ReferenceEquals(field.Model, model));
+        }
+
+        bool CanAcceptDrop(List<IGraphElementModel> draggedObjects)
+        {
+            return draggedObjects?.OfType<IVariableDeclarationModel>().Any(ContainsVariable) ?? false;
         }
 
         void OnDragUpdatedEvent(DragUpdatedEvent evt)
         {
-            var draggedObjects = DragAndDrop.GetGenericData("DragSelection") as List<ISelectableGraphElement>;
+            var draggedObjects = DragAndDrop.GetGenericData("DragSelection") as List<IGraphElementModel>;
 
             if (!CanAcceptDrop(draggedObjects))
             {
@@ -154,7 +164,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         void OnDragPerformEvent(DragPerformEvent evt)
         {
-            var selection = DragAndDrop.GetGenericData("DragSelection") as List<ISelectableGraphElement>;
+            var selection = DragAndDrop.GetGenericData("DragSelection") as List<IGraphElementModel>;
 
             if (selection != null && CanAcceptDrop(selection) && m_InsertIndex != -1)
             {
@@ -165,13 +175,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             evt.StopPropagation();
         }
 
-        void OnItemDropped(int index, IEnumerable<ISelectableGraphElement> elements)
+        void OnItemDropped(int index, IEnumerable<IGraphElementModel> elements)
         {
-            var droppedRows = elements.OfType<BlackboardField>().Where(Contains).ToList();
-            if (!droppedRows.Any())
+            var droppedModels = elements.OfType<IVariableDeclarationModel>().Where(ContainsVariable).ToList();
+            if (!droppedModels.Any())
                 return;
 
-            var models = droppedRows.Select(r => r.Model as IVariableDeclarationModel);
             IVariableDeclarationModel insertAfterModel = null;
 
             if (index >= childCount)
@@ -179,7 +188,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             else if (index > 0)
                 insertAfterModel = (this[index - 1] as BlackboardRow)?.Model as IVariableDeclarationModel;
 
-            m_Blackboard.CommandDispatcher.Dispatch(new ReorderGraphVariableDeclarationCommand(models, insertAfterModel));
+            m_Blackboard.CommandDispatcher.Dispatch(new ReorderGraphVariableDeclarationCommand(droppedModels, insertAfterModel));
         }
 
         void OnDragLeaveEvent(DragLeaveEvent evt)

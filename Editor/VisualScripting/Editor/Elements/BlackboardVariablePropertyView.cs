@@ -61,7 +61,8 @@ namespace UnityEditor.VisualScripting.Editor
                     Event.current.mousePosition,
                     (t, i) => OnTypeChanged(t)
                 )
-                ) { text = TypeText };
+            )
+            { text = TypeText };
             typeButton.AddToClassList("rowButton");
             AddRow("Type", typeButton);
 

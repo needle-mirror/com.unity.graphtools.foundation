@@ -35,20 +35,20 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             if (m_SelectedGraphView != null)
                 // ReSharper disable once DelegateSubtraction
-                m_SelectedGraphView.redrawn -= GraphViewRedrawn;
+                m_SelectedGraphView.Redrawn -= GraphViewRedrawn;
         }
 
         protected override void OnGraphViewChanging()
         {
             if (m_SelectedGraphView != null)
                 // ReSharper disable once DelegateSubtraction
-                m_SelectedGraphView.redrawn -= GraphViewRedrawn;
+                m_SelectedGraphView.Redrawn -= GraphViewRedrawn;
         }
 
         protected override void OnGraphViewChanged()
         {
             if (m_SelectedGraphView != null)
-                m_SelectedGraphView.redrawn += GraphViewRedrawn;
+                m_SelectedGraphView.Redrawn += GraphViewRedrawn;
             else
                 ZoomFactorTextChanged("");
 

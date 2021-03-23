@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
@@ -261,7 +262,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         Rect CalculateElementRect(GraphElement elem)
         {
-            Rect rect = elem.ChangeCoordinatesTo(GraphView.contentViewContainer, elem.GetRect());
+            Rect rect = elem.ChangeCoordinatesTo(GraphView.ContentViewContainer, elem.GetRect());
             rect.x = m_ContentRect.x + ((rect.x - m_ContentRectLocal.x) * m_ContentRect.width / m_ContentRectLocal.width);
             rect.y = m_ContentRect.y + ((rect.y - m_ContentRectLocal.y) * m_ContentRect.height / m_ContentRectLocal.height);
             rect.width *= m_ContentRect.width / m_ContentRectLocal.width;
@@ -332,10 +333,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 return;
             }
 
-            VisualElement container = GraphView.contentViewContainer;
+            VisualElement container = GraphView.ContentViewContainer;
 
             // Retrieve all container relative information
-            Matrix4x4 containerTransform = GraphView.viewTransform.matrix;
+            Matrix4x4 containerTransform = GraphView.ViewTransform.matrix;
             var containerScale = new Vector2(containerTransform.m00, containerTransform.m11);
             float containerWidth = parent.layout.width / containerScale.x;
             float containerHeight = parent.layout.height / containerScale.y;
@@ -361,18 +362,26 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         void DrawElements()
         {
+            if (GraphView.GraphModel == null)
+                return;
+
             // Draw placemats first ...
-            var placemats = GraphView.PlacematContainer.Placemats;
-            foreach (var placemat in placemats.Where(p => p.ShowInMiniMap && p.visible))
+            var placemats = GraphView.GraphModel.GetSortedPlacematModels();
+            foreach (var placemat in placemats)
             {
-                var elemRect = CalculateElementRect(placemat);
+                var placematUI = placemat.GetUI<GraphElement>(GraphView);
+
+                if (placematUI == null)
+                    continue;
+
+                var elemRect = CalculateElementRect(placematUI);
 
                 s_CachedRect[0].Set(elemRect.xMin, elemRect.yMin, 0.0f);
                 s_CachedRect[1].Set(elemRect.xMax, elemRect.yMin, 0.0f);
                 s_CachedRect[2].Set(elemRect.xMax, elemRect.yMax, 0.0f);
                 s_CachedRect[3].Set(elemRect.xMin, elemRect.yMax, 0.0f);
 
-                Color fillColor = placemat.resolvedStyle.backgroundColor;
+                var fillColor = placematUI.resolvedStyle.backgroundColor;
                 fillColor.a = 0.15f;
 
                 DrawSolidRectangleWithOutline(ref s_CachedRect, fillColor, m_PlacematBorderColor);
@@ -395,7 +404,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
                 DrawSolidRectangleWithOutline(ref s_CachedRect, elem.MinimapColor, elem.MinimapColor);
 
-                if (elem.Selected)
+                if (elem.IsSelected())
                     DrawRectangleOutline(elemRect, m_SelectedChildrenColor);
             });
         }
@@ -435,7 +444,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
 
             // Refresh MiniMap rects
-            CalculateRects(GraphView.contentViewContainer);
+            CalculateRects(GraphView.ContentViewContainer);
 
             var mousePosition = e.localMousePosition;
 
@@ -443,15 +452,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             {
                 if (child == null)
                     return;
-                var selectable = child.GetFirstOfType<ISelectableGraphElement>();
-                if (selectable == null || !selectable.IsSelectable())
+                var selectable = child.GetFirstOfType<GraphElement>();
+                var isSelectable = selectable?.Model?.IsSelectable() ?? false;
+                if (!isSelectable)
                     return;
 
                 if (CalculateElementRect(child).Contains(mousePosition))
                 {
-                    GraphView.ClearSelection();
-                    GraphView.AddToSelection(selectable);
-                    GraphView.FrameSelection();
+                    GraphView.DispatchFrameAndSelectElementsCommand(true, selectable);
                     e.StopPropagation();
                 }
             });

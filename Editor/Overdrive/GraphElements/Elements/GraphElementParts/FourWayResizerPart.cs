@@ -19,7 +19,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         ResizableElement m_ResizableElement;
 
         protected FourWayResizerPart(string name, IGraphElementModel model, IModelUI ownerElement, string parentClassName)
-            : base(name, model, ownerElement, parentClassName) {}
+            : base(name, model, ownerElement, parentClassName) { }
 
         protected override void BuildPartUI(VisualElement container)
         {

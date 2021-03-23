@@ -34,12 +34,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             const string initialTitle = "Initial title";
             const string newTitle = "New title";
 
-            var stickyNoteModel = m_GraphModel.CreateStickyNote();
+            var stickyNoteModel = m_GraphModel.CreateStickyNote(Rect.zero);
             stickyNoteModel.Title = initialTitle;
             var stickyNote = new StickyNote();
             stickyNote.SetupBuildAndUpdate(stickyNoteModel, m_CommandDispatcher, m_GraphView);
 
-            var titleLabel = stickyNote.Q(StickyNote.titleContainerPartName).Q<Label>(EditableLabel.labelName);
+            var titleLabel = stickyNote.SafeQ(StickyNote.titleContainerPartName).SafeQ<Label>(EditableLabel.labelName);
             Assert.AreEqual(initialTitle, titleLabel.text);
 
             stickyNoteModel.Title = newTitle;
@@ -53,12 +53,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             const string initialContent = "Initial content";
             const string newContent = "New content";
 
-            var stickyNoteModel = m_GraphModel.CreateStickyNote();
+            var stickyNoteModel = m_GraphModel.CreateStickyNote(Rect.zero);
             stickyNoteModel.Contents = initialContent;
             var stickyNote = new StickyNote();
             stickyNote.SetupBuildAndUpdate(stickyNoteModel, m_CommandDispatcher, m_GraphView);
 
-            var contentLabel = stickyNote.Q(StickyNote.contentContainerPartName).Q<Label>(EditableLabel.labelName);
+            var contentLabel = stickyNote.SafeQ(StickyNote.contentContainerPartName).SafeQ<Label>(EditableLabel.labelName);
             Assert.AreEqual(initialContent, contentLabel.text);
 
             stickyNoteModel.Contents = newContent;
@@ -72,7 +72,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             var initialRect = new Rect(0, 0, 400, 400);
             var newRect = new Rect(50, 70, 500, 300);
 
-            var stickyNoteModel = m_GraphModel.CreateStickyNote();
+            var stickyNoteModel = m_GraphModel.CreateStickyNote(Rect.zero);
             stickyNoteModel.PositionAndSize = initialRect;
             var stickyNote = new StickyNote();
             stickyNote.SetupBuildAndUpdate(stickyNoteModel, m_CommandDispatcher, m_GraphView);

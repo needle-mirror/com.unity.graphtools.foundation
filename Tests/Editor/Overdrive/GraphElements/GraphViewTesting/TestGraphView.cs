@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
@@ -10,33 +11,39 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         {
         }
 
-        // If you need this, ask yourself if you should not use a UnityTest and CommandDispatcher.State.RequestUIRebuild();
+        public bool DisplaySmartSearchCalled { get; set; }
+        public override void DisplaySmartSearch(Vector2 mousePosition)
+        {
+            DisplaySmartSearchCalled = true;
+            base.DisplaySmartSearch(mousePosition);
+        }
+
+        // If you need this, ask yourself if you should not use a UnityTest and CommandDispatcher.State.GraphViewState.RequestUIRebuild();
         public void RebuildUI(IGraphModel graphModel, CommandDispatcher commandDispatcher)
         {
             var nodeList = Nodes.ToList();
             foreach (var node in nodeList)
             {
-                RemoveElement(node, true);
+                RemoveElement(node);
             }
 
             var edgeList = Edges.ToList();
             foreach (var edge in edgeList)
             {
-                RemoveElement(edge, true);
+                RemoveElement(edge);
             }
 
             var stickyList = Stickies.ToList();
             foreach (var sticky in stickyList)
             {
-                RemoveElement(sticky, true);
+                RemoveElement(sticky);
             }
 
-            var placematList = PlacematContainer.Placemats;
+            var placematList = Placemats.ToList();
             foreach (var placemat in placematList)
             {
-                RemoveElement(placemat, true);
+                RemoveElement(placemat);
             }
-            PlacematContainer.RemoveAllPlacemats();
 
             UIForModel.Reset();
 

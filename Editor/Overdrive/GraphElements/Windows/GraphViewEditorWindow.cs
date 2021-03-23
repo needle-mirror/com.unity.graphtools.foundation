@@ -3,10 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
-using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEngine;
-using UnityEngine.GraphToolsFoundation.Overdrive;
 using UnityEngine.Profiling;
 using UnityEngine.UIElements;
 using Debug = UnityEngine.Debug;
@@ -16,22 +14,25 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class GraphViewEditorWindow : EditorWindow, IHasCustomMenu
     {
-        public static T FindOrCreateGraphWindow<T>() where T : GraphViewEditorWindow
+        /// <summary>
+        /// Finds the first window of type <typeparamref name="WindowT"/>. If no window is found, create a new one.
+        /// The window is then opened and focused.
+        /// </summary>
+        /// <typeparam name="WindowT">The window type, which should derive from <see cref="GraphViewEditorWindow"/>.</typeparam>
+        /// <returns>A window.</returns>
+        public static WindowT FindOrCreateGraphWindow<WindowT>() where WindowT : GraphViewEditorWindow
         {
-            var myGraphWindow = Resources.FindObjectsOfTypeAll(typeof(T)).OfType<T>().FirstOrDefault();
-            if (myGraphWindow == null)
+            var window = Resources.FindObjectsOfTypeAll(typeof(WindowT)).OfType<WindowT>().FirstOrDefault();
+            if (window == null)
             {
-                myGraphWindow = CreateInstance<T>();
+                window = CreateInstance<WindowT>();
             }
 
-            myGraphWindow.Show();
-            myGraphWindow.Focus();
+            window.Show();
+            window.Focus();
 
-            return myGraphWindow;
+            return window;
         }
-
-        const int k_IdleTimeBeforeGraphProcessingMs = 1000;
-        const int k_IdleTimeBeforeGraphProcessingMsPlayMode = 1000;
 
         public static readonly string graphProcessingPendingUssClassName = "graph-processing-pending";
 
@@ -54,15 +55,21 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         protected MainToolbar m_MainToolbar;
         protected ErrorToolbar m_ErrorToolbar;
 
-        GraphProcessingTimer m_GraphProcessingTimer;
-
         uint m_LastStateVersion;
 
-        Node m_ElementShownInSidePanel;
+        INodeModel m_ElementShownInSidePanel;
 
         Unity.Properties.UI.PropertyElement m_SidePanelPropertyElement;
 
-        public string EditorToolName => "UnnamedTool";
+        AutomaticGraphProcessor m_AutomaticGraphProcessor;
+        GraphProcessingStatusObserver m_GraphProcessingStatusObserver;
+        SidePanelObserver m_SidePanelObserver;
+
+        public string EditorToolName
+        {
+            get;
+            protected set;
+        } = "UnnamedTool";
 
         public bool WithSidePanel { get; set; } = true;
 
@@ -73,7 +80,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             get { yield return GraphView; }
         }
 
-        bool Locked => CommandDispatcher?.GraphToolState?.AssetModel != null && m_LockTracker.IsLocked;
+        bool Locked => CommandDispatcher?.GraphToolState?.WindowState.AssetModel != null && m_LockTracker.IsLocked;
 
         public CommandDispatcher CommandDispatcher { get; private set; }
 
@@ -100,10 +107,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             typeof(ToggleTracingCommand)
         };
 
+        static GraphViewEditorWindow()
+        {
+            SetupLogStickyCallback();
+        }
+
         protected GraphViewEditorWindow()
         {
             s_LastFocusedEditor = GetInstanceID();
-            m_GraphProcessingTimer = new GraphProcessingTimer();
         }
 
         protected virtual GraphToolState CreateInitialState()
@@ -139,10 +150,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         protected virtual void Reset()
         {
-            if (CommandDispatcher?.GraphToolState == null)
-                return;
-
-            CommandDispatcher.GraphToolState.WindowState.CurrentGraph = new OpenedGraph(null, null);
+            CommandDispatcher?.GraphToolState?.LoadGraphAsset(null, null);
         }
 
         protected virtual void OnEnable()
@@ -198,6 +206,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     {
                         CommandDispatcher.Dispatch(new LoadGraphAssetCommand(
                             lastGraphFilePath,
+                            PluginRepository,
                             CommandDispatcher.GraphToolState.WindowState.LastOpenedGraph.BoundObject,
                             LoadGraphAssetCommand.Type.KeepHistory));
                     }
@@ -206,22 +215,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                         Debug.LogError(e);
                     }
                 }
-                else
-                {
-                    // Force display of blank page.
-                    CommandDispatcher.MarkStateDirty();
-                }
             }).ExecuteLater(0);
 
-            CommandDispatcher.RegisterObserver(GraphProcessingObserver, asPostCommandObserver: true);
-
-            rootVisualElement.RegisterCallback<MouseMoveEvent>(_ =>
-            {
-                if (m_GraphProcessingTimer.IsRunning)
-                    m_GraphProcessingTimer.Restart(CommandDispatcher.GraphToolState.GraphProcessingStateComponent);
-            });
-
-            m_GraphProcessingPendingLabel = new Label("Graph Processing Pending"){name = "graph-processing-pending-label"};
+            m_GraphProcessingPendingLabel = new Label("Graph Processing Pending") { name = "graph-processing-pending-label" };
 
             if (WithSidePanel)
             {
@@ -233,15 +229,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 {
                     // PF FIXME: OnChanged is not only called as a direct result of a user action.
                     // It is called as a result of any change to one of the property. It results in a
-                    // Multiple actions dispatched during the same frame (previous one was CreateOppositePortalAction), current: UpdateModelPropertyValueAction
+                    // Multiple commands dispatched during the same frame (previous one was CreateOppositePortalCommand), current: UpdateModelPropertyValueCommand
                     // Repro: Select a portal and create opposite portal.
-                    if (m_ElementShownInSidePanel.Model is IPropertyVisitorNodeTarget nodeTarget2)
+                    if (m_ElementShownInSidePanel is IPropertyVisitorNodeTarget nodeTarget2)
                     {
-                        CommandDispatcher.Dispatch(new UpdateModelPropertyValueCommand(m_ElementShownInSidePanel.Model, path, m_SidePanelPropertyElement.GetValue<object>(path)));
+                        CommandDispatcher.Dispatch(new UpdateModelPropertyValueCommand(m_ElementShownInSidePanel, path, m_SidePanelPropertyElement.GetValue<object>(path)));
                         nodeTarget2.Target = element.GetTarget<object>();
                     }
                     else
-                        CommandDispatcher.Dispatch(new UpdateModelPropertyValueCommand(m_ElementShownInSidePanel.Model, path, m_SidePanelPropertyElement.GetValue<object>(path)));
+                        CommandDispatcher.Dispatch(new UpdateModelPropertyValueCommand(m_ElementShownInSidePanel, path, m_SidePanelPropertyElement.GetValue<object>(path)));
                 };
                 m_SidePanel.Add(m_SidePanelPropertyElement);
                 ShowNodeInSidePanel(null, false);
@@ -249,8 +245,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             if (m_SidePanel != null)
                 m_GraphContainer.Add(m_SidePanel);
-
-            Undo.undoRedoPerformed += UndoRedoPerformed;
 
             rootVisualElement.RegisterCallback<AttachToPanelEvent>(OnEnterPanel);
             rootVisualElement.RegisterCallback<DetachFromPanelEvent>(OnLeavePanel);
@@ -262,14 +256,23 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             m_LockTracker.lockStateChanged.AddListener(OnLockStateChanged);
 
-            EditorApplication.playModeStateChanged += OnEditorPlayModeStateChanged;
-            EditorApplication.pauseStateChanged += OnEditorPauseStateChanged;
+            m_AutomaticGraphProcessor = new AutomaticGraphProcessor(PluginRepository);
+            CommandDispatcher.RegisterObserver(m_AutomaticGraphProcessor);
+            rootVisualElement.RegisterCallback<MouseMoveEvent>(ResetGraphProcessorTimer);
+
+            m_GraphProcessingStatusObserver = new GraphProcessingStatusObserver(m_GraphProcessingPendingLabel, m_ErrorToolbar);
+            CommandDispatcher.RegisterObserver(m_GraphProcessingStatusObserver);
+
+            m_SidePanelObserver = new SidePanelObserver(this);
+            CommandDispatcher.RegisterObserver(m_SidePanelObserver);
         }
 
         protected virtual void OnDisable()
         {
-            // ReSharper disable once DelegateSubtraction
-            Undo.undoRedoPerformed -= UndoRedoPerformed;
+            m_AutomaticGraphProcessor?.StopTimer();
+            CommandDispatcher.UnregisterObserver(m_AutomaticGraphProcessor);
+            CommandDispatcher.UnregisterObserver(m_GraphProcessingStatusObserver);
+            CommandDispatcher.UnregisterObserver(m_SidePanelObserver);
 
             UnloadGraph();
 
@@ -290,9 +293,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             PluginRepository?.Dispose();
             PluginRepository = null;
-
-            EditorApplication.playModeStateChanged -= OnEditorPlayModeStateChanged;
-            EditorApplication.pauseStateChanged -= OnEditorPauseStateChanged;
         }
 
         protected virtual void OnDestroy()
@@ -315,6 +315,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             OnGlobalSelectionChange();
 
             m_Focused = true;
+
+            m_GraphView?.Focus();
         }
 
         protected virtual void OnLostFocus()
@@ -327,86 +329,31 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (CommandDispatcher == null)
                 return;
 
-            // PF: FIXME find a better solution for this.
-            // Prevent UI update while the mouse is captured.
-            // Mouse is typically captured on manipulation that span mouseDown/mouseMove/mouseUp events (like drags).
-            // Since UI rebuilding may replace VisualElements by new ones (this is what RebuildAll() does)
-            // the manipulation loses the VisualElements it was acting upon.
-            //
-            // Case when this happens: with autorecompilation, a compilation can finish while we are in a manipulation.
-            // Then, badges are added to signal errors. Since these are new models, a RebuildAll() is triggered.
-            //
-            // A better solution would be to avoid all calls to RebuildAll().
-            if (rootVisualElement.panel.GetCapturingElement(PointerId.mousePointerId) != null)
-            {
-                return;
-            }
-
-            Profiler.BeginSample("GtfoWindow.Update");
+            Profiler.BeginSample("GraphViewEditorWindow.Update");
             Stopwatch sw = new Stopwatch();
             sw.Start();
 
-            CommandDispatcher.BeginViewUpdate();
-
-            var rebuildType = CommandDispatcher.GraphToolState.GetUpdateType(m_LastStateVersion);
-
+            // PF FIXME To StateObserver, eventually
             UpdateGraphContainer();
 
-            if (m_BlankPage?.panel != null)
-                m_BlankPage.UpdateUI();
+            CommandDispatcher.NotifyObservers();
 
-            if (m_MainToolbar?.panel != null)
-                m_MainToolbar?.UpdateUI();
-
-            if (m_ErrorToolbar?.panel != null)
-                m_ErrorToolbar?.UpdateUI();
-
-            if (GraphView?.panel != null)
-                GraphView.UpdateUI(rebuildType);
-
-            m_LastStateVersion = CommandDispatcher.EndViewUpdate();
-
-            if (CommandDispatcher.GraphToolState.Preferences.GetBool(BoolPref.WarnOnUIFullRebuild) && rebuildType == UIRebuildType.Complete)
-            {
-                Debug.LogWarning($"Rebuilding the whole UI ({CommandDispatcher.GraphToolState.LastDispatchedCommandName})");
-            }
+            sw.Stop();
 
             if (CommandDispatcher.GraphToolState.Preferences.GetBool(BoolPref.LogUIBuildTime))
             {
                 Debug.Log($"UI Update ({CommandDispatcher.GraphToolState.LastDispatchedCommandName}) took {sw.ElapsedMilliseconds} ms");
             }
 
-            if (CommandDispatcher.GraphToolState.Preferences.GetBool(BoolPref.AutoProcess) &&
-                m_GraphProcessingTimer.ElapsedMilliseconds >= (EditorApplication.isPlaying
-                                                               ? k_IdleTimeBeforeGraphProcessingMsPlayMode
-                                                               : k_IdleTimeBeforeGraphProcessingMs))
-            {
-                m_GraphProcessingTimer.Stop(CommandDispatcher.GraphToolState.GraphProcessingStateComponent);
-                m_GraphProcessingPendingLabel.EnableInClassList(graphProcessingPendingUssClassName, false);
+            UpdateDirtyState(GraphView?.GraphModel?.AssetModel?.Dirty ?? false);
 
-                OnGraphProcessingRequest(RequestGraphProcessingOptions.Default);
-            }
+            Profiler.EndSample();
         }
 
         public void AdjustWindowMinSize(Vector2 size)
         {
             // Set the window min size from the graphView, adding the menu bar height
             minSize = new Vector2(size.x, size.y + m_MainToolbar?.layout.height ?? 0);
-        }
-
-        void OnEditorPlayModeStateChanged(PlayModeStateChange playMode)
-        {
-            MainToolbar?.UpdateUI();
-        }
-
-        void OnEditorPauseStateChanged(PauseState pauseState)
-        {
-            MainToolbar?.UpdateUI();
-        }
-
-        void UndoRedoPerformed()
-        {
-            CommandDispatcher.MarkStateDirty();
         }
 
         void OnEnterPanel(AttachToPanelEvent e)
@@ -421,13 +368,20 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             Selection.selectionChanged -= OnGlobalSelectionChange;
         }
 
-        public void ShowNodeInSidePanel(ISelectableGraphElement selectable, bool show)
+        protected void ResetGraphProcessorTimer(MouseMoveEvent e)
+        {
+            if (CommandDispatcher.GraphToolState.Preferences.GetBool(BoolPref.AutoProcess))
+            {
+                m_AutomaticGraphProcessor.ResetTimer();
+            }
+        }
+
+        public void ShowNodeInSidePanel(IGraphElementModel model, bool show)
         {
             if (m_SidePanel == null)
                 return;
 
-            if (!(selectable is Node node) ||
-                !(selectable.Model is INodeModel nodeModel) || !show)
+            if (!(model is INodeModel nodeModel) || !show)
             {
                 m_ElementShownInSidePanel = null;
                 m_SidePanelPropertyElement.ClearTarget();
@@ -435,9 +389,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
             else
             {
-                m_ElementShownInSidePanel = node;
+                m_ElementShownInSidePanel = nodeModel;
 
-                m_SidePanelTitle.text = (m_ElementShownInSidePanel?.NodeModel as IHasTitle)?.Title ??
+                m_SidePanelTitle.text = (m_ElementShownInSidePanel as IHasTitle)?.Title ??
                     "Node Inspector";
 
                 // TODO ugly, see matching hack to get the internal Root property in the typeReferenceInspector
@@ -453,7 +407,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public virtual void AddItemsToMenu(GenericMenu menu)
         {
-            var disabled = CommandDispatcher.GraphToolState.GraphModel == null;
+            var disabled = CommandDispatcher.GraphToolState.WindowState.GraphModel == null;
 
             m_LockTracker.AddItemsToMenu(menu, disabled);
         }
@@ -479,7 +433,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         protected void UpdateGraphContainer()
         {
-            var graphModel = CommandDispatcher?.GraphToolState?.GraphModel;
+            var graphModel = CommandDispatcher?.GraphToolState?.WindowState.GraphModel;
 
             if (graphModel != null)
             {
@@ -507,16 +461,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public virtual void UnloadGraph()
         {
-            CommandDispatcher.GraphToolState.UnloadCurrentGraphAsset();
+            CommandDispatcher.GraphToolState.LoadGraphAsset(null, null);
             PluginRepository?.UnregisterPlugins();
             UpdateGraphContainer();
             GraphView.UnloadGraph();
-            MainToolbar?.UpdateUI();
         }
 
         public void UnloadGraphIfDeleted()
         {
-            var iGraphModel = CommandDispatcher.GraphToolState.AssetModel as ScriptableObject;
+            var iGraphModel = CommandDispatcher.GraphToolState.WindowState.AssetModel as ScriptableObject;
             if (!iGraphModel)
             {
                 UnloadGraph();
@@ -566,9 +519,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             // PF FIXME load correct asset type (not GraphAssetModel)
             if (AssetDatabase.LoadAssetAtPath(graphAssetFilePath, typeof(GraphAssetModel)))
             {
-                var currentOpenedGraph = CommandDispatcher.GraphToolState?.WindowState.CurrentGraph ?? default;
+                var currentOpenedGraph = CommandDispatcher?.GraphToolState?.WindowState.CurrentGraph ?? default;
                 // don't load if same graph and same bound object
-                if (CommandDispatcher.GraphToolState?.AssetModel != null &&
+                if (CommandDispatcher?.GraphToolState?.WindowState.AssetModel != null &&
                     graphAssetFilePath == currentOpenedGraph.GraphAssetModelPath &&
                     currentOpenedGraph.BoundObject == boundObject)
                     return;
@@ -580,9 +533,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 return;
             }
 
+
             // Load this graph asset.
-            CommandDispatcher.Dispatch(new LoadGraphAssetCommand(graphAssetFilePath, boundObject));
-            m_GraphView.FrameAll();
+
+            CommandDispatcher?.Dispatch(new LoadGraphAssetCommand(graphAssetFilePath, PluginRepository, boundObject));
+
+            UpdateDirtyState(GraphView.GraphModel.AssetModel.Dirty);
 
             if (mode != OpenMode.OpenAndFocus)
                 return;
@@ -595,6 +551,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     return;
                 }
             }
+
+
         }
 
         protected virtual bool CanHandleAssetType(GraphAssetModel asset)
@@ -604,110 +562,42 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         string GetCurrentAssetPath()
         {
-            var asset = CommandDispatcher.GraphToolState.AssetModel;
+            var asset = CommandDispatcher.GraphToolState.WindowState.AssetModel;
             return asset == null ? null : AssetDatabase.GetAssetPath(asset as Object);
         }
 
         public enum OpenMode { Open, OpenAndFocus }
-
-        void GraphProcessingObserver(Command action)
+        static void SetupLogStickyCallback()
         {
-            if (GraphProcessingTriggerCommands.Contains(action.GetType()))
+            ConsoleWindowBridge.SetEntryDoubleClickedDelegate((file, entryInstanceId) =>
             {
-                ProcessGraph();
-            }
-        }
+                var pathAndGuid = file.Split('@');
 
-        internal void ProcessGraph()
-        {
-            m_GraphProcessingTimer.Restart(CommandDispatcher.GraphToolState.GraphProcessingStateComponent);
-            m_GraphProcessingPendingLabel.EnableInClassList(graphProcessingPendingUssClassName, true);
+                bool assetOpened = false;
+                var asset = AssetDatabase.LoadAssetAtPath<GraphAssetModel>(pathAndGuid[0]);
+                if (asset != null)
+                    assetOpened = AssetDatabase.OpenAsset(asset);
 
-            // Register
-            var stencil = CommandDispatcher.GraphToolState.GraphModel?.Stencil;
-            if (stencil != null)
-            {
-                var plugins = stencil.GetGraphProcessingPluginHandlers(GetGraphProcessingOptions(CommandDispatcher.GraphToolState.TracingState));
-                PluginRepository.RegisterPlugins(plugins);
-                stencil.OnGraphProcessingStarted(CommandDispatcher.GraphToolState?.GraphModel);
-                // PF FIXME does this really trigger a graph processing? Should we call OnGraphProcessingRequest?
-            }
-        }
-
-        static GraphProcessingOptions GetGraphProcessingOptions(TracingStateComponent tracingState)
-        {
-            GraphProcessingOptions graphProcessingOptions = EditorApplication.isPlaying
-                ? GraphProcessingOptions.LiveEditing
-                : GraphProcessingOptions.Default;
-
-            if (tracingState.TracingEnabled)
-                graphProcessingOptions |= GraphProcessingOptions.Tracing;
-            return graphProcessingOptions;
-        }
-
-        void OnGraphProcessingRequest(RequestGraphProcessingOptions options)
-        {
-            var graphProcessingOptions = GetGraphProcessingOptions(CommandDispatcher.GraphToolState.TracingState);
-
-            // Register
-            var graphModel = CommandDispatcher.GraphToolState.GraphModel;
-
-            if (graphModel?.Stencil == null)
-                return;
-
-            var plugins = graphModel.Stencil.GetGraphProcessingPluginHandlers(graphProcessingOptions);
-            PluginRepository.RegisterPlugins(plugins);
-
-            var graphProcessor = graphModel.Stencil.CreateGraphProcessor();
-            if (options == RequestGraphProcessingOptions.SaveGraph)
-                AssetDatabase.SaveAssets();
-
-            var r = graphProcessor.ProcessGraph(graphModel);
-            if (CommandDispatcher?.GraphToolState != null)
-            {
-                CommandDispatcher.GraphToolState.GraphProcessingStateComponent.m_LastResult = r;
-                OnGraphProcessingDone(CommandDispatcher.GraphToolState);
-            }
-        }
-
-        static void OnGraphProcessingDone(GraphToolState state)
-        {
-            ConsoleWindowBridge.RemoveLogEntries();
-
-            var deletedBadges = state.GraphModel.DeleteBadgesOfType<GraphProcessingErrorBadgeModel>();
-            var newBadges = new List<IGraphElementModel>();
-
-            var graphProcessingResult = state.GraphProcessingStateComponent.GetLastResult();
-            if (graphProcessingResult?.Errors != null && graphProcessingResult.Errors.Count > 0)
-            {
-                var graphAsset = state.AssetModel;
-                foreach (var error in graphProcessingResult.Errors)
+                if (assetOpened)
                 {
-                    if (error.SourceNode != null && !error.SourceNode.Destroyed)
+                    var guid = new SerializableGUID(pathAndGuid[1]);
+                    var window = focusedWindow as GraphViewEditorWindow;
+                    if (window != null && window.GraphView.GraphModel.TryGetModelFromGuid(guid, out var nodeModel))
                     {
-                        var badgeModel = new GraphProcessingErrorBadgeModel(error);
-                        state.GraphModel.AddBadge(badgeModel);
-                        newBadges.Add(badgeModel);
-                    }
-
-                    if (graphAsset != null && graphAsset is Object asset)
-                    {
-                        var graphAssetPath = asset ? AssetDatabase.GetAssetPath(asset) : "<unknown>";
-                        ConsoleWindowBridge.LogSticky(
-                            $"{graphAssetPath}: {error.Description}",
-                            $"{graphAssetPath}@{error.SourceNodeGuid}",
-                            error.IsWarning ? LogType.Warning : LogType.Error,
-                            LogOption.None,
-                            asset.GetInstanceID());
+                        var graphElement = nodeModel.GetUI<GraphElement>(window.GraphView);
+                        if (graphElement != null)
+                        {
+                            window.GraphView.DispatchFrameAndSelectElementsCommand(true, graphElement);
+                        }
                     }
                 }
-            }
-
-            if (deletedBadges.Count > 0 || newBadges.Count > 0)
-            {
-                state.MarkDeleted(deletedBadges);
-                state.MarkNew(newBadges);
-            }
+            });
         }
+
+        void UpdateDirtyState(bool dirty)
+        {
+            titleContent = new GUIContent(EditorToolName + (dirty ? "*" : ""));
+        }
+
     }
 }

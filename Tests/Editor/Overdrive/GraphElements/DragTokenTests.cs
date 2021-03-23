@@ -25,7 +25,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             m_NodeModel = GraphModel.CreateNode<TestNodeModel>("OtherNode", k_NodePos);
             m_TokenModel = GraphModel.CreateConstantNode(TypeHandle.Float, "Constant", k_TokenPos);
-            GraphView.CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             helpers = new TestEventHelpers(Window);
         }
 

@@ -8,7 +8,7 @@ namespace UnityEditor.VisualScripting.Editor
     [Serializable]
     public struct SerializableGUID
     {
-        public static SerializableGUID FromParts(ulong a, ulong b) => new SerializableGUID { m_Value0 = a, m_Value1 = b};
+        public static SerializableGUID FromParts(ulong a, ulong b) => new SerializableGUID { m_Value0 = a, m_Value1 = b };
 
         public void ToParts(out ulong a, out ulong b)
         {
@@ -38,6 +38,6 @@ namespace UnityEditor.VisualScripting.Editor
         }
 
         public static implicit operator GUID(SerializableGUID sGuid) => sGuid.m_GUID;
-        public static implicit operator SerializableGUID(GUID guid) => new SerializableGUID{m_GUID = guid};
+        public static implicit operator SerializableGUID(GUID guid) => new SerializableGUID { m_GUID = guid };
     }
 }

@@ -1,5 +1,5 @@
 namespace UnityEngine.VisualScripting
 {
-    public interface IRuntimeStencilReference {}
-    public class RuntimeClassStencilReference : IRuntimeStencilReference {}
+    public interface IRuntimeStencilReference { }
+    public class RuntimeClassStencilReference : IRuntimeStencilReference { }
 }

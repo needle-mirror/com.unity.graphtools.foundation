@@ -11,10 +11,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         const string k_UndoStringPlural = "Create Opposite Portals";
 
         public CreateOppositePortalCommand()
-            : base(k_UndoStringSingular) {}
+            : base(k_UndoStringSingular) { }
 
         public CreateOppositePortalCommand(IReadOnlyList<IEdgePortalModel> portalModels)
-            : base(k_UndoStringSingular, k_UndoStringPlural, portalModels) {}
+            : base(k_UndoStringSingular, k_UndoStringPlural, portalModels) { }
 
         public static void DefaultCommandHandler(GraphToolState graphToolState, CreateOppositePortalCommand command)
         {
@@ -27,10 +27,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             graphToolState.PushUndo(command);
 
-            foreach (var portalModel in portalsToOpen)
+            using (var graphUpdater = graphToolState.GraphViewState.Updater)
             {
-                var newPortal = graphToolState.GraphModel.CreateOppositePortal(portalModel);
-                graphToolState.MarkNew(newPortal);
+                foreach (var portalModel in portalsToOpen)
+                {
+                    var newPortal = graphToolState.GraphViewState.GraphModel.CreateOppositePortal(portalModel);
+                    graphUpdater.U.MarkNew(newPortal);
+                }
             }
         }
     }

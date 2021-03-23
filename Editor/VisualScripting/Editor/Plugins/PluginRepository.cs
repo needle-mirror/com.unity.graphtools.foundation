@@ -27,7 +27,7 @@ namespace UnityEditor.VisualScripting.Editor.Plugins
             m_PluginHandlers = new List<IPluginHandler>();
         }
 
-        public IEnumerable<IPluginHandler>  GetPluginHandlers()
+        public IEnumerable<IPluginHandler> GetPluginHandlers()
         {
             return m_PluginHandlers;
         }

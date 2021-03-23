@@ -567,5 +567,5 @@ namespace UnityEditor.VisualScripting.GraphViewModel
     }
 
     [Serializable]
-    public abstract class HighLevelNodeModel : NodeModel {}
+    public abstract class HighLevelNodeModel : NodeModel { }
 }

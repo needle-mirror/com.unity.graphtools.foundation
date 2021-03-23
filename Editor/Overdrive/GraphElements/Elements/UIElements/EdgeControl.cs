@@ -460,7 +460,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
                     var splitPoint = editableEdgeModel.EdgeControlPoints.ElementAt(i).Position;
                     splitPoint += ControlPointOffset;
-                    var localSplitPoint = GraphView.contentViewContainer.ChangeCoordinatesTo(parent, splitPoint);
+                    var localSplitPoint = GraphView.ContentViewContainer.ChangeCoordinatesTo(parent, splitPoint);
                     length = ControlPointDistance(previous, localSplitPoint, fromOrientation);
 
                     Vector2 next;
@@ -472,7 +472,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     {
                         next = editableEdgeModel.EdgeControlPoints.ElementAt(i + 1).Position;
                         next += ControlPointOffset;
-                        next = GraphView.contentViewContainer.ChangeCoordinatesTo(parent, next);
+                        next = GraphView.ContentViewContainer.ChangeCoordinatesTo(parent, next);
                     }
 
                     directionTo = (previous - next).normalized;

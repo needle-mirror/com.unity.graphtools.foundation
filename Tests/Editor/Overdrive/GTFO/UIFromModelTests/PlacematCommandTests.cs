@@ -9,43 +9,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
 {
     public class PlacematCommandTests : BaseTestFixture
     {
-        GraphView m_GraphView;
-        CommandDispatcher m_CommandDispatcher;
-        GraphModel m_GraphModel;
-
-        [SetUp]
-        public new void SetUp()
-        {
-            m_GraphModel = new GraphModel();
-            m_CommandDispatcher = new CommandDispatcher(new TestGraphToolState(m_Window.GUID, m_GraphModel));
-            CommandDispatcherHelper.RegisterDefaultCommandHandlers(m_CommandDispatcher);
-            m_GraphView = new GraphView(m_Window, m_CommandDispatcher);
-
-            m_GraphView.name = "theView";
-            m_GraphView.viewDataKey = "theView";
-            m_GraphView.StretchToParentSize();
-
-            m_Window.rootVisualElement.Add(m_GraphView);
-        }
-
-        [TearDown]
-        public new void TearDown()
-        {
-            m_Window.rootVisualElement.Remove(m_GraphView);
-            m_GraphModel = null;
-            m_CommandDispatcher = null;
-            m_GraphView = null;
-        }
-
         [UnityTest]
         public IEnumerator PlacematCollapsesOnValueChanged()
         {
-            var placematModel = m_GraphModel.CreatePlacemat();
-            var placemat = new Placemat();
-            placemat.SetupBuildAndUpdate(placematModel, m_CommandDispatcher, m_GraphView);
+            var placematModel = GraphModel.CreatePlacemat(Rect.zero);
+            MarkGraphViewStateDirty();
             yield return null;
 
-            var collapseButton = placemat.Q<CollapseButton>(Placemat.collapseButtonPartName);
+            var placemat = placematModel.GetUI<GraphElement>(GraphView);
+            var collapseButton = placemat.SafeQ<CollapseButton>(Placemat.collapseButtonPartName);
             Assert.IsNotNull(collapseButton);
             Assert.IsFalse(collapseButton.value);
             Assert.IsFalse(placematModel.Collapsed);
@@ -59,17 +31,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         [UnityTest]
         public IEnumerator PlacematCollapsesOnClick()
         {
-            var placematModel = m_GraphModel.CreatePlacemat();
-            var placemat = new Placemat();
-            placemat.SetupBuildAndUpdate(placematModel, m_CommandDispatcher, m_GraphView);
+            var placematModel = GraphModel.CreatePlacemat(Rect.zero);
+            MarkGraphViewStateDirty();
             yield return null;
 
-            var collapseButton = placemat.Q<CollapseButton>(Placemat.collapseButtonPartName);
+            var placemat = placematModel.GetUI<GraphElement>(GraphView);
+            var collapseButton = placemat.SafeQ<CollapseButton>(Placemat.collapseButtonPartName);
             Assert.IsNotNull(collapseButton);
             Assert.IsFalse(collapseButton.value);
             Assert.IsFalse(placematModel.Collapsed);
 
-            var collapseButtonIcon = placemat.Q<CollapseButton>(Placemat.collapseButtonPartName).Q(CollapseButton.iconElementName);
             var clickPosition = collapseButton.parent.LocalToWorld(collapseButton.layout.center);
 
             // Move the mouse over to make the button appear.
@@ -87,19 +58,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         {
             const string newName = "New Name";
 
-            var placematModel = m_GraphModel.CreatePlacemat();
+            var placematModel = GraphModel.CreatePlacemat(Rect.zero);
             placematModel.Title = "Placemat";
-            var placemat = new Placemat();
-            placemat.SetupBuildAndUpdate(placematModel, m_CommandDispatcher, m_GraphView);
+            MarkGraphViewStateDirty();
             yield return null;
 
-            var label = placemat.Q(Placemat.titleContainerPartName).Q(EditableLabel.labelName);
+            var placemat = placematModel.GetUI<GraphElement>(GraphView);
+            var label = placemat.SafeQ(Placemat.titleContainerPartName).SafeQ(EditableLabel.labelName);
             var clickPosition = label.parent.LocalToWorld(label.layout.center);
             EventHelper.Click(clickPosition, clickCount: 2);
 
             EventHelper.Type(newName);
 
-            EventHelper.Click(m_GraphView.layout.max);
+            EventHelper.Click(GraphView.layout.max);
             yield return null;
 
             Assert.AreEqual(newName, placematModel.Title);
@@ -111,13 +82,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             var originalRect = new Rect(0, 0, 200, 100);
             var move = new Vector2(100, 0);
 
-            var placematModel = m_GraphModel.CreatePlacemat(originalRect);
+            var placematModel = GraphModel.CreatePlacemat(originalRect);
             placematModel.Title = "Placemat";
-            var placemat = new Placemat();
-            placemat.SetupBuildAndUpdate(placematModel, m_CommandDispatcher, m_GraphView);
+            MarkGraphViewStateDirty();
             yield return null;
 
-            var rightResizer = placemat.Q(Placemat.resizerPartName).Q("right-resize");
+            var placemat = placematModel.GetUI<GraphElement>(GraphView);
+            var rightResizer = placemat.SafeQ(Placemat.resizerPartName).SafeQ("right-resize");
             var clickPosition = rightResizer.parent.LocalToWorld(rightResizer.layout.center);
             EventHelper.DragTo(clickPosition, clickPosition + move);
             yield return null;

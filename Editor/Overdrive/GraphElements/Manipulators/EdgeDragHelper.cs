@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor.GraphToolsFoundation.Overdrive.InternalModels;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -26,15 +27,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         Vector3 m_PanDiff = Vector3.zero;
         bool m_WasPanned;
 
-        bool resetPositionOnPan { get; set; }
-
         public EdgeDragHelper(CommandDispatcher commandDispatcher, GraphView graphView, EdgeConnectorListener listener, Func<IGraphModel, GhostEdgeModel> ghostEdgeViewModelCreator)
         {
             m_CommandDispatcher = commandDispatcher;
             GraphView = graphView;
             m_Listener = listener;
             m_GhostEdgeViewModelCreator = ghostEdgeViewModelCreator;
-            resetPositionOnPan = true;
             Reset();
         }
 
@@ -50,6 +48,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             {
                 ghostEdge = new GhostEdgeModel(graphModel);
             }
+
             var ui = GraphElementFactory.CreateUI<Edge>(GraphView, m_CommandDispatcher, ghostEdge);
             return ui;
         }
@@ -98,11 +97,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             if (m_WasPanned)
             {
-                if (!resetPositionOnPan || didConnect)
+                if (didConnect)
                 {
-                    Vector3 p = GraphView.contentViewContainer.transform.position;
-                    Vector3 s = GraphView.contentViewContainer.transform.scale;
-                    GraphView.UpdateViewTransform(p, s);
+                    Vector3 p = GraphView.ContentViewContainer.transform.position;
+                    Vector3 s = GraphView.ContentViewContainer.transform.scale;
+                    GraphView.CommandDispatcher.Dispatch(new ReframeGraphViewCommand(p, s));
                 }
             }
 
@@ -158,7 +157,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (portUI != null)
                 portUI.WillConnect = true;
 
-            m_CompatiblePorts = m_CommandDispatcher.GraphToolState.GraphModel.GetCompatiblePorts(draggedPort);
+            m_CompatiblePorts = m_CommandDispatcher.GraphToolState.GraphViewState.GraphModel.GetCompatiblePorts(draggedPort);
 
             // Only light compatible anchors when dragging an edge.
             GraphView.Ports.ForEach((p) =>
@@ -282,6 +281,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     if (portUI != null)
                         portUI.WillConnect = false;
                 }
+
                 GraphView.RemoveElement(m_GhostEdge);
                 m_GhostEdgeModel.ToPort = null;
                 m_GhostEdgeModel.FromPort = null;
@@ -290,14 +290,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        void Pan(TimerState ts)
+        void Pan()
         {
-            GraphView.viewTransform.position -= m_PanDiff;
+            Vector3 p = GraphView.ContentViewContainer.transform.position - m_PanDiff;
+            Vector3 s = GraphView.ContentViewContainer.transform.scale;
+            GraphView.UpdateViewTransform(p, s);
+
             edgeCandidateModel.GetUI<Edge>(GraphView)?.UpdateFromModel();
             m_WasPanned = true;
         }
 
-        public void HandleMouseUp(MouseUpEvent evt)
+        public void HandleMouseUp(MouseUpEvent evt, bool isFirstEdge, IEnumerable<Edge> otherEdges, IEnumerable<IPortModel> otherPorts)
         {
             bool didConnect = false;
 
@@ -331,9 +334,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             Port endPort = GetEndPort(mousePosition);
 
-            if (endPort == null && m_Listener != null)
+            if (endPort == null && m_Listener != null && isFirstEdge)
             {
-                m_Listener.OnDropOutsidePort(m_CommandDispatcher, m_EdgeCandidate, mousePosition, originalEdge);
+                m_Listener.OnDropOutsidePort(m_CommandDispatcher, Enumerable.Repeat(originalEdge, 1).Concat(otherEdges), Enumerable.Repeat(draggedPort, 1).Concat(otherPorts), mousePosition, originalEdge);
             }
 
             m_EdgeCandidate.SetEnabled(true);
@@ -347,20 +350,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 portUI.WillConnect = false;
 
             // If it is an existing valid edge then delete and notify the model (using DeleteElements()).
-            if (edgeCandidateModel?.ToPort != null && edgeCandidateModel?.FromPort != null)
-            {
-                // Save the current input and output before deleting the edge as they will be reset
-                var oldInput = edgeCandidateModel.ToPort;
-                var oldOutput = edgeCandidateModel.FromPort;
-
-                GraphView.RemoveElement(m_EdgeCandidate);
-
-                // Restore the previous input and output
-                edgeCandidateModel.ToPort = oldInput;
-                edgeCandidateModel.FromPort = oldOutput;
-            }
-            // otherwise, if it is an temporary edge then just remove it as it is not already known my the model
-            else
+            if (edgeCandidateModel?.ToPort == null || edgeCandidateModel?.FromPort == null)
             {
                 GraphView.RemoveElement(m_EdgeCandidate);
             }

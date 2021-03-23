@@ -48,7 +48,7 @@ namespace UnityEditor.VisualScripting.Editor.Plugins
             m_Store.GetState().CurrentGraphModel?.Stencil?.Debugger?.Stop();
         }
 
-        public void OptionsMenu(GenericMenu menu) {}
+        public void OptionsMenu(GenericMenu menu) { }
 
         void OnStateChangeUpdate()
         {

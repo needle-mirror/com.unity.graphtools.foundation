@@ -40,7 +40,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             GraphModel.CreatePlacemat(new Rect(205, 0, 200, 200));
             var nodeModel = GraphModel.CreateNode<Type0FakeNodeModel>("Node0", new Vector2(190, 100));
 
-            CommandDispatcher.MarkStateDirty();
+            MarkGraphViewStateDirty();
             yield return null;
 
             var nodeUI = nodeModel.GetUI<Node>(GraphView);
@@ -84,7 +84,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                     switch (frame)
                     {
                         case 0:
-                            CommandDispatcher.MarkStateDirty();
+                            MarkGraphViewStateDirty();
                             return TestPhase.WaitForNextFrame;
                         case 1:
                             {
@@ -94,7 +94,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                                 return TestPhase.WaitForNextFrame;
                             }
                         case 2:
-                            CommandDispatcher.MarkStateDirty();
+                            MarkGraphViewStateDirty();
                             return TestPhase.WaitForNextFrame;
                         default:
                             return TestPhase.Done;
@@ -146,15 +146,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             {
                 // Create a placemat and collapse it.
                 var placemat = GraphModel.CreatePlacemat(new Rect(0, 0, 200, 500)) as PlacematModel;
-                CommandDispatcher.MarkStateDirty();
+                MarkGraphViewStateDirty();
                 yield return null;
 
-                CommandDispatcher.Dispatch(new SetPlacematCollapsedCommand(placemat, true, new IGraphElementModel[] {}));
+                CommandDispatcher.Dispatch(new SetPlacematCollapsedCommand(placemat, true, new IGraphElementModel[] { }));
                 yield return null;
 
                 // Add a node under it.
                 GraphModel.CreateNode<Type0FakeNodeModel>("Node0", new Vector2(10, 100));
-                CommandDispatcher.MarkStateDirty();
+                MarkGraphViewStateDirty();
                 yield return null;
             }
 
@@ -175,7 +175,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                     switch (frame)
                     {
                         case 0:
-                            CommandDispatcher.MarkStateDirty();
+                            MarkGraphViewStateDirty();
                             return TestPhase.WaitForNextFrame;
                         case 1:
                             {
@@ -184,7 +184,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                                 return TestPhase.WaitForNextFrame;
                             }
                         case 2:
-                            CommandDispatcher.MarkStateDirty();
+                            MarkGraphViewStateDirty();
                             return TestPhase.WaitForNextFrame;
                         default:
                             return TestPhase.Done;
@@ -225,15 +225,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             {
                 // Create a placemat and collapse it.
                 var placemat = GraphModel.CreatePlacemat(new Rect(0, 0, 200, 500)) as PlacematModel;
-                CommandDispatcher.MarkStateDirty();
+                MarkGraphViewStateDirty();
                 yield return null;
 
-                CommandDispatcher.Dispatch(new SetPlacematCollapsedCommand(placemat, true, new IGraphElementModel[] {}));
+                CommandDispatcher.Dispatch(new SetPlacematCollapsedCommand(placemat, true, new IGraphElementModel[] { }));
                 yield return null;
 
                 // Add a node under it.
                 GraphModel.CreateNode<Type0FakeNodeModel>("Node0", new Vector2(10, 100));
-                CommandDispatcher.MarkStateDirty();
+                MarkGraphViewStateDirty();
                 yield return null;
             }
 
@@ -254,16 +254,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                     switch (frame)
                     {
                         case 0:
-                            CommandDispatcher.MarkStateDirty();
+                            MarkGraphViewStateDirty();
                             return TestPhase.WaitForNextFrame;
                         case 1:
                             {
                                 var placemat = GetGraphElementModel(0) as PlacematModel;
-                                CommandDispatcher.Dispatch(new SetPlacematCollapsedCommand(placemat, false, new IGraphElementModel[] {}));
+                                CommandDispatcher.Dispatch(new SetPlacematCollapsedCommand(placemat, false, new IGraphElementModel[] { }));
                                 return TestPhase.WaitForNextFrame;
                             }
                         case 2:
-                            CommandDispatcher.MarkStateDirty();
+                            MarkGraphViewStateDirty();
                             return TestPhase.WaitForNextFrame;
                         default:
                             return TestPhase.Done;
@@ -290,11 +290,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             var node = GraphModel.CreateNode<Type0FakeNodeModel>("Node0", new Vector2(10, 100));
             var sticky = (StickyNoteModel)GraphModel.CreateStickyNote(new Rect(100, 100, 50, 50));
 
-            placemat.HiddenElements = new[] {node};
+            placemat.HiddenElements = new[] { node };
             Assert.AreEqual(1, placemat.HiddenElements.Count(), "Node was not properly added to the list of hidden elements");
             Assert.AreEqual(node, placemat.HiddenElements.First(), "Placemat does not contain the expected node in its hidden elements");
 
-            placemat.HiddenElements = new[] {sticky};
+            placemat.HiddenElements = new[] { sticky };
             Assert.AreEqual(1, placemat.HiddenElements.Count(), "Sticky note was not properly added to the list of hidden elements");
             Assert.AreEqual(sticky, placemat.HiddenElements.First(), "Placemat does not contain the expected sticky note in its hidden elements");
         }

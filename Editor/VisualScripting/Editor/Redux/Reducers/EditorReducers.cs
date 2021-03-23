@@ -43,11 +43,11 @@ namespace UnityEditor.VisualScripting.Editor
         static State AddVisualScriptToObject(State previousState, AddVisualScriptToObjectAction action)
         {
             ((GameObject)action.Instance).AddComponent(action.ComponentType);
-//            var component = ((GameObject)action.Instance).GetComponent<MonoBehaviour>();
+            //            var component = ((GameObject)action.Instance).GetComponent<MonoBehaviour>();
             throw new NotImplementedException("AddVisualScriptToObject");
-//            previousState.MarkForUpdate(UpdateFlags.All);
+            //            previousState.MarkForUpdate(UpdateFlags.All);
 
-//            return previousState;
+            //            return previousState;
         }
     }
 }

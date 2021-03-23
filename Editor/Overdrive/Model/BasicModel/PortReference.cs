@@ -20,7 +20,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
         public INodeModel NodeModel
         {
-            get => GraphAssetModel != null && GraphAssetModel.GraphModel.NodesByGuid.TryGetValue(NodeModelGuid, out var node) ? node : null;
+            get => GraphAssetModel != null && GraphAssetModel.GraphModel.TryGetModelFromGuid(NodeModelGuid, out var node) ? node as INodeModel : null;
             set
             {
                 GraphAssetModel = (GraphAssetModel)value.AssetModel;
@@ -55,13 +55,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
             previousValue = null;
 
-            var nodemodel2 = nodeModel.GraphModel?.NodesByGuid[nodeModel.Guid];
-            if (nodemodel2 != nodeModel)
+            IGraphElementModel nodemodel2 = null;
+            nodeModel.GraphModel?.TryGetModelFromGuid(nodeModel.Guid, out nodemodel2);
+            if (nodemodel2 as INodeModel != nodeModel)
             {
-                NodeModel = nodemodel2;
+                NodeModel = nodemodel2 as INodeModel;
             }
 
-            var portHolder = nodeModel as IInOutPortsNode;
+            var portHolder = nodeModel as IInputOutputPortsNodeModel;
             var portModelsByGuid = direction == Direction.Input ? portHolder?.InputsById : portHolder?.OutputsById;
             if (portModelsByGuid != null && UniqueId != null)
             {

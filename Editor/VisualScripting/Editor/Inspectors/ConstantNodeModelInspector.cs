@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace UnityEditor.VisualScripting.Editor
 {
-//    [CustomEditor(typeof(ConstantNodeAsset<>), true)]
+    //    [CustomEditor(typeof(ConstantNodeAsset<>), true)]
     class ConstantNodeModelInspector : NodeModelInspector
     {
         GUIContent m_GUIContent;
@@ -21,9 +21,9 @@ namespace UnityEditor.VisualScripting.Editor
             serializedObject.Update();
             EditorGUI.BeginChangeCheck();
 
-//            var graph = (target as AbstractNodeAsset)?.Model.GraphModel;
-//            if (graph != null)
-//                ConstantEditorGUI(serializedObject, m_GUIContent, graph.Stencil, ConstantEditorMode.AllEditors, refreshUI);
+            //            var graph = (target as AbstractNodeAsset)?.Model.GraphModel;
+            //            if (graph != null)
+            //                ConstantEditorGUI(serializedObject, m_GUIContent, graph.Stencil, ConstantEditorMode.AllEditors, refreshUI);
 
             serializedObject.ApplyModifiedProperties();
         }
@@ -33,34 +33,34 @@ namespace UnityEditor.VisualScripting.Editor
         public static void ConstantEditorGUI(SerializedObject o, GUIContent label, Stencil stencil,
             ConstantEditorMode mode = ConstantEditorMode.ValueOnly, Action onChange = null)
         {
-//            if (!(o.targetObject is AbstractNodeAsset asset))
-//                return;
+            //            if (!(o.targetObject is AbstractNodeAsset asset))
+            //                return;
 
-//            switch (asset.Model)
-//            {
-//                case ConstantNodeModel constantNodeModel when constantNodeModel.IsLocked:
-//                    return;
-//
-//                case EnumConstantNodeModel enumModel:
-//                {
-//                    if (mode != ConstantEditorMode.ValueOnly)
-//                    {
-//                        var filter = new SearcherFilter(SearcherContext.Type).WithEnums(stencil);
-//                        stencil.TypeEditor(enumModel.value.EnumType,
-//                            (type, index) =>
-//                            {
-//                                enumModel.value.EnumType = type;
-//                                onChange?.Invoke();
-//                            }, filter);
-//                    }
-//                    enumModel.value.Value = Convert.ToInt32(EditorGUILayout.EnumPopup("Value", enumModel.EnumValue));
-//                    break;
-//                }
-//
-//                default:
-//                    EditorGUILayout.PropertyField(o.FindProperty("m_NodeModel.value"), label, true);
-//                    break;
-//            }
+            //            switch (asset.Model)
+            //            {
+            //                case ConstantNodeModel constantNodeModel when constantNodeModel.IsLocked:
+            //                    return;
+            //
+            //                case EnumConstantNodeModel enumModel:
+            //                {
+            //                    if (mode != ConstantEditorMode.ValueOnly)
+            //                    {
+            //                        var filter = new SearcherFilter(SearcherContext.Type).WithEnums(stencil);
+            //                        stencil.TypeEditor(enumModel.value.EnumType,
+            //                            (type, index) =>
+            //                            {
+            //                                enumModel.value.EnumType = type;
+            //                                onChange?.Invoke();
+            //                            }, filter);
+            //                    }
+            //                    enumModel.value.Value = Convert.ToInt32(EditorGUILayout.EnumPopup("Value", enumModel.EnumValue));
+            //                    break;
+            //                }
+            //
+            //                default:
+            //                    EditorGUILayout.PropertyField(o.FindProperty("m_NodeModel.value"), label, true);
+            //                    break;
+            //            }
         }
     }
 }

@@ -69,7 +69,7 @@ namespace UnityEditor.VisualScripting.GraphViewModel
             Selection.activeObject = this;
         }
 
-        public void Dispose() {}
+        public void Dispose() { }
     }
 
     public static class GraphAssetModelExtensions

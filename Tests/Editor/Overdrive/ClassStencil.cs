@@ -29,6 +29,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
             "visualscripting"
         };
 
+        public override string ToolName => "Class Stencil Test";
+
         public override Type GetConstantNodeValueType(TypeHandle typeHandle)
         {
             return TypeToConstantMapper.GetConstantNodeType(typeHandle);
@@ -76,6 +78,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
                 && !Attribute.IsDefined(type, typeof(ObsoleteAttribute))
                 && !k_BlackListedNamespaces.Any(b => type.Namespace != null && type.Namespace.ToLower().StartsWith(b)
                 && !Attribute.IsDefined(type, typeof(ObsoleteAttribute)));
+        }
+
+        public override IGraphProcessingErrorModel CreateProcessingErrorModel(GraphProcessingError error)
+        {
+            if (error.SourceNode != null && !error.SourceNode.Destroyed)
+            {
+                return new GraphProcessingErrorModel(error);
+            }
+
+            return null;
         }
     }
 }

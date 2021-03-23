@@ -10,7 +10,7 @@ using UnityEditor.VisualScripting.Model.Compilation;
 using UnityEngine;
 using UnityEngine.TestTools;
 
-public class DummyTestType {}
+public class DummyTestType { }
 
 namespace UnityEditor.VisualScriptingTests.Models
 {

@@ -40,7 +40,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             graphView.ClearGraphElementsHighlight();
 
-            if (graphView.Selection.Count == 0)
+            if (graphView.GetSelection().Count == 0)
             {
                 return;
             }
@@ -49,16 +49,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             // For all the selected items, highlight the graphElements that share the same declaration model
             // Exception: If the graphElement is selected, do not highlight it
-            foreach (ISelectableGraphElement selectable in graphView.Selection)
+            foreach (var selectable in graphView.GetSelection())
             {
-                if (!(selectable is IModelUI hasGraphElementModel))
-                {
-                    continue;
-                }
-
-                foreach (IHighlightable highlightable in highlightables
-                         .Where(h => (!Equals(selectable, h) || !ReferenceEquals(selectable, h)) &&
-                             h.ShouldHighlightItemUsage(hasGraphElementModel.Model)))
+                foreach (var highlightable in highlightables
+                         .Where(h => (!Equals(selectable, h.Model) || !ReferenceEquals(selectable, h.Model)) &&
+                             h.ShouldHighlightItemUsage(selectable)))
                 {
                     highlightable.Highlighted = true;
                 }

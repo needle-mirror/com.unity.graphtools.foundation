@@ -11,7 +11,7 @@ using UnityEngine;
 
 namespace UnityEditor.VisualScriptingTests.SmartSearch
 {
-    sealed class ClassForTest {}
+    sealed class ClassForTest { }
     sealed class TypeSearcherDatabaseTests : BaseFixture
     {
         sealed class TestStencil : Stencil

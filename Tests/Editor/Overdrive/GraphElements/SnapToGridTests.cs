@@ -91,7 +91,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                     Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.y),
                         m_SnappedNode.layout.y + borderOffset);
                     Assert.AreNotEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.y + offset.y),
-                        m_SnappedNode.layout.y  + borderOffset);
+                        m_SnappedNode.layout.y + borderOffset);
 
                     // X should be dragged normally
                     Assert.AreEqual(GraphViewStaticBridge.RoundToPixelGrid(m_SnappingNodePos.x + offset.x),
@@ -617,7 +617,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Vector2 secondElementPos = new Vector2(m_SnappingNodePos.x + k_HalfSpacing, m_SnappingNodePos.y + 10);
             var secondElementModel = CreatePlacemat(new Rect(secondElementPos, new Vector2(k_HalfSpacing, k_HalfSpacing)), "Placemat");
 
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
 
             // Get the UI nodes
@@ -630,8 +630,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             SetUINodeSize(ref snappingNode, k_HalfSpacing, k_HalfSpacing);
             yield return null;
 
-            Vector2 worldPosSnappingNode = graphView.contentViewContainer.LocalToWorld(m_SnappingNodePos);
-            Vector2 worldPosSecondElement = graphView.contentViewContainer.LocalToWorld(secondElementPos);
+            Vector2 worldPosSnappingNode = graphView.ContentViewContainer.LocalToWorld(m_SnappingNodePos);
+            Vector2 worldPosSecondElement = graphView.ContentViewContainer.LocalToWorld(secondElementPos);
 
             Vector2 selectionPosSnappingNode = worldPosSnappingNode + m_SelectionOffset;
             Vector2 selectionPosSecondElement = worldPosSecondElement + m_SelectionOffset;

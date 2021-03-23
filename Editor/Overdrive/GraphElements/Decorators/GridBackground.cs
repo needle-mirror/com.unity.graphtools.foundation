@@ -93,7 +93,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             {
                 throw new InvalidOperationException("GridBackground can only be added to a GraphView");
             }
-            m_Container = graphView.contentViewContainer;
+            m_Container = graphView.ContentViewContainer;
             Rect clientRect = graphView.layout;
 
             // Since we're always stretch to parent size, we will use (0,0) as (x,y) coordinates

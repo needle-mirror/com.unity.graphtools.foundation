@@ -11,7 +11,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
     public static class ConsoleWindowBridge
     {
         static Action<int> s_RemoveLogEntriesByIdentifierDelegate;
-        static readonly int k_VsLogIdentifier = "VisualScripting".GetHashCode();
+        static readonly int k_GTFLogIdentifier = "GraphToolsFoundation".GetHashCode();
 
         // TODO: This is taken directly from Runtime\Logging\LogAssert.h.  There is no C# equivalent in the editor
         // so when the native enum changes, this should be updated as well.  Unfortunately such changes are very difficult to
@@ -21,26 +21,26 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
         [Flags]
         enum LogMessageFlags
         {
-            NoLogMessageFlags                  = 0,
-            Error                              = 1 <<  0, // Message describes an error.
-            Assert                             = 1 <<  1, // Message describes an assertion failure.
-            Log                                = 1 <<  2, // Message is a general log message.
-            Fatal                              = 1 <<  4, // Message describes a fatal error, and that the program should now exit.
-            AssetImportError                   = 1 <<  6, // Message describes an error generated during asset importing.
-            AssetImportWarning                 = 1 <<  7, // Message describes a warning generated during asset importing.
-            ScriptingError                     = 1 <<  8, // Message describes an error produced by script code.
-            ScriptingWarning                   = 1 <<  9, // Message describes a warning produced by script code.
-            ScriptingLog                       = 1 << 10, // Message describes a general log message produced by script code.
-            ScriptCompileError                 = 1 << 11, // Message describes an error produced by the script compiler.
-            ScriptCompileWarning               = 1 << 12, // Message describes a warning produced by the script compiler.
-            StickyLog                          = 1 << 13, // Message is 'sticky' and should not be removed when the user manually clears the console window.
-            MayIgnoreLineNumber                = 1 << 14, // The scripting runtime should skip annotating the log callstack with file and line information.
-            ReportBug                          = 1 << 15, // When used with kFatal, indicates that the log system should launch the bug reporter.
-            DisplayPreviousErrorInStatusBar    = 1 << 16, // The message before this one should be displayed at the bottom of Unity's main window, unless there are no messages before this one.
-            ScriptingException                 = 1 << 17, // Message describes an exception produced by script code.
-            DontExtractStacktrace              = 1 << 18, // Stacktrace extraction should be skipped for this message.
-            ScriptingAssertion                 = 1 << 21, // The message describes an assertion failure in script code.
-            StacktraceIsPostprocessed          = 1 << 22, // The stacktrace has already been postprocessed and does not need further processing
+            NoLogMessageFlags = 0,
+            Error = 1 << 0, // Message describes an error.
+            Assert = 1 << 1, // Message describes an assertion failure.
+            Log = 1 << 2, // Message is a general log message.
+            Fatal = 1 << 4, // Message describes a fatal error, and that the program should now exit.
+            AssetImportError = 1 << 6, // Message describes an error generated during asset importing.
+            AssetImportWarning = 1 << 7, // Message describes a warning generated during asset importing.
+            ScriptingError = 1 << 8, // Message describes an error produced by script code.
+            ScriptingWarning = 1 << 9, // Message describes a warning produced by script code.
+            ScriptingLog = 1 << 10, // Message describes a general log message produced by script code.
+            ScriptCompileError = 1 << 11, // Message describes an error produced by the script compiler.
+            ScriptCompileWarning = 1 << 12, // Message describes a warning produced by the script compiler.
+            StickyLog = 1 << 13, // Message is 'sticky' and should not be removed when the user manually clears the console window.
+            MayIgnoreLineNumber = 1 << 14, // The scripting runtime should skip annotating the log callstack with file and line information.
+            ReportBug = 1 << 15, // When used with kFatal, indicates that the log system should launch the bug reporter.
+            DisplayPreviousErrorInStatusBar = 1 << 16, // The message before this one should be displayed at the bottom of Unity's main window, unless there are no messages before this one.
+            ScriptingException = 1 << 17, // Message describes an exception produced by script code.
+            DontExtractStacktrace = 1 << 18, // Stacktrace extraction should be skipped for this message.
+            ScriptingAssertion = 1 << 21, // The message describes an assertion failure in script code.
+            StacktraceIsPostprocessed = 1 << 22, // The stacktrace has already been postprocessed and does not need further processing
         };
 
         static int LogTypeOptionsToLogMessageFlags(LogType logType, LogOption logOptions)
@@ -90,7 +90,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
                 message = message,
                 file = file,
                 mode = mode,
-                identifier = k_VsLogIdentifier,
+                identifier = k_GTFLogIdentifier,
                 instanceID = instanceId,
             });
         }
@@ -105,10 +105,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
                 Assert.IsNotNull(s_RemoveLogEntriesByIdentifierDelegate);
             }
 
-            s_RemoveLogEntriesByIdentifierDelegate(k_VsLogIdentifier);
+            s_RemoveLogEntriesByIdentifierDelegate(k_GTFLogIdentifier);
         }
 
-        public static T FindBoundGraphViewToolWindow<T>(GraphViewBridge gv) where T : GraphViewToolWindowBridge
+        public static T FindBoundGraphViewToolWindow<T>(VisualElement gv) where T : GraphViewToolWindowBridge
         {
             var guiViews = new List<GUIView>();
             GUIViewDebuggerHelper.GetViews(guiViews);
@@ -126,7 +126,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
 
                     foreach (var graphViewTool in dockArea.m_Panes.OfType<T>())
                     {
-                        var usedGv = (GraphViewBridge)fieldInfo.GetValue(graphViewTool);
+                        var usedGv = (VisualElement)fieldInfo.GetValue(graphViewTool);
                         if (usedGv == gv)
                             return graphViewTool;
                     }
@@ -136,7 +136,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
             return null;
         }
 
-        public static void SpawnAttachedViewToolWindow<T>(EditorWindow window, GraphViewBridge gv) where T : GraphViewToolWindowBridge
+        public static void SpawnAttachedViewToolWindow<T>(EditorWindow window, VisualElement gv) where T : GraphViewToolWindowBridge
         {
             const int newToolWidth = 200;
 

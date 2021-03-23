@@ -116,7 +116,7 @@ namespace UnityEditor.VisualScriptingTests.Actions
 #if UNITY_2020_1_OR_NEWER
                     return new MoveElementsAction(newPosition0, new[] {GetNode(0)}, null, null);
 #else
-                    return new MoveElementsAction(newPosition0, new[] {GetNode(0)}, null);
+                    return new MoveElementsAction(newPosition0, new[] { GetNode(0) }, null);
 #endif
                 },
                 () =>
@@ -139,7 +139,7 @@ namespace UnityEditor.VisualScriptingTests.Actions
 #if UNITY_2020_1_OR_NEWER
                     return new MoveElementsAction(newPosition1, new[] {GetNode(1)}, null, null);
 #else
-                    return new MoveElementsAction(newPosition1, new[] {GetNode(1)}, null);
+                    return new MoveElementsAction(newPosition1, new[] { GetNode(1) }, null);
 #endif
                 },
                 () =>
@@ -162,7 +162,7 @@ namespace UnityEditor.VisualScriptingTests.Actions
 #if UNITY_2020_1_OR_NEWER
                     return new MoveElementsAction(newPosition2, new[] {GetNode(2)}, null, null);
 #else
-                    return new MoveElementsAction(newPosition2, new[] {GetNode(2)}, null);
+                    return new MoveElementsAction(newPosition2, new[] { GetNode(2) }, null);
 #endif
                 },
                 () =>
@@ -185,7 +185,7 @@ namespace UnityEditor.VisualScriptingTests.Actions
 #if UNITY_2020_1_OR_NEWER
                     return new MoveElementsAction(deltaAll, new[] {GetNode(0), GetNode(1), GetNode(2), GetNode(3)}, null, null);
 #else
-                    return new MoveElementsAction(deltaAll, new[] {GetNode(0), GetNode(1), GetNode(2), GetNode(3)}, null);
+                    return new MoveElementsAction(deltaAll, new[] { GetNode(0), GetNode(1), GetNode(2), GetNode(3) }, null);
 #endif
                 },
                 () =>
@@ -215,7 +215,7 @@ namespace UnityEditor.VisualScriptingTests.Actions
 #if UNITY_2020_1_OR_NEWER
                     return new MoveElementsAction(newStickyPosition.position - origStickyPosition.position, null, null, new[] {stickyNote});
 #else
-                    return new MoveElementsAction(newStickyPosition.position - origStickyPosition.position, null, new[] {stickyNote});
+                    return new MoveElementsAction(newStickyPosition.position - origStickyPosition.position, null, new[] { stickyNote });
 #endif
                 },
                 () =>
@@ -259,7 +259,7 @@ namespace UnityEditor.VisualScriptingTests.Actions
                     Assert.That(GetPlacemat(0).Position, Is.EqualTo(origPlacematPosition));
                     return new MoveElementsAction(deltaMove, new[] { node }, new[] { placemat }, new[] { stickyNote });
 #else
-                    return new MoveElementsAction(deltaMove, new[] {node}, new[] {stickyNote});
+                    return new MoveElementsAction(deltaMove, new[] { node }, new[] { stickyNote });
 #endif
                 },
                 () =>

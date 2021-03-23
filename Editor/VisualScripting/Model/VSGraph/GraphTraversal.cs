@@ -126,6 +126,6 @@ namespace UnityEditor.VisualScripting.Model
             }
         }
 
-        protected virtual void VisitVariableDeclaration(IVariableDeclarationModel variableDeclarationModel) {}
+        protected virtual void VisitVariableDeclaration(IVariableDeclarationModel variableDeclarationModel) { }
     }
 }

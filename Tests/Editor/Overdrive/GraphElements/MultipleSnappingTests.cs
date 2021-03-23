@@ -208,7 +208,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             GraphViewSettings.UserSettings.EnableSnapToGrid = false;
             GraphViewSettings.UserSettings.EnableSnapToBorders = false;
 
-            var actions = SetUpUIElements(k_ReferenceNodePos + new Vector2(k_HalfSpacing + k_QuarterSpacing,  k_QuarterSpacing),
+            var actions = SetUpUIElements(k_ReferenceNodePos + new Vector2(k_HalfSpacing + k_QuarterSpacing, k_QuarterSpacing),
                 k_ReferenceNodePos,
                 new Vector2(k_ReferenceNodePos.x - k_HalfSpacing - k_QuarterSpacing, k_ReferenceNodePos.y), false, true);
 
@@ -319,7 +319,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             GraphViewSettings.UserSettings.EnableSnapToPort = false;
             GraphViewSettings.UserSettings.EnableSnapToGrid = false;
 
-            var actions = SetUpUIElements(new Vector2(k_Spacing + k_QuarterSpacing - k_HalfSpacing, m_ReferenceNode1Pos.y + k_QuarterSpacing), k_ReferenceNodePos,  m_ReferenceNode1Pos + new Vector2(k_Spacing + k_QuarterSpacing, 0));
+            var actions = SetUpUIElements(new Vector2(k_Spacing + k_QuarterSpacing - k_HalfSpacing, m_ReferenceNode1Pos.y + k_QuarterSpacing), k_ReferenceNodePos, m_ReferenceNode1Pos + new Vector2(k_Spacing + k_QuarterSpacing, 0));
             while (actions.MoveNext())
             {
                 yield return null;
@@ -372,7 +372,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             //   |              |             |
             //   |              |             |
 
-            var actions = SetUpUIElements(new Vector2(3f * k_Spacing,  k_ReferenceNodePos.y),
+            var actions = SetUpUIElements(new Vector2(3f * k_Spacing, k_ReferenceNodePos.y),
                 k_ReferenceNodePos,
                 new Vector2(k_ReferenceNodePos.x - k_Spacing, k_ReferenceNodePos.y), false, true);
 

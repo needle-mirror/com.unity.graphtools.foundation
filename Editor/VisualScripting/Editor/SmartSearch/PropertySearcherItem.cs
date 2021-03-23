@@ -35,6 +35,6 @@ namespace UnityEditor.VisualScripting.Editor.SmartSearch
         public PropertySearcherItem Item { get; set; }
 
         public PropertyElement(string templateId)
-            : base(templateId) {}
+            : base(templateId) { }
     }
 }

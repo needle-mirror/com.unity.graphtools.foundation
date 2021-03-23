@@ -19,8 +19,8 @@ namespace UnityEditor.VisualScripting.Model.Stencils
         //TODO figure how to implement
         public static TypeHandle ExecutionFlow { get; } = new TypeHandle("__EXECUTIONFLOW");
         public static TypeHandle MissingType { get; } = new TypeHandle("__MISSINGTYPE");
-        public static TypeHandle ThisType { get; }  = new TypeHandle("__THISTYPE");
-        public static TypeHandle Unknown { get; }  = new TypeHandle("__UNKNOWN");
+        public static TypeHandle ThisType { get; } = new TypeHandle("__THISTYPE");
+        public static TypeHandle Unknown { get; } = new TypeHandle("__UNKNOWN");
         public static TypeHandle Bool { get; } = GenerateTypeHandle(typeof(bool));
         public static TypeHandle Void { get; } = GenerateTypeHandle(typeof(void));
         public static TypeHandle Char { get; } = GenerateTypeHandle(typeof(char));
@@ -82,12 +82,12 @@ namespace UnityEditor.VisualScripting.Model.Stencils
             return $"TypeName:{Identification}";
         }
 
-        public static bool operator==(TypeHandle left, TypeHandle right)
+        public static bool operator ==(TypeHandle left, TypeHandle right)
         {
             return left.Equals(right);
         }
 
-        public static bool operator!=(TypeHandle left, TypeHandle right)
+        public static bool operator !=(TypeHandle left, TypeHandle right)
         {
             return !left.Equals(right);
         }

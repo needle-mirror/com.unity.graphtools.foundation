@@ -15,7 +15,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             m_Window = window;
         }
 
-        public IEnumerable<IPluginHandler>  GetPluginHandlers()
+        public IEnumerable<IPluginHandler> GetPluginHandlers()
         {
             return m_PluginHandlers;
         }

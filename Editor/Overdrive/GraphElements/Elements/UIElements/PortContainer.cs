@@ -1,14 +1,13 @@
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public class PortContainer : VisualElementBridge
+    public class PortContainer : VisualElement
     {
-        public new class UxmlFactory : UxmlFactory<PortContainer> {}
+        public new class UxmlFactory : UxmlFactory<PortContainer> { }
 
         public static readonly string ussClassName = "ge-port-container";
         static readonly string portCountClassNamePrefix = ussClassName.WithUssModifier("port-count-");

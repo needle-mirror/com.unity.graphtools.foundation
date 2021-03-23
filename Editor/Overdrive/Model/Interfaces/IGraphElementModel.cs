@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
@@ -31,5 +32,26 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         /// The list of capabilities of the element.
         /// </summary>
         IReadOnlyList<Capabilities> Capabilities { get; }
+
+        /// <summary>
+        /// Color for the element.
+        /// </summary>
+        /// <remarks>
+        /// Setting a color should set HasUserColor to true.
+        /// </remarks>
+        Color Color { get; set; }
+
+        /// <summary>
+        /// True if the color was changed.
+        /// </summary>
+        bool HasUserColor { get; }
+
+        /// <summary>
+        /// Reset the color to its original state.
+        /// </summary>
+        /// <remarks>
+        /// Resetting a color should set HasUserColor to false.
+        /// </remarks>
+        void ResetColor();
     }
 }

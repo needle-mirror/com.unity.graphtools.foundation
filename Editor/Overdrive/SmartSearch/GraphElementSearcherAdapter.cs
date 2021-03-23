@@ -13,7 +13,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         protected Label m_DetailsTitle;
         protected ScrollView m_Scrollview;
 
-        protected GraphElementSearcherAdapter(string title) : base(title) {}
+        protected GraphElementSearcherAdapter(string title) : base(title) { }
 
         public override void InitDetailsPanel(VisualElement detailsPanel)
         {
@@ -76,7 +76,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         }
 
         protected virtual void OnGraphElementsCreated(SearcherItem searcherItem,
-            IEnumerable<IGraphElementModel> elements) {}
+            IEnumerable<IGraphElementModel> elements)
+        { }
     }
 
     public class GraphNodeSearcherAdapter : GraphElementSearcherAdapter

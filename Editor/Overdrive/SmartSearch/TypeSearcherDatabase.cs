@@ -18,7 +18,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 var classItem = new TypeSearcherItem(type.GenerateTypeHandle(), typeMetadata.FriendlyName);
                 searcherItems.TryAddClassItem(classItem, typeMetadata);
             }
-            return SearcherDatabase.Create(searcherItems , null, false);
+            return SearcherDatabase.Create(searcherItems, null, false);
         }
 
         public static SearcherDatabase FromItems(IEnumerable<SearcherItem> items)

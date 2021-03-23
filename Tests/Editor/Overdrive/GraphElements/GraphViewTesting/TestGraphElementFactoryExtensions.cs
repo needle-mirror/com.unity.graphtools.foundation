@@ -12,11 +12,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             switch (model)
             {
-                case ISingleInputPortNode _:
-                case ISingleOutputPortNode _:
+                case ISingleInputPortNodeModel _:
+                case ISingleOutputPortNodeModel _:
                     ui = new TokenNode();
                     break;
-                case IPortNode _:
+                case IPortNodeModel _:
                     ui = new CollapsibleInOutNode();
                     break;
                 default:

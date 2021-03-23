@@ -38,16 +38,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             var node1 = m_NodeModel1.GetUI<Node>(graphView);
             var node2 = m_NodeModel2.GetUI<Node>(graphView);
 
-            Assert.True(node1.IsDeletable());
-            Assert.False(node2.IsDeletable());
+            Assert.IsNotNull(node1);
+            Assert.IsNotNull(node2);
+
+            Assert.True(m_NodeModel1.IsDeletable());
+            Assert.False(m_NodeModel2.IsDeletable());
 
             // We need to get the graphView in focus for the commands to be properly sent.
             graphView.Focus();
 
             Assert.AreEqual(2, graphView.GraphElements.ToList().Count);
 
-            const bool noAdditiveSelect = false;
-            node1.Select(graphView, noAdditiveSelect);
+            CommandDispatcher.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Replace, m_NodeModel1));
+            yield return null;
 
             helpers.ExecuteCommand("Delete");
             yield return null;
@@ -56,7 +59,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             // Node 2 is not deletable.
             // Selecting it and sending the Delete command should leave the node count unchanged.
-            node2.Select(graphView, noAdditiveSelect);
+            CommandDispatcher.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Replace, m_NodeModel2));
+            yield return null;
 
             helpers.ExecuteCommand("Delete");
             yield return null;
@@ -78,10 +82,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             graphView.RebuildUI(GraphModel, CommandDispatcher);
             var node1 = m_NodeModel1.GetUI<Node>(graphView);
 
+            Assert.IsNotNull(node1);
+
             graphView.Focus();
 
-            const bool noAdditiveSelect = false;
-            node1.Select(graphView, noAdditiveSelect);
+            CommandDispatcher.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Replace, m_NodeModel1));
 
             helpers.MouseDownEvent(node1);
 
@@ -101,7 +106,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator ZoomWorks()
         {
-            VisualElement vc = window.GraphView.contentViewContainer;
+            VisualElement vc = window.GraphView.ContentViewContainer;
             Matrix4x4 transform = vc.transform.matrix;
 
             yield return null;

@@ -4,7 +4,6 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Serialization;
-using Object = UnityEngine.Object;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 {
@@ -18,7 +17,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         GraphAssetModel m_AssetModel;
 
         [SerializeReference]
-        protected List<INodeModel> m_GraphNodeModels;
+        List<INodeModel> m_GraphNodeModels;
 
         [SerializeField, Obsolete]
         // ReSharper disable once Unity.RedundantFormerlySerializedAsAttribute
@@ -28,7 +27,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         List<IBadgeModel> m_BadgeModels;
 
         [SerializeReference]
-        protected List<IEdgeModel> m_GraphEdgeModels;
+        List<IEdgeModel> m_GraphEdgeModels;
 
         [SerializeReference, Obsolete]
         List<EdgeModel> m_PolymorphicEdgeModels;
@@ -37,19 +36,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         List<StickyNoteModel> m_StickyNoteModels;
 
         [SerializeReference]
-        protected List<IStickyNoteModel> m_GraphStickyNoteModels;
+        List<IStickyNoteModel> m_GraphStickyNoteModels;
 
         [SerializeField, Obsolete]
         List<PlacematModel> m_PlacematModels;
 
         [SerializeReference]
-        protected List<IPlacematModel> m_GraphPlacematModels;
+        List<IPlacematModel> m_GraphPlacematModels;
 
         [SerializeReference]
-        protected List<IVariableDeclarationModel> m_GraphVariableModels;
+        List<IVariableDeclarationModel> m_GraphVariableModels;
 
         [SerializeReference]
-        protected List<IDeclarationModel> m_GraphPortalModels;
+        List<IDeclarationModel> m_GraphPortalModels;
 
         [SerializeField]
         string m_StencilTypeName; // serialized as string, resolved as type by ISerializationCallbackReceiver
@@ -82,7 +81,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         [SerializeField, FormerlySerializedAs("name")]
         string m_Name;
 
-        Dictionary<SerializableGUID, INodeModel> m_NodesByGuid;
+        // As this field is not serialized, use GetElementsByGuid() to access it.
+        Dictionary<SerializableGUID, IGraphElementModel> m_ElementsByGuid;
 
         public IGraphAssetModel AssetModel
         {
@@ -103,13 +103,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         public IReadOnlyList<IVariableDeclarationModel> VariableDeclarations => m_GraphVariableModels;
 
         public IReadOnlyList<IDeclarationModel> PortalDeclarations => m_GraphPortalModels;
-
-        /// <summary>
-        /// A dictionary that associates node models present in the graph to their GUIDs.
-        /// </summary>
-        public IReadOnlyDictionary<SerializableGUID, INodeModel> NodesByGuid => m_NodesByGuid ?? (m_NodesByGuid = new Dictionary<SerializableGUID, INodeModel>());
-
-        Dictionary<string, IGuidUpdate> m_OldToNewGuids;
 
         public string Name
         {
@@ -167,31 +160,304 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
                 .ToList();
         }
 
+        Dictionary<SerializableGUID, IGraphElementModel> GetElementsByGuid()
+        {
+            if (m_ElementsByGuid == null)
+                BuildElementByGuidDictionary();
+
+            return m_ElementsByGuid;
+        }
+
         /// <summary>
-        /// Creates a new node in the graph.
+        /// Retrieves a graph element model from its GUID.
+        /// </summary>
+        /// <param name="guid">The guid of the model to retrieve.</param>
+        /// <param name="model">The model matching the guid, or null if no model were found.</param>
+        /// <returns>True if the model was found. False otherwise.</returns>
+        public bool TryGetModelFromGuid(SerializableGUID guid, out IGraphElementModel model)
+        {
+            return GetElementsByGuid().TryGetValue(guid, out model);
+        }
+
+        /// <summary>
+        /// Adds a node model to the graph.
+        /// </summary>
+        /// <param name="nodeModel">The node model to add.</param>
+        public void AddNode(INodeModel nodeModel)
+        {
+            GetElementsByGuid().Add(nodeModel.Guid, nodeModel);
+
+            nodeModel.AssetModel = AssetModel;
+            m_GraphNodeModels.Add(nodeModel);
+        }
+
+        /// <summary>
+        /// Replaces node model at index.
+        /// </summary>
+        /// <param name="index">Index of the node model in the NodeModels list.</param>
+        /// <param name="nodeModel">The new node model.</param>
+        protected void ReplaceNode(int index, INodeModel nodeModel)
+        {
+            GetElementsByGuid().Remove(m_GraphNodeModels[index].Guid);
+            GetElementsByGuid().Add(nodeModel.Guid, nodeModel);
+
+            m_GraphNodeModels[index] = nodeModel;
+        }
+
+        /// <summary>
+        /// Removes a node model from the graph.
+        /// </summary>
+        /// <param name="nodeModel"></param>
+        protected void RemoveNode(INodeModel nodeModel)
+        {
+            GetElementsByGuid().Remove(nodeModel.Guid);
+            m_GraphNodeModels.Remove(nodeModel);
+        }
+
+        /// <summary>
+        /// Adds a portal declaration model to the graph.
+        /// </summary>
+        /// <param name="declarationModel">The portal declaration to add.</param>
+        protected void AddPortal(IDeclarationModel declarationModel)
+        {
+            GetElementsByGuid().Add(declarationModel.Guid, declarationModel);
+            m_GraphPortalModels.Add(declarationModel);
+        }
+
+        /// <summary>
+        /// Removes a portal declaration model from the graph.
+        /// </summary>
+        /// <param name="declarationModel">The portal declaration to remove.</param>
+        protected void RemovePortal(IDeclarationModel declarationModel)
+        {
+            GetElementsByGuid().Remove(declarationModel.Guid);
+            m_GraphPortalModels.Remove(declarationModel);
+        }
+
+        /// <summary>
+        /// Adds an edge to the graph.
+        /// </summary>
+        /// <param name="edgeModel">The edge to add.</param>
+        protected void AddEdge(IEdgeModel edgeModel)
+        {
+            GetElementsByGuid().Add(edgeModel.Guid, edgeModel);
+            m_GraphEdgeModels.Add(edgeModel);
+        }
+
+        /// <summary>
+        /// Removes an edge from th graph.
+        /// </summary>
+        /// <param name="edgeModel">The edge to remove.</param>
+        protected void RemoveEdge(IEdgeModel edgeModel)
+        {
+            GetElementsByGuid().Remove(edgeModel.Guid);
+            m_GraphEdgeModels.Remove(edgeModel);
+        }
+
+        /// <summary>
+        /// Adds a badge to the graph.
+        /// </summary>
+        /// <param name="badgeModel">The badge to add.</param>
+        public void AddBadge(IBadgeModel badgeModel)
+        {
+            GetElementsByGuid().Add(badgeModel.Guid, badgeModel);
+            m_BadgeModels.Add(badgeModel);
+        }
+
+        /// <summary>
+        /// Removes a badge from the graph.
+        /// </summary>
+        /// <param name="badgeModel">The badge to remove.</param>
+        public void RemoveBadge(IBadgeModel badgeModel)
+        {
+            GetElementsByGuid().Remove(badgeModel.Guid);
+            m_BadgeModels.Remove(badgeModel);
+        }
+
+        /// <summary>
+        /// Adds a sticky note to the graph.
+        /// </summary>
+        /// <param name="stickyNoteModel">The sticky note to add.</param>
+        protected void AddStickyNote(IStickyNoteModel stickyNoteModel)
+        {
+            GetElementsByGuid().Add(stickyNoteModel.Guid, stickyNoteModel);
+            m_GraphStickyNoteModels.Add(stickyNoteModel);
+        }
+
+        /// <summary>
+        /// Removes a sticky note from the graph.
+        /// </summary>
+        /// <param name="stickyNoteModel">The sticky note to remove.</param>
+        protected void RemoveStickyNote(IStickyNoteModel stickyNoteModel)
+        {
+            GetElementsByGuid().Remove(stickyNoteModel.Guid);
+            m_GraphStickyNoteModels.Remove(stickyNoteModel);
+        }
+
+        /// <summary>
+        /// Adds a placemat to the graph.
+        /// </summary>
+        /// <param name="placematModel">The placemat to add.</param>
+        protected void AddPlacemat(IPlacematModel placematModel)
+        {
+            GetElementsByGuid().Add(placematModel.Guid, placematModel);
+            m_GraphPlacematModels.Add(placematModel);
+        }
+
+        /// <summary>
+        /// Removes a placemat from the graph.
+        /// </summary>
+        /// <param name="placematModel">The placemat to remove.</param>
+        protected void RemovePlacemat(IPlacematModel placematModel)
+        {
+            GetElementsByGuid().Remove(placematModel.Guid);
+            m_GraphPlacematModels.Remove(placematModel);
+        }
+
+        /// <summary>
+        /// Adds a variable declaration to the graph.
+        /// </summary>
+        /// <param name="variableDeclarationModel">The variable declaration to add.</param>
+        protected void AddVariableDeclaration(IVariableDeclarationModel variableDeclarationModel)
+        {
+            GetElementsByGuid().Add(variableDeclarationModel.Guid, variableDeclarationModel);
+            m_GraphVariableModels.Add(variableDeclarationModel);
+        }
+
+        /// <summary>
+        /// Removes a variable declaration from the graph.
+        /// </summary>
+        /// <param name="variableDeclarationModel">The variable declaration to remove.</param>
+        protected void RemoveVariableDeclaration(IVariableDeclarationModel variableDeclarationModel)
+        {
+            GetElementsByGuid().Remove(variableDeclarationModel.Guid);
+            m_GraphVariableModels.Remove(variableDeclarationModel);
+        }
+
+        /// <summary>
+        /// Rebuilds the dictionary mapping guids to graph element models.
+        /// </summary>
+        /// <remarks>
+        /// Override this function if your graph models holds new graph elements types.
+        /// Ensure that all additional graph element model are added to the guid to model mapping.
+        /// </remarks>
+        protected virtual void BuildElementByGuidDictionary()
+        {
+            m_ElementsByGuid = new Dictionary<SerializableGUID, IGraphElementModel>();
+
+            foreach (var model in m_GraphNodeModels)
+            {
+                AddGuidToModelMapping(model);
+            }
+
+            foreach (var model in m_BadgeModels)
+            {
+                AddGuidToModelMapping(model);
+            }
+
+            foreach (var model in m_GraphEdgeModels)
+            {
+                AddGuidToModelMapping(model);
+            }
+
+            foreach (var model in m_GraphStickyNoteModels)
+            {
+                AddGuidToModelMapping(model);
+            }
+
+            foreach (var model in m_GraphPlacematModels)
+            {
+                AddGuidToModelMapping(model);
+            }
+
+            foreach (var model in m_GraphVariableModels)
+            {
+                AddGuidToModelMapping(model);
+            }
+
+            foreach (var model in m_GraphPortalModels)
+            {
+                AddGuidToModelMapping(model);
+            }
+        }
+
+        /// <summary>
+        /// Adds the model to the dictionary of elements by GUIDs.
+        /// </summary>
+        /// <remarks>
+        /// Helper function to add an entry to the m_ElementsByGuid dictionary.
+        /// <para>Use this function when overriding BuildElementByGuidDictionary(),
+        /// to add your own entries in the dictionary.</para>
+        /// </remarks>
+        /// <param name="model">The model to add. Its Guid must already be set.</param>
+        protected void AddGuidToModelMapping(IGraphElementModel model)
+        {
+            m_ElementsByGuid.Add(model.Guid, model);
+        }
+
+        /// <summary>
+        /// Instantiates an object of type <paramref name="type"/>.
+        /// </summary>
+        /// <param name="type">The type of the object to instantiate.</param>
+        /// <typeparam name="InterfaceT">A base type for <paramref name="type"/>.</typeparam>
+        /// <returns>A new object.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="type"/> is null.</exception>
+        /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="type"/> does not derive from <typeparamref name="InterfaceT"/></exception>
+        protected InterfaceT Instantiate<InterfaceT>(Type type)
+        {
+            if (type == null)
+                throw new ArgumentNullException(nameof(type));
+
+            InterfaceT obj;
+            if (typeof(InterfaceT).IsAssignableFrom(type))
+                obj = (InterfaceT)Activator.CreateInstance(type);
+            else
+                throw new ArgumentOutOfRangeException(nameof(type));
+
+            return obj;
+        }
+
+        /// <summary>
+        /// Creates a new node and optionally add it to the graph.
         /// </summary>
         /// <param name="nodeTypeToCreate">The type of the new node to create.</param>
         /// <param name="nodeName">The name of the node to create.</param>
         /// <param name="position">The position of the node to create.</param>
         /// <param name="guid">The SerializableGUID to assign to the newly created item.</param>
-        /// <param name="preDefineSetup">A method to be called before the node is created.</param>
+        /// <param name="initializationCallback">An initialization method to be called right after the node is created.</param>
         /// <param name="spawnFlags">The flags specifying how the node is to be spawned.</param>
         /// <returns>The newly created node.</returns>
         public INodeModel CreateNode(Type nodeTypeToCreate, string nodeName, Vector2 position,
-            SerializableGUID guid = default, Action<INodeModel> preDefineSetup = null, SpawnFlags spawnFlags = SpawnFlags.Default)
+            SerializableGUID guid = default, Action<INodeModel> initializationCallback = null, SpawnFlags spawnFlags = SpawnFlags.Default)
         {
-            return CreateNodeInternal(nodeTypeToCreate, nodeName, position, spawnFlags, preDefineSetup, guid);
+            var nodeModel = InstantiateNode(nodeTypeToCreate, nodeName, position, guid, initializationCallback);
+
+            if (!spawnFlags.IsOrphan())
+            {
+                AddNode(nodeModel);
+            }
+
+            return nodeModel;
         }
 
-        // TODO JOCE: to internal? Seems to be protected only for tests.
-        protected virtual INodeModel CreateNodeInternal(Type nodeTypeToCreate, string nodeName, Vector2 position,
-            SpawnFlags spawnFlags = SpawnFlags.Default, Action<INodeModel> preDefineSetup = null, SerializableGUID guid = default)
+        /// <summary>
+        /// Instantiates a new node.
+        /// </summary>
+        /// <param name="nodeTypeToCreate">The type of the new node to create.</param>
+        /// <param name="nodeName">The name of the node to create.</param>
+        /// <param name="position">The position of the node to create.</param>
+        /// <param name="guid">The SerializableGUID to assign to the newly created item.</param>
+        /// <param name="initializationCallback">An initialization method to be called right after the node is created.</param>
+        /// <returns>The newly created node.</returns>
+        protected virtual INodeModel InstantiateNode(Type nodeTypeToCreate, string nodeName, Vector2 position,
+            SerializableGUID guid = default, Action<INodeModel> initializationCallback = null)
         {
             if (nodeTypeToCreate == null)
                 throw new ArgumentNullException(nameof(nodeTypeToCreate));
+
             INodeModel nodeModel;
             if (typeof(IConstant).IsAssignableFrom(nodeTypeToCreate))
-                nodeModel = new ConstantNodeModel {Value = (IConstant)Activator.CreateInstance(nodeTypeToCreate)};
+                nodeModel = new ConstantNodeModel { Value = (IConstant)Activator.CreateInstance(nodeTypeToCreate) };
             else if (typeof(INodeModel).IsAssignableFrom(nodeTypeToCreate))
                 nodeModel = (INodeModel)Activator.CreateInstance(nodeTypeToCreate);
             else
@@ -203,19 +469,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             nodeModel.Position = position;
             nodeModel.Guid = guid.Valid ? guid : SerializableGUID.Generate();
             nodeModel.AssetModel = AssetModel;
-            preDefineSetup?.Invoke(nodeModel);
+            initializationCallback?.Invoke(nodeModel);
             nodeModel.OnCreateNode();
-            if (!spawnFlags.IsOrphan())
-            {
-                AddNode(nodeModel);
-                if (m_AssetModel)
-                    EditorUtility.SetDirty(m_AssetModel);
-            }
+
             return nodeModel;
         }
 
         /// <summary>
-        /// Creates a new variable node in the graph.
+        /// Creates a new variable node and optionally add it to the graph.
         /// </summary>
         /// <param name="declarationModel">The declaration for the variable.</param>
         /// <param name="position">The position of the node to create.</param>
@@ -229,17 +490,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         }
 
         /// <summary>
-        /// Creates a new constant node in the graph.
+        /// Creates a new constant node and optionally add it to the graph.
         /// </summary>
         /// <param name="constantTypeHandle">The type of the new constant node to create.</param>
         /// <param name="constantName">The name of the constant node to create.</param>
         /// <param name="position">The position of the node to create.</param>
         /// <param name="guid">The SerializableGUID to assign to the newly created item.</param>
-        /// <param name="preDefine">A method to be called before the constant node is created.</param>
+        /// <param name="initializationCallback">An initialization method to be called right after the constant node is created.</param>
         /// <param name="spawnFlags">The flags specifying how the node is to be spawned.</param>
         /// <returns>The newly created constant node.</returns>
         public virtual IConstantNodeModel CreateConstantNode(TypeHandle constantTypeHandle, string constantName,
-            Vector2 position, SerializableGUID guid = default, Action<IConstantNodeModel> preDefine = null, SpawnFlags spawnFlags = SpawnFlags.Default)
+            Vector2 position, SerializableGUID guid = default, Action<IConstantNodeModel> initializationCallback = null, SpawnFlags spawnFlags = SpawnFlags.Default)
         {
             var nodeType = Stencil.GetConstantNodeValueType(constantTypeHandle);
 
@@ -248,27 +509,23 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
                 if (model is IConstantNodeModel constantModel)
                 {
                     constantModel.PredefineSetup();
-                    preDefine?.Invoke(constantModel);
+                    initializationCallback?.Invoke(constantModel);
                 }
             }
 
             return (IConstantNodeModel)CreateNode(nodeType, constantName, position, guid, PreDefineSetup, spawnFlags);
         }
 
-        public void AddBadge(IBadgeModel badgeModel)
-        {
-            m_BadgeModels.Add(badgeModel);
-        }
-
-        public void RemoveBadge(IBadgeModel badgeModel)
-        {
-            m_BadgeModels.Remove(badgeModel);
-        }
-
         public IReadOnlyCollection<IGraphElementModel> DeleteBadges()
         {
             var deletedBadges = new List<IGraphElementModel>(m_BadgeModels);
+
+            foreach (var model in deletedBadges)
+            {
+                m_ElementsByGuid.Remove(model.Guid);
+            }
             m_BadgeModels.Clear();
+
             return deletedBadges;
         }
 
@@ -278,25 +535,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
                 .Where(b => b is T)
                 .ToList();
 
+            foreach (var model in deletedBadges)
+            {
+                m_ElementsByGuid.Remove(model.Guid);
+            }
+
             m_BadgeModels = m_BadgeModels
                 .Where(b => !(b is T))
                 .ToList();
 
             return deletedBadges;
-        }
-
-        public void AddNode(INodeModel nodeModel)
-        {
-            AddNodeInternal(nodeModel);
-        }
-
-        void AddNodeInternal(INodeModel nodeModel)
-        {
-            nodeModel.AssetModel = AssetModel;
-            m_GraphNodeModels.Add(nodeModel);
-            if (m_NodesByGuid == null)
-                m_NodesByGuid = new Dictionary<SerializableGUID, INodeModel>();
-            m_NodesByGuid.Add(nodeModel.Guid, nodeModel);
         }
 
         public INodeModel DuplicateNode(INodeModel sourceNode, Vector2 delta)
@@ -321,18 +569,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             if (targetInputNode != null && targetOutputNode != null)
             {
                 // Both node were duplicated; create a new edge between the duplicated nodes.
-                inputPortModel = (targetInputNode as IInOutPortsNode)?.InputsById[sourceEdge.ToPortId];
-                outputPortModel = (targetOutputNode as IInOutPortsNode)?.OutputsById[sourceEdge.FromPortId];
+                inputPortModel = (targetInputNode as IInputOutputPortsNodeModel)?.InputsById[sourceEdge.ToPortId];
+                outputPortModel = (targetOutputNode as IInputOutputPortsNodeModel)?.OutputsById[sourceEdge.FromPortId];
             }
             else if (targetInputNode != null)
             {
-                inputPortModel = (targetInputNode as IInOutPortsNode)?.InputsById[sourceEdge.ToPortId];
+                inputPortModel = (targetInputNode as IInputOutputPortsNodeModel)?.InputsById[sourceEdge.ToPortId];
                 outputPortModel = sourceEdge.FromPort;
             }
             else if (targetOutputNode != null)
             {
                 inputPortModel = sourceEdge.ToPort;
-                outputPortModel = (targetOutputNode as IInOutPortsNode)?.OutputsById[sourceEdge.FromPortId];
+                outputPortModel = (targetOutputNode as IInputOutputPortsNodeModel)?.OutputsById[sourceEdge.FromPortId];
             }
 
             if (inputPortModel != null && outputPortModel != null)
@@ -348,22 +596,23 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             return null;
         }
 
-        public virtual void CreateItemizedNode(GraphToolState graphToolState, int nodeOffset, ref IPortModel outputPortModel)
+        public virtual IInputOutputPortsNodeModel CreateItemizedNode(GraphToolState graphToolState, int nodeOffset, ref IPortModel outputPortModel)
         {
-            if (!outputPortModel.IsConnected())
-                return;
+            if (outputPortModel.IsConnected())
+                if (outputPortModel.NodeModel is IConstantNodeModel || outputPortModel.NodeModel is IVariableNodeModel)
+                {
+                    return CreateItemizedNode(nodeOffset, ref outputPortModel);
+                }
 
-            if (outputPortModel.NodeModel is IConstantNodeModel || outputPortModel.NodeModel is IVariableNodeModel)
-            {
-                CreateItemizedNode(nodeOffset, ref outputPortModel);
-            }
+            return null;
         }
 
-        protected void CreateItemizedNode(int nodeOffset, ref IPortModel outputPortModel)
+        protected IInputOutputPortsNodeModel CreateItemizedNode(int nodeOffset, ref IPortModel outputPortModel)
         {
             Vector2 offset = Vector2.up * nodeOffset;
-            var nodeToConnect = DuplicateNode(outputPortModel.NodeModel, offset) as IInOutPortsNode;
+            var nodeToConnect = DuplicateNode(outputPortModel.NodeModel, offset) as IInputOutputPortsNodeModel;
             outputPortModel = nodeToConnect?.OutputsById[outputPortModel.UniqueName];
+            return nodeToConnect;
         }
 
         public IReadOnlyCollection<IGraphElementModel> DeleteNodes(IReadOnlyCollection<INodeModel> nodeModels, bool deleteConnections)
@@ -372,7 +621,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
             foreach (var nodeModel in nodeModels.Where(n => n.IsDeletable()))
             {
-                m_GraphNodeModels.Remove(nodeModel);
+                RemoveNode(nodeModel);
                 deletedModels.Add(nodeModel);
 
                 if (deleteConnections)
@@ -380,13 +629,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
                     var connectedEdges = nodeModel.GetConnectedEdges().ToList();
                     deletedModels.AddRange(DeleteEdges(connectedEdges));
                 }
-                m_NodesByGuid?.Remove(nodeModel.Guid);
 
                 // If this is the last portal with the given declaration, delete the declaration.
                 if (nodeModel is EdgePortalModel edgePortalModel &&
-                    !this.FindReferencesInGraph<IEdgePortalModel>(edgePortalModel.DeclarationModel).Any())
+                    !this.FindReferencesInGraph<IEdgePortalModel>(edgePortalModel.DeclarationModel).Any() &&
+                    edgePortalModel.DeclarationModel != null)
                 {
-                    m_GraphPortalModels.Remove(edgePortalModel.DeclarationModel);
+                    RemovePortal(edgePortalModel.DeclarationModel);
                     deletedModels.Add(edgePortalModel.DeclarationModel);
                 }
 
@@ -396,39 +645,47 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             return deletedModels;
         }
 
-        public virtual IEdgeModel CreateEdge(IPortModel toPort, IPortModel fromPort)
+        /// <summary>
+        /// Returns the type of edge to instantiate between two ports.
+        /// </summary>
+        /// <param name="toPort">The destination port.</param>
+        /// <param name="fromPort">The origin port.</param>
+        /// <returns>The edge model type.</returns>
+        protected virtual Type GetEdgeType(IPortModel toPort, IPortModel fromPort)
         {
-            return CreateEdge<EdgeModel>(toPort, fromPort);
+            return typeof(EdgeModel);
         }
 
-        public EdgeT CreateEdge<EdgeT>(IPortModel toPort, IPortModel fromPort) where EdgeT : IEdgeModel, new()
+        /// <summary>
+        /// Creates an edge and add it to the graph.
+        /// </summary>
+        /// <param name="toPort">The port from which the edge originates.</param>
+        /// <param name="fromPort">The port to which the edge goes.</param>
+        /// <returns>The newly created edge</returns>
+        public IEdgeModel CreateEdge(IPortModel toPort, IPortModel fromPort)
         {
             var existing = this.GetEdgeConnectedToPorts(toPort, fromPort);
             if (existing != null)
-                return (EdgeT)existing;
+                return existing;
 
-            var edgeModel = CreateOrphanEdge<EdgeT>(toPort, fromPort);
-            if (edgeModel != null)
-            {
-                m_GraphEdgeModels.Add(edgeModel);
-            }
-
+            var edgeModel = InstantiateEdge(toPort, fromPort);
+            AddEdge(edgeModel);
             return edgeModel;
         }
 
-        protected EdgeT CreateOrphanEdge<EdgeT>(IPortModel toPort, IPortModel fromPort) where EdgeT : IEdgeModel, new()
+        /// <summary>
+        /// Instantiates an edge.
+        /// </summary>
+        /// <param name="toPort">The port from which the edge originates.</param>
+        /// <param name="fromPort">The port to which the edge goes.</param>
+        /// <returns>The newly created edge</returns>
+        protected virtual IEdgeModel InstantiateEdge(IPortModel toPort, IPortModel fromPort)
         {
-            Assert.IsNotNull(toPort);
-            Assert.IsNotNull(toPort.NodeModel);
-            Assert.IsNotNull(fromPort);
-            Assert.IsNotNull(fromPort.NodeModel);
-
-            var edgeModel = new EdgeT { AssetModel = AssetModel, EdgeLabel = "" };
+            var edgeType = GetEdgeType(toPort, fromPort);
+            var edgeModel = Instantiate<IEdgeModel>(edgeType);
+            edgeModel.AssetModel = AssetModel;
+            edgeModel.EdgeLabel = "";
             edgeModel.SetPorts(toPort, fromPort);
-
-            toPort.NodeModel.OnConnection(toPort, fromPort);
-            fromPort.NodeModel.OnConnection(fromPort, toPort);
-
             return edgeModel;
         }
 
@@ -436,37 +693,55 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         {
             var deletedModels = new List<IGraphElementModel>();
 
-            foreach (var edgeModel in edgeModels.Where(e => e.IsDeletable()))
+            foreach (var edgeModel in edgeModels.Where(e => e != null && e.IsDeletable()))
             {
-                edgeModel?.ToPort?.NodeModel?.OnDisconnection(edgeModel.ToPort, edgeModel.FromPort);
-                edgeModel?.FromPort?.NodeModel?.OnDisconnection(edgeModel.FromPort, edgeModel.ToPort);
+                edgeModel.ToPort?.NodeModel?.OnDisconnection(edgeModel.ToPort, edgeModel.FromPort);
+                edgeModel.FromPort?.NodeModel?.OnDisconnection(edgeModel.FromPort, edgeModel.ToPort);
 
-                m_GraphEdgeModels.Remove(edgeModel);
+                RemoveEdge(edgeModel);
                 deletedModels.Add(edgeModel);
             }
 
             return deletedModels;
         }
 
-        public virtual IStickyNoteModel CreateStickyNote(Rect position, SpawnFlags spawnFlags = SpawnFlags.Default)
+        /// <summary>
+        /// Returns the type of sticky note to instantiate.
+        /// </summary>
+        /// <returns>The sticky note model type.</returns>
+        protected virtual Type GetStickyNoteType()
         {
-            var stickyNodeModel = CreateOrphanStickyNote<StickyNoteModel>(position);
-            if (!spawnFlags.IsOrphan())
-            {
-                m_GraphStickyNoteModels.Add(stickyNodeModel);
-            }
-            return stickyNodeModel;
+            return typeof(StickyNoteModel);
         }
 
-        protected StickyNoteT CreateOrphanStickyNote<StickyNoteT>(Rect position) where StickyNoteT : IStickyNoteModel, new()
+        /// <summary>
+        /// Creates a new sticky note and optionally add it to the graph.
+        /// </summary>
+        /// <param name="position">The position of the sticky note to create.</param>
+        /// <param name="spawnFlags">The flags specifying how the sticky note is to be spawned.</param>
+        /// <returns>The newly created sticky note</returns>
+        public IStickyNoteModel CreateStickyNote(Rect position, SpawnFlags spawnFlags = SpawnFlags.Default)
         {
-            var stickyNodeModel = new StickyNoteT
+            var stickyNoteModel = InstantiateStickyNote(position);
+            if (!spawnFlags.IsOrphan())
             {
-                PositionAndSize = position,
-                AssetModel = AssetModel
-            };
+                AddStickyNote(stickyNoteModel);
+            }
+            return stickyNoteModel;
+        }
 
-            return stickyNodeModel;
+        /// <summary>
+        /// Instantiates a new sticky note.
+        /// </summary>
+        /// <param name="position">The position of the sticky note to create.</param>
+        /// <returns>The newly created sticky note</returns>
+        protected virtual IStickyNoteModel InstantiateStickyNote(Rect position)
+        {
+            var stickyNoteModelType = GetStickyNoteType();
+            var stickyNoteModel = Instantiate<IStickyNoteModel>(stickyNoteModelType);
+            stickyNoteModel.PositionAndSize = position;
+            stickyNoteModel.AssetModel = AssetModel;
+            return stickyNoteModel;
         }
 
         public IReadOnlyCollection<IGraphElementModel> DeleteStickyNotes(IReadOnlyCollection<IStickyNoteModel> stickyNoteModels)
@@ -475,7 +750,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
             foreach (var stickyNoteModel in stickyNoteModels.Where(s => s.IsDeletable()))
             {
-                m_GraphStickyNoteModels.Remove(stickyNoteModel);
+                RemoveStickyNote(stickyNoteModel);
                 stickyNoteModel.Destroy();
                 deletedModels.Add(stickyNoteModel);
             }
@@ -483,39 +758,47 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             return deletedModels;
         }
 
-        public virtual IPlacematModel CreatePlacemat(Rect position, SpawnFlags spawnFlags = SpawnFlags.Default)
+        /// <summary>
+        /// Returns the type of placemat to instantiate.
+        /// </summary>
+        /// <returns>The placemat model type.</returns>
+        protected virtual Type GetPlacematType()
         {
-            var placematModel = CreateOrphanPlacemat<PlacematModel>(position);
+            return typeof(PlacematModel);
+        }
+
+        /// <summary>
+        /// Creates a new placemat and optionally add it to the graph.
+        /// </summary>
+        /// <param name="position">The position of the placemat to create.</param>
+        /// <param name="spawnFlags">The flags specifying how the sticky note is to be spawned.</param>
+        /// <returns>The newly created placemat</returns>
+        public IPlacematModel CreatePlacemat(Rect position, SpawnFlags spawnFlags = SpawnFlags.Default)
+        {
+            var placematModel = InstantiatePlacemat(position);
             if (!spawnFlags.IsOrphan())
+            {
+                placematModel.ZOrder = this.GetPlacematMaxZOrder() + 1;
+
                 AddPlacemat(placematModel);
-
-            return placematModel;
-        }
-
-        PlacematT CreateOrphanPlacemat<PlacematT>(Rect position) where PlacematT : IPlacematModel, new()
-        {
-            var placematModel = new PlacematT
-            {
-                PositionAndSize = position,
-                AssetModel = AssetModel,
-                ZOrder = GetPlacematTopZOrder()
-            };
-            return placematModel;
-        }
-
-        int GetPlacematTopZOrder()
-        {
-            int maxZ = Int32.MinValue;
-            foreach (var model in PlacematModels)
-            {
-                maxZ = Math.Max(model.ZOrder, maxZ);
             }
-            return maxZ == Int32.MinValue ? 1 : maxZ + 1;
+
+            return placematModel;
         }
 
-        void AddPlacemat(PlacematModel placematModel)
+        /// <summary>
+        /// Instantiates a new placemat.
+        /// </summary>
+        /// <param name="position">The position of the placemat to create.</param>
+        /// <returns>The newly created placemat</returns>
+        protected virtual IPlacematModel InstantiatePlacemat(Rect position)
         {
-            m_GraphPlacematModels.Add(placematModel);
+            var placematModelType = GetPlacematType();
+            var placematModel = Instantiate<IPlacematModel>(placematModelType);
+            placematModel.PositionAndSize = position;
+            placematModel.AssetModel = AssetModel;
+            placematModel.ZOrder = 0;
+            return placematModel;
         }
 
         public IReadOnlyCollection<IGraphElementModel> DeletePlacemats(IReadOnlyCollection<IPlacematModel> placematModels)
@@ -524,7 +807,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
             foreach (var placematModel in placematModels.Where(p => p.IsDeletable()))
             {
-                m_GraphPlacematModels.Remove(placematModel);
+                RemovePlacemat(placematModel);
                 placematModel.Destroy();
                 deletedModels.Add(placematModel);
             }
@@ -542,27 +825,115 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         }
 
         /// <summary>
+        /// Returns the type of variable declaration to instantiate.
+        /// </summary>
+        /// <returns>The variable declaration model type.</returns>
+        protected virtual Type GetDefaultVariableDeclarationType()
+        {
+            return typeof(VariableDeclarationModel);
+        }
+
+        /// <summary>
         /// Creates a new variable declaration in the graph.
         /// </summary>
-        /// <param name="variableDataType">The type of the new variable declaration to create.</param>
+        /// <param name="variableDataType">The type of data the new variable declaration to create represents.</param>
         /// <param name="variableName">The name of the new variable declaration to create.</param>
         /// <param name="modifierFlags">The modifier flags of the new variable declaration to create.</param>
         /// <param name="isExposed">Whether the variable is exposed externally or not.</param>
         /// <param name="initializationModel">The initialization model of the new variable declaration to create. Can be <code>null</code>.</param>
         /// <param name="guid">The SerializableGUID to assign to the newly created item.</param>
+        /// <param name="spawnFlags">The flags specifying how the variable declaration is to be spawned.</param>
         /// <returns>The newly created variable declaration.</returns>
         public IVariableDeclarationModel CreateGraphVariableDeclaration(TypeHandle variableDataType, string variableName,
-            ModifierFlags modifierFlags, bool isExposed, IConstant initializationModel = null, SerializableGUID guid = default)
+            ModifierFlags modifierFlags, bool isExposed, IConstant initializationModel = null, SerializableGUID guid = default,
+            SpawnFlags spawnFlags = SpawnFlags.Default)
         {
-            var field = VariableDeclarationModel.Create(variableName, variableDataType, isExposed, this, modifierFlags, initializationModel: initializationModel, guid: guid);
-            m_GraphVariableModels.Add(field);
-            return field;
+            return CreateGraphVariableDeclaration(GetDefaultVariableDeclarationType(), variableDataType, variableName,
+                modifierFlags, isExposed, initializationModel, guid, InitCallback, spawnFlags);
+
+            void InitCallback(IVariableDeclarationModel variableDeclaration, IConstant initModel)
+            {
+                if (variableDeclaration is VariableDeclarationModel basicVariableDeclarationModel)
+                {
+                    basicVariableDeclarationModel.variableFlags = VariableFlags.None;
+
+                    if (initModel != null) basicVariableDeclarationModel.InitializationModel = initModel;
+                }
+            }
         }
 
-        public virtual IVariableDeclarationModel DuplicateGraphVariableDeclaration(IVariableDeclarationModel sourceModel)
+        /// <summary>
+        /// Creates a new variable declaration in the graph.
+        /// </summary>
+        /// <param name="variableTypeToCreate">The type of variable declaration to create.</param>
+        /// <param name="variableDataType">The type of data the new variable declaration to create represents.</param>
+        /// <param name="variableName">The name of the new variable declaration to create.</param>
+        /// <param name="modifierFlags">The modifier flags of the new variable declaration to create.</param>
+        /// <param name="isExposed">Whether the variable is exposed externally or not.</param>
+        /// <param name="initializationModel">The initialization model of the new variable declaration to create. Can be <code>null</code>.</param>
+        /// <param name="guid">The SerializableGUID to assign to the newly created item.</param>
+        /// <param name="initializationCallback">An initialization method to be called right after the variable declaration is created.</param>
+        /// <param name="spawnFlags">The flags specifying how the variable declaration is to be spawned.</param>
+        /// <returns>The newly created variable declaration.</returns>
+        public IVariableDeclarationModel CreateGraphVariableDeclaration(Type variableTypeToCreate,
+            TypeHandle variableDataType, string variableName, ModifierFlags modifierFlags, bool isExposed,
+            IConstant initializationModel = null, SerializableGUID guid = default, Action<IVariableDeclarationModel, IConstant> initializationCallback = null,
+            SpawnFlags spawnFlags = SpawnFlags.Default)
         {
-            string uniqueName = sourceModel.Title;
-            VariableDeclarationModel copy = ((VariableDeclarationModel)sourceModel).Clone();
+            var variableDeclaration = InstantiateVariableDeclaration(variableTypeToCreate, variableDataType,
+                variableName, modifierFlags, isExposed, initializationModel, guid, initializationCallback);
+
+            if (initializationModel == null && !spawnFlags.IsOrphan())
+                variableDeclaration.CreateInitializationValue();
+
+            if (!spawnFlags.IsOrphan())
+                AddVariableDeclaration(variableDeclaration);
+
+            return variableDeclaration;
+        }
+
+        /// <summary>
+        /// Instantiates a new variable declaration.
+        /// </summary>
+        /// <param name="variableTypeToCreate">The type of variable to create.</param>
+        /// <param name="variableDataType">The type of data the new variable declaration to create represents.</param>
+        /// <param name="variableName">The name of the new variable declaration to create.</param>
+        /// <param name="modifierFlags">The modifier flags of the new variable declaration to create.</param>
+        /// <param name="isExposed">Whether the variable is exposed externally or not.</param>
+        /// <param name="initializationModel">The initialization model of the new variable declaration to create. Can be <code>null</code>.</param>
+        /// <param name="guid">The SerializableGUID to assign to the newly created item. If none is provided, a new
+        /// SerializableGUID will be generated for it.</param>
+        /// <param name="initializationCallback">An initialization method to be called right after the variable declaration is created.</param>
+        /// <returns>The newly created variable declaration.</returns>
+        protected virtual IVariableDeclarationModel InstantiateVariableDeclaration(Type variableTypeToCreate,
+            TypeHandle variableDataType, string variableName, ModifierFlags modifierFlags, bool isExposed,
+            IConstant initializationModel, SerializableGUID guid, Action<IVariableDeclarationModel, IConstant> initializationCallback = null)
+        {
+            var variableDeclaration = Instantiate<IVariableDeclarationModel>(variableTypeToCreate);
+
+            variableDeclaration.Guid = guid.Valid ? guid : SerializableGUID.Generate();
+            variableDeclaration.AssetModel = AssetModel;
+            variableDeclaration.DataType = variableDataType;
+            variableDeclaration.Title = variableName;
+            variableDeclaration.IsExposed = isExposed;
+            variableDeclaration.Modifiers = modifierFlags;
+
+            initializationCallback?.Invoke(variableDeclaration, initializationModel);
+
+            return variableDeclaration;
+        }
+
+        /// <summary>
+        /// Duplicates a variable declaration.
+        /// </summary>
+        /// <param name="sourceModel">The variable declaration to duplicate.</param>
+        /// <typeparam name="TDeclType">The type of the variable declaration to duplicate.</typeparam>
+        /// <returns>The duplicated variable declaration.</returns>
+        public virtual TDeclType DuplicateGraphVariableDeclaration<TDeclType>(TDeclType sourceModel)
+            where TDeclType : IVariableDeclarationModel
+        {
+            var uniqueName = sourceModel.Title;
+            var copy = sourceModel.Clone();
             copy.Title = uniqueName;
             if (copy.InitializationModel != null)
             {
@@ -570,20 +941,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
                 copy.InitializationModel.ObjectValue = sourceModel.InitializationModel.ObjectValue;
             }
 
-            EditorUtility.SetDirty((Object)AssetModel);
-
-            m_GraphVariableModels.Add(copy);
+            AddVariableDeclaration(copy);
 
             return copy;
         }
 
-        public IReadOnlyCollection<IGraphElementModel> DeleteVariableDeclarations(IReadOnlyCollection<IVariableDeclarationModel> variableModels, bool deleteUsages)
+        public IReadOnlyCollection<IGraphElementModel> DeleteVariableDeclarations(IReadOnlyCollection<IVariableDeclarationModel> variableModels, bool deleteUsages = true)
         {
             var deletedModels = new List<IGraphElementModel>();
 
             foreach (var variableModel in variableModels.Where(v => v.IsDeletable()))
             {
-                m_GraphVariableModels.Remove(variableModel);
+                RemoveVariableDeclaration(variableModel);
                 deletedModels.Add(variableModel);
 
                 if (deleteUsages)
@@ -596,15 +965,45 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             return deletedModels;
         }
 
+        /// <summary>
+        /// Returns the type of portal to instantiate.
+        /// </summary>
+        /// <returns>The portal model type.</returns>
+        protected virtual Type GetPortalType()
+        {
+            return typeof(DeclarationModel);
+        }
+
+        /// <summary>
+        /// Creates a new declaration model representing a portal and optionally add it to the graph.
+        /// </summary>
+        /// <param name="portalName">The name of the portal</param>
+        /// <param name="spawnFlags">The flags specifying how the portal is to be spawned.</param>
+        /// <returns>The newly created declaration model</returns>
         public IDeclarationModel CreateGraphPortalDeclaration(string portalName, SpawnFlags spawnFlags = SpawnFlags.Default)
         {
-            var field = new DeclarationModel {Title = portalName};
-            field.AssignNewGuid();
+            var decl = InstantiatePortal(portalName);
 
             if (!spawnFlags.IsOrphan())
-                m_GraphPortalModels.Add(field);
+            {
+                AddPortal(decl);
+            }
 
-            return field;
+            return decl;
+        }
+
+        /// <summary>
+        /// Instantiates a new portal model.
+        /// </summary>
+        /// <param name="portalName">The name of the portal</param>
+        /// <returns>The newly created declaration model</returns>
+        protected virtual IDeclarationModel InstantiatePortal(string portalName)
+        {
+            var portalModelType = GetPortalType();
+            var portalModel = Instantiate<IDeclarationModel>(portalModelType);
+            portalModel.Title = portalName;
+            portalModel.Guid = SerializableGUID.Generate();
+            return portalModel;
         }
 
         public IEdgePortalModel CreateOppositePortal(IEdgePortalModel edgePortalModel, Vector2 position, SpawnFlags spawnFlags = SpawnFlags.Default)
@@ -654,40 +1053,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             return this.CreateNode<DataEdgePortalExitModel>();
         }
 
-        internal void AddGuidToUpdate(IGuidUpdate element, string oldGuid)
-        {
-            if (m_OldToNewGuids == null)
-                m_OldToNewGuids = new Dictionary<string, IGuidUpdate>();
-
-
-            if (oldGuid == "00000000000000000000000000000000")
-                oldGuid = (-m_OldToNewGuids.Count).ToString();
-
-            Debug.Assert(!m_OldToNewGuids.ContainsKey(oldGuid), element + " already owns " + oldGuid);
-            m_OldToNewGuids[oldGuid] = element;
-        }
-
-        void UpdateGuids()
-        {
-            if (m_OldToNewGuids == null)
-                return;
-
-            // Generate missing GUIDs
-            foreach (var model in m_OldToNewGuids)
-            {
-                model.Value.AssignGuid(model.Key);
-            }
-
-            // Update placemat hidden elements.
-            foreach (var model in m_OldToNewGuids)
-            {
-                if (model.Value is PlacematModel placematModel)
-                    placematModel.UpdateHiddenGuids(m_OldToNewGuids);
-            }
-
-            m_OldToNewGuids.Clear();
-        }
-
         public virtual void OnEnable()
         {
             if (m_GraphEdgeModels == null)
@@ -728,20 +1093,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             }
 #pragma warning restore 612
 
-            UpdateGuids();
-
             if (m_GraphNodeModels == null)
                 m_GraphNodeModels = new List<INodeModel>();
-
-            m_NodesByGuid = new Dictionary<SerializableGUID, INodeModel>(m_GraphNodeModels.Count);
 
             foreach (var model in NodeModels)
             {
                 if (model is null)
                     continue;
                 model.AssetModel = AssetModel;
-                Debug.Assert(model.Guid.Valid);
-                m_NodesByGuid.Add(model.Guid, model);
             }
 
             foreach (var nodeModel in NodeModels)
@@ -760,11 +1119,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         {
         }
 
-        public void Dispose() {}
+        public void Dispose() { }
 
         public void UndoRedoPerformed()
         {
             OnEnable();
+            foreach (var edgeModel in EdgeModels.OfType<EdgeModel>())
+            {
+                edgeModel.ResetPorts();
+            }
         }
 
         public virtual void OnAfterDeserializeAssetModel()
@@ -805,8 +1168,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
                     portalModel.DeclarationModel = newPortalDeclaration;
                 }
 
-                m_GraphPortalModels.Remove(oldPortalDeclaration);
-                m_GraphPortalModels.Add(newPortalDeclaration);
+                RemovePortal(oldPortalDeclaration);
+                AddPortal(newPortalDeclaration);
             }
         }
 

@@ -45,7 +45,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIToolkitTests
             yield return null;
 
             Assert.IsFalse(collapseButton.value);
-            var icon = collapseButton.Q("icon");
+            var icon = collapseButton.SafeQ("icon");
             Vector2 center = collapseButton.parent.LocalToWorld(collapseButton.layout.center);
             EventHelper.Click(center);
 

@@ -74,7 +74,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             //   | Node1 o---o Node2 |
             //   +-------+   +-------+
 
-            var actions = SetUpUIElements(new Vector2(k_ReferenceNodePos.x + 400, k_ReferenceNodePos.y), k_ReferenceNodePos, Vector2.zero,  false, true);
+            var actions = SetUpUIElements(new Vector2(k_ReferenceNodePos.x + 400, k_ReferenceNodePos.y), k_ReferenceNodePos, Vector2.zero, false, true);
             while (actions.MoveNext())
             {
                 yield return null;
@@ -159,7 +159,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             //   +-------+
             //
 
-            var actions = SetUpUIElements(new Vector2(k_ReferenceNodePos.x, k_ReferenceNodePos.y + k_NodeSize.y), k_ReferenceNodePos, Vector2.zero,  true, true);
+            var actions = SetUpUIElements(new Vector2(k_ReferenceNodePos.x, k_ReferenceNodePos.y + k_NodeSize.y), k_ReferenceNodePos, Vector2.zero, true, true);
             while (actions.MoveNext())
             {
                 yield return null;
@@ -209,7 +209,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             // Third node
             Vector2 secondReferenceNodePos = GraphViewStaticBridge.RoundToPixelGrid(new Vector2(m_SnappingNodePos.x + k_NodeSize.x, m_SnappingNodePos.y + k_NodeSize.y * 0.5f));
-            IInOutPortsNode secondReferenceNodeModel = CreateNode("Node3", secondReferenceNodePos, 1);
+            IInputOutputPortsNodeModel secondReferenceNodeModel = CreateNode("Node3", secondReferenceNodePos, 1);
 
             var node1OutputPort = referenceNode1Model.OutputsByDisplayOrder[0];
             var node2InputPort = snappingNodeModel.InputsByDisplayOrder[0];
@@ -220,7 +220,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Assert.IsNotNull(node2OutputPort);
             Assert.IsNotNull(node3InputPort);
 
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
 
             // Connect the ports together
@@ -235,7 +235,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 yield return null;
             }
 
-            Vector2 worldNodePos = graphView.contentViewContainer.LocalToWorld(m_SnappingNodePos);
+            Vector2 worldNodePos = graphView.ContentViewContainer.LocalToWorld(m_SnappingNodePos);
             Vector2 start = worldNodePos + m_SelectionOffset;
 
             // We move the snapping Node2 toward reference Node1 within the snapping range
@@ -268,7 +268,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             // The snapping Node2 should not snap to Node3's port
             Assert.AreNotEqual(node3InputPortUI.GetGlobalCenter().y, node2OutputPortUI.GetGlobalCenter().y);
 
-            worldNodePos = graphView.contentViewContainer.LocalToWorld(snappingNodeModel.Position);
+            worldNodePos = graphView.ContentViewContainer.LocalToWorld(snappingNodeModel.Position);
             start = worldNodePos + m_SelectionOffset;
 
             // We move the snapping Node2 toward Node3 within the snapping range
@@ -311,7 +311,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             // Third node
             Vector2 secondSelectedNodePos = new Vector2(m_SnappingNodePos.x + k_NodeSize.x, m_SnappingNodePos.y + k_NodeSize.y * 0.5f);
-            IInOutPortsNode secondSelectedNodeModel = CreateNode("Node3", secondSelectedNodePos, 1);
+            IInputOutputPortsNodeModel secondSelectedNodeModel = CreateNode("Node3", secondSelectedNodePos, 1);
 
             var node1OutputPort = referenceNode1Model.OutputsByDisplayOrder[0];
             var node2InputPort = snappingNodeModel.InputsByDisplayOrder[0];
@@ -322,7 +322,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Assert.IsNotNull(node2OutputPort);
             Assert.IsNotNull(node3InputPort);
 
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
 
             // Connect the ports together
@@ -337,8 +337,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 yield return null;
             }
 
-            Vector2 worldPosNode2 = graphView.contentViewContainer.LocalToWorld(m_SnappingNodePos);
-            Vector2 worldPosNode3 = graphView.contentViewContainer.LocalToWorld(secondSelectedNodePos);
+            Vector2 worldPosNode2 = graphView.ContentViewContainer.LocalToWorld(m_SnappingNodePos);
+            Vector2 worldPosNode3 = graphView.ContentViewContainer.LocalToWorld(secondSelectedNodePos);
 
             Vector2 selectionPosNode2 = worldPosNode2 + m_SelectionOffset;
             Vector2 selectionPosNode3 = worldPosNode3 + m_SelectionOffset;
@@ -416,7 +416,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Assert.IsNotNull(node1SecondOutputPort);
             Assert.IsNotNull(node2InputPort);
 
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
 
             // Connect the ports together
@@ -432,7 +432,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 yield return null;
             }
 
-            Vector2 worldNodePos = graphView.contentViewContainer.LocalToWorld(m_SnappingNodePos);
+            Vector2 worldNodePos = graphView.ContentViewContainer.LocalToWorld(m_SnappingNodePos);
             Vector2 start = worldNodePos + m_SelectionOffset;
 
             // We move the snapping node closer to the first output port within the snapping range

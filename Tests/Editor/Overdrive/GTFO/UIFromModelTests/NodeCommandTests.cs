@@ -1,55 +1,24 @@
 using System.Collections;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
-using GraphModel = UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels.GraphModel;
 using NodeModel = UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels.NodeModel;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
 {
     class NodeCommandTests : BaseTestFixture
     {
-        GraphView m_GraphView;
-        CommandDispatcher m_CommandDispatcher;
-        GraphModel m_GraphModel;
-
-        [SetUp]
-        public new void SetUp()
-        {
-            m_GraphModel = new GraphModel();
-            m_CommandDispatcher = new CommandDispatcher(new TestGraphToolState(m_Window.GUID, m_GraphModel));
-            CommandDispatcherHelper.RegisterDefaultCommandHandlers(m_CommandDispatcher);
-            m_GraphView = new GraphView(m_Window, m_CommandDispatcher);
-
-            m_GraphView.name = "theView";
-            m_GraphView.viewDataKey = "theView";
-            m_GraphView.StretchToParentSize();
-
-            m_Window.rootVisualElement.Add(m_GraphView);
-        }
-
-        [TearDown]
-        public new void TearDown()
-        {
-            m_Window.rootVisualElement.Remove(m_GraphView);
-            m_GraphModel = null;
-            m_CommandDispatcher = null;
-            m_GraphView = null;
-        }
-
         [UnityTest]
         public IEnumerator CollapsibleNodeCollapsesOnValueChange()
         {
-            var nodeModel = m_GraphModel.CreateNode<IONodeModel>();
-            var node = new CollapsibleInOutNode();
-            node.SetupBuildAndUpdate(nodeModel, m_CommandDispatcher, m_GraphView);
-            m_GraphView.AddElement(node);
+            var nodeModel = GraphModel.CreateNode<IONodeModel>();
+            MarkGraphViewStateDirty();
             yield return null;
 
-            var collapseButton = node.Q<CollapseButton>(CollapsibleInOutNode.collapseButtonPartName);
+            var node = nodeModel.GetUI<GraphElement>(GraphView);
+            var collapseButton = node.SafeQ<CollapseButton>(CollapsibleInOutNode.collapseButtonPartName);
             Assert.IsNotNull(collapseButton);
             Assert.IsFalse(collapseButton.value);
             Assert.IsFalse(nodeModel.Collapsed);
@@ -63,15 +32,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         [UnityTest]
         public IEnumerator CollapsibleNodeCollapsesOnClick()
         {
-            var nodeModel = m_GraphModel.CreateNode<IONodeModel>();
+            var nodeModel = GraphModel.CreateNode<IONodeModel>();
             // Add a port to make the node collapsible.
-            nodeModel.AddInputPort("port", PortType.Data, TypeHandle.Void, null, PortModelOptions.NoEmbeddedConstant);
-            var node = new CollapsibleInOutNode();
-            node.SetupBuildAndUpdate(nodeModel, m_CommandDispatcher, m_GraphView);
-            m_GraphView.AddElement(node);
+            nodeModel.AddInputPort("port", PortType.Data, TypeHandle.Void, null, Orientation.Horizontal, PortModelOptions.NoEmbeddedConstant);
+            MarkGraphViewStateDirty();
             yield return null;
 
-            var collapseButton = node.Q<CollapseButton>(CollapsibleInOutNode.collapseButtonPartName);
+            var node = nodeModel.GetUI<GraphElement>(GraphView);
+            var collapseButton = node.SafeQ<CollapseButton>(CollapsibleInOutNode.collapseButtonPartName);
             Assert.IsNotNull(collapseButton);
             Assert.IsFalse(collapseButton.value);
             Assert.IsFalse(nodeModel.Collapsed);
@@ -93,19 +61,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         {
             const string newName = "New Name";
 
-            var nodeModel = m_GraphModel.CreateNode<NodeModel>("Node");
-            var node = new Node();
-            node.SetupBuildAndUpdate(nodeModel, m_CommandDispatcher, m_GraphView);
-            m_GraphView.AddElement(node);
+            var nodeModel = GraphModel.CreateNode<NodeModel>("Node");
+            MarkGraphViewStateDirty();
             yield return null;
 
-            var label = node.Q(Node.titleContainerPartName).Q(EditableLabel.labelName);
+            var node = nodeModel.GetUI<GraphElement>(GraphView);
+            var label = node.SafeQ(CollapsibleInOutNode.titleIconContainerPartName).SafeQ(EditableLabel.labelName);
             var clickPosition = label.parent.LocalToWorld(label.layout.center);
             EventHelper.Click(clickPosition, clickCount: 2);
 
             EventHelper.Type(newName);
 
-            EventHelper.Click(m_GraphView.layout.min);
+            EventHelper.Click(GraphView.layout.min);
             yield return null;
 
             Assert.AreEqual(newName, nodeModel.Title);

@@ -20,10 +20,6 @@
     height: auto;
 }
 
-.blackboard--windowed > .ge-resizer {
-    display: none;
-}
-
 .ge-blackboard__header {
     flex-direction: column;
     background-color: #393939;

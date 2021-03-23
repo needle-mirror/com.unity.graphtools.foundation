@@ -34,7 +34,7 @@ namespace UnityEditor.VisualScripting.Editor
 
         public IVariableDeclarationModel VariableDeclarationModel => m_Model;
 
-        public void Expand() {}
+        public void Expand() { }
         public virtual bool CanInstantiateInGraph() => true;
 
         public override bool IsRenamable()

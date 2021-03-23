@@ -21,11 +21,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public static void DefaultCommandHandler(GraphToolState state, ToggleTracingCommand command)
         {
-            var graphModel = state.GraphModel;
+            var graphModel = state.WindowState.GraphModel;
             if (graphModel?.Stencil == null)
                 return;
 
-            state.TracingState.TracingEnabled = command.Value;
+            using (var updater = state.TracingControlState.Updater)
+            {
+                updater.U.TracingEnabled = command.Value;
+            }
+
+            // PF FIXME could be implemented as an observer
             graphModel.Stencil.Debugger.OnToggleTracing(graphModel, command.Value);
         }
     }

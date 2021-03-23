@@ -148,16 +148,16 @@ namespace UnityEditor.VisualScripting.Model
             model.Owner = destination;
         }
 
-//        public virtual string GetUniqueName(string baseName)
-//        {
+        //        public virtual string GetUniqueName(string baseName)
+        //        {
         // TODO: fixme - kept for later
-//            var roslynTranslator = stencil.CreateTranslator() as RoslynTranslator;
-//            if (roslynTranslator == null)
-//                return baseName;
-//            var syntaxTree = roslynTranslator.Translate(this, CompilationOptions.Default);
-//            return UniqueNameGenerator.CreateUniqueVariableName(syntaxTree, baseName);
-//            return baseName;
-//        }
+        //            var roslynTranslator = stencil.CreateTranslator() as RoslynTranslator;
+        //            if (roslynTranslator == null)
+        //                return baseName;
+        //            var syntaxTree = roslynTranslator.Translate(this, CompilationOptions.Default);
+        //            return UniqueNameGenerator.CreateUniqueVariableName(syntaxTree, baseName);
+        //            return baseName;
+        //        }
 
         public IEnumerable<VariableNodeModel> FindUsages(VariableDeclarationModel decl)
         {

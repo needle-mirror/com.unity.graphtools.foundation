@@ -8,6 +8,20 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
+    class WindowStateComponent : Overdrive.WindowStateComponent
+    {
+        internal IGraphModel m_GraphModel;
+
+        public override IGraphModel GraphModel => m_GraphModel;
+    }
+
+    class GraphViewStateComponent : Overdrive.GraphViewStateComponent
+    {
+        internal IGraphModel m_GraphModel;
+
+        public override IGraphModel GraphModel => m_GraphModel;
+    }
+
     class GraphToolState : Overdrive.GraphToolState
     {
         static Preferences CreatePreferences()
@@ -19,7 +33,20 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         }
 
         IGraphModel m_GraphModel;
-        public override IGraphModel GraphModel => m_GraphModel;
+
+        private protected override Overdrive.WindowStateComponent CreateWindowStateComponent(GUID guid)
+        {
+            var state = PersistedState.GetOrCreateViewStateComponent<WindowStateComponent>(guid, nameof(WindowState));
+            state.m_GraphModel = m_GraphModel;
+            return state;
+        }
+
+        private protected override Overdrive.GraphViewStateComponent CreateGraphViewStateComponent()
+        {
+            var state = PersistedState.GetOrCreateAssetStateComponent<GraphViewStateComponent>(nameof(GraphViewState));
+            state.m_GraphModel = m_GraphModel;
+            return state;
+        }
 
         public GraphToolState(GUID graphViewEditorWindowGUID, IGraphModel graphModel)
             : base(graphViewEditorWindowGUID, CreatePreferences())
@@ -82,6 +109,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             graphView.AddTestStylesheet("Tests.uss");
 
             helpers = new TestEventHelpers(window);
+
+            Vector3 frameTranslation = Vector3.zero;
+            Vector3 frameScaling = Vector3.one;
+            CommandDispatcher.Dispatch(new ReframeGraphViewCommand(frameTranslation, frameScaling));
         }
 
         [TearDown]
@@ -113,6 +144,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             }
         }
 
+        protected void MarkGraphViewStateDirty()
+        {
+            using (var updater = CommandDispatcher.GraphToolState.GraphViewState.Updater)
+            {
+                updater.U.ForceCompleteUpdate();
+            }
+        }
+
         protected IONodeModel CreateNode(string title = "", Vector2 position = default, int inCount = 0, int outCount = 0, int exeInCount = 0, int exeOutCount = 0, Orientation orientation = Orientation.Horizontal)
         {
             return CreateNode<IONodeModel>(title, position, inCount, outCount, exeInCount, exeOutCount, orientation);
@@ -120,7 +159,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
         protected TNodeModel CreateNode<TNodeModel>(string title, Vector2 position, int inCount = 0, int outCount = 0, int exeInCount = 0, int exeOutCount = 0, Orientation orientation = Orientation.Horizontal) where TNodeModel : IONodeModel, new()
         {
-            var node = GraphModel.CreateNode<TNodeModel>(title, position, preDefineSetup: model =>
+            var node = GraphModel.CreateNode<TNodeModel>(title, position, initializationCallback: model =>
             {
                 model.InputCount = inCount;
                 model.OuputCount = outCount;
@@ -152,11 +191,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Assert.AreEqual(originalEdgeCount + 1, GraphModel.EdgeModels.Count, "Edge has not been created");
         }
 
-        protected IPlacematModel CreatePlacemat(Rect posAndDim, string title = "", int zOrder = 0)
+        protected IPlacematModel CreatePlacemat(Rect posAndDim, string title = "")
         {
             var pm = GraphModel.CreatePlacemat(posAndDim);
             pm.Title = title;
-            pm.ZOrder = zOrder;
             return pm;
         }
 

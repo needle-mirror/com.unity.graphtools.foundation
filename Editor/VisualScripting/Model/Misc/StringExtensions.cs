@@ -17,7 +17,7 @@ namespace UnityEditor.VisualScripting.Model
         public static string ToUnityNameFormat(this string userName)
         {
             string newName = string.Concat(k_NonLegitChars.Replace(userName, "")
-                .Split(new[] {'_', ' '}, StringSplitOptions.RemoveEmptyEntries)
+                .Split(new[] { '_', ' ' }, StringSplitOptions.RemoveEmptyEntries)
                 .Select((s, i) => (i == 0 ? char.ToLower(s[0]) : char.ToUpper(s[0])) + s.Substring(1, s.Length - 1)));
 
             if (string.IsNullOrWhiteSpace(newName))

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.InternalModels
@@ -10,17 +11,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.InternalModels
     /// A ghost edge is usually used as an edge that shows where an edge would connect to during edge
     /// connection manipulations.
     /// </remarks>
-    public class GhostEdgeModel : IEdgeModel, IGhostEdge
+    public class GhostEdgeModel : GraphElementModel, IEdgeModel, IGhostEdge
     {
-        SerializableGUID m_Guid = SerializableGUID.Generate();
+        /// <inheritdoc />
+        public override IGraphModel GraphModel { get; }
 
-        public IGraphAssetModel AssetModel
+        /// <inheritdoc />
+        public override IGraphAssetModel AssetModel
         {
-            get => GraphModel.AssetModel;
-            set => GraphModel.AssetModel = value;
+            get => m_AssetModel;
+            // override setter to not throw when null
+            set => m_AssetModel = (GraphAssetModel)value;
         }
-
-        public IGraphModel GraphModel { get; }
 
         public IPortModel FromPort { get; set; }
 
@@ -44,18 +46,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.InternalModels
 
         public Vector2 EndPoint { get; set; } = Vector2.zero;
 
-        /// <summary>
-        /// The unique identifier of the edge.
-        /// </summary>
-        public SerializableGUID Guid
-        {
-            get => m_Guid;
-            set => m_Guid = value;
-        }
-
         public GhostEdgeModel(IGraphModel graphModel)
         {
             GraphModel = graphModel;
+            m_AssetModel = graphModel?.AssetModel as GraphAssetModel;
         }
 
         public void SetPorts(IPortModel toPortModel, IPortModel fromPortModel)
@@ -63,22 +57,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.InternalModels
             FromPort = fromPortModel;
             ToPort = toPortModel;
         }
-
-        public void ResetPorts()
-        {
-        }
-
-        /// <summary>
-        /// Assign a newly generated GUID to the model.
-        /// </summary>
-        public void AssignNewGuid()
-        {
-            m_Guid = SerializableGUID.Generate();
-        }
-
-        // Ghost edges have no capabilities
-        readonly List<Capabilities> m_Capabilities = new List<Capabilities> { UnityEditor.GraphToolsFoundation.Overdrive.Capabilities.NoCapabilities};
-        public virtual IReadOnlyList<Capabilities> Capabilities => m_Capabilities;
 
         public (PortMigrationResult, PortMigrationResult) TryMigratePorts(out INodeModel inputNode, out INodeModel outputNode)
         {

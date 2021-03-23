@@ -8,6 +8,6 @@ namespace UnityEditor.VisualScripting.Editor
     class TokenList : VisualElement
     {
         [UsedImplicitly]
-        internal new class UxmlFactory : UxmlFactory<TokenList> {}
+        internal new class UxmlFactory : UxmlFactory<TokenList> { }
     }
 }

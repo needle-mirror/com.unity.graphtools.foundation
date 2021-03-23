@@ -4,12 +4,16 @@ using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public interface IGraphAssetModel : IDisposable
+    public interface IGraphAssetModel
     {
         string Name { get; set; }
         string FriendlyScriptName { get; }
         IGraphModel GraphModel { get; }
         IBlackboardGraphModel BlackboardGraphModel { get; }
+        /// <summary>
+        /// The dirty state of the asset (true if it needs to be saved)
+        /// </summary>
+        bool Dirty { get; set; }
         void CreateGraph(string graphName, Type stencilType = null, bool writeOnDisk = true);
     }
 

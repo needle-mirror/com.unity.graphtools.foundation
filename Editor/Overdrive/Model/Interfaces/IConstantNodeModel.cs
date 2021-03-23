@@ -2,7 +2,7 @@ using System;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public interface IConstantNodeModel : ISingleOutputPortNode, IHasMainOutputPort
+    public interface IConstantNodeModel : ISingleOutputPortNodeModel, IHasMainOutputPort
     {
         // Type safe value set.
         void SetValue<T>(T value);

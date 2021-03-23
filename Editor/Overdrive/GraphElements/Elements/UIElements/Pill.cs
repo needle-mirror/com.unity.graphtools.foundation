@@ -6,7 +6,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class Pill : VisualElement
     {
-        public new class UxmlFactory : UxmlFactory<Pill, UxmlTraits> {}
+        public new class UxmlFactory : UxmlFactory<Pill, UxmlTraits> { }
 
         public new class UxmlTraits : VisualElement.UxmlTraits
         {
@@ -91,8 +91,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             var tpl = GraphElementHelper.LoadUXML("Pill.uxml");
             VisualElement mainContainer = tpl.Instantiate();
 
-            m_TitleLabel = mainContainer.Q<Label>("title-label");
-            m_Icon = mainContainer.Q<Image>("icon");
+            m_TitleLabel = mainContainer.SafeQ<Label>("title-label");
+            m_Icon = mainContainer.SafeQ<Image>("icon");
 
             Add(mainContainer);
 

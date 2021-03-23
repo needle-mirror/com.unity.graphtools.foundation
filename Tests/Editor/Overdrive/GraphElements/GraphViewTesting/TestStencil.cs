@@ -5,6 +5,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
     public class TestStencil : Stencil
     {
+        public static string toolName = "GTF GraphElements Tests";
+
+        public override string ToolName => toolName;
+
         public override Type GetConstantNodeValueType(TypeHandle typeHandle)
         {
             return TypeToConstantMapper.GetConstantNodeType(typeHandle);
@@ -22,6 +26,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         public void SetOnGetSearcherDatabaseProviderCallback(Action callback)
         {
             m_OnGetSearcherDatabaseProviderCallback = callback;
+        }
+
+        public override IGraphProcessingErrorModel CreateProcessingErrorModel(GraphProcessingError error)
+        {
+            if (error.SourceNode != null && !error.SourceNode.Destroyed)
+            {
+                return new GraphProcessingErrorModel(error);
+            }
+
+            return null;
         }
     }
 }

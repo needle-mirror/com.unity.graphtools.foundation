@@ -45,39 +45,41 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             graphToolState.PushUndo(command);
 
-            var graphModel = graphToolState.GraphModel;
-
-            var fromPortModel = command.FromPortModel;
-            var toPortModel = command.ToPortModel;
-
-            var edgesToDelete = command.EdgeModelsToDelete ?? new List<IEdgeModel>();
-
-            // Delete previous connections
-            if (toPortModel != null && toPortModel.Capacity != PortCapacity.Multi)
+            using (var graphUpdater = graphToolState.GraphViewState.Updater)
             {
-                edgesToDelete = edgesToDelete.Concat(toPortModel.GetConnectedEdges()).ToList();
+                var graphModel = graphToolState.GraphViewState.GraphModel;
+
+                var fromPortModel = command.FromPortModel;
+                var toPortModel = command.ToPortModel;
+
+                var edgesToDelete = command.EdgeModelsToDelete ?? new List<IEdgeModel>();
+
+                // Delete previous connections
+                if (toPortModel != null && toPortModel.Capacity != PortCapacity.Multi)
+                {
+                    edgesToDelete = edgesToDelete.Concat(toPortModel.GetConnectedEdges()).ToList();
+                }
+
+                if (command.EdgeModelsToDelete != null)
+                {
+                    graphModel.DeleteEdges(edgesToDelete);
+                    graphUpdater.U.MarkDeleted(edgesToDelete);
+                }
+
+                if (command.CreateItemizedNode)
+                {
+                    var newNode = graphModel.CreateItemizedNode(graphToolState, EdgeCommandConfig.nodeOffset, ref fromPortModel);
+                    graphUpdater.U.MarkNew(newNode);
+                }
+
+                var edgeModel = graphModel.CreateEdge(toPortModel, fromPortModel);
+                graphUpdater.U.MarkNew(edgeModel);
+
+                if (command.PortAlignment.HasFlag(Direction.Input))
+                    graphUpdater.U.MarkModelToAutoAlign(toPortModel.NodeModel);
+                if (command.PortAlignment.HasFlag(Direction.Output))
+                    graphUpdater.U.MarkModelToAutoAlign(fromPortModel.NodeModel);
             }
-
-            if (command.EdgeModelsToDelete != null)
-            {
-                graphToolState.GraphModel.DeleteEdges(edgesToDelete);
-                graphToolState.MarkDeleted(edgesToDelete);
-            }
-
-            if (command.CreateItemizedNode)
-            {
-                graphModel.CreateItemizedNode(graphToolState, EdgeCommandConfig.nodeOffset, ref fromPortModel);
-                // We do not know what happened in CreateItemizedNode. Refresh the whole UI.
-                graphToolState.RequestUIRebuild();
-            }
-
-            var edgeModel = graphModel.CreateEdge(toPortModel, fromPortModel);
-            graphToolState.MarkNew(edgeModel);
-
-            if (command.PortAlignment.HasFlag(Direction.Input))
-                graphToolState.MarkModelToAutoAlign(toPortModel.NodeModel);
-            if (command.PortAlignment.HasFlag(Direction.Output))
-                graphToolState.MarkModelToAutoAlign(fromPortModel.NodeModel);
         }
     }
 
@@ -87,10 +89,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         const string k_UndoStringPlural = "Delete Edges";
 
         public DeleteEdgeCommand()
-            : base(k_UndoStringSingular) {}
+            : base(k_UndoStringSingular) { }
 
         public DeleteEdgeCommand(IReadOnlyList<IEdgeModel> edgesToDelete)
-            : base(k_UndoStringSingular, k_UndoStringPlural , edgesToDelete)
+            : base(k_UndoStringSingular, k_UndoStringPlural, edgesToDelete)
         {
         }
 
@@ -100,8 +102,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 return;
 
             graphToolState.PushUndo(command);
-            graphToolState.GraphModel.DeleteEdges(command.Models);
-            graphToolState.MarkDeleted(command.Models);
+
+            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            {
+                graphToolState.GraphViewState.GraphModel.DeleteEdges(command.Models);
+                graphUpdater.U.MarkDeleted(command.Models);
+            }
         }
     }
 
@@ -126,8 +132,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public static void DefaultCommandHandler(GraphToolState graphToolState, AddControlPointOnEdgeCommand command)
         {
             graphToolState.PushUndo(command);
-            command.EdgeModel.InsertEdgeControlPoint(command.AtIndex, command.Position, 100);
-            graphToolState.MarkChanged(command.EdgeModel);
+
+            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            {
+                command.EdgeModel.InsertEdgeControlPoint(command.AtIndex, command.Position, 100);
+                graphUpdater.U.MarkChanged(command.EdgeModel);
+            }
         }
     }
 
@@ -154,8 +164,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public static void DefaultCommandHandler(GraphToolState graphToolState, MoveEdgeControlPointCommand command)
         {
             graphToolState.PushUndo(command);
-            command.EdgeModel.ModifyEdgeControlPoint(command.EdgeIndex, command.NewPosition, command.NewTightness);
-            graphToolState.MarkChanged(command.EdgeModel);
+
+            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            {
+                command.EdgeModel.ModifyEdgeControlPoint(command.EdgeIndex, command.NewPosition, command.NewTightness);
+                graphUpdater.U.MarkChanged(command.EdgeModel);
+            }
         }
     }
 
@@ -178,8 +192,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public static void DefaultCommandHandler(GraphToolState graphToolState, RemoveEdgeControlPointCommand command)
         {
             graphToolState.PushUndo(command);
-            command.EdgeModel.RemoveEdgeControlPoint(command.EdgeIndex);
-            graphToolState.MarkChanged(command.EdgeModel);
+
+            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            {
+                command.EdgeModel.RemoveEdgeControlPoint(command.EdgeIndex);
+                graphUpdater.U.MarkChanged(command.EdgeModel);
+            }
         }
     }
 
@@ -202,8 +220,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public static void DefaultCommandHandler(GraphToolState graphToolState, SetEdgeEditModeCommand command)
         {
             graphToolState.PushUndo(command);
-            command.EdgeModel.EditMode = command.Value;
-            graphToolState.MarkChanged(command.EdgeModel);
+
+            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            {
+                command.EdgeModel.EditMode = command.Value;
+                graphUpdater.U.MarkChanged(command.EdgeModel);
+            }
         }
     }
 
@@ -249,7 +271,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public static void DefaultCommandHandler(GraphToolState graphToolState, ReorderEdgeCommand command)
         {
-            if (command.EdgeModel?.FromPort is IReorderableEdgesPort fromPort && fromPort.HasReorderableEdges)
+            if (command.EdgeModel?.FromPort is IReorderableEdgesPortModel fromPort && fromPort.HasReorderableEdges)
             {
                 var siblingEdges = fromPort.GetConnectedEdges().ToList();
                 var siblingEdgesCount = siblingEdges.Count;
@@ -276,11 +298,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     if (reorderAction != null)
                     {
                         graphToolState.PushUndo(command);
-                        reorderAction(command.EdgeModel);
-                        fromPort.NodeModel.RevealReorderableEdgesOrder(true, command.EdgeModel);
 
-                        graphToolState.MarkChanged(siblingEdges);
-                        graphToolState.MarkChanged(fromPort.NodeModel);
+                        using (var graphUpdater = graphToolState.GraphViewState.Updater)
+                        {
+                            reorderAction(command.EdgeModel);
+
+                            graphUpdater.U.MarkChanged(siblingEdges);
+                            graphUpdater.U.MarkChanged(fromPort.NodeModel);
+                        }
                     }
                 }
             }
@@ -290,14 +315,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     public class SplitEdgeAndInsertExistingNodeCommand : Command
     {
         public readonly IEdgeModel EdgeModel;
-        public readonly IInOutPortsNode NodeModel;
+        public readonly IInputOutputPortsNodeModel NodeModel;
 
         public SplitEdgeAndInsertExistingNodeCommand()
         {
             UndoString = "Insert Node On Edge";
         }
 
-        public SplitEdgeAndInsertExistingNodeCommand(IEdgeModel edgeModel, IInOutPortsNode nodeModel) : this()
+        public SplitEdgeAndInsertExistingNodeCommand(IEdgeModel edgeModel, IInputOutputPortsNodeModel nodeModel) : this()
         {
             EdgeModel = edgeModel;
             NodeModel = nodeModel;
@@ -310,16 +335,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             graphToolState.PushUndo(command);
 
-            var graphModel = graphToolState.GraphModel;
-            var edgeInput = command.EdgeModel.ToPort;
-            var edgeOutput = command.EdgeModel.FromPort;
-            var deletedModels = graphModel.DeleteEdge(command.EdgeModel);
-            var edge1 = graphModel.CreateEdge(edgeInput, command.NodeModel.OutputsByDisplayOrder.First(p => p?.PortType == edgeInput?.PortType));
-            var edge2 = graphModel.CreateEdge(command.NodeModel.InputsByDisplayOrder.First(p => p?.PortType == edgeOutput?.PortType), edgeOutput);
+            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            {
+                var graphModel = graphToolState.GraphViewState.GraphModel;
+                var edgeInput = command.EdgeModel.ToPort;
+                var edgeOutput = command.EdgeModel.FromPort;
+                var deletedModels = graphModel.DeleteEdge(command.EdgeModel);
+                var edge1 = graphModel.CreateEdge(edgeInput, command.NodeModel.OutputsByDisplayOrder.First(p => p?.PortType == edgeInput?.PortType));
+                var edge2 = graphModel.CreateEdge(command.NodeModel.InputsByDisplayOrder.First(p => p?.PortType == edgeOutput?.PortType), edgeOutput);
 
-            graphToolState.MarkDeleted(deletedModels);
-            graphToolState.MarkNew(edge1);
-            graphToolState.MarkNew(edge2);
+                graphUpdater.U.MarkDeleted(deletedModels);
+                graphUpdater.U.MarkNew(edge1);
+                graphUpdater.U.MarkNew(edge2);
+            }
         }
     }
 
@@ -328,7 +356,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         const string k_UndoStringSingular = "Convert Edge to Portal";
         const string k_UndoStringPlural = "Convert Edges to Portals";
 
-        static readonly Vector2 k_EntryPortalBaseOffset =  Vector2.right * 75;
+        static readonly Vector2 k_EntryPortalBaseOffset = Vector2.right * 75;
         static readonly Vector2 k_ExitPortalBaseOffset = Vector2.left * 250;
         const int k_PortalHeight = 24;
 
@@ -348,7 +376,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         // TODO JOCE: Move to GraphView or something. We should be able to create from edge without a command handler (for tests, for example)
         public static void DefaultCommandHandler(GraphToolState graphToolState, ConvertEdgesToPortalsCommand command)
         {
-            var graphModel = graphToolState.GraphModel;
+            var graphModel = graphToolState.GraphViewState.GraphModel;
 
             if (command.EdgeData == null)
                 return;
@@ -359,90 +387,98 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             graphToolState.PushUndo(command);
 
-            var existingPortalEntries = new Dictionary<IPortModel, IEdgePortalEntryModel>();
-            var existingPortalExits = new Dictionary<IPortModel, List<IEdgePortalExitModel>>();
-
-            foreach (var edgeModel in edgeData)
-                ConvertEdgeToPortals(edgeModel);
-
-            // Adjust placement in case of multiple incoming exit portals so they don't overlap
-            foreach (var portalList in existingPortalExits.Values.Where(l => l.Count > 1))
+            using (var updater = graphToolState.GraphViewState.Updater)
             {
-                var cnt = portalList.Count;
-                bool isEven = cnt % 2 == 0;
-                int offset = isEven ? k_PortalHeight / 2 : 0;
-                for (int i = (cnt - 1) / 2; i >= 0; i--)
+                var existingPortalEntries = new Dictionary<IPortModel, IEdgePortalEntryModel>();
+                var existingPortalExits = new Dictionary<IPortModel, List<IEdgePortalExitModel>>();
+
+                foreach (var edgeModel in edgeData)
+                    ConvertEdgeToPortals(edgeModel);
+
+                // Adjust placement in case of multiple incoming exit portals so they don't overlap
+                foreach (var portalList in existingPortalExits.Values.Where(l => l.Count > 1))
                 {
-                    portalList[i].Position = new Vector2(portalList[i].Position.x, portalList[i].Position.y - offset);
-                    portalList[cnt - 1 - i].Position = new Vector2(portalList[cnt - 1 - i].Position.x, portalList[cnt - 1 - i].Position.y + offset);
-                    offset += k_PortalHeight;
-                }
-            }
-
-            graphModel.DeleteEdges(edgeData.Select(d => d.edge).ToList());
-
-            graphToolState.RequestUIRebuild();
-
-            void ConvertEdgeToPortals((IEdgeModel edgeModel, Vector2 startPos, Vector2 endPos) data)
-            {
-                // Only a single portal per output port. Don't recreate if we already created one.
-                var outputPortModel = data.edgeModel.FromPort;
-                IEdgePortalEntryModel portalEntry = null;
-                if (outputPortModel != null && !existingPortalEntries.TryGetValue(data.edgeModel.FromPort, out portalEntry))
-                {
-                    portalEntry = graphModel.CreateEntryPortalFromEdge(data.edgeModel);
-                    existingPortalEntries[outputPortModel] = portalEntry;
-
-                    if (!(outputPortModel.NodeModel is IInOutPortsNode nodeModel))
-                        return;
-
-                    portalEntry.Position = data.startPos + k_EntryPortalBaseOffset;
-
-                    // y offset based on port order. hurgh.
-                    var idx = nodeModel.OutputsByDisplayOrder.IndexOf(outputPortModel);
-                    portalEntry.Position += Vector2.down * (k_PortalHeight * idx + 16); // Fudgy.
-
-                    string portalName;
-                    if (nodeModel is IConstantNodeModel constantNodeModel)
-                        portalName = constantNodeModel.Type.FriendlyName();
-                    else
+                    var cnt = portalList.Count;
+                    bool isEven = cnt % 2 == 0;
+                    int offset = isEven ? k_PortalHeight / 2 : 0;
+                    for (int i = (cnt - 1) / 2; i >= 0; i--)
                     {
-                        portalName = (nodeModel as IHasTitle)?.Title ?? "";
-                        var portName = (outputPortModel as IHasTitle)?.Title ?? "";
-                        if (!string.IsNullOrEmpty(portName))
-                            portalName += " - " + portName;
+                        portalList[i].Position = new Vector2(portalList[i].Position.x, portalList[i].Position.y - offset);
+                        portalList[cnt - 1 - i].Position = new Vector2(portalList[cnt - 1 - i].Position.x, portalList[cnt - 1 - i].Position.y + offset);
+                        offset += k_PortalHeight;
                     }
-
-                    portalEntry.DeclarationModel = graphModel.CreateGraphPortalDeclaration(portalName);
-
-                    graphModel.CreateEdge(portalEntry.InputPort, outputPortModel);
                 }
 
-                // We can have multiple portals on input ports however
-                if (!existingPortalExits.TryGetValue(data.edgeModel.ToPort, out var portalExits))
-                {
-                    portalExits = new List<IEdgePortalExitModel>();
-                    existingPortalExits[data.edgeModel.ToPort] = portalExits;
-                }
+                var edgesToDelete = edgeData.Select(d => d.edge).ToList();
+                graphModel.DeleteEdges(edgesToDelete);
+                updater.U.MarkDeleted(edgesToDelete);
 
-                IEdgePortalExitModel portalExit;
-                var inputPortModel = data.edgeModel.ToPort;
-                portalExit = graphModel.CreateExitPortalFromEdge(data.edgeModel);
-                portalExits.Add(portalExit);
-
-                portalExit.Position = data.endPos + k_ExitPortalBaseOffset;
+                void ConvertEdgeToPortals((IEdgeModel edgeModel, Vector2 startPos, Vector2 endPos) data)
                 {
-                    if (data.edgeModel.ToPort.NodeModel is IInOutPortsNode nodeModel)
+                    // Only a single portal per output port. Don't recreate if we already created one.
+                    var outputPortModel = data.edgeModel.FromPort;
+                    IEdgePortalEntryModel portalEntry = null;
+                    if (outputPortModel != null && !existingPortalEntries.TryGetValue(data.edgeModel.FromPort, out portalEntry))
                     {
+                        portalEntry = graphModel.CreateEntryPortalFromEdge(data.edgeModel);
+                        existingPortalEntries[outputPortModel] = portalEntry;
+                        updater.U.MarkNew(portalEntry);
+
+                        if (!(outputPortModel.NodeModel is IInputOutputPortsNodeModel nodeModel))
+                            return;
+
+                        portalEntry.Position = data.startPos + k_EntryPortalBaseOffset;
+
                         // y offset based on port order. hurgh.
-                        var idx = nodeModel.InputsByDisplayOrder.IndexOf(inputPortModel);
-                        portalExit.Position += Vector2.down * (k_PortalHeight * idx + 16); // Fudgy.
+                        var idx = nodeModel.OutputsByDisplayOrder.IndexOf(outputPortModel);
+                        portalEntry.Position += Vector2.down * (k_PortalHeight * idx + 16); // Fudgy.
+
+                        string portalName;
+                        if (nodeModel is IConstantNodeModel constantNodeModel)
+                            portalName = constantNodeModel.Type.FriendlyName();
+                        else
+                        {
+                            portalName = (nodeModel as IHasTitle)?.Title ?? "";
+                            var portName = (outputPortModel as IHasTitle)?.Title ?? "";
+                            if (!string.IsNullOrEmpty(portName))
+                                portalName += " - " + portName;
+                        }
+
+                        portalEntry.DeclarationModel = graphModel.CreateGraphPortalDeclaration(portalName);
+                        updater.U.MarkNew(portalEntry.DeclarationModel);
+
+                        var newEntryEdge = graphModel.CreateEdge(portalEntry.InputPort, outputPortModel);
+                        updater.U.MarkNew(newEntryEdge);
                     }
+
+                    // We can have multiple portals on input ports however
+                    if (!existingPortalExits.TryGetValue(data.edgeModel.ToPort, out var portalExits))
+                    {
+                        portalExits = new List<IEdgePortalExitModel>();
+                        existingPortalExits[data.edgeModel.ToPort] = portalExits;
+                    }
+
+                    IEdgePortalExitModel portalExit;
+                    var inputPortModel = data.edgeModel.ToPort;
+                    portalExit = graphModel.CreateExitPortalFromEdge(data.edgeModel);
+                    portalExits.Add(portalExit);
+                    updater.U.MarkNew(portalExit);
+
+                    portalExit.Position = data.endPos + k_ExitPortalBaseOffset;
+                    {
+                        if (data.edgeModel.ToPort.NodeModel is IInputOutputPortsNodeModel nodeModel)
+                        {
+                            // y offset based on port order. hurgh.
+                            var idx = nodeModel.InputsByDisplayOrder.IndexOf(inputPortModel);
+                            portalExit.Position += Vector2.down * (k_PortalHeight * idx + 16); // Fudgy.
+                        }
+                    }
+
+                    portalExit.DeclarationModel = portalEntry?.DeclarationModel;
+
+                    var newExitEdge = graphModel.CreateEdge(inputPortModel, portalExit.OutputPort);
+                    updater.U.MarkNew(newExitEdge);
                 }
-
-                portalExit.DeclarationModel = portalEntry?.DeclarationModel;
-
-                graphModel.CreateEdge(inputPortModel, portalExit.OutputPort);
             }
         }
     }
@@ -454,23 +490,27 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             UndoString = "Toggle Ports";
         }
 
-        public static void DefaultCommandHandler(GraphToolState previousGraphToolState, TogglePortsCommand command)
+        public static void DefaultCommandHandler(GraphToolState graphToolState, TogglePortsCommand command)
         {
-            previousGraphToolState.PushUndo(command);
+            graphToolState.PushUndo(command);
 
-            var changedPorts = new List<IPortModel>();
-            foreach (var node in previousGraphToolState.GraphModel.NodeModels.OfType<IPortNode>())
+            using (var graphUpdater = graphToolState.GraphViewState.Updater)
             {
-                foreach (var port in node.Ports)
+                var changedPorts = new List<IPortModel>();
+                foreach (var node in graphToolState.GraphViewState.GraphModel.NodeModels.OfType<IPortNodeModel>())
                 {
-                    if (port.Orientation == Orientation.Horizontal)
-                        port.Orientation = Orientation.Vertical;
-                    else
-                        port.Orientation = Orientation.Horizontal;
-                    changedPorts.Add(port);
+                    foreach (var port in node.Ports)
+                    {
+                        if (port.Orientation == Orientation.Horizontal)
+                            port.Orientation = Orientation.Vertical;
+                        else
+                            port.Orientation = Orientation.Horizontal;
+                        changedPorts.Add(port);
+                    }
                 }
+
+                graphUpdater.U.MarkChanged(changedPorts);
             }
-            previousGraphToolState.MarkChanged(changedPorts);
         }
     }
 
@@ -484,24 +524,28 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             EdgeModels = edgeModels;
         }
 
-        public static void DefaultCommandHandler(GraphToolState previousGraphToolState, ToggleEdgePortsCommand command)
+        public static void DefaultCommandHandler(GraphToolState graphToolState, ToggleEdgePortsCommand command)
         {
-            previousGraphToolState.PushUndo(command);
+            graphToolState.PushUndo(command);
 
-            var changedPorts = new List<IPortModel>();
-
-            foreach (var edgeModel in command.EdgeModels)
+            using (var graphUpdater = graphToolState.GraphViewState.Updater)
             {
-                foreach (var port in new[] { edgeModel.FromPort, edgeModel.ToPort })
+                var changedPorts = new List<IPortModel>();
+
+                foreach (var edgeModel in command.EdgeModels)
                 {
-                    if (port.Orientation == Orientation.Horizontal)
-                        port.Orientation = Orientation.Vertical;
-                    else
-                        port.Orientation = Orientation.Horizontal;
-                    changedPorts.Add(port);
+                    foreach (var port in new[] { edgeModel.FromPort, edgeModel.ToPort })
+                    {
+                        if (port.Orientation == Orientation.Horizontal)
+                            port.Orientation = Orientation.Vertical;
+                        else
+                            port.Orientation = Orientation.Horizontal;
+                        changedPorts.Add(port);
+                    }
                 }
+
+                graphUpdater.U.MarkChanged(changedPorts);
             }
-            previousGraphToolState.MarkChanged(changedPorts);
         }
     }
 }

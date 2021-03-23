@@ -6,7 +6,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels
 {
     class TestStencil : Stencil
     {
+        public static string toolName = "GTF Tests";
+
         ISearcherDatabaseProvider m_SearcherProvider;
+
+        public override string ToolName => toolName;
 
         public TestStencil()
         {
@@ -22,28 +26,49 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels
         {
             return m_SearcherProvider;
         }
+
+        public override IGraphProcessingErrorModel CreateProcessingErrorModel(GraphProcessingError error)
+        {
+            if (error.SourceNode != null && !error.SourceNode.Destroyed)
+            {
+                return new GraphProcessingErrorModel(error);
+            }
+
+            return null;
+        }
     }
 
-    class GraphModel : BasicModel.GraphModel
+    public class GraphModel : BasicModel.GraphModel
     {
         public override Type DefaultStencilType => typeof(TestStencil);
 
-        public override IEdgeModel CreateEdge(IPortModel toPort, IPortModel fromPort)
+        protected override Type GetEdgeType(IPortModel toPort, IPortModel fromPort)
         {
-            var edge = new EdgeModel(this);
-            edge.SetPorts(toPort, fromPort);
-            m_GraphEdgeModels.Add(edge);
-            return edge;
+            return typeof(EdgeModel);
         }
 
-        protected override INodeModel CreateNodeInternal(Type nodeTypeToCreate, string nodeName, Vector2 position,
-            SpawnFlags spawnFlags = SpawnFlags.Default, Action<INodeModel> preDefineSetup = null, SerializableGUID guid = default)
+        protected override IEdgeModel InstantiateEdge(IPortModel toPort, IPortModel fromPort)
+        {
+            var edgeModel = base.InstantiateEdge(toPort, fromPort);
+
+            if (edgeModel is EdgeModel testEdgeModel)
+            {
+                testEdgeModel.SetGraphModel(this);
+            }
+
+            return edgeModel;
+        }
+
+        protected override INodeModel InstantiateNode(Type nodeTypeToCreate, string nodeName, Vector2 position,
+            SerializableGUID guid = default, Action<INodeModel> initializationCallback = null)
         {
             if (nodeTypeToCreate == null)
                 throw new ArgumentNullException(nameof(nodeTypeToCreate));
-            NodeModel nodeModel;
 
-            if (typeof(NodeModel).IsAssignableFrom(nodeTypeToCreate))
+            NodeModel nodeModel;
+            if (typeof(IConstant).IsAssignableFrom(nodeTypeToCreate))
+                nodeModel = new ConstantNodeModel { Value = (IConstant)Activator.CreateInstance(nodeTypeToCreate) };
+            else if (typeof(NodeModel).IsAssignableFrom(nodeTypeToCreate))
                 nodeModel = (NodeModel)Activator.CreateInstance(nodeTypeToCreate);
             else
                 throw new ArgumentOutOfRangeException(nameof(nodeTypeToCreate));
@@ -52,43 +77,63 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels
             nodeModel.Guid = guid.Valid ? guid : SerializableGUID.Generate();
             nodeModel.Title = nodeName;
             nodeModel.SetGraphModel(this);
-            preDefineSetup?.Invoke(nodeModel);
+            initializationCallback?.Invoke(nodeModel);
             nodeModel.OnCreateNode();
-            if (!spawnFlags.IsOrphan())
-            {
-                AddNode(nodeModel);
-            }
+
             return nodeModel;
         }
 
-        public IPlacematModel CreatePlacemat()
+        public override IVariableNodeModel CreateVariableNode(IVariableDeclarationModel declarationModel,
+            Vector2 position, SerializableGUID guid = default, SpawnFlags spawnFlags = SpawnFlags.Default)
         {
-            var placemat = new PlacematModel(this);
-            m_GraphPlacematModels.Add(placemat);
-            return placemat;
+            return this.CreateNode<VariableNodeModel>(declarationModel.DisplayTitle, position, guid, v => v.DeclarationModel = declarationModel, spawnFlags);
         }
 
-        public override IPlacematModel CreatePlacemat(Rect position, SpawnFlags spawnFlags = SpawnFlags.Default)
+        protected override Type GetDefaultVariableDeclarationType()
         {
-            var placemat = CreatePlacemat();
-            placemat.PositionAndSize = position;
-            return placemat;
+            return typeof(VariableDeclarationModel);
         }
 
-        public IStickyNoteModel CreateStickyNote()
+        protected override IVariableDeclarationModel InstantiateVariableDeclaration(Type variableTypeToCreate,
+            TypeHandle variableDataType, string variableName, ModifierFlags modifierFlags, bool isExposed,
+            IConstant initializationModel, SerializableGUID guid, Action<IVariableDeclarationModel, IConstant> initializationCallback = null)
         {
-            var sticky = new StickyNoteModel(this);
-            m_GraphStickyNoteModels.Add(sticky);
-            return sticky;
+            var vdm = base.InstantiateVariableDeclaration(variableTypeToCreate, variableDataType, variableName, modifierFlags, isExposed, initializationModel, guid, initializationCallback);
+
+            if (vdm is VariableDeclarationModel testVdm)
+                testVdm.SetGraphModel(this);
+
+            return vdm;
         }
 
-        public override IStickyNoteModel CreateStickyNote(Rect position, SpawnFlags spawnFlags = SpawnFlags.Default)
+        protected override Type GetPlacematType()
         {
-            var sticky = CreateStickyNote();
-            sticky.PositionAndSize = position;
-            sticky.Theme = StickyNoteTheme.Classic.ToString();
-            sticky.TextSize = StickyNoteFontSize.Small.ToString();
-            return sticky;
+            return typeof(PlacematModel);
+        }
+
+        protected override IPlacematModel InstantiatePlacemat(Rect position)
+        {
+            var placematModel = base.InstantiatePlacemat(position);
+
+            if (placematModel is PlacematModel testPlacematModel)
+                testPlacematModel.SetGraphModel(this);
+
+            return placematModel;
+        }
+
+        protected override Type GetStickyNoteType()
+        {
+            return typeof(StickyNoteModel);
+        }
+
+        protected override IStickyNoteModel InstantiateStickyNote(Rect position)
+        {
+            var stickyNoteModel = base.InstantiateStickyNote(position);
+
+            if (stickyNoteModel is StickyNoteModel testStickyNoteModel)
+                testStickyNoteModel.SetGraphModel(this);
+
+            return stickyNoteModel;
         }
 
         public override bool CheckIntegrity(Verbosity errors)

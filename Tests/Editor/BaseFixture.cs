@@ -25,7 +25,7 @@ namespace UnityEditor.VisualScriptingTests
         public IGraphElementModel ElementModelToRename { get; set; }
         public GUID NodeToFrameGuid { get; set; } = default;
         public int CurrentGraphIndex => 0;
-        public VSPreferences Preferences { get; }  = new VSPreferences();
+        public VSPreferences Preferences { get; } = new VSPreferences();
 
         public object BoundObject { get; set; }
 
@@ -87,8 +87,8 @@ namespace UnityEditor.VisualScriptingTests
 
         class TestPluginRepository : IPluginRepository
         {
-            public void RegisterPlugins(CompilationOptions getCompilationOptions) {}
-            public void UnregisterPlugins() {}
+            public void RegisterPlugins(CompilationOptions getCompilationOptions) { }
+            public void UnregisterPlugins() { }
             public IEnumerable<IPluginHandler> RegisteredPlugins { get; }
         }
     }
@@ -241,7 +241,7 @@ namespace UnityEditor.VisualScriptingTests
 
         protected void TestPrereqActionPostreq<T>(TestingMode mode, Func<T> checkReqsAndProvideAction, Action checkPostReqs) where T : IAction
         {
-            TestPrereqActionPostreq(mode, () => {}, checkReqsAndProvideAction, checkPostReqs);
+            TestPrereqActionPostreq(mode, () => { }, checkReqsAndProvideAction, checkPostReqs);
         }
 
         [SetUp]

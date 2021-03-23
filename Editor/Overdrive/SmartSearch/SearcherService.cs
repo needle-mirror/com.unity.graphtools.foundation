@@ -17,7 +17,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         static readonly Searcher.SearcherWindow.Alignment k_FindAlignment = new Searcher.SearcherWindow.Alignment(
             Searcher.SearcherWindow.Alignment.Vertical.Top, Searcher.SearcherWindow.Alignment.Horizontal.Center);
-        static readonly TypeSearcherAdapter k_TypeAdapter =  new TypeSearcherAdapter("Pick a type");
+        static readonly TypeSearcherAdapter k_TypeAdapter = new TypeSearcherAdapter("Pick a type");
         static readonly Comparison<SearcherItem> k_GraphElementSort = (x, y) =>
         {
             var xRoot = GetRoot(x);
@@ -66,20 +66,20 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 PromptSearcherPopup(dbs, filter, adapter, position, callback);
         }
 
-        public static void ShowInputToGraphNodes(GraphToolState graphToolState, IPortModel portModel, Vector2 position,
+        public static void ShowInputToGraphNodes(GraphToolState graphToolState, IEnumerable<IPortModel> portModels, Vector2 position,
             Action<GraphNodeModelSearcherItem> callback)
         {
-            var stencil = graphToolState.GraphModel.Stencil;
-            var filter = stencil.GetSearcherFilterProvider()?.GetInputToGraphSearcherFilter(portModel);
-            var adapter = stencil.GetSearcherAdapter(graphToolState.GraphModel, "Add an input node", portModel);
+            var stencil = graphToolState.WindowState.GraphModel.Stencil;
+            var filter = stencil.GetSearcherFilterProvider()?.GetInputToGraphSearcherFilter(portModels);
+            var adapter = stencil.GetSearcherAdapter(graphToolState.WindowState.GraphModel, "Add an input node", portModels);
             var dbProvider = stencil.GetSearcherDatabaseProvider();
 
             if (dbProvider == null)
                 return;
 
-            var dbs = dbProvider.GetGraphElementsSearcherDatabases(graphToolState.GraphModel)
-                .Concat(dbProvider.GetGraphVariablesSearcherDatabases(graphToolState.GraphModel))
-                .Concat(dbProvider.GetDynamicSearcherDatabases(portModel))
+            var dbs = dbProvider.GetGraphElementsSearcherDatabases(graphToolState.WindowState.GraphModel)
+                .Concat(dbProvider.GetGraphVariablesSearcherDatabases(graphToolState.WindowState.GraphModel))
+                .Concat(dbProvider.GetDynamicSearcherDatabases(portModels))
                 .ToList();
 
             ShowSearcher(graphToolState, position, callback, dbs, filter, adapter);
@@ -88,15 +88,31 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public static void ShowOutputToGraphNodes(GraphToolState graphToolState, IPortModel portModel, Vector2 position,
             Action<GraphNodeModelSearcherItem> callback)
         {
-            var stencil = graphToolState.GraphModel.Stencil;
+            var stencil = graphToolState.WindowState.GraphModel.Stencil;
             var filter = stencil.GetSearcherFilterProvider()?.GetOutputToGraphSearcherFilter(portModel);
-            var adapter = stencil.GetSearcherAdapter(graphToolState.GraphModel, $"Choose an action for {portModel.DataTypeHandle.GetMetadata(stencil).FriendlyName}", portModel);
+            var adapter = stencil.GetSearcherAdapter(graphToolState.WindowState.GraphModel, $"Choose an action for {portModel.DataTypeHandle.GetMetadata(stencil).FriendlyName}", Enumerable.Repeat(portModel, 1));
             var dbProvider = stencil.GetSearcherDatabaseProvider();
 
             if (dbProvider == null)
                 return;
 
-            var dbs = dbProvider.GetGraphElementsSearcherDatabases(graphToolState.GraphModel).ToList();
+            var dbs = dbProvider.GetGraphElementsSearcherDatabases(graphToolState.WindowState.GraphModel).ToList();
+
+            ShowSearcher(graphToolState, position, callback, dbs, filter, adapter);
+        }
+
+        public static void ShowOutputToGraphNodes(GraphToolState graphToolState, IEnumerable<IPortModel> portModels, Vector2 position,
+            Action<GraphNodeModelSearcherItem> callback)
+        {
+            var stencil = graphToolState.WindowState.GraphModel.Stencil;
+            var filter = stencil.GetSearcherFilterProvider()?.GetOutputToGraphSearcherFilter(portModels);
+            var adapter = stencil.GetSearcherAdapter(graphToolState.WindowState.GraphModel, $"Choose an action for {portModels.First().DataTypeHandle.GetMetadata(stencil).FriendlyName}", portModels);
+            var dbProvider = stencil.GetSearcherDatabaseProvider();
+
+            if (dbProvider == null)
+                return;
+
+            var dbs = dbProvider.GetGraphElementsSearcherDatabases(graphToolState.WindowState.GraphModel).ToList();
 
             ShowSearcher(graphToolState, position, callback, dbs, filter, adapter);
         }
@@ -104,31 +120,31 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public static void ShowEdgeNodes(GraphToolState graphToolState, IEdgeModel edgeModel, Vector2 position,
             Action<GraphNodeModelSearcherItem> callback)
         {
-            var stencil = graphToolState.GraphModel.Stencil;
+            var stencil = graphToolState.WindowState.GraphModel.Stencil;
             var filter = stencil.GetSearcherFilterProvider()?.GetEdgeSearcherFilter(edgeModel);
-            var adapter = stencil.GetSearcherAdapter(graphToolState.GraphModel, "Insert Node");
+            var adapter = stencil.GetSearcherAdapter(graphToolState.WindowState.GraphModel, "Insert Node");
             var dbProvider = stencil.GetSearcherDatabaseProvider();
 
             if (dbProvider == null)
                 return;
 
-            var dbs = dbProvider.GetGraphElementsSearcherDatabases(graphToolState.GraphModel).ToList();
+            var dbs = dbProvider.GetGraphElementsSearcherDatabases(graphToolState.WindowState.GraphModel).ToList();
 
             ShowSearcher(graphToolState, position, callback, dbs, filter, adapter);
         }
 
         public static void ShowGraphNodes(GraphToolState graphToolState, Vector2 position, Action<GraphNodeModelSearcherItem> callback)
         {
-            var stencil = graphToolState.GraphModel.Stencil;
+            var stencil = graphToolState.WindowState.GraphModel.Stencil;
             var filter = stencil.GetSearcherFilterProvider()?.GetGraphSearcherFilter();
-            var adapter = stencil.GetSearcherAdapter(graphToolState.GraphModel, "Add a graph node");
+            var adapter = stencil.GetSearcherAdapter(graphToolState.WindowState.GraphModel, "Add a graph node");
             var dbProvider = stencil.GetSearcherDatabaseProvider();
 
             if (dbProvider == null)
                 return;
 
-            var dbs = dbProvider.GetGraphElementsSearcherDatabases(graphToolState.GraphModel)
-                .Concat(dbProvider.GetDynamicSearcherDatabases(null))
+            var dbs = dbProvider.GetGraphElementsSearcherDatabases(graphToolState.WindowState.GraphModel)
+                .Concat(dbProvider.GetDynamicSearcherDatabases((IPortModel)null))
                 .ToList();
 
             ShowSearcher(graphToolState, position, callback, dbs, filter, adapter);
@@ -277,7 +293,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public static void ShowTypes(List<SearcherDatabase> databases, Vector2 position, Action<TypeHandle, int> callback)
         {
-            var searcher = new Searcher.Searcher(databases, k_TypeAdapter) {SortComparison = TypeComparison};
+            var searcher = new Searcher.Searcher(databases, k_TypeAdapter) { SortComparison = TypeComparison };
             Searcher.SearcherWindow.Show(EditorWindow.focusedWindow, searcher, item =>
             {
                 if (!(item is TypeSearcherItem typeItem))
@@ -294,11 +310,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             {
                 // TODO virtual property in NodeModel formatting what's displayed in the find window
                 case IConstantNodeModel cnm:
-                {
-                    var nodeTitle = cnm.Type == typeof(string) ? $"\"{title}\"" : title;
-                    title = $"Const {cnm.Type.Name} {nodeTitle}";
-                    break;
-                }
+                    {
+                        var nodeTitle = cnm.Type == typeof(string) ? $"\"{title}\"" : title;
+                        title = $"Const {cnm.Type.Name} {nodeTitle}";
+                        break;
+                    }
             }
 
             return new FindInGraphAdapter.FindSearcherItem(node, title);

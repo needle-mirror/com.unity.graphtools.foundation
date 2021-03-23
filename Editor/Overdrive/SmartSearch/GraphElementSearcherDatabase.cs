@@ -49,16 +49,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     switch (attribute.Context)
                     {
                         case SearcherContext.Graph:
-                        {
-                            var node = new GraphNodeModelSearcherItem(
-                                new NodeSearcherItemData(type),
-                                data => data.CreateNode(type, name),
-                                name
-                            );
+                            {
+                                var node = new GraphNodeModelSearcherItem(
+                                    new NodeSearcherItemData(type),
+                                    data => data.CreateNode(type, name),
+                                    name
+                                );
 
-                            Items.AddAtPath(node, path);
-                            break;
-                        }
+                                Items.AddAtPath(node, path);
+                                break;
+                            }
 
                         default:
                             Debug.LogWarning($"The node {type} is not a " +

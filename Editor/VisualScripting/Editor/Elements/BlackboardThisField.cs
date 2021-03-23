@@ -13,7 +13,7 @@ namespace UnityEditor.VisualScripting.Editor
         public IGraphElementModel GraphElementModel => userData as IGraphElementModel;
         public IGraphElementModel ExpandableGraphElementModel => null;
 
-        public void Expand() {}
+        public void Expand() { }
         public bool CanInstantiateInGraph() => true;
 
         public bool Highlighted

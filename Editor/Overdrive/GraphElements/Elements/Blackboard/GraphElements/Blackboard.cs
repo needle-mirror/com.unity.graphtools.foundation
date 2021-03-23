@@ -1,12 +1,12 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public class Blackboard : GraphElement, ISelection
+    public class Blackboard : GraphElement, IDragSource
     {
         public static new readonly string ussClassName = "ge-blackboard";
         public static readonly string windowedModifierUssClassName = ussClassName.WithUssModifier("windowed");
@@ -16,14 +16,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public static readonly string persistenceKey = "Blackboard";
 
+        BlackboardUpdateObserver m_UpdateObserver;
         protected Dragger m_Dragger;
         protected ScrollView m_ScrollView;
         protected VisualElement m_ContentContainer;
 
         public override VisualElement contentContainer => m_ContentContainer;
-
-        // ISelection implementation
-        public List<ISelectableGraphElement> Selection => GraphView?.Selection;
 
         bool m_Windowed;
 
@@ -66,13 +64,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             return !m_Windowed;
         }
 
-        public override bool IsResizable()
-        {
-            return true;
-        }
-
         public Blackboard()
         {
+            RegisterCallback<AttachToPanelEvent>(OnEnterPanel);
+            RegisterCallback<DetachFromPanelEvent>(OnLeavePanel);
+
             Dragger = new Dragger { ClampToParentEdges = true };
 
             RegisterCallback<DragUpdatedEvent>(e =>
@@ -80,10 +76,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 e.StopPropagation();
             });
 
+            // prevent Zoomer manipulator
             // event interception to prevent GraphView manipulators from being triggered
             // when working with the blackboard
-
-            // prevent Zoomer manipulator
             RegisterCallback<WheelEvent>(e =>
             {
                 e.StopPropagation();
@@ -92,17 +87,47 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             RegisterCallback<MouseDownEvent>(e =>
             {
                 if (e.button == (int)MouseButton.LeftMouse)
-                    ClearSelection();
+                {
+                    CommandDispatcher.Dispatch(new ClearSelectionCommand());
+                }
                 // prevent ContentDragger manipulator
                 e.StopPropagation();
             });
 
-            RegisterCallback<AttachToPanelEvent>(OnAttachToPanel);
-            RegisterCallback<DetachFromPanelEvent>(OnDetachFromPanel);
-
             RegisterCallback<PromptSearcherEvent>(OnPromptSearcher);
 
-            focusable = true;
+            RegisterCallback<ShortcutDisplaySmartSearchEvent>(OnShortcutDisplaySmartSearchEvent);
+            RegisterCallback<KeyDownEvent>(OnRenameKeyDown);
+        }
+
+        void RegisterObservers()
+        {
+            if (m_UpdateObserver == null)
+                m_UpdateObserver = new BlackboardUpdateObserver(this);
+            CommandDispatcher.RegisterObserver(m_UpdateObserver);
+        }
+
+        void UnregisterObservers()
+        {
+            CommandDispatcher.UnregisterObserver(m_UpdateObserver);
+        }
+
+        /// <summary>
+        /// AttachToPanelEvent event callback.
+        /// </summary>
+        /// <param name="e">The event.</param>
+        protected virtual void OnEnterPanel(AttachToPanelEvent e)
+        {
+            RegisterObservers();
+        }
+
+        /// <summary>
+        /// DetachFromPanelEvent event callback.
+        /// </summary>
+        /// <param name="e">The event.</param>
+        protected virtual void OnLeavePanel(DetachFromPanelEvent e)
+        {
+            UnregisterObservers();
         }
 
         protected override void BuildPartList()
@@ -122,9 +147,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             hierarchy.Add(m_ScrollView);
             m_ScrollView.Add(m_ContentContainer);
-            ResizeRestriction = ResizeRestriction.None; // As both the width and height can be changed by the user using a resizer
-
-            hierarchy.Add(new Resizer());
         }
 
         protected override void PostBuildUI()
@@ -137,29 +159,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             this.AddStylesheet("Blackboard.uss");
         }
 
-        public virtual void AddToSelection(ISelectableGraphElement selectable)
-        {
-            GraphView?.AddToSelection(selectable);
-        }
-
-        public virtual void RemoveFromSelection(ISelectableGraphElement selectable)
-        {
-            GraphView?.RemoveFromSelection(selectable);
-        }
-
-        public virtual void ClearSelection()
-        {
-            GraphView?.ClearSelection();
-        }
-
         public List<IHighlightable> Highlightables { get; } = new List<IHighlightable>();
 
         protected override void BuildContextualMenu(ContextualMenuPopulateEvent evt)
         {
             base.BuildContextualMenu(evt);
 
-            var selectedModels = Selection.OfType<IModelUI>().Select(e => e.Model).ToArray();
-            if (selectedModels.Length > 0)
+            var selectedModels = GetSelection();
+            if (selectedModels.Count > 0)
             {
                 evt.menu.AppendAction("Delete", menuAction =>
                 {
@@ -168,44 +175,36 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        void OnAttachToPanel(AttachToPanelEvent evt)
-        {
-            RegisterCallback<KeyDownEvent>(OnKeyDownEvent);
-        }
+        public IReadOnlyList<IGraphElementModel> GetSelection() => GraphView.GetSelection();
 
-        void OnDetachFromPanel(DetachFromPanelEvent evt)
+        /// <summary>
+        /// Callback for the ShortcutDisplaySmartSearchEvent.
+        /// </summary>
+        /// <param name="e">The event.</param>
+        protected void OnShortcutDisplaySmartSearchEvent(ShortcutDisplaySmartSearchEvent e)
         {
-            UnregisterCallback<KeyDownEvent>(OnKeyDownEvent);
-        }
-
-        void OnKeyDownEvent(KeyDownEvent e)
-        {
-            if ((e.keyCode == KeyCode.F2 && Application.platform != RuntimePlatform.OSXEditor) ||
-                ((e.keyCode == KeyCode.Return || e.keyCode == KeyCode.KeypadEnter) && Application.platform == RuntimePlatform.OSXEditor))
+            using (var promptSearcherEvent = PromptSearcherEvent.GetPooled(e.MousePosition))
             {
-                var renamableSelection = Selection.OfType<GraphElement>().Where(x => x.IsRenamable()).ToList();
-                var lastSelectedItem = renamableSelection.LastOrDefault();
-                if (lastSelectedItem != null)
-                {
-                    if (renamableSelection.Count > 1)
-                    {
-                        ClearSelection();
-                        AddToSelection(lastSelectedItem);
-                    }
-
-                    lastSelectedItem.Rename();
-
-                    e.StopPropagation();
-                }
+                promptSearcherEvent.target = e.target;
+                SendEvent(promptSearcherEvent);
             }
-            else if (e.keyCode == KeyCode.Space)
+            e.StopPropagation();
+        }
+
+        /// <summary>
+        /// Callback for the KeyDownEvent to handle renames.
+        /// </summary>
+        /// <param name="e">The event.</param>
+        protected new void OnRenameKeyDown(KeyDownEvent e)
+        {
+            if (e.target == this)
             {
-                using (var promptSearcherEvent = PromptSearcherEvent.GetPooled(e.originalMousePosition))
-                {
-                    var target = panel.Pick(e.originalMousePosition);
-                    promptSearcherEvent.target = target;
-                    SendEvent(promptSearcherEvent);
-                }
+                // Forward event to the last selected element.
+                var renamableSelection = GraphView.GetSelection().Where(x => x.IsRenamable());
+                var lastSelectedItem = renamableSelection.LastOrDefault();
+                var lastSelectedItemUI = lastSelectedItem?.GetUI<GraphElement>(GraphView);
+
+                lastSelectedItemUI?.OnRenameKeyDown(e);
             }
         }
 

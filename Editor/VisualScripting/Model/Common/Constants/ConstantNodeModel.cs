@@ -9,7 +9,7 @@ namespace UnityEditor.VisualScripting.Model
     [Serializable]
     public abstract class ConstantNodeModel : NodeModel, IVariableModel, IConstantNodeModel
     {
-        public virtual IPortModel OutputPort { get; protected set;}
+        public virtual IPortModel OutputPort { get; protected set; }
         public abstract IVariableDeclarationModel DeclarationModel { get; }
         public abstract object ObjectValue { get; set; }
         public abstract Type Type { get; }

@@ -1,5 +1,3 @@
-using UnityEngine.Assertions;
-
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels
 {
     class NodeModel : BasicModel.NodeModel, IRenamable
@@ -8,13 +6,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels
 
         public override IGraphAssetModel AssetModel
         {
-            get => m_GraphAssetModel;
-            set
-            {
-                // We only accept a null asset in tests
-                Assert.IsNull(value);
-                m_GraphAssetModel = null;
-            }
+            get => base.AssetModel;
+            // override setter to not throw when null
+            set => m_AssetModel = (GraphAssetModel)value;
         }
 
         public override IGraphModel GraphModel => m_GraphModel;
@@ -40,12 +34,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels
             m_GraphModel = graphModel;
         }
 
-        public override IPortModel CreatePort(Direction direction, string portName, PortType portType,
-            TypeHandle dataType, string portId, PortModelOptions options)
+        public override IPortModel CreatePort(Direction direction, Orientation orientation, string portName,
+            PortType portType, TypeHandle dataType, string portId, PortModelOptions options)
         {
             var port = new PortModel
             {
                 Direction = direction,
+                Orientation = orientation,
                 PortType = portType,
                 DataTypeHandle = dataType,
                 Title = portName,

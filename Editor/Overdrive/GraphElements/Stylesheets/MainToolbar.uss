@@ -1,53 +1,53 @@
-#vseMenu #errorIconLabel, #vseMenu #previousErrorButton {
+.ge-main-toolbar #errorIconLabel, .ge-main-toolbar #previousErrorButton {
     border-left-width: 1px;
 }
 
-#vseMenu #newGraphButton .icon {
+.ge-main-toolbar #newGraphButton .icon {
     background-image: url("Icons/MainToolbar/CreateNew.png");
 }
 
-#vseMenu #saveAllButton .icon {
+.ge-main-toolbar #saveAllButton .icon {
     background-image: resource("SaveActive");
 }
 
-#vseMenu #buildAllButton .icon {
+.ge-main-toolbar #buildAllButton .icon {
     background-image: url("Icons/MainToolbar/BuildAll.png");
     width: 14px;
     height: 12px;
 }
 
-#vseMenu #refreshButton .icon {
+.ge-main-toolbar #refreshButton .icon {
     background-image: url("Icons/MainToolbar/Refresh.png");
 }
 
-#vseMenu #enableTracingButton {
+.ge-main-toolbar #enableTracingButton {
     width: 100px;
 }
-#vseMenu #enableTracingButton .icon {
+.ge-main-toolbar #enableTracingButton .icon {
     background-image: resource("Animation.Record");
     width: 16px;
     height: 16px;
     left:4px;
 }
 
-#vseMenu #enableTracingButton > .icon > .unity-label {
+.ge-main-toolbar #enableTracingButton > .icon > .unity-label {
     flex: 1;
     margin-left: 16px;
 }
 
-#vseMenu #optionsButton .icon {
+.ge-main-toolbar #optionsButton .icon {
     background-image: url("Icons/MainToolbar/Options.png");
     width: 15px;
     height: 14px;
 }
 
-#vseMenu #showMiniMapButton .icon {
+.ge-main-toolbar #showMiniMapButton .icon {
     background-image: url("Icons/MainToolbar/MiniMap.png");
     width: 14px;
     height: 12px;
 }
 
-#vseMenu #showBlackboardButton .icon {
+.ge-main-toolbar #showBlackboardButton .icon {
     background-image: url("Icons/MainToolbar/Blackboard.png");
     width: 14px;
     height: 12px;
@@ -55,19 +55,19 @@
 
 /* breadcrumb */
 
-#vseMenu #breadcrumbButton .popupIcon {
+.ge-main-toolbar #breadcrumbButton .popupIcon {
     background-image: resource("IN pulldown");
     width: 8px;
     height: 13px;
 }
 
-#vseMenu #breadcrumbButton .icon {
+.ge-main-toolbar #breadcrumbButton .icon {
     background-image: url("Icons/MainToolbar/ScriptSelector.png");
     width: 14px;
     height: 12px;
 }
 
-#vseMenu #breadcrumbButton {
+.ge-main-toolbar #breadcrumbButton {
     flex-direction: row;
     -unity-slice-left: 1;
     -unity-slice-right: 1;

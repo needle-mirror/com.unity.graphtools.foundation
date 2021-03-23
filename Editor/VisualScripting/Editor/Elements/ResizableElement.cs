@@ -10,7 +10,7 @@ namespace UnityEditor.VisualScripting.Editor
     public class ResizableElement : VisualElement
     {
         [UsedImplicitly]
-        internal new class UxmlFactory : UxmlFactory<ResizableElement> {}
+        internal new class UxmlFactory : UxmlFactory<ResizableElement> { }
 
         public ResizableElement()
         {
@@ -24,9 +24,9 @@ namespace UnityEditor.VisualScripting.Editor
                 resizer.AddManipulator(new ElementResizer(this, value));
             }
 
-            foreach (Resizer vertical in new[] {Resizer.Top, Resizer.Bottom})
+            foreach (Resizer vertical in new[] { Resizer.Top, Resizer.Bottom })
             {
-                foreach (Resizer horizontal in new[] {Resizer.Left, Resizer.Right})
+                foreach (Resizer horizontal in new[] { Resizer.Left, Resizer.Right })
                 {
                     VisualElement resizer =
                         this.MandatoryQ(vertical.ToString().ToLower() + "-" + horizontal.ToString().ToLower() + "-resize");
@@ -38,10 +38,10 @@ namespace UnityEditor.VisualScripting.Editor
         [Flags]
         public enum Resizer
         {
-            Top    = 1 << 0,
+            Top = 1 << 0,
             Bottom = 1 << 1,
-            Left   = 1 << 2,
-            Right  = 1 << 3,
+            Left = 1 << 2,
+            Right = 1 << 3,
         }
     }
 }

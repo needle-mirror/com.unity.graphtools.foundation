@@ -156,7 +156,7 @@ namespace UnityEditor.CodeViewer
                 text => { m_Store.Dispatch(new ToggleShowLineNumberAction()); }, null);
             menu.AddItem(new GUIContent("Line Icons"), m_Store.GetState().ViewerSettings.ShowLineIcons,
                 text => { m_Store.Dispatch(new ToggleShowLineIconsAction()); }, null);
-            menu.AddItem(new GUIContent("Copy entire text"), false , CopyFullText);
+            menu.AddItem(new GUIContent("Copy entire text"), false, CopyFullText);
             menu.ShowAsContext();
         }
 

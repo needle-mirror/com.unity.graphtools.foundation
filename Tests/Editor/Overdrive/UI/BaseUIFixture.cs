@@ -38,7 +38,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         protected GraphView GraphView { get; private set; }
         protected TestEventHelpers Helpers { get; set; }
         protected CommandDispatcher CommandDispatcher => Window.CommandDispatcher;
-        protected GraphModel GraphModel => (GraphModel)CommandDispatcher.GraphToolState.GraphModel;
+        protected GraphModel GraphModel => (GraphModel)CommandDispatcher.GraphToolState.WindowState.GraphModel;
 
         protected abstract bool CreateGraphOnStartup { get; }
         protected virtual Type CreatedGraphType => typeof(ClassStencil);
@@ -46,8 +46,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         [SetUp]
         public virtual void SetUp()
         {
-            var windowWithRect = EditorWindow.GetWindowWithRect<GtfoWindowTest>(k_WindowRect);
-            Window = windowWithRect;
+            Window = EditorWindow.GetWindowWithRect<GtfoWindowTest>(k_WindowRect);
             GraphView = Window.GraphView;
             Helpers = new TestEventHelpers(Window);
 
@@ -59,7 +58,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         }
 
         [TearDown]
-        public void TearDown()
+        public virtual void TearDown()
         {
             // See case: https://fogbugz.unity3d.com/f/cases/998343/
             // Clearing the capture needs to happen before closing the window
@@ -79,6 +78,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         protected GraphElement GetGraphElement(int index)
         {
             return GetGraphElements()[index];
+        }
+
+        protected void MarkGraphViewStateDirty()
+        {
+            using (var updater = CommandDispatcher.GraphToolState.GraphViewState.Updater)
+            {
+                updater.U.ForceCompleteUpdate();
+            }
         }
 
         IList<IGraphElementModel> GetGraphElementModels()

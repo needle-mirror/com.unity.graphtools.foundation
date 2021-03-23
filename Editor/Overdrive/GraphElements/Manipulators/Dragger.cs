@@ -6,17 +6,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class Dragger : MouseManipulator
     {
-        private Vector2 m_Start;
-        protected bool m_Active;
-
-        public Vector2 PanSpeed { get; set; }
+        Vector2 m_Start;
+        bool m_Active;
 
         public bool ClampToParentEdges { get; set; }
 
         public Dragger()
         {
-            activators.Add(new ManipulatorActivationFilter {button = MouseButton.LeftMouse});
-            PanSpeed = new Vector2(1, 1);
+            activators.Add(new ManipulatorActivationFilter { button = MouseButton.LeftMouse });
             ClampToParentEdges = false;
             m_Active = false;
         }
@@ -68,8 +65,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 return;
             }
 
-            GraphElement ce = e.target as GraphElement;
-            if (ce != null && !ce.IsMovable())
+            if (e.target is GraphElement ce && !ce.IsMovable())
             {
                 return;
             }
@@ -86,7 +82,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         protected void OnMouseMove(MouseMoveEvent e)
         {
-            GraphElement ce = e.target as GraphElement;
+            var ce = e.target as GraphElement;
             if (ce != null && !ce.IsMovable())
             {
                 return;

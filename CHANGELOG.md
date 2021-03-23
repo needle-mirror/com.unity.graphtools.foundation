@@ -5,12 +5,122 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.9.0-preview.2] - 2021-03-23
+
+### Added
+
+- `SelectElementsCommand` `ClearSelectionCommand` and  to select and unselect graph view elements.
+- `ReframeGraphViewCommand` to change the graph view pan and zoom.
+- `GetPlacematMinZOrder`, `GetPlacematMaxZOrder` and `GetSortedPlacematModels` extension methods on `IGraphModel`.
+- `GraphModel.GetEdgeType`, `GraphModel.GetStickyNoteType`, `GraphModel.GetPlacematType`, `GraphModel.GetVariableDeclarationType` and `GraphModel.GetPortalType` virtual methods used to define the type of elements to create in `GraphModel.CreateEdge`, `GraphModel.CreateStickyNote`, `GraphModel.CreatePlacemat`, `GraphModel.CreateVariableDeclaration` and `GraphModel.CreatePortal`, respectively.
+- `IGraphModel.CreateGraphVariableDeclaration` can take a type parameter to create any `IVariableDeclarationModel`-derived declaration.
+  Also provided in a generic version of the same.
+- Support for shortcuts defined in Unity ShortcutManager.
+- Class deriving from `Stencil` must implement the `ToolName` property that returns a unique, human readable tool name.
+- `GraphElementModel` class as the parent class for most classes implementing `IGraphElementModel` 
+- `IGraphElementModel` new members `Color`, `HasUserColor` and `ResetColor()` to customize elements color
+- `Capbilities.Colorable` to tell an `IGraphElementColor` can change color. `NodeModel` and `PlacematModel` have this capability by default.
+- `PortModel` now save it's `AssetModel` instead of getting it from its `NodeModel`. Assigned during `CreatePort()`
+- `ResetElementColorCommand` and `ChangeElementColorCommand` can be called on any `IGraphElementModel` and will check for `Colorable` capability.
+- `GraphElementModel` introduces versioning with `Version` for backward compatibility.
+- `VerticalPortContainerPart` created to house the vertical ports on nodes.
+- New Vertical Flow sample showcasing the vertical flow.
+- Dirty state displayed in the window title with an *.
+- `IChangeset` and `ChangesetManager` to enable `IStateComponent` to manage changesets.
+- `IStateComponentUpdater` to encapsulate updates to state components.
+- `IStateObserver` for classes that observes `IStateComponent`s and want to be notified of their changes.
+- `Observation`, to encapsulate an observation of an `IStateComponent` by an `IStateObserver`
+- `VisualElement.SafeQ`, equivalent to `VisualElement.Q` but does a null check first.
+
+### Removed
+
+- `ISelection`; query or use commands to modify the `GraphToolState.SelectionState` instead.
+- `ISelectableGraphElement`: use `IGraphElement` instead. Query the selection or use commands to modify the selection
+  using `GraphToolState.SelectionState` instead. React to change in selection in `GraphElement.UpdateElementFromModel()` instead.
+- `GraphView.OnSelectionChangedCallback`; react to selected state in `GraphElement.UpdateElementFromModel()` instead.
+- `VisualElementBridge`; derive from `VisualElement` instead and use extension methods from `GraphViewStaticBridge`.
+- Unused classes and interface `SearchTreeEntry`, `SearchTreeGroupEntry`, `SearchWindowContext`, `ISearchWindowProvider` and `SearchWindow`.
+- `IGraphViewSelection`, `GraphViewUndoRedoSelection` and `PersistedSelection`; functionality is now handled by `SelectionStateComponent`.
+- `ViewTransformChangedCallback`. Install an observer on `ReframeGraphViewCommand` instead, using `CommandDispatcher.RegisterObserver`.
+- `GraphModel.NodesByGuid`; use `GraphModel.TryGetModelFromGuid()` instead.
+- `ChangePlacematLayoutCommand` and `ChangeStickyNoteLayoutCommand`: use `ChangeElementLayoutCommand` instead.
+- `ResizeFlags` and `IResizableGraphElement`
+- `GraphModel.CreateNodeInternal` was merged into `GraphModel.CreateNode`
+- `NodeModel.DataTypeString`
+- `NodeModel.VariableString`
+- `VariableDeclarationModel.Create`; use `GraphModel.CreateGraphVariableDeclaration()` instead.
+- `GraphModel.DuplicateGraphVariableDeclaration` has been made generic for any `IVariableDeclarationModel`.
+- `ShortcutHandler` manipulator. Replaced by callbacks on subclasses of `ShortcutEventBase` events.
+- `GraphView.ShortcutHandler` and `GraphView.GetShortcutDictionary()` To define new shortcuts, create a subclass
+  of `ShortcutEventBase` and add the `[ToolShortcutEvent]` attribute to it. See the `ShortcutFrameAllEvent` class
+  for an example. To respond to shortcuts, register a callback on the new shortcut event subclass.
+- `GraphElement.IsDeletable()`: ask model instead
+- `GraphElement.IsResizable()`: ask model instead
+- `GraphElement.IsDroppable()`: ask model instead
+- `GraphElement.IsRenamable()`: ask model instead
+- `GraphElement.IsCopiable()`: ask model instead
+- `GraphViewBridge`; derive from `VisualElement` instead.
+- `Stencil.GetThisType()`
+- Remove `IVariableDeclarationMetadataModel` from `IVariableDeclarationModel`
+- Remove `GetMetadataModel()` and `SetMetadataModel()` from `VariableDeclarationModel`
+- `UndoRedoTraversal`
+- `IEdgeModel.ResetPorts()`: Found in  Basic model `EdgeModel`.
+- Removed the distinction between pre- and post-command observers. CommandObservers are now all executed before the command handler.
+
+### Changed
+
+- `GraphToolState.PushUndo()` now saves the `GraphViewStateComponent` (graph view pan and zoom), the `BlackboardViewStateComponent`
+  (blackboard variable expanded state) and `SelectionStateComponent` (the current selection).
+- `GraphView.Selection` changed to `GraphView.GetSelection()`.
+- `ISelection` replaced by `IDragSource`.
+- Renamed `NodeSerializationHelpers` to `SerializationHelpers
+- Renamed `BoolPref.LogAllDispatchedActions` to `BoolPref.LogAllDispatchedCommands`
+- `PlacematContainer.CycleDirection` moved to `PlacematCommandsExtension.CycleDirection`
+- The `MainToolbar` USS name `vseMenu` has been removed. It now has the USS class `ge-main-toolbar`.
+- All list of graph element models in `GraphModel` are now private. Use the corresponding properties and `Add...` / `Remove...` to access them.
+- `IVariableDeclarationModel.VariableName` was replaced by `IVariableDeclarationModel.GetVariableName()`
+- `CreateGraphVariableDeclarationCommand` constructor can take a type parameter to create any `IVariableDeclarationModel`-derived declaration.
+- `GraphModel.GetVariableDeclarationType` was renamed to `GraphModel.GetDefaultVariableDeclarationType`
+- `PromptSearcherEvent` moved from the internal bridge to the main code base.
+- Tools need to call `ShortcutHelper.RegisterDefaultShortcuts()` to use the default shortcuts provided by GTF. We suggest adding an
+  `[InitializeOnLoad]` static method in the tool editor window class.
+- `CollapisbleInOutNode` now has a top and bottom container for vertical ports.
+- `InOutPortContainerPart` only handles horizontal ports.
+- `NodeModel.DeletePort` has been deprecated. The default behavior (with `removeFromOrderedPorts = false`) did not actually delete any ports. Use `NodeModel.DisconnectPort` instead. In the next release, `NodeModel.DeletePort` will lost its extra parameter and will always delete the ports.
+- `INodeModel.CreatePort` now takes in an `Orientation` parameter.
+- `INodeModel.AddInputPort`, `INodeModel.AddOutputPort`, `INodeModel.AddPlaceHolderPort`, `INodeModel.AddDataInputPort`, `INodeModel.AddDataOutputPort`, `INodeModel.AddExecutionInputPort` and `INodeModel.AddExecutionOutputPort` now all take in an optional `Orientation` parameter.
+- Moved and renamed `GraphViewBridge.contentContainer` to `GraphView.ContentContainer`
+- Moved and renamed `GraphViewBridge.viewTransform` to `GraphView.ViewTransform`
+- Moved and renamed `GraphViewBridge.redrawn` to `GraphView.Redrawn`
+- `IPortNode` renamed to `IPortNodeModel`
+- `IInOutPortsNode` renamed to `IInputOutputPortsNodeModel`
+- `ISingleInputPortNode` renamed to `ISingleInputPortNodeModel`
+- `ISingleOutputPortNode` renamed to `ISingleOutputPortNodeModel`
+- `IReorderableEdgesPort` renamed to `IReorderableEdgesPortModel`
+- Moved Debugging plugin (tracing) from `VisualScripting` to `Plugins` directory.
+- Moved Debugging plugin(tracing) to `UnityEditor.GraphtoolFundation.Plugins.Debugging` namespace.
+- Renamed Debugging `Port` to `DebuggingPort`.
+- Port height can be more than 24px in height.
+- `EditorStateComponent` renamed to `StateComponent`
+- State components interface is now read-only. Updates to state components should go through their Updater.
+- UI update process (most of what was in `GraphViewEditorWindow.Update()`) was refactored into implementations of `IStateObserver`:
+  `GraphView.Updater`, `BlackboardUpdateObserver`, `GraphProcessingStatusObserver`, `SidePanelObserver`, etc.
+- The graph processing was refactored into the `AutomaticGraphProcessor` observer.
+- Graph processing error badges are not part of the `IGraphModel` anymore. They are held by the `GraphProcessingStateComponent`.
+
+### Fixed
+
+- PortContainer instantiate ports UI when it is built.
+- `CollapsibleInOutNode.Progress` is now able to find the progress bar.
+- CopyPasteData only use interfaces
+
 ## [0.8.2-preview] - 2021-02-18
 
 ### Fixed
 
 - Clear the models to select after rebuilding the UI.
 - CalculateRectToFitAll works edges drawn using something else than the Edge class.
+
 
 ## [0.8.1-preview] - 2021-02-16
 
@@ -23,6 +133,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 
 - Obsolete names on `Enumeration`
+- Allow dragging multiple edges from the same port.
 - `class BasicModel.GraphTemplate<TStencil>` which provides a default `IGraphTemplate` implementation
 - `DefaultSearcherDatabaseProvider` which provides a default `ISearcherDatabaseProvider` implementation
 - `DropTarget` abstract `ModelUI` class handling drag and drop from SelectionDragger
@@ -39,6 +150,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `IGraphAssetModel.SourceFilePath`
 - `IDroppable` interface
 - `IDropTarget`. Use new class `DropTarget` to catch `GraphView` mouse drags as drag and drop instead of move.
+- `Resizer`
 
 ### Changed
 
@@ -85,6 +197,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `Stencil.DragNDropHandler` changed to `Stencil.GetExternalDragNDropHandler()`. Allows to dynamically select a drag and drop handler depending on context.
 - `Graphview.ExtractVariablesFromDroppedElements` changed to `Stencil.ExtractVariableFromGraphElement`
 - `SerializableGUID` is now backed by a Hash128 rather than a GUID.
+- The internal bridge was renamed from InternalAPIEngineBridgeDev.003 to InternalAPIEngineBridge.015
 
 ### Fixed
 

@@ -46,7 +46,7 @@ namespace UnityEditor.VisualScripting.Editor
         public object BoundObject
         {
             get => m_Win.BoundObject;
-            set => m_Win.SetBoundObject(value  as GameObject);
+            set => m_Win.SetBoundObject(value as GameObject);
         }
 
         public List<GraphModel> PreviousGraphModels => m_Win.PreviousGraphModels;

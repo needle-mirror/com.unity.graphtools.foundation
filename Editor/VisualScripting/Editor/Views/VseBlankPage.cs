@@ -14,7 +14,7 @@ namespace UnityEditor.VisualScripting.Editor
             out Object boundObject);
     }
 
-    public interface VSOnboardingProvider : IOnboardingProvider {}
+    public interface VSOnboardingProvider : IOnboardingProvider { }
 
     public class VseBlankPage : VisualElement
     {

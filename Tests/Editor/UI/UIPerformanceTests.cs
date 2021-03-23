@@ -70,7 +70,7 @@ namespace UnityEditor.VisualScriptingTests.UI
         static object[] MakeActionTest<T>(T action, State.UIRebuildType rebuildType = State.UIRebuildType.Partial) where T : IAction
         {
             Func<VSGraphModel, IAction> setupFunc = model => action;
-            return new object[] { typeof(T).Name, rebuildType, setupFunc};
+            return new object[] { typeof(T).Name, rebuildType, setupFunc };
         }
 
         static object[] MakeActionTest<T>(Func<VSGraphModel, T> getAction, State.UIRebuildType rebuildType = State.UIRebuildType.Partial) where T : IAction

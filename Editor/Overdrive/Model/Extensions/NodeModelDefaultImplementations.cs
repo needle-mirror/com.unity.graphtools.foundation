@@ -6,7 +6,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public static class NodeModelDefaultImplementations
     {
-        public static IEnumerable<IEdgeModel> GetConnectedEdges(IPortNode self)
+        public static IEnumerable<IEdgeModel> GetConnectedEdges(IPortNodeModel self)
         {
             var graphModel = self.GraphModel;
             if (graphModel != null)
@@ -15,12 +15,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             return Enumerable.Empty<IEdgeModel>();
         }
 
-        public static IPortModel GetInputPort(ISingleInputPortNode self)
+        public static IPortModel GetInputPort(ISingleInputPortNodeModel self)
         {
             return self.InputsById.Values.FirstOrDefault();
         }
 
-        public static IPortModel GetOutputPort(ISingleOutputPortNode self)
+        public static IPortModel GetOutputPort(ISingleOutputPortNodeModel self)
         {
             return self.OutputsById.Values.FirstOrDefault();
         }

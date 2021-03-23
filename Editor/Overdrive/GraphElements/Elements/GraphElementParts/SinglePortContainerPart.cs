@@ -20,7 +20,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public override VisualElement Root => m_PortContainer;
 
         protected SinglePortContainerPart(string name, IGraphElementModel model, IModelUI ownerElement, string parentClassName)
-            : base(name, model, ownerElement, parentClassName) {}
+            : base(name, model, ownerElement, parentClassName) { }
 
         protected override void BuildPartUI(VisualElement container)
         {

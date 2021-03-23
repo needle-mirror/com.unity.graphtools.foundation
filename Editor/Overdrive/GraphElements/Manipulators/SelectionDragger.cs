@@ -6,37 +6,52 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public class SelectionDragger : Dragger
+    public class SelectionDragger : MouseManipulator
     {
         DropTarget m_CurrentDropTarget;
         bool m_Dragging;
         readonly Snapper m_Snapper = new Snapper();
 
-        public bool IsActive => m_Active;
+        bool m_Active;
+
+        Vector2 m_PanSpeed;
 
         // selectedElement is used to store a unique selection candidate for cases where user clicks on an item not to
         // drag it but just to reset the selection -- we only know this after the manipulation has ended
-        GraphElement selectedElement { get; set; }
-        GraphElement clickedElement { get; set; }
+        GraphElement m_SelectedElement;
+        GraphElement m_ClickedElement;
 
-        private List<VisualElement> m_DropTargetPickList = new List<VisualElement>();
-        DropTarget GetDropTargetAt(Vector2 mousePosition, IEnumerable<VisualElement> exclusionList)
+        List<VisualElement> m_DropTargetPickList = new List<VisualElement>();
+
+        GraphView m_GraphView;
+
+        Dictionary<GraphElement, OriginalPos> m_OriginalPos;
+        Vector2 m_OriginalMouse;
+        List<Edge> m_EdgesToUpdate = new List<Edge>();
+
+        class OriginalPos
+        {
+            public Rect pos;
+            public bool dragStarted;
+        }
+
+        public bool IsActive => m_Active;
+
+        DropTarget GetDropTargetAt(Vector2 mousePosition, IReadOnlyList<VisualElement> exclusionList)
         {
             Vector2 pickPoint = mousePosition;
 
-            List<VisualElement> pickList = m_DropTargetPickList;
-
-            pickList.Clear();
-            target.panel.PickAll(pickPoint, pickList);
+            m_DropTargetPickList.Clear();
+            target.panel.PickAll(pickPoint, m_DropTargetPickList);
 
             DropTarget dropTarget = null;
 
-            for (int i = 0; i < pickList.Count; i++)
+            for (int i = 0; i < m_DropTargetPickList.Count; i++)
             {
-                if (pickList[i] == target && target != m_GraphView)
+                if (m_DropTargetPickList[i] == target && target != m_GraphView)
                     continue;
 
-                VisualElement picked = pickList[i];
+                VisualElement picked = m_DropTargetPickList[i];
 
                 dropTarget = picked as DropTarget;
 
@@ -71,17 +86,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             {
                 activators.Add(new ManipulatorActivationFilter { button = MouseButton.LeftMouse, modifiers = EventModifiers.Control });
             }
-            PanSpeed = new Vector2(1, 1);
-            ClampToParentEdges = false;
+            m_PanSpeed = new Vector2(1, 1);
 
             m_GraphView = graphView;
         }
 
         protected override void RegisterCallbacksOnTarget()
         {
-            var selectionContainer = target as ISelection;
-
-            if (selectionContainer == null)
+            if (!(target is IDragSource))
             {
                 throw new InvalidOperationException("Manipulator can only be added to a control that supports selection");
             }
@@ -106,19 +118,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             target.UnregisterCallback<MouseCaptureOutEvent>(OnMouseCaptureOutEvent);
         }
 
-        private GraphView m_GraphView;
-
-        class OriginalPos
-        {
-            public Rect pos;
-            public bool dragStarted;
-        }
-
-        private Dictionary<GraphElement, OriginalPos> m_OriginalPos;
-        private Vector2 m_originalMouse;
-        List<Edge> m_EdgesToUpdate = new List<Edge>();
-
-        private void OnMouseCaptureOutEvent(MouseCaptureOutEvent e)
+        /// <summary>
+        /// Callback for the MouseCaptureOut event.
+        /// </summary>
+        /// <param name="e">The event.</param>
+        protected void OnMouseCaptureOutEvent(MouseCaptureOutEvent e)
         {
             if (m_Active)
             {
@@ -126,24 +130,28 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 {
                     using (DragExitedEvent eExit = DragExitedEvent.GetPooled())
                     {
-                        eExit.target = m_CurrentDropTarget as VisualElement;
+                        eExit.target = m_CurrentDropTarget;
                         m_GraphView.SendEvent(eExit);
                     }
                 }
 
                 // Stop processing the event sequence if the target has lost focus, then.
-                selectedElement = null;
+                m_SelectedElement = null;
                 m_CurrentDropTarget = null;
                 m_Active = false;
 
-                if (m_GraphView.Selection.Any())
+                if (m_GraphView?.GetSelection().Any() ?? false)
                 {
                     m_Snapper.EndSnap();
                 }
             }
         }
 
-        protected new void OnMouseDown(MouseDownEvent e)
+        /// <summary>
+        /// Callback for the MouseDown event.
+        /// </summary>
+        /// <param name="e">The event.</param>
+        protected void OnMouseDown(MouseDownEvent e)
         {
             if (m_Active)
             {
@@ -156,36 +164,38 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 if (m_GraphView == null)
                     return;
 
-                selectedElement = null;
+                m_SelectedElement = null;
 
                 // avoid starting a manipulation on a non movable object
-                clickedElement = e.target as GraphElement;
-                if (clickedElement == null)
+                m_ClickedElement = e.target as GraphElement;
+                if (m_ClickedElement == null)
                 {
                     var ve = e.target as VisualElement;
-                    clickedElement = ve.GetFirstAncestorOfType<GraphElement>();
-                    if (clickedElement == null)
+                    m_ClickedElement = ve?.GetFirstAncestorOfType<GraphElement>();
+                    if (m_ClickedElement == null)
                         return;
                 }
 
                 // Only start manipulating if the clicked element is movable, selected and that the mouse is in its clickable region (it must be deselected otherwise).
-                if (!clickedElement.IsMovable() || !clickedElement.ContainsPoint(clickedElement.WorldToLocal(e.mousePosition)))
+                if (!m_ClickedElement.IsMovable() || !m_ClickedElement.ContainsPoint(m_ClickedElement.WorldToLocal(e.mousePosition)))
                     return;
 
                 // If we hit this, this likely because the element has just been unselected
                 // It is important for this manipulator to receive the event so the previous one did not stop it
                 // but we shouldn't let it propagate to other manipulators to avoid a re-selection
-                if (!m_GraphView.Selection.Contains(clickedElement))
+                if (!m_ClickedElement.IsSelected())
                 {
                     e.StopImmediatePropagation();
                     return;
                 }
 
-                selectedElement = clickedElement;
+                m_SelectedElement = m_ClickedElement;
 
                 m_OriginalPos = new Dictionary<GraphElement, OriginalPos>();
 
-                HashSet<GraphElement> elementsToMove = new HashSet<GraphElement>(m_GraphView.Selection.OfType<GraphElement>());
+                var selection = m_GraphView.GetSelection();
+
+                var elementsToMove = new HashSet<GraphElement>(selection.Select(model => model.GetUI(m_GraphView)).OfType<GraphElement>());
 
                 var selectedPlacemats = new HashSet<Placemat>(elementsToMove.OfType<Placemat>());
                 foreach (var placemat in selectedPlacemats)
@@ -207,14 +217,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                         continue;
 
                     Rect geometry = ce.GetPosition();
-                    Rect geometryInContentViewSpace = ce.hierarchy.parent.ChangeCoordinatesTo(m_GraphView.contentViewContainer, geometry);
+                    Rect geometryInContentViewSpace = ce.hierarchy.parent.ChangeCoordinatesTo(m_GraphView.ContentViewContainer, geometry);
                     m_OriginalPos[ce] = new OriginalPos
                     {
                         pos = geometryInContentViewSpace,
                     };
                 }
 
-                m_originalMouse = e.mousePosition;
+                m_OriginalMouse = e.mousePosition;
                 m_ItemPanDiff = Vector3.zero;
 
                 if (m_PanSchedule == null)
@@ -223,7 +233,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     m_PanSchedule.Pause();
                 }
 
-                m_Snapper.BeginSnap(selectedElement);
+                m_Snapper.BeginSnap(m_SelectedElement);
 
                 m_Active = true;
                 target.CaptureMouse(); // We want to receive events even when mouse is not over ourself.
@@ -238,12 +248,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public const float maxSpeedFactor = 2.5f;
         public const float maxPanSpeed = maxSpeedFactor * panSpeed;
 
-        private IVisualElementScheduledItem m_PanSchedule;
-        private Vector3 m_PanDiff = Vector3.zero;
-        private Vector3 m_ItemPanDiff = Vector3.zero;
-        private Vector2 m_MouseDiff = Vector2.zero;
+        IVisualElementScheduledItem m_PanSchedule;
+        Vector3 m_PanDiff = Vector3.zero;
+        Vector3 m_ItemPanDiff = Vector3.zero;
+        Vector2 m_MouseDiff = Vector2.zero;
 
-        private float m_Scale;
+        float m_Scale;
 
         internal Vector2 GetEffectivePanSpeed(Vector2 mousePos)
         {
@@ -273,17 +283,21 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
 
             // Let the snapper compute a snapped position
-            Rect geometryInContentViewContainerSpace = element.parent.ChangeCoordinatesTo(m_GraphView.contentViewContainer, selectedElementProposedGeom);
+            Rect geometryInContentViewContainerSpace = element.parent.ChangeCoordinatesTo(m_GraphView.ContentViewContainer, selectedElementProposedGeom);
 
-            Vector2 mousePanningDelta = new Vector2((m_MouseDiff.x - m_ItemPanDiff.x) * PanSpeed.x / m_Scale, (m_MouseDiff.y - m_ItemPanDiff.y) * PanSpeed.y / m_Scale);
+            Vector2 mousePanningDelta = new Vector2((m_MouseDiff.x - m_ItemPanDiff.x) * m_PanSpeed.x / m_Scale, (m_MouseDiff.y - m_ItemPanDiff.y) * m_PanSpeed.y / m_Scale);
             geometryInContentViewContainerSpace = m_Snapper.GetSnappedRect(geometryInContentViewContainerSpace, element, m_Scale, mousePanningDelta);
 
             // Once the snapped position is computed in the GraphView.contentViewContainer's space then
             // translate it into the local space of the parent of the selected element.
-            selectedElementProposedGeom = m_GraphView.contentViewContainer.ChangeCoordinatesTo(element.parent, geometryInContentViewContainerSpace);
+            selectedElementProposedGeom = m_GraphView.ContentViewContainer.ChangeCoordinatesTo(element.parent, geometryInContentViewContainerSpace);
         }
 
-        protected new void OnMouseMove(MouseMoveEvent e)
+        /// <summary>
+        /// Callback for the MouseMove event.
+        /// </summary>
+        /// <param name="e">The event.</param>
+        protected void OnMouseMove(MouseMoveEvent e)
         {
             if (!m_Active)
                 return;
@@ -306,40 +320,45 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             // We need to monitor the mouse diff "by hand" because we stop positioning the graph elements once the
             // mouse has gone out.
-            m_MouseDiff = m_originalMouse - e.mousePosition;
+            m_MouseDiff = m_OriginalMouse - e.mousePosition;
 
-            // Handle the selected element
-            Rect selectedElementGeom = GetSelectedElementGeom();
-
-            ComputeSnappedRect(ref selectedElementGeom, selectedElement);
-
-            foreach (KeyValuePair<GraphElement, OriginalPos> v in m_OriginalPos)
+            if (m_SelectedElement.parent != null)
             {
-                GraphElement ce = v.Key;
+                // Handle the selected element
+                Rect selectedElementGeom = GetSelectedElementGeom();
 
-                // Protect against stale visual elements that have been deparented since the start of the manipulation
-                if (ce.hierarchy.parent == null)
-                    continue;
+                ComputeSnappedRect(ref selectedElementGeom, m_SelectedElement);
 
-                if (!v.Value.dragStarted)
+                foreach (KeyValuePair<GraphElement, OriginalPos> v in m_OriginalPos)
                 {
-                    v.Value.dragStarted = true;
+                    GraphElement ce = v.Key;
+
+                    // Protect against stale visual elements that have been deparented since the start of the manipulation
+                    if (ce.hierarchy.parent == null)
+                        continue;
+
+                    if (!v.Value.dragStarted)
+                    {
+                        v.Value.dragStarted = true;
+                    }
+
+                    SnapOrMoveElement(v.Key, v.Value.pos, selectedElementGeom);
                 }
-                SnapOrMoveElement(v.Key, v.Value.pos, selectedElementGeom);
+
+                foreach (var edge in m_EdgesToUpdate)
+                {
+                    SnapOrMoveEdge(edge, selectedElementGeom);
+                }
             }
 
-            foreach (var edge in m_EdgesToUpdate)
-            {
-                SnapOrMoveEdge(edge, selectedElementGeom);
-            }
-
-            List<ISelectableGraphElement> selection = m_GraphView.Selection;
+            var selection = m_GraphView.GetSelection();
+            var selectedUI = selection.Select(m => m.GetUI(m_GraphView));
 
             // TODO: Replace with a temp drawing or something...maybe manipulator could fake position
             // all this to let operation know which element sits under cursor...or is there another way to draw stuff that is being dragged?
 
             var previousDropTarget = m_CurrentDropTarget;
-            m_CurrentDropTarget = GetDropTargetAt(e.mousePosition, selection.OfType<VisualElement>());
+            m_CurrentDropTarget = GetDropTargetAt(e.mousePosition, selectedUI.OfType<VisualElement>().ToList());
 
             if (m_CurrentDropTarget != previousDropTarget)
             {
@@ -347,7 +366,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 {
                     using (DragLeaveEvent eLeave = DragLeaveEvent.GetPooled(e))
                     {
-                        eLeave.target = previousDropTarget as VisualElement;
+                        eLeave.target = previousDropTarget;
                         m_GraphView.SendEvent(eLeave);
                     }
                 }
@@ -356,7 +375,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 {
                     using (DragEnterEvent eEnter = DragEnterEvent.GetPooled(e))
                     {
-                        eEnter.target = m_CurrentDropTarget as VisualElement;
+                        eEnter.target = m_CurrentDropTarget;
                         m_GraphView.SendEvent(eEnter);
                     }
                 }
@@ -366,7 +385,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             {
                 using (DragUpdatedEvent eUpdated = DragUpdatedEvent.GetPooled(e))
                 {
-                    eUpdated.target = m_CurrentDropTarget as VisualElement;
+                    eUpdated.target = m_CurrentDropTarget;
                     m_GraphView.SendEvent(eUpdated);
                 }
             }
@@ -375,15 +394,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             e.StopPropagation();
         }
 
-        private void Pan(TimerState ts)
+        void Pan(TimerState ts)
         {
-            m_GraphView.viewTransform.position -= m_PanDiff;
+            Vector3 p = m_GraphView.ContentViewContainer.transform.position - m_PanDiff;
+            Vector3 s = m_GraphView.ContentViewContainer.transform.scale;
+            m_GraphView.UpdateViewTransform(p, s);
+
             m_ItemPanDiff += m_PanDiff;
 
             // Handle the selected element
             Rect selectedElementGeom = GetSelectedElementGeom();
 
-            ComputeSnappedRect(ref selectedElementGeom, selectedElement);
+            ComputeSnappedRect(ref selectedElementGeom, m_SelectedElement);
 
             foreach (KeyValuePair<GraphElement, OriginalPos> v in m_OriginalPos)
             {
@@ -395,8 +417,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             if (m_Snapper.IsActive)
             {
-                Vector2 geomDiff = selectedElementGeom.position - m_OriginalPos[selectedElement].pos.position;
-                Vector2 position = new Vector2(originalPos.x + geomDiff.x , originalPos.y + geomDiff.y);
+                Vector2 geomDiff = selectedElementGeom.position - m_OriginalPos[m_SelectedElement].pos.position;
+                Vector2 position = new Vector2(originalPos.x + geomDiff.x, originalPos.y + geomDiff.y);
 
                 element.SetPosition(new Rect(position, element.layout.size));
             }
@@ -409,16 +431,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         Rect GetSelectedElementGeom()
         {
             // Handle the selected element
-            Matrix4x4 g = selectedElement.worldTransform;
+            Matrix4x4 g = m_SelectedElement.worldTransform;
             m_Scale = g.m00; //The scale on x is equal to the scale on y because the graphview is not distorted
 
-            Rect selectedElementGeom = m_OriginalPos[selectedElement].pos;
+            Rect selectedElementGeom = m_OriginalPos[m_SelectedElement].pos;
 
             if (m_Snapper.IsActive)
             {
                 // Compute the new position of the selected element using the mouse delta position and panning info
-                selectedElementGeom.x = selectedElementGeom.x - (m_MouseDiff.x - m_ItemPanDiff.x) * PanSpeed.x / m_Scale;
-                selectedElementGeom.y = selectedElementGeom.y - (m_MouseDiff.y - m_ItemPanDiff.y) * PanSpeed.y / m_Scale;
+                selectedElementGeom.x = selectedElementGeom.x - (m_MouseDiff.x - m_ItemPanDiff.x) * m_PanSpeed.x / m_Scale;
+                selectedElementGeom.y = selectedElementGeom.y - (m_MouseDiff.y - m_ItemPanDiff.y) * m_PanSpeed.y / m_Scale;
             }
 
             return selectedElementGeom;
@@ -432,10 +454,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             Rect newPos = new Rect(0, 0, originalPos.width, originalPos.height);
 
             // Compute the new position of the selected element using the mouse delta position and panning info
-            newPos.x = originalPos.x - (m_MouseDiff.x - m_ItemPanDiff.x) * PanSpeed.x / scale.x * element.transform.scale.x;
-            newPos.y = originalPos.y - (m_MouseDiff.y - m_ItemPanDiff.y) * PanSpeed.y / scale.y * element.transform.scale.y;
+            newPos.x = originalPos.x - (m_MouseDiff.x - m_ItemPanDiff.x) * m_PanSpeed.x / scale.x * element.transform.scale.x;
+            newPos.y = originalPos.y - (m_MouseDiff.y - m_ItemPanDiff.y) * m_PanSpeed.y / scale.y * element.transform.scale.y;
 
-            newPos = m_GraphView.contentViewContainer.ChangeCoordinatesTo(element.hierarchy.parent, newPos);
+            newPos = m_GraphView.ContentViewContainer.ChangeCoordinatesTo(element.hierarchy.parent, newPos);
 
             element.SetPosition(newPos);
         }
@@ -444,7 +466,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             if (m_Snapper.IsActive)
             {
-                Vector2 geomDiff = selectedElementGeom.position - m_OriginalPos[selectedElement].pos.position;
+                Vector2 geomDiff = selectedElementGeom.position - m_OriginalPos[m_SelectedElement].pos.position;
                 var offset = new Vector2(geomDiff.x, geomDiff.y);
 
                 edge.EdgeControl.ControlPointOffset = offset;
@@ -462,21 +484,25 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             // Compute the new position of the selected element using the mouse delta position and panning info
             var offset = new Vector2(
-                -(m_MouseDiff.x - m_ItemPanDiff.x) * PanSpeed.x / scale.x * edge.transform.scale.x,
-                -(m_MouseDiff.y - m_ItemPanDiff.y) * PanSpeed.y / scale.y * edge.transform.scale.y
+                -(m_MouseDiff.x - m_ItemPanDiff.x) * m_PanSpeed.x / scale.x * edge.transform.scale.x,
+                -(m_MouseDiff.y - m_ItemPanDiff.y) * m_PanSpeed.y / scale.y * edge.transform.scale.y
             );
 
             edge.EdgeControl.ControlPointOffset = offset;
         }
 
-        protected new void OnMouseUp(MouseUpEvent evt)
+        /// <summary>
+        /// Callback for the MouseUp event.
+        /// </summary>
+        /// <param name="evt">The event.</param>
+        protected void OnMouseUp(MouseUpEvent evt)
         {
             if (m_GraphView == null)
             {
                 if (m_Active)
                 {
                     target.ReleaseMouse();
-                    selectedElement = null;
+                    m_SelectedElement = null;
                     m_Active = false;
                     m_Dragging = false;
                     m_CurrentDropTarget = null;
@@ -485,13 +511,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 return;
             }
 
-            List<ISelectableGraphElement> selection = m_GraphView.Selection;
+            var selectedModels = m_GraphView.GetSelection();
 
             if (CanStopManipulation(evt))
             {
                 if (m_Active)
                 {
-                    if (m_Dragging || selectedElement == null)
+                    if (m_Dragging || m_SelectedElement == null)
                     {
                         if (target is GraphView graphView)
                         {
@@ -500,7 +526,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                         }
 
                         // if we stop dragging on something else than a DropTarget, just move elements
-                        if (m_GraphView != null && (m_CurrentDropTarget == null || !m_CurrentDropTarget.CanAcceptSelectionDrop(m_GraphView.Selection)))
+                        if (m_GraphView != null && (m_CurrentDropTarget == null || !m_CurrentDropTarget.CanAcceptSelectionDrop(selectedModels)))
                         {
                             var movedElements = new HashSet<GraphElement>(m_OriginalPos.Keys);
                             movedElements.AddRange(m_EdgesToUpdate);
@@ -512,7 +538,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                                 .Where(e => !(e.Model is INodeModel) || e.IsMovable())
                                 .Select(e => e.Model)
                                 .OfType<IMovable>();
-                            m_GraphView.CommandDispatcher.Dispatch(new MoveElementsCommand(delta, models.ToArray()));
+                            m_GraphView.CommandDispatcher.Dispatch(
+                                new MoveElementsCommand(delta, models.ToArray()));
                         }
                     }
 
@@ -526,18 +553,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
                     if (m_ItemPanDiff != Vector3.zero)
                     {
-                        Vector3 p = m_GraphView.contentViewContainer.transform.position;
-                        Vector3 s = m_GraphView.contentViewContainer.transform.scale;
-                        m_GraphView.UpdateViewTransform(p, s);
+                        Vector3 p = m_GraphView.ContentViewContainer.transform.position;
+                        Vector3 s = m_GraphView.ContentViewContainer.transform.scale;
+                        m_GraphView.CommandDispatcher.Dispatch(new ReframeGraphViewCommand(p, s));
                     }
 
-                    if (selection.Count > 0 && m_CurrentDropTarget != null)
+                    if (selectedModels.Count > 0 && m_CurrentDropTarget != null)
                     {
-                        if (m_CurrentDropTarget.CanAcceptSelectionDrop(selection))
+                        if (m_CurrentDropTarget.CanAcceptSelectionDrop(selectedModels))
                         {
                             using (DragPerformEvent ePerform = DragPerformEvent.GetPooled(evt))
                             {
-                                ePerform.target = m_CurrentDropTarget as VisualElement;
+                                ePerform.target = m_CurrentDropTarget;
                                 m_GraphView.SendEvent(ePerform);
                             }
                         }
@@ -545,13 +572,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                         {
                             using (DragExitedEvent eExit = DragExitedEvent.GetPooled(evt))
                             {
-                                eExit.target = m_CurrentDropTarget as VisualElement;
+                                eExit.target = m_CurrentDropTarget;
                                 m_GraphView.SendEvent(eExit);
                             }
                         }
                     }
 
-                    if (selection.Any())
+                    if (selectedModels.Any())
                     {
                         m_Snapper.EndSnap();
                     }
@@ -559,7 +586,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     target.ReleaseMouse();
                     evt.StopPropagation();
                 }
-                selectedElement = null;
+                m_SelectedElement = null;
                 m_Active = false;
                 m_CurrentDropTarget = null;
                 m_Dragging = false;
@@ -567,7 +594,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        private void OnKeyDown(KeyDownEvent e)
+        /// <summary>
+        /// Callback for the KeyDown event.
+        /// </summary>
+        /// <param name="e">The event.</param>
+        protected void OnKeyDown(KeyDownEvent e)
         {
             if (e.keyCode != KeyCode.Escape || m_GraphView == null || !m_Active)
                 return;
@@ -584,14 +615,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             if (m_ItemPanDiff != Vector3.zero)
             {
-                Vector3 p = m_GraphView.contentViewContainer.transform.position;
-                Vector3 s = m_GraphView.contentViewContainer.transform.scale;
-                m_GraphView.UpdateViewTransform(p, s);
+                Vector3 p = m_GraphView.ContentViewContainer.transform.position;
+                Vector3 s = m_GraphView.ContentViewContainer.transform.scale;
+                m_GraphView.CommandDispatcher.Dispatch(new ReframeGraphViewCommand(p, s));
             }
 
             using (DragExitedEvent eExit = DragExitedEvent.GetPooled())
             {
-                eExit.target = m_CurrentDropTarget as VisualElement;
+                eExit.target = m_CurrentDropTarget;
                 m_GraphView.SendEvent(eExit);
             }
 

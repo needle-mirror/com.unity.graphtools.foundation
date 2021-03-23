@@ -45,13 +45,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator MovableElementCanBeDragged()
         {
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
 
             var node = m_NodeModel.GetUI<Node>(graphView);
             Assert.IsNotNull(node);
 
-            Vector2 worldNodePos = graphView.contentViewContainer.LocalToWorld(k_NodePos);
+            Vector2 worldNodePos = graphView.ContentViewContainer.LocalToWorld(k_NodePos);
             Vector2 start = worldNodePos + k_SelectionOffset;
             Vector2 moveOffset = new Vector2(10, 10);
 
@@ -73,7 +73,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator LocallyScaledElementMovesAtSameSpeed()
         {
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
             var node = m_NodeModel.GetUI<Node>(graphView);
 
@@ -86,7 +86,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator MovableElementCanBeDraggedAndMoveCancelledByEscapeKey()
         {
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
             var node = m_NodeModel.GetUI<Node>(graphView);
 
@@ -95,11 +95,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             try
             {
-                GraphElement elem = graphView.Q<GraphElement>();
+                GraphElement elem = graphView.SafeQ<GraphElement>();
 
                 Vector2 startElementPosition = node.GetPosition().position;
 
-                Vector2 worldNodePos = graphView.contentViewContainer.LocalToWorld(k_NodePos);
+                Vector2 worldNodePos = graphView.ContentViewContainer.LocalToWorld(k_NodePos);
 
                 Vector2 start = worldNodePos + k_SelectionOffset;
                 Vector2 move = new Vector2(-10, -10);
@@ -150,13 +150,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator MovableElementCanBeDraggedAtTheBorderToStartPanningInNegativeX()
         {
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
             var node = m_NodeModel.GetUI<Node>(graphView);
 
             bool needsMouseUp = false;
 
-            Vector2 worldNodePos = graphView.contentViewContainer.LocalToWorld(k_NodePos);
+            Vector2 worldNodePos = graphView.ContentViewContainer.LocalToWorld(k_NodePos);
             Vector2 start = worldNodePos + k_SelectionOffset;
             Vector2 panPos = new Vector2(SelectionDragger.panAreaWidth, start.y);
 
@@ -173,15 +173,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 helpers.MouseDragEvent(start, panPos);
                 yield return null;
 
-                GraphElement elem = graphView.Q<GraphElement>();
+                GraphElement elem = graphView.SafeQ<GraphElement>();
 
                 float deltaX = start.x - panPos.x;
                 var newPos = new Vector2(k_NodePos.x - deltaX, k_NodePos.y);
 
                 Assert.AreEqual(newPos, elem.GetPosition().position);
 
-                Assert.AreEqual(0, graphView.viewTransform.position.x);
-                Assert.AreEqual(0, graphView.viewTransform.position.y);
+                Assert.AreEqual(0, graphView.ViewTransform.position.x);
+                Assert.AreEqual(0, graphView.ViewTransform.position.y);
 
                 timePassed += SelectionDragger.panInterval;
                 graphView.UpdateScheduledEvents();
@@ -192,8 +192,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 newPos.x -= panSpeedAtLocation;
                 Assert.AreEqual(newPos, elem.GetPosition().position);
 
-                Assert.AreEqual(panSpeedAtLocation, graphView.viewTransform.position.x);
-                Assert.AreEqual(0, graphView.viewTransform.position.y);
+                Assert.AreEqual(panSpeedAtLocation, graphView.ViewTransform.position.x);
+                Assert.AreEqual(0, graphView.ViewTransform.position.y);
 
                 timePassed += SelectionDragger.panInterval;
                 graphView.UpdateScheduledEvents();
@@ -202,8 +202,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 newPos.x -= panSpeedAtLocation;
                 Assert.AreEqual(newPos, elem.GetPosition().position);
 
-                Assert.AreEqual(panSpeedAtLocation * 2, graphView.viewTransform.position.x);
-                Assert.AreEqual(0, graphView.viewTransform.position.y);
+                Assert.AreEqual(panSpeedAtLocation * 2, graphView.ViewTransform.position.x);
+                Assert.AreEqual(0, graphView.ViewTransform.position.y);
 
                 helpers.MouseUpEvent(panPos);
                 needsMouseUp = false;
@@ -211,8 +211,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
                 Assert.AreEqual(newPos, node.GetPosition().position);
 
-                Assert.AreEqual(panSpeedAtLocation * 2, graphView.contentViewContainer.transform.position.x);
-                Assert.AreEqual(0, graphView.contentViewContainer.transform.position.y);
+                Assert.AreEqual(panSpeedAtLocation * 2, graphView.ContentViewContainer.transform.position.x);
+                Assert.AreEqual(0, graphView.ContentViewContainer.transform.position.y);
             }
             finally
             {
@@ -226,13 +226,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator MovableElementCanBeDraggedAtTheBorderToStartPanningInPositiveX()
         {
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
             var node = m_NodeModel.GetUI<Node>(graphView);
 
             bool needsMouseUp = false;
 
-            Vector2 worldNodePos = graphView.contentViewContainer.LocalToWorld(k_NodePos);
+            Vector2 worldNodePos = graphView.ContentViewContainer.LocalToWorld(k_NodePos);
             Vector2 start = worldNodePos + k_SelectionOffset;
             Vector2 panPos = new Vector2(window.position.width - SelectionDragger.panAreaWidth, start.y);
 
@@ -249,7 +249,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 helpers.MouseDragEvent(start, panPos);
                 yield return null;
 
-                GraphElement elem = graphView.Q<GraphElement>();
+                GraphElement elem = graphView.SafeQ<GraphElement>();
 
                 float deltaX = start.x - panPos.x;
 
@@ -257,8 +257,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
                 Assert.AreEqual(newPos, elem.GetPosition().position);
 
-                Assert.AreEqual(0, graphView.viewTransform.position.x);
-                Assert.AreEqual(0, graphView.viewTransform.position.y);
+                Assert.AreEqual(0, graphView.ViewTransform.position.x);
+                Assert.AreEqual(0, graphView.ViewTransform.position.y);
 
                 timePassed += SelectionDragger.panInterval;
                 graphView.UpdateScheduledEvents();
@@ -269,8 +269,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 newPos.x += panSpeedAtLocation;
                 Assert.AreEqual(newPos, elem.GetPosition().position);
 
-                Assert.AreEqual(-panSpeedAtLocation, graphView.viewTransform.position.x);
-                Assert.AreEqual(0, graphView.viewTransform.position.y);
+                Assert.AreEqual(-panSpeedAtLocation, graphView.ViewTransform.position.x);
+                Assert.AreEqual(0, graphView.ViewTransform.position.y);
 
                 timePassed += SelectionDragger.panInterval;
                 graphView.UpdateScheduledEvents();
@@ -279,8 +279,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 newPos.x += panSpeedAtLocation;
                 Assert.AreEqual(newPos, elem.GetPosition().position);
 
-                Assert.AreEqual(-panSpeedAtLocation * 2, graphView.viewTransform.position.x);
-                Assert.AreEqual(0, graphView.viewTransform.position.y);
+                Assert.AreEqual(-panSpeedAtLocation * 2, graphView.ViewTransform.position.x);
+                Assert.AreEqual(0, graphView.ViewTransform.position.y);
 
                 helpers.MouseUpEvent(panPos);
                 needsMouseUp = false;
@@ -288,8 +288,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
                 Assert.AreEqual(newPos, node.GetPosition().position);
 
-                Assert.AreEqual(-panSpeedAtLocation * 2, graphView.contentViewContainer.transform.position.x);
-                Assert.AreEqual(0, graphView.contentViewContainer.transform.position.y);
+                Assert.AreEqual(-panSpeedAtLocation * 2, graphView.ContentViewContainer.transform.position.x);
+                Assert.AreEqual(0, graphView.ContentViewContainer.transform.position.y);
             }
             finally
             {
@@ -303,17 +303,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator MovableElementCanBeDraggedAtTheBorderToStartPanningInNegativeY()
         {
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
             var node = m_NodeModel.GetUI<Node>(graphView);
 
             bool needsMouseUp = false;
 
-            Vector2 worldNodePos = graphView.contentViewContainer.LocalToWorld(k_NodePos);
+            Vector2 worldNodePos = graphView.ContentViewContainer.LocalToWorld(k_NodePos);
             Vector2 start = worldNodePos + k_SelectionOffset;
 
             Vector2 worldPanPos =
-                graphView.contentViewContainer.LocalToWorld(
+                graphView.ContentViewContainer.LocalToWorld(
                     new Vector2(SelectionDragger.panAreaWidth, SelectionDragger.panAreaWidth));
             Vector2 panPos = new Vector2(start.x, worldPanPos.y);
 
@@ -330,15 +330,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 helpers.MouseDragEvent(start, panPos);
                 yield return null;
 
-                GraphElement elem = graphView.Q<GraphElement>();
+                GraphElement elem = graphView.SafeQ<GraphElement>();
 
                 float deltaY = start.y - panPos.y;
                 Vector2 newPos = new Vector2(k_NodePos.x, k_NodePos.y - deltaY);
 
                 Assert.AreEqual(newPos, elem.GetPosition().position);
 
-                Assert.AreEqual(0, graphView.viewTransform.position.x);
-                Assert.AreEqual(0, graphView.viewTransform.position.y);
+                Assert.AreEqual(0, graphView.ViewTransform.position.x);
+                Assert.AreEqual(0, graphView.ViewTransform.position.y);
 
                 timePassed += SelectionDragger.panInterval;
                 graphView.UpdateScheduledEvents();
@@ -349,8 +349,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 newPos.y -= panSpeedAtLocation;
                 Assert.AreEqual(newPos, elem.GetPosition().position);
 
-                Assert.AreEqual(0, graphView.viewTransform.position.x);
-                Assert.AreEqual(panSpeedAtLocation, graphView.viewTransform.position.y);
+                Assert.AreEqual(0, graphView.ViewTransform.position.x);
+                Assert.AreEqual(panSpeedAtLocation, graphView.ViewTransform.position.y);
 
                 timePassed += SelectionDragger.panInterval;
                 graphView.UpdateScheduledEvents();
@@ -359,8 +359,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 newPos.y -= panSpeedAtLocation;
                 Assert.AreEqual(newPos, elem.GetPosition().position);
 
-                Assert.AreEqual(0, graphView.viewTransform.position.x);
-                Assert.AreEqual(panSpeedAtLocation * 2, graphView.viewTransform.position.y);
+                Assert.AreEqual(0, graphView.ViewTransform.position.x);
+                Assert.AreEqual(panSpeedAtLocation * 2, graphView.ViewTransform.position.y);
 
                 helpers.MouseUpEvent(panPos);
                 needsMouseUp = false;
@@ -368,8 +368,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
                 Assert.AreEqual(newPos, node.GetPosition().position);
 
-                Assert.AreEqual(0, graphView.contentViewContainer.transform.position.x);
-                Assert.AreEqual(panSpeedAtLocation * 2, graphView.contentViewContainer.transform.position.y);
+                Assert.AreEqual(0, graphView.ContentViewContainer.transform.position.x);
+                Assert.AreEqual(panSpeedAtLocation * 2, graphView.ContentViewContainer.transform.position.y);
             }
             finally
             {
@@ -383,13 +383,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator MovableElementCanBeDraggedAtTheBorderToStartPanningInPositiveY()
         {
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
             var node = m_NodeModel.GetUI<Node>(graphView);
 
             bool needsMouseUp = false;
 
-            Vector2 worldNodePos = graphView.contentViewContainer.LocalToWorld(k_NodePos);
+            Vector2 worldNodePos = graphView.ContentViewContainer.LocalToWorld(k_NodePos);
             Vector2 start = worldNodePos + k_SelectionOffset;
             float worldY = graphView.LocalToWorld(new Vector2(0, graphView.layout.height - SelectionDragger.panAreaWidth)).y;
             Vector2 panPos = new Vector2(start.x, worldY);
@@ -410,12 +410,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 float deltaY = start.y - panPos.y;
                 Vector2 newPos = new Vector2(k_NodePos.x, k_NodePos.y - deltaY);
 
-                GraphElement elem = graphView.Q<GraphElement>();
+                GraphElement elem = graphView.SafeQ<GraphElement>();
 
                 Assert.AreEqual(newPos, elem.GetPosition().position);
 
-                Assert.AreEqual(0, graphView.viewTransform.position.x);
-                Assert.AreEqual(0, graphView.viewTransform.position.y);
+                Assert.AreEqual(0, graphView.ViewTransform.position.x);
+                Assert.AreEqual(0, graphView.ViewTransform.position.y);
 
                 timePassed += SelectionDragger.panInterval;
                 graphView.UpdateScheduledEvents();
@@ -426,8 +426,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 newPos.y += panSpeedAtLocation;
                 Assert.AreEqual(newPos, elem.GetPosition().position);
 
-                Assert.AreEqual(0, graphView.viewTransform.position.x);
-                Assert.AreEqual(-panSpeedAtLocation, graphView.viewTransform.position.y);
+                Assert.AreEqual(0, graphView.ViewTransform.position.x);
+                Assert.AreEqual(-panSpeedAtLocation, graphView.ViewTransform.position.y);
 
                 timePassed += SelectionDragger.panInterval;
                 graphView.UpdateScheduledEvents();
@@ -436,8 +436,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 newPos.y += panSpeedAtLocation;
                 Assert.AreEqual(newPos, elem.GetPosition().position);
 
-                Assert.AreEqual(0, graphView.viewTransform.position.x);
-                Assert.AreEqual(-panSpeedAtLocation * 2, graphView.viewTransform.position.y);
+                Assert.AreEqual(0, graphView.ViewTransform.position.x);
+                Assert.AreEqual(-panSpeedAtLocation * 2, graphView.ViewTransform.position.y);
 
                 helpers.MouseUpEvent(panPos);
                 needsMouseUp = false;
@@ -445,8 +445,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
                 Assert.AreEqual(newPos, node.GetPosition().position);
 
-                Assert.AreEqual(0, graphView.contentViewContainer.transform.position.x);
-                Assert.AreEqual(-panSpeedAtLocation * 2, graphView.contentViewContainer.transform.position.y);
+                Assert.AreEqual(0, graphView.ContentViewContainer.transform.position.x);
+                Assert.AreEqual(-panSpeedAtLocation * 2, graphView.ContentViewContainer.transform.position.y);
             }
             finally
             {
@@ -460,7 +460,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator DraggingEdgeToOrOverBorderStartsPanningInNegativeX()
         {
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
 
             bool needsMouseUp = false;
@@ -468,7 +468,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             try
             {
-                var port = window.GraphView.Q<Port>();
+                var port = window.GraphView.SafeQ<Port>();
 
                 portCenter = port.GetGlobalCenter();
 
@@ -482,53 +482,53 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 helpers.MouseDragEvent(portCenter, new Vector2(EdgeDragHelper.panAreaWidth, portCenter.y));
                 yield return null;
 
-                Assert.AreEqual(0, graphView.viewTransform.position.x);
-                Assert.AreEqual(0, graphView.viewTransform.position.y);
+                Assert.AreEqual(0, graphView.ViewTransform.position.x);
+                Assert.AreEqual(0, graphView.ViewTransform.position.y);
 
                 timePassed += EdgeDragHelper.panInterval;
                 graphView.UpdateScheduledEvents();
 
                 float panSpeedAtLocation = EdgeDragHelper.panSpeed * 0.5f;
                 float totalDisplacement = panSpeedAtLocation;
-                Assert.AreEqual(totalDisplacement, graphView.viewTransform.position.x);
-                Assert.AreEqual(0, graphView.viewTransform.position.y);
+                Assert.AreEqual(totalDisplacement, graphView.ViewTransform.position.x);
+                Assert.AreEqual(0, graphView.ViewTransform.position.y);
 
                 timePassed += EdgeDragHelper.panInterval;
                 graphView.UpdateScheduledEvents();
 
                 totalDisplacement += panSpeedAtLocation;
-                Assert.AreEqual(totalDisplacement, graphView.viewTransform.position.x);
-                Assert.AreEqual(0, graphView.viewTransform.position.y);
+                Assert.AreEqual(totalDisplacement, graphView.ViewTransform.position.x);
+                Assert.AreEqual(0, graphView.ViewTransform.position.y);
 
                 // Move outside window
                 helpers.MouseDragEvent(new Vector2(EdgeDragHelper.panAreaWidth, portCenter.y),
                     new Vector2(-EdgeDragHelper.panAreaWidth, portCenter.y));
                 yield return null;
 
-                Assert.AreEqual(totalDisplacement, graphView.viewTransform.position.x);
-                Assert.AreEqual(0, graphView.viewTransform.position.y);
+                Assert.AreEqual(totalDisplacement, graphView.ViewTransform.position.x);
+                Assert.AreEqual(0, graphView.ViewTransform.position.y);
 
                 panSpeedAtLocation = EdgeDragHelper.maxPanSpeed;
                 timePassed += EdgeDragHelper.panInterval;
                 graphView.UpdateScheduledEvents();
 
                 totalDisplacement += panSpeedAtLocation;
-                Assert.AreEqual(totalDisplacement, graphView.viewTransform.position.x);
-                Assert.AreEqual(0, graphView.viewTransform.position.y);
+                Assert.AreEqual(totalDisplacement, graphView.ViewTransform.position.x);
+                Assert.AreEqual(0, graphView.ViewTransform.position.y);
 
                 timePassed += EdgeDragHelper.panInterval;
                 graphView.UpdateScheduledEvents();
 
                 totalDisplacement += panSpeedAtLocation;
-                Assert.AreEqual(totalDisplacement, graphView.viewTransform.position.x);
-                Assert.AreEqual(0, graphView.viewTransform.position.y);
+                Assert.AreEqual(totalDisplacement, graphView.ViewTransform.position.x);
+                Assert.AreEqual(0, graphView.ViewTransform.position.y);
 
                 helpers.MouseUpEvent(new Vector2(-EdgeDragHelper.panAreaWidth, portCenter.y));
                 needsMouseUp = false;
                 yield return null;
 
-                Assert.AreEqual(totalDisplacement, graphView.viewTransform.position.x);
-                Assert.AreEqual(0, graphView.viewTransform.position.y);
+                Assert.AreEqual(totalDisplacement, graphView.ViewTransform.position.x);
+                Assert.AreEqual(0, graphView.ViewTransform.position.y);
             }
             finally
             {
@@ -542,7 +542,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator DraggingEdgeToOrOverBorderStartsPanningInPositiveX()
         {
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
 
             bool needsMouseUp = false;
@@ -550,7 +550,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             try
             {
-                var port = window.GraphView.Q<Port>();
+                var port = window.GraphView.SafeQ<Port>();
 
                 portCenter = port.GetGlobalCenter();
 
@@ -565,23 +565,23 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                     new Vector2(window.position.width - (EdgeDragHelper.panAreaWidth), portCenter.y));
                 yield return null;
 
-                Assert.AreEqual(0, graphView.viewTransform.position.x);
-                Assert.AreEqual(0, graphView.viewTransform.position.y);
+                Assert.AreEqual(0, graphView.ViewTransform.position.x);
+                Assert.AreEqual(0, graphView.ViewTransform.position.y);
 
                 timePassed += EdgeDragHelper.panInterval;
                 graphView.UpdateScheduledEvents();
 
                 float panSpeedAtLocation = -EdgeDragHelper.panSpeed * 0.5f;
                 float totalDisplacement = panSpeedAtLocation;
-                Assert.AreEqual(totalDisplacement, graphView.viewTransform.position.x);
-                Assert.AreEqual(0, graphView.viewTransform.position.y);
+                Assert.AreEqual(totalDisplacement, graphView.ViewTransform.position.x);
+                Assert.AreEqual(0, graphView.ViewTransform.position.y);
 
                 timePassed += EdgeDragHelper.panInterval;
                 graphView.UpdateScheduledEvents();
 
                 totalDisplacement += panSpeedAtLocation;
-                Assert.AreEqual(totalDisplacement, graphView.viewTransform.position.x);
-                Assert.AreEqual(0, graphView.viewTransform.position.y);
+                Assert.AreEqual(totalDisplacement, graphView.ViewTransform.position.x);
+                Assert.AreEqual(0, graphView.ViewTransform.position.y);
 
                 // Move outside window
                 helpers.MouseDragEvent(
@@ -589,30 +589,30 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                     new Vector2(window.position.width + EdgeDragHelper.panAreaWidth, portCenter.y));
                 yield return null;
 
-                Assert.AreEqual(totalDisplacement, graphView.viewTransform.position.x);
-                Assert.AreEqual(0, graphView.viewTransform.position.y);
+                Assert.AreEqual(totalDisplacement, graphView.ViewTransform.position.x);
+                Assert.AreEqual(0, graphView.ViewTransform.position.y);
 
                 panSpeedAtLocation = -EdgeDragHelper.maxPanSpeed;
                 timePassed += EdgeDragHelper.panInterval;
                 graphView.UpdateScheduledEvents();
 
                 totalDisplacement += panSpeedAtLocation;
-                Assert.AreEqual(totalDisplacement, graphView.viewTransform.position.x);
-                Assert.AreEqual(0, graphView.viewTransform.position.y);
+                Assert.AreEqual(totalDisplacement, graphView.ViewTransform.position.x);
+                Assert.AreEqual(0, graphView.ViewTransform.position.y);
 
                 timePassed += EdgeDragHelper.panInterval;
                 graphView.UpdateScheduledEvents();
 
                 totalDisplacement += panSpeedAtLocation;
-                Assert.AreEqual(totalDisplacement, graphView.viewTransform.position.x);
-                Assert.AreEqual(0, graphView.viewTransform.position.y);
+                Assert.AreEqual(totalDisplacement, graphView.ViewTransform.position.x);
+                Assert.AreEqual(0, graphView.ViewTransform.position.y);
 
                 helpers.MouseUpEvent(new Vector2(window.position.width + EdgeDragHelper.panAreaWidth, portCenter.y));
                 needsMouseUp = false;
                 yield return null;
 
-                Assert.AreEqual(totalDisplacement, graphView.viewTransform.position.x);
-                Assert.AreEqual(0, graphView.viewTransform.position.y);
+                Assert.AreEqual(totalDisplacement, graphView.ViewTransform.position.x);
+                Assert.AreEqual(0, graphView.ViewTransform.position.y);
             }
             finally
             {
@@ -626,7 +626,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator DraggingEdgeToOrOverBorderStartsPanningInNegativeY()
         {
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
 
             bool needsMouseUp = false;
@@ -634,7 +634,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             try
             {
-                var port = window.GraphView.Q<Port>();
+                var port = window.GraphView.SafeQ<Port>();
 
                 portCenter = port.GetGlobalCenter();
 
@@ -645,12 +645,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 long timePassed = 0;
                 GraphViewStaticBridge.SetTimeSinceStartupCB(() => timePassed);
 
-                Vector2 originalWorldNodePos = graphView.contentViewContainer.LocalToWorld(new Vector2(portCenter.x, EdgeDragHelper.panAreaWidth));
+                Vector2 originalWorldNodePos = graphView.ContentViewContainer.LocalToWorld(new Vector2(portCenter.x, EdgeDragHelper.panAreaWidth));
                 helpers.MouseDragEvent(portCenter, originalWorldNodePos);
                 yield return null;
 
-                Assert.AreEqual(0, graphView.viewTransform.position.x);
-                Assert.AreEqual(0, graphView.viewTransform.position.y);
+                Assert.AreEqual(0, graphView.ViewTransform.position.x);
+                Assert.AreEqual(0, graphView.ViewTransform.position.y);
 
                 timePassed += EdgeDragHelper.panInterval;
                 graphView.UpdateScheduledEvents();
@@ -658,45 +658,45 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 float panSpeedAtLocation = EdgeDragHelper.panSpeed * 0.5f;
                 float totalDisplacement = panSpeedAtLocation;
 
-                Assert.AreEqual(0, graphView.viewTransform.position.x);
-                Assert.AreEqual(totalDisplacement, graphView.viewTransform.position.y);
+                Assert.AreEqual(0, graphView.ViewTransform.position.x);
+                Assert.AreEqual(totalDisplacement, graphView.ViewTransform.position.y);
 
                 timePassed += EdgeDragHelper.panInterval;
                 graphView.UpdateScheduledEvents();
 
                 totalDisplacement += panSpeedAtLocation;
-                Assert.AreEqual(0, graphView.viewTransform.position.x);
-                Assert.AreEqual(totalDisplacement, graphView.viewTransform.position.y);
+                Assert.AreEqual(0, graphView.ViewTransform.position.x);
+                Assert.AreEqual(totalDisplacement, graphView.ViewTransform.position.y);
 
                 // Move outside window
                 Vector2 newWorldNodePos = new Vector2(portCenter.x, -EdgeDragHelper.panAreaWidth);
                 helpers.MouseDragEvent(originalWorldNodePos, newWorldNodePos);
                 yield return null;
 
-                Assert.AreEqual(0, graphView.viewTransform.position.x);
-                Assert.AreEqual(totalDisplacement, graphView.viewTransform.position.y);
+                Assert.AreEqual(0, graphView.ViewTransform.position.x);
+                Assert.AreEqual(totalDisplacement, graphView.ViewTransform.position.y);
 
                 timePassed += EdgeDragHelper.panInterval;
                 graphView.UpdateScheduledEvents();
 
                 panSpeedAtLocation = EdgeDragHelper.maxPanSpeed;
                 totalDisplacement += panSpeedAtLocation;
-                Assert.AreEqual(0, graphView.viewTransform.position.x);
-                Assert.AreEqual(totalDisplacement, graphView.viewTransform.position.y);
+                Assert.AreEqual(0, graphView.ViewTransform.position.x);
+                Assert.AreEqual(totalDisplacement, graphView.ViewTransform.position.y);
 
                 timePassed += EdgeDragHelper.panInterval;
                 graphView.UpdateScheduledEvents();
 
                 totalDisplacement += panSpeedAtLocation;
-                Assert.AreEqual(0, graphView.viewTransform.position.x);
-                Assert.AreEqual(totalDisplacement, graphView.viewTransform.position.y);
+                Assert.AreEqual(0, graphView.ViewTransform.position.x);
+                Assert.AreEqual(totalDisplacement, graphView.ViewTransform.position.y);
 
                 helpers.MouseUpEvent(newWorldNodePos);
                 needsMouseUp = false;
                 yield return null;
 
-                Assert.AreEqual(0, graphView.viewTransform.position.x);
-                Assert.AreEqual(totalDisplacement, graphView.viewTransform.position.y);
+                Assert.AreEqual(0, graphView.ViewTransform.position.x);
+                Assert.AreEqual(totalDisplacement, graphView.ViewTransform.position.y);
             }
             finally
             {
@@ -710,7 +710,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator DraggingEdgeToOrOverBorderStartsPanningInPositiveY()
         {
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
 
             bool needsMouseUp = false;
@@ -719,7 +719,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             try
             {
-                var port = window.GraphView.Q<Port>();
+                var port = window.GraphView.SafeQ<Port>();
 
                 portCenter = port.GetGlobalCenter();
 
@@ -735,8 +735,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                     new Vector2(portCenter.x, worldY));
                 yield return null;
 
-                Assert.AreEqual(0, graphView.viewTransform.position.x);
-                Assert.AreEqual(0, graphView.viewTransform.position.y);
+                Assert.AreEqual(0, graphView.ViewTransform.position.x);
+                Assert.AreEqual(0, graphView.ViewTransform.position.y);
 
                 timePassed += EdgeDragHelper.panInterval;
                 graphView.UpdateScheduledEvents();
@@ -744,15 +744,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 float panSpeedAtLocation = -EdgeDragHelper.panSpeed * 0.5f;
                 float totalDisplacement = panSpeedAtLocation;
 
-                Assert.AreEqual(0, graphView.viewTransform.position.x);
-                Assert.AreEqual(totalDisplacement, graphView.viewTransform.position.y);
+                Assert.AreEqual(0, graphView.ViewTransform.position.x);
+                Assert.AreEqual(totalDisplacement, graphView.ViewTransform.position.y);
 
                 timePassed += EdgeDragHelper.panInterval;
                 graphView.UpdateScheduledEvents();
 
                 totalDisplacement += panSpeedAtLocation;
-                Assert.AreEqual(0, graphView.viewTransform.position.x);
-                Assert.AreEqual(totalDisplacement, graphView.viewTransform.position.y);
+                Assert.AreEqual(0, graphView.ViewTransform.position.x);
+                Assert.AreEqual(totalDisplacement, graphView.ViewTransform.position.y);
 
                 // Move outside window
                 helpers.MouseDragEvent(
@@ -760,30 +760,30 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                     new Vector2(portCenter.x, worldY + 2 * EdgeDragHelper.panAreaWidth));
                 yield return null;
 
-                Assert.AreEqual(0, graphView.viewTransform.position.x);
-                Assert.AreEqual(totalDisplacement, graphView.viewTransform.position.y);
+                Assert.AreEqual(0, graphView.ViewTransform.position.x);
+                Assert.AreEqual(totalDisplacement, graphView.ViewTransform.position.y);
 
                 timePassed += EdgeDragHelper.panInterval;
                 graphView.UpdateScheduledEvents();
 
                 panSpeedAtLocation = -EdgeDragHelper.maxPanSpeed;
                 totalDisplacement += panSpeedAtLocation;
-                Assert.AreEqual(0, graphView.viewTransform.position.x);
-                Assert.AreEqual(totalDisplacement, graphView.viewTransform.position.y);
+                Assert.AreEqual(0, graphView.ViewTransform.position.x);
+                Assert.AreEqual(totalDisplacement, graphView.ViewTransform.position.y);
 
                 timePassed += EdgeDragHelper.panInterval;
                 graphView.UpdateScheduledEvents();
 
                 totalDisplacement += panSpeedAtLocation;
-                Assert.AreEqual(0, graphView.viewTransform.position.x);
-                Assert.AreEqual(totalDisplacement, graphView.viewTransform.position.y);
+                Assert.AreEqual(0, graphView.ViewTransform.position.x);
+                Assert.AreEqual(totalDisplacement, graphView.ViewTransform.position.y);
 
                 helpers.MouseUpEvent(new Vector2(portCenter.x, worldY + 2 * EdgeDragHelper.panAreaWidth));
                 needsMouseUp = false;
                 yield return null;
 
-                Assert.AreEqual(0, graphView.viewTransform.position.x);
-                Assert.AreEqual(totalDisplacement, graphView.viewTransform.position.y);
+                Assert.AreEqual(0, graphView.ViewTransform.position.x);
+                Assert.AreEqual(totalDisplacement, graphView.ViewTransform.position.y);
             }
             finally
             {
@@ -797,10 +797,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator MiniMapElementCanBeDragged()
         {
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
 
-            MiniMap minimap = graphView.Q<MiniMap>();
+            MiniMap minimap = graphView.SafeQ<MiniMap>();
 
             Vector2 start = minimap.worldBound.center;
             Vector2 offset = new Vector2(10, 10);
@@ -825,7 +825,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator PanSpeedsAreAsExpected()
         {
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
 
             float minSpeed = SelectionDragger.minSpeedFactor * SelectionDragger.panSpeed;

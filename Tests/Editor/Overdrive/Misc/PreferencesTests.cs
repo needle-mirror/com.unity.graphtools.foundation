@@ -14,7 +14,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Misc
             public static readonly MyIntPref MyPref1 = new MyIntPref(k_ToolBasePrefId + 1, nameof(MyPref1), new[] { k_ObsoleteName });
 
             protected MyIntPref(int id, string name, string[] obsoleteNames = null)
-                : base(id, name, obsoleteNames) {}
+                : base(id, name, obsoleteNames) { }
         }
 
         public sealed class MyPreferences : Preferences
@@ -26,7 +26,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Misc
                 return preferences;
             }
 
-            MyPreferences() : base(k_Prefix) {}
+            MyPreferences() : base(k_Prefix) { }
 
             protected override void SetDefaultValues()
             {

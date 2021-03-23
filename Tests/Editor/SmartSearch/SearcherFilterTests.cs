@@ -16,7 +16,7 @@ namespace UnityEditor.VisualScriptingTests.SmartSearch
     {
         protected override bool CreateGraphOnStartup => true;
 
-        internal abstract class BaseFakeObject {}
+        internal abstract class BaseFakeObject { }
 
 #pragma warning disable CS0414
 #pragma warning disable CS0649
@@ -33,12 +33,12 @@ namespace UnityEditor.VisualScriptingTests.SmartSearch
             public static int Zero => 0;
 
             [UsedImplicitly]
-            public FakeObject() {}
+            public FakeObject() { }
 
-            public void Foo() {}
+            public void Foo() { }
             public FakeObject GetChild() { return Child; }
 
-            public static bool operator!(FakeObject fo) { return false; }
+            public static bool operator !(FakeObject fo) { return false; }
         }
 #pragma warning restore CS0649
 #pragma warning restore CS0414
@@ -46,9 +46,9 @@ namespace UnityEditor.VisualScriptingTests.SmartSearch
         [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
         internal class OtherFakeObject
         {
-            public static void Bar(FakeObject fo) {}
+            public static void Bar(FakeObject fo) { }
 
-            public void DoStuff() {}
+            public void DoStuff() { }
         }
 
         [UsedImplicitly]
@@ -528,7 +528,7 @@ namespace UnityEditor.VisualScriptingTests.SmartSearch
         class TestFilter : SearcherFilter
         {
             public TestFilter(SearcherContext context)
-                : base(context) {}
+                : base(context) { }
 
             internal TestFilter WithString()
             {

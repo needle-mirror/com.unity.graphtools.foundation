@@ -90,9 +90,9 @@ namespace UnityEditor.VisualScripting.Editor
             IDebugger debugger = state.CurrentGraphModel.Stencil.Debugger;
             var targetIndices = debugger.GetDebuggingTargets(state.CurrentGraphModel);
             var items = targetIndices == null ? null : targetIndices.Select(x =>
-                (SearcherItem) new TargetSearcherItem(x, debugger.GetTargetLabel(state.CurrentGraphModel, x))).ToList();
+                (SearcherItem)new TargetSearcherItem(x, debugger.GetTargetLabel(state.CurrentGraphModel, x))).ToList();
             if (items == null || !items.Any())
-                items = new List<SearcherItem> {new SearcherItem("<No Object found>")};
+                items = new List<SearcherItem> { new SearcherItem("<No Object found>") };
 
             SearcherWindow.Show(EditorWindow.focusedWindow, items, "Entities", i =>
             {

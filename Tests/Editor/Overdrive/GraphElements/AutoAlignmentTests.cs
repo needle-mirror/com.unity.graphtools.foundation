@@ -293,7 +293,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 yield return null;
             }
 
-            Vector2 selectionPosStickyNote = graphView.contentViewContainer.LocalToWorld(m_StickyNote.layout.position) + k_SelectionOffset;
+            Vector2 selectionPosStickyNote = graphView.ContentViewContainer.LocalToWorld(m_StickyNote.layout.position) + k_SelectionOffset;
 
             // Unselect StickyNote
             actions = SelectElement(selectionPosStickyNote);
@@ -471,7 +471,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             }
 
             Assert.AreNotEqual(expectedYmax, m_FirstNode.layout.yMax);
-            Assert.AreEqual(expectedYmax , m_SecondNode.layout.yMax);
+            Assert.AreEqual(expectedYmax, m_SecondNode.layout.yMax);
             Assert.AreEqual(expectedDistanceBetweenFirstSecond, m_SecondNode.layout.y - m_FirstNode.layout.y);
             Assert.AreEqual(expectedYmax, m_ThirdNode.layout.yMax);
             Assert.AreEqual(expectedYmax, m_FourthNode.layout.yMax);
@@ -688,9 +688,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             //                    | right
 
             Vector2 firstNodePos = new Vector2(0, 0);
-            Vector2 secondNodePos = new Vector2(100, 100);
-            Vector2 thirdNodePos = new Vector2(300, 200);
-            Vector2 fourthNodePos = new Vector2(500, 400);
+            Vector2 secondNodePos = new Vector2(200, 100);
+            Vector2 thirdNodePos = new Vector2(400, 200);
+            Vector2 fourthNodePos = new Vector2(600, 400);
 
             var actions = CreateConnectedNodes(firstNodePos, secondNodePos, thirdNodePos, fourthNodePos, true);
             while (actions.MoveNext())
@@ -712,7 +712,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             Assert.AreNotEqual(expectedXMax, m_FirstNode.layout.xMax);
             Assert.AreEqual(expectedXMax, m_SecondNode.layout.xMax);
-            Assert.AreEqual(expectedDistanceBetweenFirstSecond,  m_SecondNode.layout.xMin - m_FirstNode.layout.xMax);
+            Assert.AreEqual(expectedDistanceBetweenFirstSecond, m_SecondNode.layout.xMin - m_FirstNode.layout.xMax);
             Assert.AreEqual(expectedXMax, m_ThirdNode.layout.xMax);
             Assert.AreEqual(expectedXMax, m_FourthNode.layout.xMax);
         }
@@ -740,7 +740,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             FourthNodeModel = CreateNode("Node4", fourthNodePos, 0, 0, 1, 1);
             var fifthNodeModel = CreateNode("Node5", fifthNodePos, 0, 0, 1);
 
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
 
             IPortModel outputPortFirstNode = FirstNodeModel.OutputsByDisplayOrder[0];
@@ -811,7 +811,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             yield return null;
 
             // Select node 5
-            Vector2 selectionPosNode5 = graphView.contentViewContainer.LocalToWorld(fifthNode.layout.position) + k_SelectionOffset;
+            Vector2 selectionPosNode5 = graphView.ContentViewContainer.LocalToWorld(fifthNode.layout.position) + k_SelectionOffset;
             actions = SelectElement(selectionPosNode5);
             while (actions.MoveNext())
             {
@@ -866,7 +866,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             FourthNodeModel = CreateNode("Node4", fourthNodePos, 0, 0, 1, 1);
             var fifthNodeModel = CreateNode("Node5", fifthNodePos, 0, 0, 1);
 
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
 
             IPortModel outputPortFirstNode = FirstNodeModel.OutputsByDisplayOrder[0];
@@ -937,7 +937,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             yield return null;
 
             // Select node 5
-            Vector2 selectionPosNode5 = graphView.contentViewContainer.LocalToWorld(fifthNode.layout.position) + k_SelectionOffset;
+            Vector2 selectionPosNode5 = graphView.ContentViewContainer.LocalToWorld(fifthNode.layout.position) + k_SelectionOffset;
             actions = SelectElement(selectionPosNode5);
             while (actions.MoveNext())
             {
@@ -987,7 +987,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             FourthNodeModel = CreateNode("Node4", fourthNodePos, 0, 0, 1, 1);
             var fifthNodeModel = CreateNode("Node5", fifthNodePos, 0, 0, 1);
 
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
 
             IPortModel outputPortFirstNode = FirstNodeModel.OutputsByDisplayOrder[0];
@@ -1061,7 +1061,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             yield return null;
 
             // Select node 5
-            Vector2 selectionPosNode5 = graphView.contentViewContainer.LocalToWorld(fifthNode.layout.position) + k_SelectionOffset;
+            Vector2 selectionPosNode5 = graphView.ContentViewContainer.LocalToWorld(fifthNode.layout.position) + k_SelectionOffset;
             actions = SelectElement(selectionPosNode5);
             while (actions.MoveNext())
             {

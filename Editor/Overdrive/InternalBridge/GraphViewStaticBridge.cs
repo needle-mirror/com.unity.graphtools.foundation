@@ -1,34 +1,37 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using JetBrains.Annotations;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.UIElements.UIR;
+using Cursor = UnityEngine.UIElements.Cursor;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
 {
     public static class GraphViewStaticBridge
     {
-#if !UNITY_2020_1_OR_NEWER
-        public static VisualElement Instantiate(this VisualTreeAsset vta)
+        public static class EventCommandNames
         {
-            return vta.CloneTree();
+            public const string Cut = UnityEngine.EventCommandNames.Cut;
+            public const string Copy = UnityEngine.EventCommandNames.Copy;
+            public const string Paste = UnityEngine.EventCommandNames.Paste;
+            public const string Duplicate = UnityEngine.EventCommandNames.Duplicate;
+            public const string Delete = UnityEngine.EventCommandNames.Delete;
+            public const string SoftDelete = UnityEngine.EventCommandNames.SoftDelete;
+            public const string FrameSelected = UnityEngine.EventCommandNames.FrameSelected;
         }
 
-#endif
+        public static readonly int s_EditorPixelsPerPointId = Shader.PropertyToID("_EditorPixelsPerPoint");
+        public static readonly int s_GraphViewScaleId = Shader.PropertyToID("_GraphViewScale");
+
+        static Shader s_GraphViewShader;
 
         public static Color EditorPlayModeTint => UIElementsUtility.editorPlayModeTintColor;
 
         public static void ShowColorPicker(Action<Color> callback, Color initialColor, bool withAlpha)
         {
             ColorPicker.Show(callback, initialColor, withAlpha);
-        }
-
-        public static string SearchField(Rect position, string text)
-        {
-            return EditorGUI.SearchField(position, text);
         }
 
         public static float RoundToPixelGrid(float v)
@@ -223,11 +226,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
 
         public static void DrawImmediate(MeshGenerationContext mgc, Action callback)
         {
-#if UNITY_2020_1_OR_NEWER
             mgc.painter.DrawImmediate(callback, true);
-#else
-            mgc.painter.DrawImmediate(callback);
-#endif
         }
 
         public static void SolidRectangle(MeshGenerationContext mgc, Rect rectParams, Color color, ContextType context)
@@ -276,181 +275,64 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
         {
             return UQueryExtensions.MandatoryQ(e, name, className);
         }
-    }
 
-    public abstract class VisualElementBridge : VisualElement
-    {
-        [UsedImplicitly]
-        internal override void OnViewDataReady()
+        internal static void SetIsCompositeRoot(this VisualElement ve)
         {
-            base.OnViewDataReady();
+            ve.isCompositeRoot = true;
         }
 
-        protected new string GetFullHierarchicalViewDataKey()
+        internal static void ChangeMouseCursorTo(this VisualElement ve, int internalCursorId)
         {
-            return base.GetFullHierarchicalViewDataKey();
-        }
-
-        protected new T GetOrCreateViewData<T>(object existing, string key) where T : class, new()
-        {
-            return base.GetOrCreateViewData<T>(existing, key);
-        }
-
-        protected new void SaveViewData()
-        {
-            base.SaveViewData();
-        }
-
-        public new uint controlid => base.controlid;
-
-        protected void SetIsCompositeRoot()
-        {
-            isCompositeRoot = true;
-        }
-
-        public static void ChangeMouseCursorTo(VisualElement ve, int internalCursorId)
-        {
-            var cursor = new UnityEngine.UIElements.Cursor();
+            var cursor = new Cursor();
             cursor.defaultCursorId = internalCursorId;
 
             ve.elementPanel.cursorManager.SetCursor(cursor);
         }
-    }
 
-    public abstract class GraphViewBridge : VisualElementBridge
-    {
-        protected static class EventCommandNames
+        public static uint GetControlId(this VisualElement self) => self.controlid;
+
+        public static Vector2 GetMousePosition()
         {
-            public const string Cut = UnityEngine.EventCommandNames.Cut;
-            public const string Copy = UnityEngine.EventCommandNames.Copy;
-            public const string Paste = UnityEngine.EventCommandNames.Paste;
-            public const string Duplicate = UnityEngine.EventCommandNames.Duplicate;
-            public const string Delete = UnityEngine.EventCommandNames.Delete;
-            public const string SoftDelete = UnityEngine.EventCommandNames.SoftDelete;
-            public const string FrameSelected = UnityEngine.EventCommandNames.FrameSelected;
+            return PointerDeviceState.GetPointerPosition(PointerId.mousePointerId);
         }
 
-        static readonly int s_EditorPixelsPerPointId = Shader.PropertyToID("_EditorPixelsPerPoint");
-        static readonly int s_GraphViewScaleId = Shader.PropertyToID("_GraphViewScale");
-
-        public VisualElement contentViewContainer { get; protected set; }
-
-        public ITransform viewTransform => contentViewContainer.transform;
-
-        float scale => viewTransform.scale.x;
-
-        // BE AWARE: This is just a stopgap measure to get the minimap notified and should not be used outside of it.
-        // This should also get ripped once the minimap is re-written.
-        public Action redrawn { get; set; }
-
-        [UsedImplicitly]
-#if UNITY_2020_1_OR_NEWER
-        void OnBeforeDrawChain(RenderChain renderChain)
-#else
-        void OnBeforeDrawChain(UIRenderDevice renderChain)
-#endif
+        public static void SetEventPropagationToNormal(this EventBase e)
         {
-            Material mat = renderChain.GetStandardMaterial();
-
-            // Set global graph view shader properties (used by UIR)
-            mat.SetFloat(s_EditorPixelsPerPointId, EditorGUIUtility.pixelsPerPoint);
-            mat.SetFloat(s_GraphViewScaleId, scale);
-            redrawn?.Invoke();
+            e.propagation = EventBase.EventPropagation.TricklesDown | EventBase.EventPropagation.Bubbles | EventBase.EventPropagation.Cancellable;
         }
 
-        static Shader graphViewShader;
-
-        protected void OnEnterPanel()
+        public static void SetUpRender(this VisualElement self, Action<Material> onUpdateMaterial, Action<IPanel> onBeforeUpdate)
         {
-            if (panel is BaseVisualElementPanel p)
+            if (self.panel is BaseVisualElementPanel p)
             {
-                if (graphViewShader == null)
-#if UNITY_2020_1_OR_NEWER
-                    graphViewShader = Shader.Find("Hidden/GraphView/GraphViewUIE");
-#else
-                    graphViewShader = EditorGUIUtility.LoadRequired("GraphView/GraphViewUIE.shader") as Shader;
-#endif
+                if (s_GraphViewShader == null)
+                    s_GraphViewShader = Shader.Find("Hidden/GraphView/GraphViewUIE");
 
-                p.standardShader = graphViewShader;
+                p.standardShader = s_GraphViewShader;
                 HostView ownerView = p.ownerObject as HostView;
                 if (ownerView != null && ownerView.actualView != null)
                     ownerView.actualView.antiAliasing = 4;
 
-#if UNITY_2020_1_OR_NEWER
-                p.updateMaterial += OnUpdateMaterial;
-                p.beforeUpdate += OnBeforeUpdate;
-#else
-                // Changing the updaters is assumed not to be a normal use case, except maybe for Unity debugging
-                // purposes. For that reason, we don't track updater changes.
-                Panel.BeforeUpdaterChange += OnBeforeUpdaterChange;
-                Panel.AfterUpdaterChange += OnAfterUpdaterChange;
-                UpdateDrawChainRegistration(true);
-#endif
+                p.updateMaterial += onUpdateMaterial;
+                p.beforeUpdate += onBeforeUpdate;
             }
 
             // Force DefaultCommonDark.uss since GraphView only has a dark style at the moment
-            UIElementsEditorUtility.ForceDarkStyleSheet(this);
+            UIElementsEditorUtility.ForceDarkStyleSheet(self);
         }
 
-        protected void OnLeavePanel()
+        public static void TearDownRender(this VisualElement self, Action<Material> onUpdateMaterial, Action<IPanel> onBeforeUpdate)
         {
-#if UNITY_2020_1_OR_NEWER
-            if (panel is BaseVisualElementPanel p)
+            if (self.panel is BaseVisualElementPanel p)
             {
-                p.beforeUpdate -= OnBeforeUpdate;
-                p.updateMaterial -= OnUpdateMaterial;
-            }
-#else
-            // ReSharper disable once DelegateSubtraction
-            Panel.BeforeUpdaterChange -= OnBeforeUpdaterChange;
-
-            // ReSharper disable once DelegateSubtraction
-            Panel.AfterUpdaterChange -= OnAfterUpdaterChange;
-            UpdateDrawChainRegistration(false);
-#endif
-        }
-
-#if UNITY_2020_1_OR_NEWER
-        void OnBeforeUpdate(IPanel p)
-        {
-            redrawn?.Invoke();
-        }
-
-        void OnUpdateMaterial(Material mat)
-        {
-            // Set global graph view shader properties (used by UIR)
-            mat.SetFloat(s_EditorPixelsPerPointId, EditorGUIUtility.pixelsPerPoint);
-            mat.SetFloat(s_GraphViewScaleId, scale);
-        }
-
-#else
-        void OnBeforeUpdaterChange()
-        {
-            UpdateDrawChainRegistration(false);
-        }
-
-        void OnAfterUpdaterChange()
-        {
-            UpdateDrawChainRegistration(true);
-        }
-
-        void UpdateDrawChainRegistration(bool register)
-        {
-            var p = panel as BaseVisualElementPanel;
-            UIRRepaintUpdater updater = p?.GetUpdater(VisualTreeUpdatePhase.Repaint) as UIRRepaintUpdater;
-            if (updater != null)
-            {
-                if (register)
-                    updater.BeforeDrawChain += OnBeforeDrawChain;
-                else updater.BeforeDrawChain -= OnBeforeDrawChain;
+                p.beforeUpdate -= onBeforeUpdate;
+                p.updateMaterial -= onUpdateMaterial;
             }
         }
-
-#endif
     }
 
     public abstract class GraphViewToolWindowBridge : EditorWindow
     {
-        public abstract void SelectGraphViewFromWindow(EditorWindow window, GraphViewBridge graphView, int graphViewIndexInWindow = 0);
+        public abstract void SelectGraphViewFromWindow(EditorWindow window, VisualElement graphView, int graphViewIndexInWindow = 0);
     }
 }

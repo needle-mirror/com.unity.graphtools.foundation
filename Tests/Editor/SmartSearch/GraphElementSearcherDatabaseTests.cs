@@ -19,7 +19,7 @@ namespace UnityEditor.VisualScriptingTests.SmartSearch
     {
         public static bool DoNothing1(this GraphElementSearcherDatabaseTests o) { return true; }
         internal static int DoNothing2(this GraphElementSearcherDatabaseTests o) { return 0; }
-        public static void DoNothing3(this GraphElementSearcherDatabaseTests o) {}
+        public static void DoNothing3(this GraphElementSearcherDatabaseTests o) { }
     }
 
     class GraphElementSearcherDatabaseTests : BaseFixture
@@ -47,12 +47,12 @@ namespace UnityEditor.VisualScriptingTests.SmartSearch
 
             public int this[int index] => index + 1;
 
-            public FakeObject() {}
-            public FakeObject(int i) {}
+            public FakeObject() { }
+            public FakeObject(int i) { }
 
             public string Name => "FakeObject";
             public float GetFloat() { return 1f; }
-            public void Foo() {}
+            public void Foo() { }
         }
 #pragma warning restore CS0649
 #pragma warning restore CS0414

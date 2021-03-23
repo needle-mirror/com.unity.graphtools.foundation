@@ -5,7 +5,7 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public abstract class GraphElement : ModelUI, ISelectableGraphElement
+    public abstract class GraphElement : ModelUI, IGraphElement
     {
         static readonly CustomStyleProperty<int> s_LayerProperty = new CustomStyleProperty<int>("--layer");
         static readonly Color k_MinimapColor = new Color(0.9f, 0.9f, 0.9f, 0.5f);
@@ -16,8 +16,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         int m_Layer;
 
         bool m_LayerIsInline;
-
-        bool m_Selected;
 
         ClickSelector m_ClickSelector;
 
@@ -35,26 +33,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public virtual bool ShowInMiniMap { get; set; } = true;
 
-        internal ResizeRestriction ResizeRestriction { get; set; }
-
-        public bool Selected
-        {
-            get => m_Selected;
-            set
-            {
-                // Set new value (toggle old value)
-                if (!IsSelectable())
-                    return;
-
-                if (m_Selected == value)
-                    return;
-
-                m_Selected = value;
-
-                this.SetCheckedPseudoState(m_Selected);
-            }
-        }
-
         protected ClickSelector ClickSelector
         {
             get => m_ClickSelector;
@@ -65,6 +43,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             MinimapColor = k_MinimapColor;
             RegisterCallback<CustomStyleResolvedEvent>(OnCustomStyleResolved);
+            RegisterCallback<KeyDownEvent>(OnRenameKeyDown);
+            focusable = true;
         }
 
         public void ResetLayer()
@@ -89,9 +69,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         protected override void UpdateElementFromModel()
         {
-            ClickSelector = IsSelectable() ? new ClickSelector() : null;
+            ClickSelector = Model.IsSelectable() ? new ClickSelector() : null;
 
-            EnableInClassList(selectableModifierUssClassName, IsSelectable() && ClickSelector != null);
+            EnableInClassList(selectableModifierUssClassName, Model.IsSelectable() && ClickSelector != null);
+
+            this.SetCheckedPseudoState(IsSelected());
         }
 
         void OnCustomStyleResolved(CustomStyleResolvedEvent evt)
@@ -103,43 +85,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             UpdateLayer(prevLayer);
         }
 
-        public virtual bool IsSelectable()
-        {
-            return Model?.IsSelectable() ?? false;
-        }
-
         public virtual bool IsMovable()
         {
             return Model?.IsMovable() ?? false;
         }
 
-        public virtual bool IsDeletable()
-        {
-            return Model?.IsDeletable() ?? false;
-        }
-
-        public virtual bool IsResizable()
-        {
-            return Model?.IsResizable() ?? false;
-        }
-
-        public virtual bool IsDroppable()
-        {
-            return Model?.IsDroppable() ?? false;
-        }
-
-        public virtual bool IsRenamable()
-        {
-            return Model?.IsRenamable() ?? false;
-        }
-
-        public virtual bool IsCopiable()
-        {
-            return Model?.IsCopiable() ?? false;
-        }
-
         // PF: remove
-        public Rect GetPosition()
+        internal Rect GetPosition()
         {
             return layout;
         }
@@ -150,56 +102,66 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             style.top = newPos.y;
         }
 
-        public virtual void OnSelected()
+        /// <summary>
+        /// Checks if the underlying graph element model is selected.
+        /// </summary>
+        /// <returns>True if the model is selected, false otherwise.</returns>
+        public bool IsSelected()
         {
+            return CommandDispatcher?.GraphToolState?.SelectionState?.IsSelected(Model) ?? false;
         }
 
-        public virtual void OnUnselected()
+        /// <summary>
+        /// Displays the UI to rename the graph element.
+        /// </summary>
+        /// <returns>True if the UI could be displayed. False otherwise.</returns>
+        public virtual bool Rename()
         {
+            var editableLabel = this.SafeQ<EditableLabel>();
+
+            // Execute after
+            schedule.Execute(() => editableLabel?.BeginEditing()).ExecuteLater(0);
+
+            return editableLabel != null;
         }
 
-        public virtual void Select(VisualElement selectionContainer, bool additive)
+
+        /// <summary>
+        /// Returns wether the passed keyboard event is a rename event on this platform
+        /// </summary>
+        /// <param name="e">The event.</param>
+        /// <return>Whether the event is a key rename event</return>
+        public static bool IsRenameKey<T>(KeyboardEventBase<T> e) where T : KeyboardEventBase<T>, new()
         {
-            if (selectionContainer is ISelection selection)
+#if UNITY_STANDALONE_OSX
+            return e.keyCode == KeyCode.Return && e.modifiers == EventModifiers.None;
+#else
+            return e.keyCode == KeyCode.F2 && (e.modifiers & ~EventModifiers.FunctionKey) == EventModifiers.None;
+#endif
+        }
+
+
+        /// <summary>
+        /// Callback for the KeyDownEvent to handle renames.
+        /// </summary>
+        /// <param name="e">The event.</param>
+        protected internal void OnRenameKeyDown(KeyDownEvent e)
+        {
+            if (IsRenameKey(e))
             {
-                if (!selection.Selection.Contains(this))
+                if (Model.IsRenamable())
                 {
-                    if (!additive)
-                        selection.ClearSelection();
+                    if (!hierarchy.parent.ChangeCoordinatesTo(GraphView, layout).Overlaps(GraphView.layout))
+                    {
+                        GraphView.DispatchFrameAndSelectElementsCommand(false, this);
+                    }
 
-                    selection.AddToSelection(this);
+                    if (Rename())
+                    {
+                        e.StopPropagation();
+                    }
                 }
             }
-        }
-
-        public virtual void Unselect(VisualElement  selectionContainer)
-        {
-            if (selectionContainer is ISelection selection)
-            {
-                if (selection.Selection.Contains(this))
-                {
-                    selection.RemoveFromSelection(this);
-                }
-            }
-        }
-
-        public virtual bool IsSelected(VisualElement selectionContainer)
-        {
-            if (selectionContainer is ISelection selection)
-            {
-                if (selection.Selection.Contains(this))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        public virtual void Rename()
-        {
-            var editableLabel = this.Q<EditableLabel>();
-            editableLabel.BeginEditing();
         }
     }
 }

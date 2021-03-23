@@ -1,29 +1,69 @@
 using System;
+using System.Collections.Generic;
+using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public enum RequestGraphProcessingOptions
+    /// <summary>
+    /// A state component holding data related to graph processing.
+    /// </summary>
+    public class GraphProcessingStateComponent : AssetStateComponent<GraphProcessingStateComponent.StateUpdater>
     {
-        Default,
-        SaveGraph,
-    }
-
-    public class GraphProcessingStateComponent : AssetViewStateComponent
-    {
-        public GraphProcessingResult m_LastResult;
-
-        public bool GraphProcessingPending { get; set; }
-
-        public Action<RequestGraphProcessingOptions> OnGraphProcessingRequest;
-
-        public void RequestGraphProcessing(RequestGraphProcessingOptions options)
+        /// <summary>
+        /// The updater for the <see cref="GraphProcessingStateComponent"/>.
+        /// </summary>
+        public class StateUpdater : BaseUpdater<GraphProcessingStateComponent>
         {
-            OnGraphProcessingRequest?.Invoke(options);
+            /// <inheritdoc  cref="GraphProcessingStateComponent.GraphProcessingPending"/>
+            public bool GraphProcessingPending
+            {
+                set
+                {
+                    m_State.GraphProcessingPending = value;
+                    m_State.SetUpdateType(UpdateType.Complete);
+                }
+            }
+
+            /// <summary>
+            /// Sets the result of the graph processing.
+            /// </summary>
+            /// <param name="results">The results.</param>
+            /// <param name="errorModels">The error to display.</param>
+            public void SetResults(GraphProcessingResult results, IEnumerable<IGraphProcessingErrorModel> errorModels)
+            {
+                m_State.RawResults = results;
+                m_State.m_Errors?.Clear();
+                if (errorModels != null)
+                    m_State.m_Errors?.AddRange(errorModels);
+                m_State.SetUpdateType(UpdateType.Complete);
+            }
         }
 
-        public GraphProcessingResult GetLastResult()
+        List<IGraphProcessingErrorModel> m_Errors;
+
+        /// <summary>
+        /// Whether we are waiting for the graph processing to begin.
+        /// </summary>
+        public bool GraphProcessingPending { get; private set; }
+
+        /// <summary>
+        /// The graph processing results.
+        /// </summary>
+        public GraphProcessingResult RawResults { get; private set; }
+
+        /// <summary>
+        /// The errors to display.
+        /// </summary>
+        public IReadOnlyList<IGraphProcessingErrorModel> Errors => m_Errors ?? (m_Errors = new List<IGraphProcessingErrorModel>());
+
+        /// <inheritdoc/>
+        protected override void Dispose(bool disposing)
         {
-            return m_LastResult;
+            if (disposing)
+            {
+                RawResults = null;
+                m_Errors = null;
+            }
         }
     }
 }

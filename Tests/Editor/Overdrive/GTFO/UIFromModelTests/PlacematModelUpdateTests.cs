@@ -31,11 +31,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         [Test]
         public void CollapsingPlacematModelCollapsesPlacemat()
         {
-            var placematModel = m_GraphModel.CreatePlacemat();
+            var placematModel = m_GraphModel.CreatePlacemat(Rect.zero);
             var placemat = new Placemat();
             placemat.SetupBuildAndUpdate(placematModel, m_CommandDispatcher, m_GraphView);
 
-            var collapseButton = placemat.Q<CollapseButton>(CollapsibleInOutNode.collapseButtonPartName);
+            var collapseButton = placemat.SafeQ<CollapseButton>(CollapsibleInOutNode.collapseButtonPartName);
             Assert.IsFalse(collapseButton.value);
 
             placematModel.Collapsed = true;
@@ -49,12 +49,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             const string initialTitle = "Initial title";
             const string newTitle = "New title";
 
-            var placematModel = m_GraphModel.CreatePlacemat();
+            var placematModel = m_GraphModel.CreatePlacemat(Rect.zero);
             placematModel.Title = initialTitle;
             var placemat = new Placemat();
             placemat.SetupBuildAndUpdate(placematModel, m_CommandDispatcher, m_GraphView);
 
-            var titleLabel = placemat.Q(EditableTitlePart.titleLabelName).Q<Label>(EditableLabel.labelName);
+            var titleLabel = placemat.SafeQ(EditableTitlePart.titleLabelName).SafeQ<Label>(EditableLabel.labelName);
             Assert.AreEqual(initialTitle, titleLabel.text);
 
             placematModel.Title = newTitle;
@@ -68,7 +68,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             var initialRect = new Rect(0, 0, 400, 400);
             var newRect = new Rect(50, 70, 500, 300);
 
-            var placematModel = m_GraphModel.CreatePlacemat();
+            var placematModel = m_GraphModel.CreatePlacemat(Rect.zero);
             placematModel.PositionAndSize = initialRect;
             var placemat = new Placemat();
             placemat.SetupBuildAndUpdate(placematModel, m_CommandDispatcher, m_GraphView);

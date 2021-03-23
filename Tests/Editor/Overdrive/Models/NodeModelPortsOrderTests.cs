@@ -19,7 +19,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
         public void DefinePortsInNewOrderReusesExistingPorts()
         {
             var node = GraphModel.CreateNode<PortOrderTestNodeModel>("test", Vector2.zero,
-                preDefineSetup: model => model.MakePortsFromNames(new List<string> { "A", "B", "C" }));
+                initializationCallback: model => model.MakePortsFromNames(new List<string> { "A", "B", "C" }));
             Assert.That(node.InputsById.Count, Is.EqualTo(3));
 
             var A = node.InputsById["A"];
@@ -45,7 +45,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
         public void RemovingAndAddingPortsPreservesExistingPorts()
         {
             var node = GraphModel.CreateNode<PortOrderTestNodeModel>("test", Vector2.zero,
-                preDefineSetup: model => model.MakePortsFromNames(new List<string> { "A", "B", "C" }));
+                initializationCallback: model => model.MakePortsFromNames(new List<string> { "A", "B", "C" }));
             Assert.That(node.InputsById.Count, Is.EqualTo(3));
 
             var A = node.InputsById["A"];
@@ -65,7 +65,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
         public void ShufflingPortsPreserveConnections()
         {
             var node = GraphModel.CreateNode<PortOrderTestNodeModel>("test", Vector2.zero,
-                preDefineSetup: model => model.MakePortsFromNames(new List<string> { "A", "B", "C" }));
+                initializationCallback: model => model.MakePortsFromNames(new List<string> { "A", "B", "C" }));
 
             var decl = GraphModel.CreateGraphVariableDeclaration(TypeHandle.Int, "myInt", ModifierFlags.None, true);
             var nodeA = GraphModel.CreateVariableNode(decl, Vector2.up);

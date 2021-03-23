@@ -8,11 +8,11 @@ namespace UnityEditor.VisualScripting.GraphViewModel
     [Flags]
     public enum SpawnFlags
     {
-        None   = 0,
+        None = 0,
         /// <summary>
         /// During the NodeModel creation, it registers an undo point so the spawning/adding can be undoable/redoable
         /// </summary>
-        Undoable  = 1 << 0,
+        Undoable = 1 << 0,
         /// <summary>
         /// During the NodeModel creation, it with a SerializableAsset under it to make it serializable in the asset.
         /// </summary>
@@ -20,7 +20,7 @@ namespace UnityEditor.VisualScripting.GraphViewModel
         /// <summary>
         /// The created NodeModel is not added to a Stack/Graph. Useful for display only purposes.
         /// </summary>
-        Orphan  = 1 << 2,
+        Orphan = 1 << 2,
         /// <summary>
         /// This include the SpawnFlags.Orphan and SpawnFlags.CreateNodeAsset
         /// </summary>

@@ -13,7 +13,7 @@ namespace UnityEditor.VisualScripting.Editor
 
         public static void AddOverlay(this INodeState node)
         {
-            var disabledOverlay = new VisualElement {name = "disabledOverlay", pickingMode = PickingMode.Ignore};
+            var disabledOverlay = new VisualElement { name = "disabledOverlay", pickingMode = PickingMode.Ignore };
             ((VisualElement)node).hierarchy.Add(disabledOverlay);
         }
     }

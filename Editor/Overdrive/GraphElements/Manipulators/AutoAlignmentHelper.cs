@@ -54,7 +54,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             return alignmentBorderPosition;
         }
 
-        protected override void UpdateReferencePosition(ref float referencePosition, Rect currentElementRect) {}
+        protected override void UpdateReferencePosition(ref float referencePosition, Rect currentElementRect) { }
 
         protected override Vector2 GetDelta(Rect elementPosition, float referencePosition)
         {

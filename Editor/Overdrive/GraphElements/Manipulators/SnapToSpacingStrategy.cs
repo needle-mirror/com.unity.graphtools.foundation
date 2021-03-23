@@ -26,7 +26,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             public Line LineInBetween;
             public Line EndSideLine;
 
-            public List<Line> Lines => new List<Line> {StartSideLine, EndSideLine, LineInBetween};
+            public List<Line> Lines => new List<Line> { StartSideLine, EndSideLine, LineInBetween };
         }
 
         static Vector2 GetMaxPos(Rect rect, SnapReference reference)
@@ -94,7 +94,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 return sourceRect;
             }
 
-            Rect selectedElementRect = (selectedElement).parent.ChangeCoordinatesTo(m_GraphView.contentViewContainer, (selectedElement).GetPosition());
+            Rect selectedElementRect = (selectedElement).parent.ChangeCoordinatesTo(m_GraphView.ContentViewContainer, (selectedElement).GetPosition());
             UpdateSpacingPositions(selectedElement, selectedElementRect);
 
             Rect snappedRect = sourceRect;
@@ -169,7 +169,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             {
                 if (!IsIgnoredElement(selectedElement, element, rectToFit))
                 {
-                    Rect geometryInContentViewContainerSpace = (element).parent.ChangeCoordinatesTo(m_GraphView.contentViewContainer, (element).GetPosition());
+                    Rect geometryInContentViewContainerSpace = (element).parent.ChangeCoordinatesTo(m_GraphView.ContentViewContainer, (element).GetPosition());
                     AddReferenceRects(selectedElement, element, geometryInContentViewContainerSpace);
                 }
             }
@@ -178,7 +178,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         bool IsIgnoredElement(GraphElement selectedElement, GraphElement element, Rect rectToFit)
         {
             if (selectedElement is Placemat placemat && element.layout.Overlaps(placemat.layout) || element is Edge || !element.visible
-                || element.IsSelected(m_GraphView) || element.layout.Overlaps(selectedElement.layout))
+                || element.IsSelected() || element.layout.Overlaps(selectedElement.layout))
             {
                 return true;
             }
@@ -307,21 +307,21 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 // Position before firstRect
                 AddSpacingPosition(positions[0], new ReferenceRects
                 {
-                    Rects = new List<Rect> {sourceRect, firstRect, secondRect},
+                    Rects = new List<Rect> { sourceRect, firstRect, secondRect },
                     Orientation = orientation
                 });
 
                 // Position between firstRect and secondRect
                 AddSpacingPosition(positions[1], new ReferenceRects
                 {
-                    Rects = new List<Rect> {firstRect, sourceRect, secondRect},
+                    Rects = new List<Rect> { firstRect, sourceRect, secondRect },
                     Orientation = orientation
                 });
 
                 // Position after secondRect
                 AddSpacingPosition(positions[2], new ReferenceRects
                 {
-                    Rects = new List<Rect> {firstRect, secondRect, sourceRect},
+                    Rects = new List<Rect> { firstRect, secondRect, sourceRect },
                     Orientation = orientation
                 });
             }
@@ -418,7 +418,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             SnapReference startReference = orientation == Orientation.Vertical ? SnapReference.BottomEdge : SnapReference.RightEdge;
             SnapReference endReference = orientation == Orientation.Vertical ? SnapReference.TopEdge : SnapReference.LeftEdge;
 
-            float maxCoordinate = rects.Max(rect =>  orientation == Orientation.Vertical ? rect.xMax : rect.yMax) + SpacingLine.DefaultSpacingLineSideLength;
+            float maxCoordinate = rects.Max(rect => orientation == Orientation.Vertical ? rect.xMax : rect.yMax) + SpacingLine.DefaultSpacingLineSideLength;
             float spacingLineSideLength = SpacingLine.DefaultSpacingLineSideLength / m_CurrentScale;
 
             Vector2 firstSidePos = GetMaxPos(rects[0], startReference);

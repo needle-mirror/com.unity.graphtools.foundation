@@ -33,6 +33,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public PropertySearcherItem Item { get; set; }
 
         public PropertyElement(string templateId)
-            : base(templateId) {}
+            : base(templateId) { }
     }
 }

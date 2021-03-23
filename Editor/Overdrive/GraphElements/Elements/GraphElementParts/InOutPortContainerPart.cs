@@ -1,8 +1,12 @@
-using System;
+using System.Linq;
 using UnityEngine.UIElements;
+// ReSharper disable InconsistentNaming
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
+    /// <summary>
+    /// The UI part for horizontal input and output port container.
+    /// </summary>
     public class InOutPortContainerPart : BaseModelUIPart
     {
         public static readonly string ussClassName = "ge-in-out-port-container-part";
@@ -11,7 +15,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public static InOutPortContainerPart Create(string name, IGraphElementModel model, IModelUI modelUI, string parentClassName)
         {
-            if (model is IPortNode)
+            if (model is IPortNodeModel)
             {
                 return new InOutPortContainerPart(name, model, modelUI, parentClassName);
             }
@@ -28,11 +32,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public override VisualElement Root => m_Root;
 
         protected InOutPortContainerPart(string name, IGraphElementModel model, IModelUI ownerElement, string parentClassName)
-            : base(name, model, ownerElement, parentClassName) {}
+            : base(name, model, ownerElement, parentClassName) { }
 
         protected override void BuildPartUI(VisualElement container)
         {
-            if (m_Model is IPortNode)
+            if (m_Model is IPortNodeModel)
             {
                 m_Root = new VisualElement { name = PartName };
                 m_Root.AddToClassList(ussClassName);
@@ -56,6 +60,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             m_Root.AddStylesheet("PortContainerPart.uss");
         }
 
+        /// <inheritdoc />
         protected override void UpdatePartFromModel()
         {
             switch (m_Model)
@@ -67,9 +72,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 // case ISingleOutputPortNode outputPortHolder:
                 //     m_OutputPortContainer?.UpdatePorts(new[] { outputPortHolder.OutputPort }, m_OwnerElement.GraphView, m_OwnerElement.CommandDispatcher);
                 //     break;
-                case IInOutPortsNode portHolder:
-                    m_InputPortContainer?.UpdatePorts(portHolder.GetInputPorts(), m_OwnerElement.GraphView, m_OwnerElement.CommandDispatcher);
-                    m_OutputPortContainer?.UpdatePorts(portHolder.GetOutputPorts(), m_OwnerElement.GraphView, m_OwnerElement.CommandDispatcher);
+                case IInputOutputPortsNodeModel portHolder:
+                    m_InputPortContainer?.UpdatePorts(portHolder.GetInputPorts().Where(p => p.Orientation == Orientation.Horizontal), m_OwnerElement.GraphView, m_OwnerElement.CommandDispatcher);
+                    m_OutputPortContainer?.UpdatePorts(portHolder.GetOutputPorts().Where(p => p.Orientation == Orientation.Horizontal), m_OwnerElement.GraphView, m_OwnerElement.CommandDispatcher);
                     break;
             }
         }

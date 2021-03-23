@@ -91,7 +91,7 @@ namespace UnityEditor.VisualScripting.Editor
 
                     if (nodeModelSelected != null && framesPerNode.TryGetValue(nodeModelSelected.Guid, out HashSet<(int, int)> frames))
                     {
-                        foreach ((int, int)frameInterval in frames)
+                        foreach ((int, int) frameInterval in frames)
                         {
                             float xStart = m_TimeArea.FrameToPixel(frameInterval.Item1);
                             float xEnd = m_TimeArea.FrameToPixel(frameInterval.Item2) - frameDeltaToPixel * 0.1f;
@@ -190,7 +190,7 @@ namespace UnityEditor.VisualScripting.Editor
 
                 int firstNodeFrame = pair.Value.First();
                 // first frame is 3, initial interval is (3,4)
-                (int start, int end)curInterval = (firstNodeFrame, firstNodeFrame + 1);
+                (int start, int end) curInterval = (firstNodeFrame, firstNodeFrame + 1);
                 foreach (var i in pair.Value.Skip(1))
                 {
                     // interval was (3,5),  node is not active during frame 5, cur frame is 6

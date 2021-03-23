@@ -464,7 +464,7 @@ namespace UnityEditor.VisualScripting.GraphViewModel
 #endif
         }
 
-        public void Dispose() {}
+        public void Dispose() { }
 
         public IEnumerable<IEdgeModel> GetEdgesConnections(IPortModel portModel)
         {

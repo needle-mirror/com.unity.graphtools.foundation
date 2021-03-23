@@ -20,7 +20,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             var port = portModel.GetUI<Port>(null);
             Assert.IsNotNull(port);
 
-            var label = port.Q<Label>();
+            var label = port.SafeQ<Label>();
             Assert.AreEqual("", label.text);
 
             Assert.IsNotNull(portModel as IHasTitle);
@@ -73,12 +73,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
 
         class FakeIONodeModel : IONodeModel
         {
-            public override IPortModel CreatePort(Direction direction, string portName, PortType portType,
+            public override IPortModel CreatePort(Direction direction, Orientation orientation, string portName, PortType portType,
                 TypeHandle dataType, string portId, PortModelOptions options)
             {
                 return new FakePortModel(GraphModel)
                 {
                     Direction = direction,
+                    Orientation = orientation,
                     Title = portName,
                     PortType = portType,
                     DataTypeHandle = dataType,
@@ -99,7 +100,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         [Test]
         public void ConnectingPortUpdateClasses()
         {
-            var nodeModel = new FakeIONodeModel {InputCount = 1, OuputCount = 1};
+            var nodeModel = new FakeIONodeModel { InputCount = 1, OuputCount = 1 };
             nodeModel.DefineNode();
 
             var node = new CollapsibleInOutNode();

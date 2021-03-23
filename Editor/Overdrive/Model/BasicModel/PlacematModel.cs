@@ -12,20 +12,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
     [Serializable]
     //[MovedFrom(false, "UnityEditor.VisualScripting.GraphViewModel", "Unity.GraphTools.Foundation.Overdrive.Editor")]
     [MovedFrom("UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel")]
-    public class PlacematModel : IPlacematModel, ISerializationCallbackReceiver, IGuidUpdate
+    public class PlacematModel : GraphElementModel, IPlacematModel
     {
         const string k_DefaultPlacematName = "Placemat";
 
-        public static readonly Color defaultColor = new Color(0.15f, 0.19f, 0.19f);
+        /// <inheritdoc />
+        public override Color DefaultColor => new Color(0.15f, 0.19f, 0.19f);
 
         [SerializeField]
         string m_Title;
 
         [SerializeField]
         Rect m_Position;
-
-        [SerializeField]
-        Color m_Color;
 
         [SerializeField]
         bool m_Collapsed;
@@ -36,29 +34,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         [SerializeField]
         List<string> m_HiddenElements;
 
-        [SerializeField]
-        GraphAssetModel m_AssetModel;
-
-        [SerializeField]
-        SerializableGUID m_Guid;
-
-        [SerializeField, Obsolete]
-        string m_Id = "";
-
-        [SerializeField]
-        List<string> m_SerializedCapabilities;
-
         List<IGraphElementModel> m_CachedHiddenElementModels;
-
-        protected List<Capabilities> m_Capabilities;
-
-        public IGraphAssetModel AssetModel
-        {
-            get => m_AssetModel;
-            set => m_AssetModel = (GraphAssetModel)value;
-        }
-
-        public virtual IGraphModel GraphModel => m_AssetModel.GraphModel;
 
         public string Title
         {
@@ -96,12 +72,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             }
         }
 
-        public Color Color
-        {
-            get => m_Color;
-            set => m_Color = value;
-        }
-
         public bool Collapsed
         {
             get => m_Collapsed;
@@ -131,26 +101,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             }
         }
 
-        /// <summary>
-        /// The unique identifier of the placemat.
-        /// </summary>
-        public SerializableGUID Guid
-        {
-            get
-            {
-                if (!m_Guid.Valid)
-                    AssignNewGuid();
-                return m_Guid;
-            }
-            set => m_Guid = value;
-        }
-
         public bool Destroyed { get; private set; }
 
         public PlacematModel()
         {
             InternalInitCapabilities();
-            Color = defaultColor;
             Title = k_DefaultPlacematName;
         }
 
@@ -170,78 +125,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
                 return;
 
             Title = newName;
-        }
-
-        public void ResetColor()
-        {
-            Color = defaultColor;
-        }
-
-        /// <summary>
-        /// Assign a newly generated GUID to the model.
-        /// </summary>
-        public void AssignNewGuid()
-        {
-            m_Guid = SerializableGUID.Generate();
-        }
-
-        /// <summary>
-        /// Assign a GUID to the model.
-        /// </summary>
-        /// <param name="guidString">A string representation of the guid to be parsed.</param>
-        void IGuidUpdate.AssignGuid(string guidString)
-        {
-            m_Guid = new SerializableGUID(guidString);
-            if (!m_Guid.Valid)
-                AssignNewGuid();
-        }
-
-        public virtual IReadOnlyList<Capabilities> Capabilities => m_Capabilities;
-
-        public void OnBeforeSerialize()
-        {
-            m_SerializedCapabilities = m_Capabilities?.Select(c => c.Name).ToList() ?? new List<string>();
-        }
-
-        public void OnAfterDeserialize()
-        {
-            if (!m_Guid.Valid)
-            {
-#pragma warning disable 612
-                if (!String.IsNullOrEmpty(m_Id))
-                {
-                    (GraphModel as GraphModel)?.AddGuidToUpdate(this, m_Id);
-                }
-#pragma warning restore 612
-            }
-
-            if (!m_SerializedCapabilities.Any())
-                // If we're reloading an older node
-                InitCapabilities();
-            else
-                m_Capabilities = m_SerializedCapabilities.Select(Overdrive.Capabilities.Get).ToList();
-        }
-
-        internal void UpdateHiddenGuids(Dictionary<string, IGuidUpdate> mapping)
-        {
-            List<string> updatedHiddenElementGuids = new List<string>();
-            bool updated = false;
-
-            foreach (var hiddenGuid in HiddenElementsGuid)
-            {
-                if (mapping.TryGetValue(hiddenGuid, out var element) && element is IGraphElementModel graphElementModel)
-                {
-                    updated = true;
-                    updatedHiddenElementGuids.Add(graphElementModel.Guid.ToString());
-                }
-                else
-                {
-                    updatedHiddenElementGuids.Add(hiddenGuid);
-                }
-            }
-
-            if (updated)
-                HiddenElementsGuid = updatedHiddenElementGuids;
         }
 
         public IEnumerable<IGraphElementModel> HiddenElements
@@ -299,7 +182,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             }
         }
 
-        protected virtual void InitCapabilities()
+        /// <inheritdoc />
+        protected override void InitCapabilities()
         {
             InternalInitCapabilities();
         }
@@ -314,8 +198,24 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
                 Overdrive.Capabilities.Renamable,
                 Overdrive.Capabilities.Movable,
                 Overdrive.Capabilities.Resizable,
-                Overdrive.Capabilities.Collapsible
+                Overdrive.Capabilities.Collapsible,
+                Overdrive.Capabilities.Colorable
             };
+        }
+
+        /// <inheritdoc />
+        public override void OnAfterDeserialize()
+        {
+            base.OnAfterDeserialize();
+            if (Version <= SerializationVersion.GTF_V_0_8_2)
+            {
+                this.SetCapability(Overdrive.Capabilities.Colorable, true);
+                if (DefaultColor != InternalSerializedColor)
+                {
+                    // sets HasUserColor properly
+                    Color = InternalSerializedColor;
+                }
+            }
         }
     }
 }

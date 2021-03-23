@@ -92,7 +92,7 @@ namespace UnityEditor.VisualScripting.Model
                 {
                     list.Insert(insertIndex, existing);
 
-//                        m_NextIndex++; // just inserted one so
+                    //                        m_NextIndex++; // just inserted one so
                 }
             }
             else

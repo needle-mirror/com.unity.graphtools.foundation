@@ -4,9 +4,9 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public class EditableLabel : VisualElementBridge
+    public class EditableLabel : VisualElement
     {
-        public new class UxmlFactory : UxmlFactory<EditableLabel, UxmlTraits> {}
+        public new class UxmlFactory : UxmlFactory<EditableLabel, UxmlTraits> { }
         public new class UxmlTraits : VisualElement.UxmlTraits
         {
             UxmlBoolAttributeDescription m_Multiline = new UxmlBoolAttributeDescription { name = "multiline" };
@@ -43,13 +43,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public EditableLabel()
         {
-            SetIsCompositeRoot();
+            this.SetIsCompositeRoot();
             focusable = true;
 
             GraphElementHelper.LoadTemplateAndStylesheet(this, "EditableLabel", "ge-editable-label");
 
-            m_Label = this.Q<Label>(name: labelName);
-            m_TextField = this.Q<TextField>(name: textFieldName);
+            m_Label = this.SafeQ<Label>(name: labelName);
+            m_TextField = this.SafeQ<TextField>(name: textFieldName);
 
             m_Label.RegisterCallback<MouseDownEvent>(OnLabelMouseDown);
 
@@ -86,7 +86,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             m_Label.style.display = DisplayStyle.None;
             m_TextField.style.display = StyleKeyword.Null;
 
-            m_TextField.Q(TextField.textInputUssName).Focus();
+            m_TextField.SafeQ(TextField.textInputUssName).Focus();
             m_TextField.SelectAll();
         }
 
@@ -96,12 +96,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             {
                 if (e.button == (int)MouseButton.LeftMouse)
                 {
-                    if (e.clickCount == 1)
-                    {
-                        // Prevent focusing on single click.
-                        e.PreventDefault();
-                    }
-                    else if (e.clickCount == 2)
+                    if (e.clickCount == 2)
                     {
                         BeginEditing();
 

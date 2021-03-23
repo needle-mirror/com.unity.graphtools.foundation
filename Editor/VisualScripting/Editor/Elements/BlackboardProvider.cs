@@ -42,7 +42,7 @@ namespace UnityEditor.VisualScripting.Editor
             var mainSection = new BlackboardSection { title = k_MainSectionTitle };
             mainSection.canAcceptDrop += MainCanAcceptDrop;
             yield return mainSection;
-            var blackboardSection = new BlackboardSection {title = k_CurrentScopeVariableDeclarationsSectionTitle};
+            var blackboardSection = new BlackboardSection { title = k_CurrentScopeVariableDeclarationsSectionTitle };
             blackboardSection.canAcceptDrop += _ => false;
             yield return blackboardSection;
         }
@@ -172,7 +172,7 @@ namespace UnityEditor.VisualScripting.Editor
 
         public bool CanAddItems => true;
 
-        public void BuildContextualMenu(DropdownMenu evtMenu, VisualElement visualElement, Store store, Vector2 mousePosition) {}
+        public void BuildContextualMenu(DropdownMenu evtMenu, VisualElement visualElement, Store store, Vector2 mousePosition) { }
 
         static bool CanDisplayThisToken => true;
     }

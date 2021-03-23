@@ -25,7 +25,7 @@ namespace UnityEditor.VisualScriptingTests.Models
         [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
         class D<T>
         {
-            public void F(T t) {}
+            public void F(T t) { }
             public T G(T t)
             {
                 return t;
@@ -55,7 +55,7 @@ namespace UnityEditor.VisualScriptingTests.Models
         [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
         class C
         {
-            public void F<T>(T t) {}
+            public void F<T>(T t) { }
 
             public T G<T>(T t)
             {
@@ -88,19 +88,19 @@ namespace UnityEditor.VisualScriptingTests.Models
             }
         }
 
-        [TestCase(ClassType.Plain, "F",            typeof(float),       0)]
-        [TestCase(ClassType.Plain, "G",            typeof(float),       0)]
-        [TestCase(ClassType.Plain, "H",            typeof(float),       0)]
-        [TestCase(ClassType.Plain, "H",            typeof(float),       1)]
-        [TestCase(ClassType.Plain, "ListFromType", typeof(float),       0)]
+        [TestCase(ClassType.Plain, "F", typeof(float), 0)]
+        [TestCase(ClassType.Plain, "G", typeof(float), 0)]
+        [TestCase(ClassType.Plain, "H", typeof(float), 0)]
+        [TestCase(ClassType.Plain, "H", typeof(float), 1)]
+        [TestCase(ClassType.Plain, "ListFromType", typeof(float), 0)]
         [TestCase(ClassType.Plain, "TypeFromList", typeof(List<float>), 0)]
         [TestCase(ClassType.Plain, "ListFromList", typeof(List<float>), 0)]
 
-        [TestCase(ClassType.Generic, "F",            typeof(float),       0)]
-        [TestCase(ClassType.Generic, "G",            typeof(float),       0)]
-        [TestCase(ClassType.Generic, "H",            typeof(float),       0)]
-        [TestCase(ClassType.Generic, "H",            typeof(float),       1)]
-        [TestCase(ClassType.Generic, "ListFromType", typeof(float),       0)]
+        [TestCase(ClassType.Generic, "F", typeof(float), 0)]
+        [TestCase(ClassType.Generic, "G", typeof(float), 0)]
+        [TestCase(ClassType.Generic, "H", typeof(float), 0)]
+        [TestCase(ClassType.Generic, "H", typeof(float), 1)]
+        [TestCase(ClassType.Generic, "ListFromType", typeof(float), 0)]
         [TestCase(ClassType.Generic, "TypeFromList", typeof(List<float>), 0)]
         [TestCase(ClassType.Generic, "ListFromList", typeof(List<float>), 0)]
         public void SolveTypeArguments(ClassType t, string methodName, Type connectedType, int parameterIndex)
@@ -131,26 +131,26 @@ namespace UnityEditor.VisualScriptingTests.Models
 
         const int k_InstanceIndex = -1;
 
-        [TestCase(ClassType.Plain, "F",            typeof(float),       0, typeof(void))]
-        [TestCase(ClassType.Plain, "G",            typeof(float),       0, typeof(float))]
-        [TestCase(ClassType.Plain, "H",            typeof(float),       0, typeof(float))]
-        [TestCase(ClassType.Plain, "H",            typeof(float),       1, typeof(float))]
-        [TestCase(ClassType.Plain, "ListFromType", typeof(float),       0, typeof(List<float>))]
+        [TestCase(ClassType.Plain, "F", typeof(float), 0, typeof(void))]
+        [TestCase(ClassType.Plain, "G", typeof(float), 0, typeof(float))]
+        [TestCase(ClassType.Plain, "H", typeof(float), 0, typeof(float))]
+        [TestCase(ClassType.Plain, "H", typeof(float), 1, typeof(float))]
+        [TestCase(ClassType.Plain, "ListFromType", typeof(float), 0, typeof(List<float>))]
         [TestCase(ClassType.Plain, "TypeFromList", typeof(List<float>), 0, typeof(float))]
         [TestCase(ClassType.Plain, "ListFromList", typeof(List<float>), 0, typeof(List<float>))]
 
-        [TestCase(ClassType.Generic, "F",            typeof(List<float>), k_InstanceIndex, typeof(void))]
-        [TestCase(ClassType.Generic, "G",            typeof(List<float>), k_InstanceIndex, typeof(float))]
-        [TestCase(ClassType.Generic, "H",            typeof(List<float>), k_InstanceIndex, typeof(float))]
+        [TestCase(ClassType.Generic, "F", typeof(List<float>), k_InstanceIndex, typeof(void))]
+        [TestCase(ClassType.Generic, "G", typeof(List<float>), k_InstanceIndex, typeof(float))]
+        [TestCase(ClassType.Generic, "H", typeof(List<float>), k_InstanceIndex, typeof(float))]
         [TestCase(ClassType.Generic, "ListFromType", typeof(List<float>), k_InstanceIndex, typeof(List<float>))]
         [TestCase(ClassType.Generic, "TypeFromList", typeof(List<float>), k_InstanceIndex, typeof(float))]
         [TestCase(ClassType.Generic, "ListFromList", typeof(List<float>), k_InstanceIndex, typeof(List<float>))]
 
-        [TestCase(ClassType.Generic, "F",            typeof(float),       0, typeof(void))]
-        [TestCase(ClassType.Generic, "G",            typeof(float),       0, typeof(float))]
-        [TestCase(ClassType.Generic, "H",            typeof(float),       0, typeof(float))]
-        [TestCase(ClassType.Generic, "H",            typeof(float),       1, typeof(float))]
-        [TestCase(ClassType.Generic, "ListFromType", typeof(float),       0, typeof(List<float>))]
+        [TestCase(ClassType.Generic, "F", typeof(float), 0, typeof(void))]
+        [TestCase(ClassType.Generic, "G", typeof(float), 0, typeof(float))]
+        [TestCase(ClassType.Generic, "H", typeof(float), 0, typeof(float))]
+        [TestCase(ClassType.Generic, "H", typeof(float), 1, typeof(float))]
+        [TestCase(ClassType.Generic, "ListFromType", typeof(float), 0, typeof(List<float>))]
         [TestCase(ClassType.Generic, "TypeFromList", typeof(List<float>), 0, typeof(float))]
         [TestCase(ClassType.Generic, "ListFromList", typeof(List<float>), 0, typeof(List<float>))]
         public void GenericOutputTypeIsSolved(ClassType t, string methodName, Type connectedType, int methodParameterIndex,
@@ -185,19 +185,19 @@ namespace UnityEditor.VisualScriptingTests.Models
                 Assert.That(call.OutputPort.DataType, Is.EqualTo(expectedOutputType.GenerateTypeHandle(Stencil)));
         }
 
-        [TestCase(ClassType.Plain, "F",            typeof(float),       0, typeof(float))]
-        [TestCase(ClassType.Plain, "G",            typeof(float),       0, typeof(float))]
-        [TestCase(ClassType.Plain, "H",            typeof(float),       0, typeof(float))]
-        [TestCase(ClassType.Plain, "H",            typeof(float),       1, typeof(float))]
-        [TestCase(ClassType.Plain, "ListFromType", typeof(float),       0, typeof(float))]
+        [TestCase(ClassType.Plain, "F", typeof(float), 0, typeof(float))]
+        [TestCase(ClassType.Plain, "G", typeof(float), 0, typeof(float))]
+        [TestCase(ClassType.Plain, "H", typeof(float), 0, typeof(float))]
+        [TestCase(ClassType.Plain, "H", typeof(float), 1, typeof(float))]
+        [TestCase(ClassType.Plain, "ListFromType", typeof(float), 0, typeof(float))]
         [TestCase(ClassType.Plain, "TypeFromList", typeof(List<float>), 0, typeof(List<float>))]
         [TestCase(ClassType.Plain, "ListFromList", typeof(List<float>), 0, typeof(List<float>))]
 
-        [TestCase(ClassType.Generic, "F",            typeof(float),       0, typeof(float))]
-        [TestCase(ClassType.Generic, "G",            typeof(float),       0, typeof(float))]
-        [TestCase(ClassType.Generic, "H",            typeof(float),       0, typeof(float))]
-        [TestCase(ClassType.Generic, "H",            typeof(float),       1, typeof(float))]
-        [TestCase(ClassType.Generic, "ListFromType", typeof(float),       0, typeof(float))]
+        [TestCase(ClassType.Generic, "F", typeof(float), 0, typeof(float))]
+        [TestCase(ClassType.Generic, "G", typeof(float), 0, typeof(float))]
+        [TestCase(ClassType.Generic, "H", typeof(float), 0, typeof(float))]
+        [TestCase(ClassType.Generic, "H", typeof(float), 1, typeof(float))]
+        [TestCase(ClassType.Generic, "ListFromType", typeof(float), 0, typeof(float))]
         [TestCase(ClassType.Generic, "TypeFromList", typeof(List<float>), 0, typeof(List<float>))]
         [TestCase(ClassType.Generic, "ListFromList", typeof(List<float>), 0, typeof(List<float>))]
         public void GenericInputTypeIsSolved(ClassType t, string methodName, Type connectedType, int methodParameterIndex,

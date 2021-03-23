@@ -12,31 +12,31 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         /// <summary>
         /// Handler for any DragEnterEvent passed to this element
         /// </summary>
-        /// <param name="evt">event passed</param>
+        /// <param name="evt">event passed.</param>
         void OnDragEnter(DragEnterEvent evt);
 
         /// <summary>
         /// Handler for any DragEnterEvent passed to this element
         /// </summary>
-        /// <param name="evt">event passed</param>
+        /// <param name="evt">event passed.</param>
         void OnDragLeave(DragLeaveEvent evt);
 
         /// <summary>
         /// Handler for any DragEnterEvent passed to this element
         /// </summary>
-        /// <param name="evt">event passed</param>
+        /// <param name="evt">event passed.</param>
         void OnDragUpdated(DragUpdatedEvent evt);
 
         /// <summary>
         /// Handler for any DragEnterEvent passed to this element
         /// </summary>
-        /// <param name="evt">event passed</param>
+        /// <param name="evt">event passed.</param>
         void OnDragPerform(DragPerformEvent evt);
 
         /// <summary>
         /// Handler for any DragEnterEvent passed to this element
         /// </summary>
-        /// <param name="evt">event passed</param>
+        /// <param name="evt">event passed.</param>
         void OnDragExited(DragExitedEvent evt);
     }
 }

@@ -2,8 +2,7 @@
     "name": "RecipesEditor",
     "references": [
         "Unity.GraphTools.Foundation.Overdrive.Editor",
-        "Unity.Searcher.Editor",
-        "Unity.InternalAPIEngineBridgeDev.003"
+        "Unity.Searcher.Editor"
     ],
     "includePlatforms": [
         "Editor"

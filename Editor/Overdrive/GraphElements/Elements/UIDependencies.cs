@@ -26,7 +26,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             if (m_BackwardDependencies != null)
             {
-                foreach (var(graphElement, dependencyType) in m_BackwardDependencies)
+                foreach (var (graphElement, dependencyType) in m_BackwardDependencies)
                 {
                     if (dependencyType.HasFlagFast(DependencyType.Style))
                         (graphElement as VisualElement)?.UnregisterCallback<CustomStyleResolvedEvent>(OnBackwardDependencyCustomStyleResolved);
@@ -59,7 +59,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             m_Owner.AddBackwardDependencies();
             if (m_BackwardDependencies != null)
             {
-                foreach (var(graphElement, dependencyType) in m_BackwardDependencies)
+                foreach (var (graphElement, dependencyType) in m_BackwardDependencies)
                 {
                     if (dependencyType.HasFlagFast(DependencyType.Style))
                         (graphElement as VisualElement)?.RegisterCallback<CustomStyleResolvedEvent>(OnBackwardDependencyCustomStyleResolved);
@@ -124,7 +124,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             if (m_ForwardDependencies != null)
             {
-                foreach (var(graphElement, dependencyType) in m_ForwardDependencies)
+                foreach (var (graphElement, dependencyType) in m_ForwardDependencies)
                 {
                     if (dependencyType.HasFlagFast(DependencyType.Geometry))
                         graphElement.UpdateFromModel();
@@ -136,7 +136,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             if (m_ForwardDependencies != null)
             {
-                foreach (var(graphElement, dependencyType) in m_ForwardDependencies)
+                foreach (var (graphElement, dependencyType) in m_ForwardDependencies)
                 {
                     if (dependencyType.HasFlagFast(DependencyType.Style))
                         graphElement.UpdateFromModel();
@@ -148,7 +148,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             if (m_ForwardDependencies != null)
             {
-                foreach (var(graphElement, dependencyType) in m_ForwardDependencies)
+                foreach (var (graphElement, dependencyType) in m_ForwardDependencies)
                 {
                     if (dependencyType.HasFlagFast(DependencyType.Removal))
                         graphElement.UpdateFromModel();

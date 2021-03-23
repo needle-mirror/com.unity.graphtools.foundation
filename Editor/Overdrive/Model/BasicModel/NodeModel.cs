@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.Assertions;
 using Object = UnityEngine.Object;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
@@ -27,22 +26,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
     /// A model that represents a node in a graph.
     /// </summary>
     [Serializable]
-    public abstract class NodeModel : IInOutPortsNode, IHasTitle, IHasProgress, ICollapsible, ISerializationCallbackReceiver, IGuidUpdate
+    public abstract class NodeModel : GraphElementModel, IInputOutputPortsNodeModel, IHasTitle, IHasProgress, ICollapsible
     {
         [SerializeField, HideInInspector]
-        SerializableGUID m_Guid;
-
-        [SerializeField, HideInInspector]
-        protected GraphAssetModel m_GraphAssetModel;
-
-        [SerializeField, HideInInspector]
         Vector2 m_Position;
-
-        [SerializeField, HideInInspector]
-        Color m_Color;
-
-        [SerializeField, HideInInspector]
-        bool m_HasUserColor;
 
         [SerializeField, HideInInspector]
         string m_Title;
@@ -61,47 +48,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         [SerializeField]
         ModelState m_State;
 
-        [SerializeField, HideInInspector]
-        List<string> m_SerializedCapabilities;
-
         /// <summary>
-        /// The unique identifier of the node.
+        /// Stencil for this nodemodel, helper getter for Graphmodel Stencil
         /// </summary>
-        public SerializableGUID Guid
-        {
-            get
-            {
-                if (!m_Guid.Valid)
-                    AssignNewGuid();
-                return m_Guid;
-            }
-            // Setter for tests only.
-            set => m_Guid = value;
-        }
-
-        protected List<Capabilities> m_Capabilities;
-
-        public IReadOnlyList<Capabilities> Capabilities => m_Capabilities;
-
-        public virtual IGraphAssetModel AssetModel
-        {
-            get => m_GraphAssetModel;
-            set
-            {
-                Assert.IsNotNull(value);
-                m_GraphAssetModel = (GraphAssetModel)value;
-            }
-        }
-
-        public virtual IGraphModel GraphModel => AssetModel?.GraphModel;
-
-        protected Stencil Stencil => m_GraphAssetModel != null ? m_GraphAssetModel.GraphModel.Stencil : null;
+        protected Stencil Stencil => GraphModel.Stencil;
 
         public virtual string IconTypeString => "node";
-
-        public virtual string DataTypeString => "";
-
-        public virtual string VariableString => "";
 
         public ModelState State
         {
@@ -131,23 +83,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             }
         }
 
-        public Color Color
-        {
-            get => m_HasUserColor ? m_Color : Color.clear;
-            set
-            {
-                m_HasUserColor = true;
-                m_Color = value;
-            }
-        }
-
         public virtual bool AllowSelfConnect => false;
-
-        public bool HasUserColor
-        {
-            get => m_HasUserColor;
-            set => m_HasUserColor = value;
-        }
 
         OrderedPorts m_InputsById;
         OrderedPorts m_OutputsById;
@@ -168,7 +104,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
         public IReadOnlyDictionary<string, IConstant> InputConstantsById => m_InputConstantsById;
 
-        public bool Collapsed
+        public virtual bool Collapsed
         {
             get => m_Collapsed;
             set
@@ -184,14 +120,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
         public bool Destroyed { get; private set; }
 
+        /// <inheritdoc />
+        public override Color DefaultColor => new Color(0.776f, 0.443f, 0, 0.5f);
+
         public NodeModel()
         {
             InternalInitCapabilities();
             m_OutputsById = new OrderedPorts();
             m_InputsById = new OrderedPorts();
             m_InputConstantsById = new SerializedReferenceDictionary<string, IConstant>();
-
-            m_Color = new Color(0.776f, 0.443f, 0, 0.5f);
         }
 
         public void Destroy() => Destroyed = true;
@@ -243,13 +180,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             foreach (var kv in m_PreviousInputs
                      .Where<KeyValuePair<string, IPortModel>>(kv => !m_InputsById.ContainsKey(kv.Key)))
             {
-                DeletePort(kv.Value);
+                DisconnectPort(kv.Value);
             }
 
             foreach (var kv in m_PreviousOutputs
                      .Where<KeyValuePair<string, IPortModel>>(kv => !m_OutputsById.ContainsKey(kv.Key)))
             {
-                DeletePort(kv.Value);
+                DisconnectPort(kv.Value);
             }
 
             // remove input constants that aren't used
@@ -285,23 +222,38 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             return Stencil?.GetPortCapacity(portModel, out cap) ?? false ? cap : portModel?.GetDefaultCapacity() ?? PortCapacity.Multi;
         }
 
-        public virtual IPortModel CreatePort(Direction direction, string portName, PortType portType,
+        /// <inheritdoc />
+        public virtual IPortModel CreatePort(Direction direction, Orientation orientation, string portName, PortType portType,
             TypeHandle dataType, string portId, PortModelOptions options)
         {
             return new PortModel
             {
                 Direction = direction,
+                Orientation = orientation,
                 PortType = portType,
                 DataTypeHandle = dataType,
                 Title = portName ?? "",
                 UniqueName = portId,
                 Options = options,
-                NodeModel = this
+                NodeModel = this,
+                AssetModel = AssetModel
             };
         }
 
+        /// <inheritdoc />
+        public void DisconnectPort(IPortModel portModel)
+        {
+#pragma warning disable 618
+            DeletePort(portModel, false);
+#pragma warning restore 618
+        }
+
+        /// <inheritdoc />
+        [Obsolete("Use DisconnectPort instead.")]
         public void DeletePort(IPortModel portModel, bool removeFromOrderedPorts = false)
         {
+            // TODO JOCE: all known usages have removeFromOrderedPorts = false;
+            // In port 0.9 release, remove the parameter from the method so that DeletePort(portModel) always deletes ports.
             if (GraphModel != null)
             {
                 var edgeModels = GraphModel.GetEdgesConnections(portModel);
@@ -321,21 +273,32 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             }
         }
 
-        public virtual IPortModel AddInputPort(string portName, PortType portType, TypeHandle dataType, string portId = null, PortModelOptions options = PortModelOptions.Default, Action<IConstant> preDefine = null)
+        /// <inheritdoc />
+        public virtual IPortModel AddInputPort(string portName, PortType portType, TypeHandle dataType,
+            string portId = null, Orientation orientation = Orientation.Horizontal,
+            PortModelOptions options = PortModelOptions.Default, Action<IConstant> initializationCallback = null)
         {
-            var portModel = CreatePort(Direction.Input, portName, portType, dataType, portId, options);
+            var portModel = CreatePort(Direction.Input, orientation, portName, portType, dataType, portId, options);
             portModel = ReuseOrCreatePortModel(portModel, m_PreviousInputs, m_InputsById);
-            UpdateConstantForInput(portModel, preDefine);
+            UpdateConstantForInput(portModel, initializationCallback);
             return portModel;
         }
 
-        public virtual IPortModel AddOutputPort(string portName, PortType portType, TypeHandle dataType, string portId = null, PortModelOptions options = PortModelOptions.Default)
+        /// <inheritdoc />
+        public virtual IPortModel AddOutputPort(string portName, PortType portType, TypeHandle dataType,
+            string portId = null, Orientation orientation = Orientation.Horizontal,
+            PortModelOptions options = PortModelOptions.Default)
         {
-            var portModel = CreatePort(Direction.Output, portName, portType, dataType, portId, options);
+            var portModel = CreatePort(Direction.Output, orientation, portName, portType, dataType, portId, options);
             return ReuseOrCreatePortModel(portModel, m_PreviousOutputs, m_OutputsById);
         }
 
-        protected void UpdateConstantForInput(IPortModel inputPort, Action<IConstant> preDefine = null)
+        /// <summary>
+        /// Updates an input port's constant.
+        /// </summary>
+        /// <param name="inputPort">The port to update.</param>
+        /// <param name="initializationCallback">An initialization method for the constant to be called right after the constant is created.</param>
+        protected void UpdateConstantForInput(IPortModel inputPort, Action<IConstant> initializationCallback = null)
         {
             var id = inputPort.UniqueName;
             if ((inputPort.Options & PortModelOptions.NoEmbeddedConstant) != 0)
@@ -372,7 +335,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
                 && Stencil.GetConstantNodeValueType(inputPort.DataTypeHandle) != null)
             {
                 var embeddedConstant = ((GraphModel)GraphModel).Stencil.CreateConstantValue(inputPort.DataTypeHandle);
-                preDefine?.Invoke(embeddedConstant);
+                initializationCallback?.Invoke(embeddedConstant);
                 EditorUtility.SetDirty((Object)AssetModel);
                 m_InputConstantsById[id] = embeddedConstant;
             }
@@ -440,25 +403,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             return NodeModelDefaultImplementations.GetConnectedEdges(this);
         }
 
-        /// <summary>
-        /// Assign a newly generated GUID to the model.
-        /// </summary>
-        public void AssignNewGuid()
-        {
-            m_Guid = SerializableGUID.Generate();
-        }
-
-        /// <summary>
-        /// Assign a GUID to the model.
-        /// </summary>
-        /// <param name="guidString">A string representation of the guid to be parsed.</param>
-        void IGuidUpdate.AssignGuid(string guidString)
-        {
-            m_Guid = new SerializableGUID(guidString);
-            if (!m_Guid.Valid)
-                AssignNewGuid();
-        }
-
         public void Move(Vector2 delta)
         {
             if (!this.IsMovable())
@@ -467,21 +411,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             Position += delta;
         }
 
-        public virtual void OnBeforeSerialize()
+        /// <inheritdoc />
+        public override void OnAfterDeserialize()
         {
-            m_SerializedCapabilities = m_Capabilities?.Select(c => c.Name).ToList() ?? new List<string>();
-        }
-
-        public virtual void OnAfterDeserialize()
-        {
+            base.OnAfterDeserialize();
+            if (Version <= SerializationVersion.GTF_V_0_8_2)
+            {
+                this.SetCapability(Overdrive.Capabilities.Colorable, true);
+            }
             m_OutputsById = new OrderedPorts();
             m_InputsById = new OrderedPorts();
-
-            if (!m_SerializedCapabilities.Any())
-                // If we're reloading an older node
-                InitCapabilities();
-            else
-                m_Capabilities = m_SerializedCapabilities.Select(Overdrive.Capabilities.Get).ToList();
         }
 
         public virtual void OnAfterDeserializeAssetModel()
@@ -511,7 +450,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 #pragma warning restore 612
         }
 
-        protected virtual void InitCapabilities()
+        /// <inheritdoc />
+        protected override void InitCapabilities()
         {
             InternalInitCapabilities();
         }
@@ -525,7 +465,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
                 Overdrive.Capabilities.Copiable,
                 Overdrive.Capabilities.Selectable,
                 Overdrive.Capabilities.Movable,
-                Overdrive.Capabilities.Collapsible
+                Overdrive.Capabilities.Collapsible,
+                Overdrive.Capabilities.Colorable
             };
         }
     }

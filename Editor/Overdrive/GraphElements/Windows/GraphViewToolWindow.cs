@@ -51,7 +51,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 .Where(myType => myType.IsClass && !myType.IsAbstract && myType.IsSubclassOf(typeof(GraphViewToolWindow)));
         }
 
-        public override void SelectGraphViewFromWindow(EditorWindow window, GraphViewBridge graphView, int graphViewIndexInWindow = 0)
+        public override void SelectGraphViewFromWindow(EditorWindow window, VisualElement graphView, int graphViewIndexInWindow = 0)
         {
             var gvChoice = new GraphViewChoice { window = window, graphView = graphView as GraphView, idx = graphViewIndexInWindow };
             SelectGraphView(gvChoice);
@@ -156,7 +156,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 int idx = 0;
                 foreach (var graphView in window.GraphViews.Where(IsGraphViewSupported))
                 {
-                    m_GraphViewChoices.Add(new GraphViewChoice {window = window, idx = idx++, graphView = graphView, canUse = !usedGraphViews.Contains(graphView)});
+                    m_GraphViewChoices.Add(new GraphViewChoice { window = window, idx = idx++, graphView = graphView, canUse = !usedGraphViews.Contains(graphView) });
                 }
             }
 

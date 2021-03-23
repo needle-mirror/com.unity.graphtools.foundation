@@ -92,7 +92,7 @@ namespace UnityEditor.VisualScripting.Editor
 
                 if (titleComponents.Any())
                 {
-                    VisualElement titleContainerElement = new VisualElement {name = "titleContainerElement"};
+                    VisualElement titleContainerElement = new VisualElement { name = "titleContainerElement" };
                     titleContainerElement.style.flexDirection = FlexDirection.Row;
 
                     foreach (var titleComponent in titleComponents)
@@ -100,7 +100,7 @@ namespace UnityEditor.VisualScripting.Editor
                         if (titleComponent.titleComponentType == LoopStackModel.TitleComponentType.String)
                         {
                             titleContainerElement.Add(new Label
-                                {name = "titleLabel", text = (string)titleComponent.titleObject});
+                            { name = "titleLabel", text = (string)titleComponent.titleObject });
                         }
                         else if (titleComponent.titleComponentType == LoopStackModel.TitleComponentType.Token)
                         {
@@ -237,7 +237,7 @@ namespace UnityEditor.VisualScripting.Editor
             if (s_Options == null)
             {
                 s_Options = new[] { new GUIContent("Function Parameter"), new GUIContent("Function Variable") };
-                s_EventOptions = new[] {s_Options[1]};
+                s_EventOptions = new[] { s_Options[1] };
             }
 
             EditorUtility.DisplayCustomMenu(

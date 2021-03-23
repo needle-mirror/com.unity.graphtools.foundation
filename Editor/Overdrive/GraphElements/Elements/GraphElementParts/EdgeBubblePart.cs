@@ -23,7 +23,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         protected EdgeBubble m_EdgeBubble;
 
         protected EdgeBubblePart(string name, IGraphElementModel model, IModelUI ownerElement, string parentClassName)
-            : base(name, model, ownerElement, parentClassName) {}
+            : base(name, model, ownerElement, parentClassName) { }
 
         protected override void BuildPartUI(VisualElement container)
         {
@@ -46,11 +46,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             if (ShouldShow())
             {
-                VisualElement attachPoint = edge.Q<EdgeControl>() ?? edge;
+                VisualElement attachPoint = edge.SafeQ<EdgeControl>() ?? edge;
                 var offset = Vector2.zero;
                 if (attachPoint is EdgeControl)
                 {
                     offset = ComputePosition() - new Vector2(attachPoint.layout.xMin + attachPoint.layout.width / 2, attachPoint.layout.yMin + attachPoint.layout.height / 2);
+                    if (float.IsNaN(offset.x))
+                        offset.x = 0;
+                    if (float.IsNaN(offset.y))
+                        offset.y = 0;
                 }
 
                 m_EdgeBubble.SetAttacherOffset(offset);
@@ -79,7 +83,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         Vector2 ComputePosition()
         {
             var edge = m_OwnerElement as Edge;
-            var edgeControl = edge?.Q<EdgeControl>();
+            var edgeControl = edge?.SafeQ<EdgeControl>();
 
             if (edgeControl == null)
                 return Vector2.zero;

@@ -8,6 +8,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         [SerializeReference]
         IGraphModel m_GraphModel;
 
+        public bool Dirty
+        {
+            get;
+            set;
+        }
+
         public IGraphModel GraphModel => m_GraphModel;
         public abstract IBlackboardGraphModel BlackboardGraphModel { get; }
 
@@ -50,8 +56,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             m_GraphModel?.OnDisable();
         }
 
-        public void Dispose() {}
-        public void OnBeforeSerialize() {}
+        public void OnBeforeSerialize() { }
 
         public void OnAfterDeserialize()
         {

@@ -7,7 +7,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
     [Serializable]
     //[MovedFrom(false, "UnityEditor.VisualScripting.Model", "Unity.GraphTools.Foundation.Overdrive.Editor")]
     [MovedFrom("UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting")]
-    public class VariableNodeModel : NodeModel, IVariableNodeModel, IRenamable, ICloneable, IHasMainOutputPort
+    public class
+        VariableNodeModel : NodeModel, IVariableNodeModel, IRenamable, ICloneable, IHasMainOutputPort
     {
         const string k_MainPortName = "MainPortName";
 
@@ -16,11 +17,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
         protected IPortModel m_MainPortModel;
 
-        // PF: remove base implementation
-        public override string DataTypeString => VariableDeclarationModel?.DataType.GetMetadata(Stencil).FriendlyName ?? string.Empty;
+        /// <summary>
+        /// The human readable name of the data type of the variable declaration model.
+        /// </summary>
+        public virtual string DataTypeString => VariableDeclarationModel?.DataType.GetMetadata(Stencil).FriendlyName ?? string.Empty;
 
-        // PF: remove base implementation
-        public override string VariableString => DeclarationModel == null ? string.Empty : VariableDeclarationModel.IsExposed ? "Exposed variable" : "Variable";
+        /// <summary>
+        /// The string used to describe this variable.
+        /// </summary>
+        public virtual string VariableString => DeclarationModel == null ? string.Empty : VariableDeclarationModel.IsExposed ? "Exposed variable" : "Variable";
 
         public override string Title => m_DeclarationModel == null ? "" : m_DeclarationModel.Title;
 

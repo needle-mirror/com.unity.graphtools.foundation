@@ -96,14 +96,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Types
         public void Test_IsAssignableTo_UsingGraph()
         {
             throw new NotImplementedException("Test_IsAssignableTo_UsingGraph");
-//            //Arrange
-//            var typeMetadata = CreateMetadata(typeof(VisualBehaviour));
-//
-//            //Act
-//            bool isAssignableTo = typeMetadata.IsAssignableTo(new Mock<IVSGraphModel>().Object);
-//
-//            //Assert
-//            Assert.That(isAssignableTo, Is.False);
+            //            //Arrange
+            //            var typeMetadata = CreateMetadata(typeof(VisualBehaviour));
+            //
+            //            //Act
+            //            bool isAssignableTo = typeMetadata.IsAssignableTo(new Mock<IVSGraphModel>().Object);
+            //
+            //            //Assert
+            //            Assert.That(isAssignableTo, Is.False);
         }
 
 #pragma warning disable CS0414

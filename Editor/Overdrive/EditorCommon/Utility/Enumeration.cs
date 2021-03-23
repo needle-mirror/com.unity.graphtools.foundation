@@ -56,12 +56,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             return Id;
         }
 
-        public static bool operator==(Enumeration left, Enumeration right)
+        public static bool operator ==(Enumeration left, Enumeration right)
         {
             return Equals(left, right);
         }
 
-        public static bool operator!=(Enumeration left, Enumeration right)
+        public static bool operator !=(Enumeration left, Enumeration right)
         {
             return !Equals(left, right);
         }

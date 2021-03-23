@@ -6,7 +6,7 @@ using UnityEditor.VisualScripting.Editor;
 using UnityEditor.VisualScripting.GraphViewModel;
 using UnityEngine;
 
-namespace  UnityEditor.VisualScripting.Model
+namespace UnityEditor.VisualScripting.Model
 {
     public class CompilerQuickFix
     {
@@ -45,7 +45,7 @@ namespace  UnityEditor.VisualScripting.Model
 
         public void AddError(string description, INodeModel node = null, CompilerQuickFix quickFix = null)
         {
-            AddError(description, node,  false, quickFix);
+            AddError(description, node, false, quickFix);
         }
 
         public void AddWarning(string description, INodeModel node = null, CompilerQuickFix quickFix = null)

@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace UnityEditor.VisualScripting.Editor
 {
-//    [CustomEditor(typeof(AbstractNodeAsset), true)]
+    //    [CustomEditor(typeof(AbstractNodeAsset), true)]
     class NodeModelInspector : GraphElementModelInspector
     {
         bool m_InputsCollapsed = true;
@@ -16,15 +16,15 @@ namespace UnityEditor.VisualScripting.Editor
 
         protected override void GraphElementInspectorGUI(Action refreshUI)
         {
-//            if (target is AbstractNodeAsset asset)
-//            {
-//                var node = asset.Model;
-//                node.HasUserColor = EditorGUILayout.Toggle("Set Custom Color", node.HasUserColor);
-//                if (node.HasUserColor)
-//                    node.Color = EditorGUILayout.ColorField("Node Color", node.Color);
-//
-//                DisplayPorts(node);
-//            }
+            //            if (target is AbstractNodeAsset asset)
+            //            {
+            //                var node = asset.Model;
+            //                node.HasUserColor = EditorGUILayout.Toggle("Set Custom Color", node.HasUserColor);
+            //                if (node.HasUserColor)
+            //                    node.Color = EditorGUILayout.ColorField("Node Color", node.Color);
+            //
+            //                DisplayPorts(node);
+            //            }
         }
 
         protected void DisplayPorts(INodeModel node)

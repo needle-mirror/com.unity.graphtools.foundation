@@ -23,36 +23,36 @@ namespace UnityEngine.VisualScripting
     [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Class, AllowMultiple = true)]
     public class NodeAttribute : AbstractNodeAttribute
     {
-        public NodeAttribute(Type stencilReferenceType = null) : base(stencilReferenceType) {}
+        public NodeAttribute(Type stencilReferenceType = null) : base(stencilReferenceType) { }
     }
 
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
     public class TypeMembersNodeAttribute : AbstractNodeAttribute
     {
-        public TypeMembersNodeAttribute(Type stencilReferenceType = null) : base(stencilReferenceType) {}
+        public TypeMembersNodeAttribute(Type stencilReferenceType = null) : base(stencilReferenceType) { }
     }
 
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
     public class MethodNodeAttribute : AbstractNodeAttribute
     {
-        public MethodNodeAttribute(Type stencilReferenceType = null) : base(stencilReferenceType) {}
+        public MethodNodeAttribute(Type stencilReferenceType = null) : base(stencilReferenceType) { }
     }
 
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
     public class PropertyNodeAttribute : AbstractNodeAttribute
     {
-        public PropertyNodeAttribute(Type stencilReferenceType = null) : base(stencilReferenceType) {}
+        public PropertyNodeAttribute(Type stencilReferenceType = null) : base(stencilReferenceType) { }
     }
 
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
     public class FieldNodeAttribute : AbstractNodeAttribute
     {
-        public FieldNodeAttribute(Type stencilReferenceType = null) : base(stencilReferenceType) {}
+        public FieldNodeAttribute(Type stencilReferenceType = null) : base(stencilReferenceType) { }
     }
 
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
     public class ConstantVariableNodeAttribute : AbstractNodeAttribute
     {
-        public ConstantVariableNodeAttribute(Type stencilReferenceType = null) : base(stencilReferenceType) {}
+        public ConstantVariableNodeAttribute(Type stencilReferenceType = null) : base(stencilReferenceType) { }
     }
 }

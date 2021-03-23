@@ -35,7 +35,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
         {
             if (m_PlayHeadCursor == null)
             {
-                m_PlayHeadCursor = new TimeCursorManipulator(AnimationWindowStyles.playHead){drawHead = false};
+                m_PlayHeadCursor = new TimeCursorManipulator(AnimationWindowStyles.playHead) { drawHead = false };
                 m_PlayHeadCursor.headColor = PlayHeadColor;
                 m_PlayHeadCursor.lineColor = PlayHeadColor;
                 m_PlayHeadCursor.alignment = TimeCursorManipulator.Alignment.Left;

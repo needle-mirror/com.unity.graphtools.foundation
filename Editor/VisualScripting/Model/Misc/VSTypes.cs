@@ -5,12 +5,12 @@ namespace UnityEditor.VisualScripting.Model
 {
     public class Unknown
     {
-        Unknown() {}
+        Unknown() { }
     }
 
     public class ExecutionFlow
     {
-        ExecutionFlow() {}
+        ExecutionFlow() { }
     }
 
     public enum VariableType
@@ -25,8 +25,8 @@ namespace UnityEditor.VisualScripting.Model
     [PublicAPI]
     public enum ModifierFlags
     {
-        None      = 0,
-        ReadOnly  = 1 << 0,
+        None = 0,
+        ReadOnly = 1 << 0,
         WriteOnly = 1 << 1,
         ReadWrite = 1 << 2,
     }

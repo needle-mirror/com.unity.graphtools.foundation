@@ -145,7 +145,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 yield return null;
             }
 
-            Vector2 selectionPosStickyNote = graphView.contentViewContainer.LocalToWorld(m_StickyNote.layout.position) + k_SelectionOffset;
+            Vector2 selectionPosStickyNote = graphView.ContentViewContainer.LocalToWorld(m_StickyNote.layout.position) + k_SelectionOffset;
 
             // Unselect StickyNote
             actions = SelectElement(selectionPosStickyNote);

@@ -11,7 +11,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Types
     [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
     sealed class FakeBinaryOverload
     {
-        public static FakeBinaryOverload operator+(FakeBinaryOverload a, FakeBinaryOverload b)
+        public static FakeBinaryOverload operator +(FakeBinaryOverload a, FakeBinaryOverload b)
         {
             return a;
         }
@@ -20,19 +20,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Types
     [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
     sealed class FakeUnaryOverload
     {
-        public static bool operator!(FakeUnaryOverload a)
+        public static bool operator !(FakeUnaryOverload a)
         {
             return true;
         }
     }
 
-    sealed class FakeNoOverload {}
+    sealed class FakeNoOverload { }
 
     [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
     static class FakeNoOverloadExtension
     {
-        public static void Ext1(this FakeNoOverload o) {}
-        public static void Ext2(this FakeNoOverload[] o) {}
+        public static void Ext1(this FakeNoOverload o) { }
+        public static void Ext2(this FakeNoOverload[] o) { }
     }
 
     sealed class AssemblyCacheTests

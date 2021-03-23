@@ -16,7 +16,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public SearcherFilter WithFieldQuery(string field, object value, LuceneSearcherDatabase.FilterType type = LuceneSearcherDatabase.FilterType.Must)
         {
-            LuceneFilters.Add(new LuceneSearcherDatabase.Filter { Field = field, Value = value, Type = type});
+            LuceneFilters.Add(new LuceneSearcherDatabase.Filter { Field = field, Value = value, Type = type });
             return this;
         }
     }

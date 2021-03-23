@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
@@ -30,13 +31,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         [Test]
         public void StickyNoteHasExpectedParts()
         {
-            var stickyNoteModel = m_GraphModel.CreateStickyNote();
+            var stickyNoteModel = m_GraphModel.CreateStickyNote(Rect.zero);
             var stickyNote = new StickyNote();
             stickyNote.SetupBuildAndUpdate(stickyNoteModel, m_CommandDispatcher, m_GraphView);
 
-            Assert.IsNotNull(stickyNote.Q<VisualElement>(StickyNote.titleContainerPartName));
-            Assert.IsNotNull(stickyNote.Q<VisualElement>(StickyNote.contentContainerPartName));
-            Assert.IsNotNull(stickyNote.Q<VisualElement>(StickyNote.resizerPartName));
+            Assert.IsNotNull(stickyNote.SafeQ<VisualElement>(StickyNote.titleContainerPartName));
+            Assert.IsNotNull(stickyNote.SafeQ<VisualElement>(StickyNote.contentContainerPartName));
+            Assert.IsNotNull(stickyNote.SafeQ<VisualElement>(StickyNote.resizerPartName));
         }
     }
 }

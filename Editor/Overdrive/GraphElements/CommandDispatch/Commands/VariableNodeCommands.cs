@@ -16,17 +16,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             UndoString = "Create Variable Node";
         }
 
-        public CreateVariableNodesCommand(List<(IVariableDeclarationModel, SerializableGUID, Vector2)> variablesToCreate) : this()
+        public CreateVariableNodesCommand(IReadOnlyList<(IVariableDeclarationModel, SerializableGUID, Vector2)> variablesToCreate) : this()
         {
-            VariablesToCreate = variablesToCreate;
+            VariablesToCreate = variablesToCreate?.ToList() ?? new List<(IVariableDeclarationModel, SerializableGUID, Vector2)>();
         }
 
         public CreateVariableNodesCommand(IVariableDeclarationModel graphElementModel, Vector2 mousePosition,
                                           IReadOnlyList<IEdgeModel> edgeModelsToDelete = null, IPortModel connectAfterCreation = null,
                                           bool autoAlign = false) : this()
         {
-            VariablesToCreate = new List<(IVariableDeclarationModel, SerializableGUID, Vector2)>();
-            VariablesToCreate.Add((graphElementModel, SerializableGUID.Generate(), mousePosition));
+            VariablesToCreate = new List<(IVariableDeclarationModel, SerializableGUID, Vector2)>
+            {
+                (graphElementModel, SerializableGUID.Generate(), mousePosition)
+            };
             EdgeModelsToDelete = edgeModelsToDelete;
             ConnectAfterCreation = connectAfterCreation;
             AutoAlign = autoAlign;
@@ -38,38 +40,41 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             {
                 graphToolState.PushUndo(command);
 
-                var edgesToDelete = command.EdgeModelsToDelete ?? new List<IEdgeModel>();
-
-                // Delete previous connections
-                var portToConnect = command.ConnectAfterCreation;
-                if (portToConnect != null && portToConnect.Capacity != PortCapacity.Multi)
+                using (var graphUpdater = graphToolState.GraphViewState.Updater)
                 {
-                    var existingEdges = portToConnect.GetConnectedEdges();
-                    edgesToDelete = edgesToDelete.Concat(existingEdges).ToList();
-                }
+                    var edgesToDelete = command.EdgeModelsToDelete ?? new List<IEdgeModel>();
 
-                // Delete previous connections
-                if (edgesToDelete.Any())
-                {
-                    graphToolState.GraphModel.DeleteEdges(edgesToDelete);
-                    graphToolState.MarkDeleted(edgesToDelete);
-                }
-
-                foreach (var(variableDeclarationModel, guid, position) in command.VariablesToCreate)
-                {
-                    var vsGraphModel = graphToolState.GraphModel;
-
-                    var newVariable = vsGraphModel.CreateVariableNode(variableDeclarationModel, position, guid: guid);
-                    graphToolState.MarkNew(newVariable);
-
-                    if (portToConnect != null)
+                    // Delete previous connections
+                    var portToConnect = command.ConnectAfterCreation;
+                    if (portToConnect != null && portToConnect.Capacity != PortCapacity.Multi)
                     {
-                        var newEdge =
-                            graphToolState.GraphModel.CreateEdge(portToConnect, newVariable.OutputPort);
-                        graphToolState.MarkNew(newEdge);
-                        if (command.AutoAlign)
+                        var existingEdges = portToConnect.GetConnectedEdges();
+                        edgesToDelete = edgesToDelete.Concat(existingEdges).ToList();
+                    }
+
+                    // Delete previous connections
+                    if (edgesToDelete.Any())
+                    {
+                        graphToolState.GraphViewState.GraphModel.DeleteEdges(edgesToDelete);
+                        graphUpdater.U.MarkDeleted(edgesToDelete);
+                    }
+
+                    foreach (var (variableDeclarationModel, guid, position) in command.VariablesToCreate)
+                    {
+                        var vsGraphModel = graphToolState.GraphViewState.GraphModel;
+
+                        var newVariable = vsGraphModel.CreateVariableNode(variableDeclarationModel, position, guid: guid);
+                        graphUpdater.U.MarkNew(newVariable);
+
+                        if (portToConnect != null)
                         {
-                            graphToolState.MarkModelToAutoAlign(newEdge);
+                            var newEdge =
+                                graphToolState.GraphViewState.GraphModel.CreateEdge(portToConnect, newVariable.OutputPort);
+                            graphUpdater.U.MarkNew(newEdge);
+                            if (command.AutoAlign)
+                            {
+                                graphUpdater.U.MarkModelToAutoAlign(newEdge);
+                            }
                         }
                     }
                 }
@@ -77,139 +82,189 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         }
     }
 
-    public class ConvertVariableNodesToConstantNodesCommand : ModelCommand<IVariableNodeModel>
+    /// <summary>
+    /// A command to convert variables to constants and vice versa.
+    /// </summary>
+    public class ConvertConstantNodesAndVariableNodesCommand : Command
     {
-        const string k_UndoStringSingular = "Convert Variable To Constant";
-        const string k_UndoStringPlural = "Convert Variables To Constants";
+        public IReadOnlyList<IConstantNodeModel> ConstantModels;
+        public IReadOnlyList<IVariableNodeModel> VariableModels;
 
-        public ConvertVariableNodesToConstantNodesCommand()
-            : base(k_UndoStringSingular) {}
+        const string k_UndoString = "Convert Constants And Variables";
+        const string k_UndoStringCToVSingular = "Convert Constant To Variable";
+        const string k_UndoStringCToVPlural = "Convert Constants To Variables";
+        const string k_UndoStringVToCSingular = "Convert Variable To Constant";
+        const string k_UndoStringVToCPlural = "Convert Variables To Constants";
 
-        public ConvertVariableNodesToConstantNodesCommand(params IVariableNodeModel[] variableModels)
-            : base(k_UndoStringSingular, k_UndoStringPlural, variableModels) {}
-
-        public static void DefaultCommandHandler(GraphToolState graphToolState, ConvertVariableNodesToConstantNodesCommand command)
+        /// <summary>
+        /// Initializes a new instance of the ConvertConstantNodesAndVariableNodesCommand class.
+        /// </summary>
+        public ConvertConstantNodesAndVariableNodesCommand()
         {
-            if (!command.Models.Any())
-                return;
+            UndoString = k_UndoString;
+        }
 
-            graphToolState.PushUndo(command);
+        /// <summary>
+        /// Initializes a new instance of the ConvertConstantNodesAndVariableNodesCommand class.
+        /// </summary>
+        /// <param name="constantModels">The constants to convert to variables.</param>
+        /// <param name="variableModels">The variables to convert to constants.</param>
+        public ConvertConstantNodesAndVariableNodesCommand(
+            IReadOnlyList<IConstantNodeModel> constantModels,
+            IReadOnlyList<IVariableNodeModel> variableModels)
+        {
+            ConstantModels = constantModels;
+            VariableModels = variableModels;
 
-            var graphModel = graphToolState.GraphModel;
-            foreach (var variableModel in command.Models)
+            var constantCount = ConstantModels?.Count ?? 0;
+            var variableCount = VariableModels?.Count ?? 0;
+
+            if (constantCount == 0)
             {
-                if (graphModel.Stencil.GetConstantNodeValueType(variableModel.GetDataType()) == null)
-                    continue;
-                var constantModel = graphModel.CreateConstantNode(variableModel.GetDataType(), variableModel.Title, variableModel.Position);
-                constantModel.ObjectValue = variableModel.VariableDeclarationModel?.InitializationModel?.ObjectValue;
-                constantModel.State = variableModel.State;
-                constantModel.HasUserColor = variableModel.HasUserColor;
-                if (variableModel.HasUserColor)
-                    constantModel.Color = variableModel.Color;
-                graphToolState.MarkNew(constantModel);
-
-                var edgeModels = graphModel.GetEdgesConnections(variableModel.OutputPort).ToList();
-                foreach (var edge in edgeModels)
+                if (variableCount == 1)
                 {
-                    var newEdge = graphModel.CreateEdge(edge.ToPort, constantModel.OutputPort);
-                    var deletedModels = graphModel.DeleteEdge(edge);
-                    graphToolState.MarkNew(newEdge);
-                    graphToolState.MarkDeleted(deletedModels);
+                    UndoString = k_UndoStringVToCSingular;
                 }
-
-                var deletedElements = graphModel.DeleteNode(variableModel, deleteConnections: false);
-                graphToolState.MarkDeleted(deletedElements);
+                else
+                {
+                    UndoString = k_UndoStringVToCPlural;
+                }
+            }
+            else if (variableCount == 0)
+            {
+                if (constantCount == 1)
+                {
+                    UndoString = k_UndoStringCToVSingular;
+                }
+                else
+                {
+                    UndoString = k_UndoStringCToVPlural;
+                }
+            }
+            else
+            {
+                UndoString = k_UndoString;
             }
         }
-    }
 
-    public class ConvertConstantNodesToVariableNodesCommand : ModelCommand<IConstantNodeModel>
-    {
-        const string k_UndoStringSingular = "Convert Constant To Variable";
-        const string k_UndoStringPlural = "Convert Constants To Variables";
-
-        public ConvertConstantNodesToVariableNodesCommand()
-            : base(k_UndoStringSingular) {}
-
-        public ConvertConstantNodesToVariableNodesCommand(params IConstantNodeModel[] constantModels)
-            : base(k_UndoStringSingular, k_UndoStringPlural, constantModels) {}
-
-        public static void DefaultCommandHandler(GraphToolState graphToolState, ConvertConstantNodesToVariableNodesCommand command)
+        /// <summary>
+        /// Default command handler.
+        /// </summary>
+        /// <param name="graphToolState">The state to modify.</param>
+        /// <param name="command">The command to apply to the state.</param>
+        public static void DefaultCommandHandler(GraphToolState graphToolState, ConvertConstantNodesAndVariableNodesCommand command)
         {
-            if (!command.Models.Any())
+            if ((command.ConstantModels?.Count ?? 0) == 0 && (command.VariableModels?.Count ?? 0) == 0)
                 return;
 
             graphToolState.PushUndo(command);
 
-            var graphModel = graphToolState.GraphModel;
-            foreach (var constantModel in command.Models)
+            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            using (var selectionUpdater = graphToolState.SelectionState.Updater)
             {
-                var declarationModel = graphModel.CreateGraphVariableDeclaration(
-                    constantModel.Type.GenerateTypeHandle(),
-                    StringExtensions.CodifyString(constantModel.Type.FriendlyName()), ModifierFlags.None, true,
-                    constantModel.Value.CloneConstant());
-                graphToolState.MarkNew(declarationModel);
+                var graphModel = graphToolState.GraphViewState.GraphModel;
 
-                if (graphModel.CreateVariableNode(declarationModel, constantModel.Position) is IVariableNodeModel variableModel)
+                foreach (var constantModel in command.ConstantModels ?? Enumerable.Empty<IConstantNodeModel>())
                 {
-                    graphToolState.MarkNew(variableModel);
+                    var declarationModel = graphModel.CreateGraphVariableDeclaration(
+                        constantModel.Type.GenerateTypeHandle(),
+                        StringExtensions.CodifyString(constantModel.Type.FriendlyName()), ModifierFlags.None, true,
+                        constantModel.Value.CloneConstant());
+                    graphUpdater.U.MarkNew(declarationModel);
 
-                    variableModel.State = constantModel.State;
-                    variableModel.HasUserColor = constantModel.HasUserColor;
-                    if (constantModel.HasUserColor)
-                        variableModel.Color = constantModel.Color;
-                    foreach (var edge in graphModel.GetEdgesConnections(constantModel.OutputPort).ToList())
+                    if (graphModel.CreateVariableNode(declarationModel, constantModel.Position) is IVariableNodeModel variableModel)
                     {
-                        var newEdge = graphModel.CreateEdge(edge.ToPort, variableModel.OutputPort);
-                        var deleteModels = graphModel.DeleteEdge(edge);
+                        graphUpdater.U.MarkNew(variableModel);
+                        selectionUpdater.U.SelectElement(variableModel, true);
 
-                        graphToolState.MarkNew(newEdge);
-                        graphToolState.MarkDeleted(deleteModels);
+                        variableModel.State = constantModel.State;
+                        if (constantModel.HasUserColor)
+                            variableModel.Color = constantModel.Color;
+                        foreach (var edge in graphModel.GetEdgesConnections(constantModel.OutputPort).ToList())
+                        {
+                            var newEdge = graphModel.CreateEdge(edge.ToPort, variableModel.OutputPort);
+                            var deletedModels = graphModel.DeleteEdge(edge);
+
+                            graphUpdater.U.MarkNew(newEdge);
+                            graphUpdater.U.MarkDeleted(deletedModels);
+                            selectionUpdater.U.SelectElements(deletedModels, false);
+                        }
                     }
+
+                    var deletedElements = graphModel.DeleteNode(constantModel, deleteConnections: false);
+                    graphUpdater.U.MarkDeleted(deletedElements);
+                    selectionUpdater.U.SelectElements(deletedElements, false);
                 }
 
-                var deletedElements  = graphModel.DeleteNode(constantModel, deleteConnections: false);
-                graphToolState.MarkDeleted(deletedElements);
+                foreach (var variableModel in command.VariableModels ?? Enumerable.Empty<IVariableNodeModel>())
+                {
+                    if (graphModel.Stencil.GetConstantNodeValueType(variableModel.GetDataType()) == null)
+                        continue;
+                    var constantModel = graphModel.CreateConstantNode(variableModel.GetDataType(), variableModel.Title, variableModel.Position);
+                    constantModel.ObjectValue = variableModel.VariableDeclarationModel?.InitializationModel?.ObjectValue;
+                    constantModel.State = variableModel.State;
+                    if (variableModel.HasUserColor)
+                        constantModel.Color = variableModel.Color;
+                    graphUpdater.U.MarkNew(constantModel);
+                    selectionUpdater.U.SelectElement(constantModel, true);
+
+                    var edgeModels = graphModel.GetEdgesConnections(variableModel.OutputPort).ToList();
+                    foreach (var edge in edgeModels)
+                    {
+                        var newEdge = graphModel.CreateEdge(edge.ToPort, constantModel.OutputPort);
+                        var deletedModels = graphModel.DeleteEdge(edge);
+                        graphUpdater.U.MarkNew(newEdge);
+                        graphUpdater.U.MarkDeleted(deletedModels);
+                        selectionUpdater.U.SelectElements(deletedModels, false);
+                    }
+
+                    var deletedElements = graphModel.DeleteNode(variableModel, deleteConnections: false);
+                    graphUpdater.U.MarkDeleted(deletedElements);
+                    selectionUpdater.U.SelectElements(deletedElements, false);
+                }
             }
         }
     }
 
     // Create a separate instance of the constant or variable node for each connections on the original variable node.
-    public class ItemizeNodeCommand : ModelCommand<ISingleOutputPortNode>
+    public class ItemizeNodeCommand : ModelCommand<ISingleOutputPortNodeModel>
     {
         const string k_UndoStringSingular = "Itemize Node";
         const string k_UndoStringPlural = "Itemize Nodes";
 
         public ItemizeNodeCommand()
-            : base(k_UndoStringSingular) {}
+            : base(k_UndoStringSingular) { }
 
-        public ItemizeNodeCommand(params ISingleOutputPortNode[] models)
-            : base(k_UndoStringSingular, k_UndoStringPlural, models) {}
+        public ItemizeNodeCommand(params ISingleOutputPortNodeModel[] models)
+            : base(k_UndoStringSingular, k_UndoStringPlural, models) { }
 
         public static void DefaultCommandHandler(GraphToolState graphToolState, ItemizeNodeCommand command)
         {
             bool undoPushed = false;
 
-            var graphModel = graphToolState.GraphModel;
-            foreach (var model in command.Models.Where(m => m is IVariableNodeModel || m is IConstantNodeModel))
+            using (var graphUpdater = graphToolState.GraphViewState.Updater)
             {
-                var edges = graphModel.GetEdgesConnections(model.OutputPort).ToList();
-
-                for (var i = 1; i < edges.Count; i++)
+                var graphModel = graphToolState.GraphViewState.GraphModel;
+                foreach (var model in command.Models.Where(m => m is IVariableNodeModel || m is IConstantNodeModel))
                 {
-                    if (!undoPushed)
-                    {
-                        undoPushed = true;
-                        graphToolState.PushUndo(command);
-                    }
+                    var edges = graphModel.GetEdgesConnections(model.OutputPort).ToList();
 
-                    var newModel = (ISingleOutputPortNode)graphModel.DuplicateNode(model, i * 50 * Vector2.up);
-                    graphToolState.MarkNew(newModel);
-                    var edge = edges[i];
-                    var newEdge = graphModel.CreateEdge(edge.ToPort, newModel.OutputPort);
-                    var deletedModels = graphModel.DeleteEdge(edge);
-                    graphToolState.MarkNew(newEdge);
-                    graphToolState.MarkDeleted(deletedModels);
+                    for (var i = 1; i < edges.Count; i++)
+                    {
+                        if (!undoPushed)
+                        {
+                            undoPushed = true;
+                            graphToolState.PushUndo(command);
+                        }
+
+                        var newModel = (ISingleOutputPortNodeModel)graphModel.DuplicateNode(model, i * 50 * Vector2.up);
+                        graphUpdater.U.MarkNew(newModel);
+                        var edge = edges[i];
+                        var newEdge = graphModel.CreateEdge(edge.ToPort, newModel.OutputPort);
+                        var deletedModels = graphModel.DeleteEdge(edge);
+                        graphUpdater.U.MarkNew(newEdge);
+                        graphUpdater.U.MarkDeleted(deletedModels);
+                    }
                 }
             }
         }
@@ -221,10 +276,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         const string k_UndoStringPlural = "Toggle Lock Constants";
 
         public ToggleLockConstantNodeCommand()
-            : base(k_UndoStringSingular) {}
+            : base(k_UndoStringSingular) { }
 
         public ToggleLockConstantNodeCommand(params IConstantNodeModel[] constantNodeModels)
-            : base(k_UndoStringSingular, k_UndoStringPlural, constantNodeModels) {}
+            : base(k_UndoStringSingular, k_UndoStringPlural, constantNodeModels) { }
 
         public static void DefaultCommandHandler(GraphToolState graphToolState, ToggleLockConstantNodeCommand command)
         {
@@ -233,11 +288,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             graphToolState.PushUndo(command);
 
-            foreach (var constantNodeModel in command.Models)
+            using (var graphUpdater = graphToolState.GraphViewState.Updater)
             {
-                constantNodeModel.IsLocked = !constantNodeModel.IsLocked;
+                foreach (var constantNodeModel in command.Models)
+                {
+                    constantNodeModel.IsLocked = !constantNodeModel.IsLocked;
+                }
+
+                graphUpdater.U.MarkChanged(command.Models);
             }
-            graphToolState.MarkChanged(command.Models);
         }
     }
 
@@ -248,7 +307,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public readonly IVariableDeclarationModel Variable;
 
         public ChangeVariableDeclarationCommand()
-            : base(k_UndoStringSingular) {}
+            : base(k_UndoStringSingular) { }
 
         public ChangeVariableDeclarationCommand(IReadOnlyList<IVariableNodeModel> models, IVariableDeclarationModel variable)
             : base(k_UndoStringSingular, k_UndoStringSingular, models)
@@ -263,14 +322,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             graphToolState.PushUndo(command);
 
-            foreach (var model in command.Models)
+            using (var graphUpdater = graphToolState.GraphViewState.Updater)
             {
-                model.DeclarationModel = command.Variable;
+                foreach (var model in command.Models)
+                {
+                    model.DeclarationModel = command.Variable;
 
-                var references = graphToolState.GraphModel.FindReferencesInGraph<IVariableNodeModel>(command.Variable);
-                graphToolState.MarkChanged(references);
+                    var references = graphToolState.GraphViewState.GraphModel.FindReferencesInGraph<IVariableNodeModel>(command.Variable);
+                    graphUpdater.U.MarkChanged(references);
+                }
+
+                graphUpdater.U.MarkChanged(command.Models);
             }
-            graphToolState.MarkChanged(command.Models);
         }
     }
 }

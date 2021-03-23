@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements;
+using UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO
@@ -8,15 +9,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO
     {
         protected TestEditorWindow m_Window;
 
+        protected GraphModel GraphModel => m_Window.GraphModel as GraphModel;
+        protected CommandDispatcher CommandDispatcher => m_Window.CommandDispatcher;
+        protected GraphView GraphView => m_Window.GraphView;
+
         protected TestEventHelpers EventHelper { get; private set; }
 
         [SetUp]
         public void SetUp()
         {
-            m_Window = EditorWindow.GetWindow<TestEditorWindow>();
-
-            // Make sure the window is shown (tests can fail if the window appears to low in the screen).
-            m_Window.position = new Rect(Vector2.one * 10, Vector2.one * 1000);
+            m_Window = EditorWindow.GetWindowWithRect<TestEditorWindow>(new Rect(100, 100, 800, 800));
             EventHelper = new TestEventHelpers(m_Window);
         }
 
@@ -24,6 +26,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO
         public void TearDown()
         {
             m_Window.Close();
+        }
+
+        protected void MarkGraphViewStateDirty()
+        {
+            using (var updater = CommandDispatcher.GraphToolState.GraphViewState.Updater)
+            {
+                updater.U.ForceCompleteUpdate();
+            }
         }
     }
 }

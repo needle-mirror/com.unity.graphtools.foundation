@@ -17,44 +17,44 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public static TracingStep ExecutedNode(INodeModel nodeModel1, byte progress) =>
             new TracingStep
-        {
-            Type = TracingStepType.ExecutedNode,
-            NodeModel = nodeModel1,
-            Progress = progress,
-        };
+            {
+                Type = TracingStepType.ExecutedNode,
+                NodeModel = nodeModel1,
+                Progress = progress,
+            };
 
         public static TracingStep TriggeredPort(IPortModel portModel) =>
             new TracingStep
-        {
-            Type = TracingStepType.TriggeredPort,
-            NodeModel = portModel.NodeModel,
-            PortModel = portModel,
-        };
+            {
+                Type = TracingStepType.TriggeredPort,
+                NodeModel = portModel.NodeModel,
+                PortModel = portModel,
+            };
 
         public static TracingStep WrittenValue(IPortModel portModel, string valueString) =>
             new TracingStep
-        {
-            Type = TracingStepType.WrittenValue,
-            NodeModel = portModel.NodeModel,
-            PortModel = portModel,
-            ValueString = valueString,
-        };
+            {
+                Type = TracingStepType.WrittenValue,
+                NodeModel = portModel.NodeModel,
+                PortModel = portModel,
+                ValueString = valueString,
+            };
 
         public static TracingStep ReadValue(IPortModel portModel, string valueString) =>
             new TracingStep
-        {
-            Type = TracingStepType.ReadValue,
-            NodeModel = portModel.NodeModel,
-            PortModel = portModel,
-            ValueString = valueString,
-        };
+            {
+                Type = TracingStepType.ReadValue,
+                NodeModel = portModel.NodeModel,
+                PortModel = portModel,
+                ValueString = valueString,
+            };
 
         public static TracingStep Error(INodeModel nodeModel, string error) =>
             new TracingStep
-        {
-            Type = TracingStepType.Error,
-            NodeModel = nodeModel,
-            ErrorMessage = error,
-        };
+            {
+                Type = TracingStepType.Error,
+                NodeModel = nodeModel,
+                ErrorMessage = error,
+            };
     }
 }

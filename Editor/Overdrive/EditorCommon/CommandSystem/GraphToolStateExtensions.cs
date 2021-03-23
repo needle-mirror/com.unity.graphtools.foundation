@@ -4,24 +4,34 @@ using System.Linq;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    [Obsolete("2021-01-05 StateExtensions was renamed to GraphToolStateExtensions (UnityUpgradable) -> GraphToolStateExtensions")]
-    public static class StateExtensions {}
-
+    [Obsolete]
     public static class GraphToolStateExtensions
     {
+        [Obsolete("2021-02-19 Use IGraphViewStateComponentUpdater.MarkNew() instead.")]
         public static void MarkNew(this GraphToolState graphToolState, IGraphElementModel model)
         {
-            graphToolState.MarkNew(new[] { model });
+            using (var stateUpdater = graphToolState.GraphViewState.Updater)
+            {
+                stateUpdater.U.MarkNew(model);
+            }
         }
 
+        [Obsolete("2021-02-19 Use IGraphViewStateComponentUpdater.MarkChanged() instead.")]
         public static void MarkChanged(this GraphToolState graphToolState, IGraphElementModel model)
         {
-            graphToolState.MarkChanged(new[] { model });
+            using (var stateUpdater = graphToolState.GraphViewState.Updater)
+            {
+                stateUpdater.U.MarkChanged(model);
+            }
         }
 
+        [Obsolete("2021-02-19 Use IGraphViewStateComponentUpdater.MarkDeleted() instead.")]
         public static void MarkDeleted(this GraphToolState graphToolState, IGraphElementModel model)
         {
-            graphToolState.MarkDeleted(new[] { model });
+            using (var stateUpdater = graphToolState.GraphViewState.Updater)
+            {
+                stateUpdater.U.MarkDeleted(model);
+            }
         }
     }
 }

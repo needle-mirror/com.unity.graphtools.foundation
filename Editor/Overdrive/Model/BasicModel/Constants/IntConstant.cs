@@ -3,5 +3,5 @@ using UnityEngine.Scripting.APIUpdating;
 namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 {
     [MovedFrom("UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting")]
-    public class IntConstant : Constant<int> {}
+    public class IntConstant : Constant<int> { }
 }

@@ -131,7 +131,7 @@ namespace UnityEditor.VisualScripting.Editor
                 if (foundAddLabel)
                     continue;
 
-                var addLabel = new Label {name = k_StackNodeSeparatorAddLabel, text = "+"};
+                var addLabel = new Label { name = k_StackNodeSeparatorAddLabel, text = "+" };
                 highlight.Add(addLabel);
             }
         }
@@ -265,7 +265,7 @@ namespace UnityEditor.VisualScripting.Editor
             evt.menu.AppendAction("Split Stack", menuAction =>
             {
                 m_Store.Dispatch(new SplitStackAction(stackModel, separatorIndex));
-            }, action => separatorIndex == 0 || separatorIndex >= stackModel.NodeModels.Count  ? DropdownMenuAction.Status.Disabled : DropdownMenuAction.Status.Normal);
+            }, action => separatorIndex == 0 || separatorIndex >= stackModel.NodeModels.Count ? DropdownMenuAction.Status.Disabled : DropdownMenuAction.Status.Normal);
         }
 
         public override bool DragExited()

@@ -28,7 +28,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             Assert.IsTrue(port.ClassListContains(Port.notConnectedModifierUssClassName));
             Assert.IsFalse(port.ClassListContains(Port.connectedModifierUssClassName));
             Assert.IsTrue(port.ClassListContains(Port.portDataTypeClassNamePrefix + portModel.PortDataType.Name.ToKebabCase()));
-            Assert.IsNotNull(port.Q<VisualElement>(Port.connectorPartName));
+            Assert.IsNotNull(port.SafeQ<VisualElement>(Port.connectorPartName));
         }
 
         [Test]
@@ -48,7 +48,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             Assert.IsTrue(port.ClassListContains(Port.notConnectedModifierUssClassName));
             Assert.IsFalse(port.ClassListContains(Port.connectedModifierUssClassName));
             Assert.IsTrue(port.ClassListContains(Port.portDataTypeClassNamePrefix + portModel.PortDataType.Name.ToKebabCase()));
-            Assert.IsNotNull(port.Q<VisualElement>(Port.connectorPartName));
+            Assert.IsNotNull(port.SafeQ<VisualElement>(Port.connectorPartName));
         }
     }
 
@@ -95,8 +95,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             var portModel = nodeModel.Ports.First();
             var port = portModel.GetUI<Port>(m_GraphView);
             Assert.IsNotNull(port);
-            var connector = port.Q(PortConnectorPart.connectorUssName);
-            var connectorCap = port.Q(PortConnectorPart.connectorCapUssName);
+            var connector = port.SafeQ(PortConnectorPart.connectorUssName);
+            var connectorCap = port.SafeQ(PortConnectorPart.connectorCapUssName);
 
             CustomStyleProperty<Color> portColorProperty = new CustomStyleProperty<Color>("--port-color");
             Color portColor;

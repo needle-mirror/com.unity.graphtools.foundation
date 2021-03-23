@@ -11,15 +11,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Types
     namespace NewNamespace
     {
         [MovedFrom(false, sourceNamespace: "UnityEditor.GraphToolsFoundation.Overdrive.Tests.Types.OldNamespace", sourceClassName: "OldTypeName", sourceAssembly: "Unity.OldAssemblyName.Foundation.Overdrive.Editor.Tests")]
-        class NewTypeName {}
+        class NewTypeName { }
 
         class EnclosingType
         {
             [MovedFrom(false, sourceClassName: "EnclosingType/InnerOld", sourceNamespace: "UnityEditor.GraphToolsFoundation.Overdrive.Tests.Types.OldNamespace", sourceAssembly: "Unity.OldAssemblyName.Foundation.Overdrive.Editor.Tests")]
-            public class InnerNew {}
+            public class InnerNew { }
 
             [MovedFrom(false, sourceNamespace: "UnityEditor.GraphToolsFoundation.Overdrive.Tests.Types.OldNamespace", sourceAssembly: "Unity.OldAssemblyName.Foundation.Overdrive.Editor.Tests")]
-            public class InnerTypeUnchanged {}
+            public class InnerTypeUnchanged { }
         }
     }
 
@@ -35,17 +35,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Types
             Assert.That(th, Is.EqualTo(TypeHandle.Unknown));
         }
 
-        [Test]
-        public void Test_TypeHandleSerializationOfCustomType_Unknown_UsingExtenderMethod()
-        {
-            //Arrange-Act
-            var th = typeof(Unknown).GenerateTypeHandle();
-
-            //Assert
-            Assert.That(th, Is.EqualTo(TypeHandle.Unknown));
-        }
-
-        class A {}
+        class A { }
 
         [Test]
         public void Test_TypeHandleDeserializationOfRegularType()
@@ -64,7 +54,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Types
         public void Test_TypeHandle_Resolve_WorksWithRenamedTypes_WithMovedFromAttribute()
         {
             var typeStr = typeof(NewTypeName).AssemblyQualifiedName;
-            var originalTypeStr = typeStr ?
+            var originalTypeStr = typeStr?
                 .Replace("NewNamespace", "OldNamespace")
                 .Replace("NewTypeName", "OldTypeName")
                 .Replace("GraphTools.", "OldAssemblyName.");
@@ -79,7 +69,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Types
         public void Test_TypeHandle_WithNestedType_Resolve_WorksWithRenamedTypes_WithMovedFromAttribute()
         {
             var typeStr = typeof(EnclosingType.InnerNew).AssemblyQualifiedName;
-            var originalTypeStr = typeStr ?
+            var originalTypeStr = typeStr?
                 .Replace("NewNamespace", "OldNamespace")
                 .Replace("InnerNew", "InnerOld")
                 .Replace("GraphTools.", "OldAssemblyName.");
@@ -94,7 +84,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Types
         public void Test_TypeHandle_WithNestedType_Resolve_ChangedAssembly_WithMovedFromAttribute()
         {
             var typeStr = typeof(EnclosingType.InnerTypeUnchanged).AssemblyQualifiedName;
-            var originalTypeStr = typeStr ?
+            var originalTypeStr = typeStr?
                 .Replace("NewNamespace", "OldNamespace")
                 .Replace("GraphTools.", "OldAssemblyName.");
 

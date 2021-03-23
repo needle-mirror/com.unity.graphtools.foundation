@@ -7,11 +7,15 @@ using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.SmartSearch
 {
-    sealed class ClassForTest {}
+    sealed class ClassForTest { }
     sealed class TypeSearcherDatabaseTests : BaseFixture
     {
         sealed class TestStencil : Stencil
         {
+            public static string toolName = "GTF SmartSearch Tests";
+
+            public override string ToolName => toolName;
+
             public override Type GetConstantNodeValueType(TypeHandle typeHandle)
             {
                 return TypeToConstantMapper.GetConstantNodeType(typeHandle);
@@ -20,6 +24,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.SmartSearch
             public override ISearcherDatabaseProvider GetSearcherDatabaseProvider()
             {
                 return new ClassSearcherDatabaseProvider(this);
+            }
+
+            public override IGraphProcessingErrorModel CreateProcessingErrorModel(GraphProcessingError error)
+            {
+                if (error.SourceNode != null && !error.SourceNode.Destroyed)
+                {
+                    return new GraphProcessingErrorModel(error);
+                }
+
+                return null;
             }
         }
 
@@ -36,7 +50,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.SmartSearch
         [Test]
         public void TestClasses()
         {
-            var db = TypeSearcherDatabase.FromTypes(m_Stencil, new[] {typeof(string), typeof(ClassForTest)});
+            var db = TypeSearcherDatabase.FromTypes(m_Stencil, new[] { typeof(string), typeof(ClassForTest) });
             ValidateHierarchy(db.Search("", out _), new[]
             {
                 new SearcherItem("Classes", "", new List<SearcherItem>

@@ -20,60 +20,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public static void DefaultCommandHandler(GraphToolState graphToolState, CreateStickyNoteCommand command)
         {
             graphToolState.PushUndo(command);
-            var stickyNote = graphToolState.GraphModel.CreateStickyNote(command.Position);
-            graphToolState.MarkNew(stickyNote);
-        }
-    }
 
-    public class ChangeStickyNoteLayoutCommand : ModelCommand<IStickyNoteModel, Rect>
-    {
-        const string k_UndoStringSingular = "Resize Sticky Note";
-        const string k_UndoStringPlural = "Resize Sticky Notes";
-
-        public ResizeFlags ResizeWhat;
-
-        public ChangeStickyNoteLayoutCommand()
-            : base(k_UndoStringSingular) {}
-
-        public ChangeStickyNoteLayoutCommand(IStickyNoteModel stickyNoteModel, Rect position, ResizeFlags resizeWhat)
-            : base(k_UndoStringSingular, k_UndoStringPlural, new[] { stickyNoteModel }, position)
-        {
-            ResizeWhat = resizeWhat;
-        }
-
-        public static void DefaultCommandHandler(GraphToolState graphToolState, ChangeStickyNoteLayoutCommand command)
-        {
-            if (!command.Models.Any())
-                return;
-
-            if (command.ResizeWhat == ResizeFlags.None)
-                return;
-
-            graphToolState.PushUndo(command);
-
-            foreach (var noteModel in command.Models)
+            using (var graphUpdater = graphToolState.GraphViewState.Updater)
             {
-                var newRect = noteModel.PositionAndSize;
-                if ((command.ResizeWhat & ResizeFlags.Left) == ResizeFlags.Left)
-                {
-                    newRect.x = command.Value.x;
-                }
-                if ((command.ResizeWhat & ResizeFlags.Top) == ResizeFlags.Top)
-                {
-                    newRect.y = command.Value.y;
-                }
-                if ((command.ResizeWhat & ResizeFlags.Width) == ResizeFlags.Width)
-                {
-                    newRect.width = command.Value.width;
-                }
-                if ((command.ResizeWhat & ResizeFlags.Height) == ResizeFlags.Height)
-                {
-                    newRect.height = command.Value.height;
-                }
-
-                noteModel.PositionAndSize = newRect;
+                var stickyNote = graphToolState.GraphViewState.GraphModel.CreateStickyNote(command.Position);
+                graphUpdater.U.MarkNew(stickyNote);
             }
-            graphToolState.MarkChanged(command.Models);
         }
     }
 
@@ -102,13 +54,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             graphToolState.PushUndo(command);
 
-            if (command.Title != null)
-                command.StickyNoteModel.Title = command.Title;
+            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            {
+                if (command.Title != null)
+                    command.StickyNoteModel.Title = command.Title;
 
-            if (command.Contents != null)
-                command.StickyNoteModel.Contents = command.Contents;
+                if (command.Contents != null)
+                    command.StickyNoteModel.Contents = command.Contents;
 
-            graphToolState.MarkChanged(command.StickyNoteModel);
+                graphUpdater.U.MarkChanged(command.StickyNoteModel);
+            }
         }
     }
 
@@ -118,10 +73,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         const string k_UndoStringPlural = "Change Sticky Notes Theme";
 
         public UpdateStickyNoteThemeCommand()
-            : base(k_UndoStringSingular) {}
+            : base(k_UndoStringSingular) { }
 
         public UpdateStickyNoteThemeCommand(IStickyNoteModel[] stickyNoteModels, string theme)
-            : base(k_UndoStringSingular, k_UndoStringPlural, stickyNoteModels, theme) {}
+            : base(k_UndoStringSingular, k_UndoStringPlural, stickyNoteModels, theme) { }
 
         public static void DefaultCommandHandler(GraphToolState graphToolState, UpdateStickyNoteThemeCommand command)
         {
@@ -130,11 +85,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             graphToolState.PushUndo(command);
 
-            foreach (var noteModel in command.Models)
+            using (var graphUpdater = graphToolState.GraphViewState.Updater)
             {
-                noteModel.Theme = command.Value;
+                foreach (var noteModel in command.Models)
+                {
+                    noteModel.Theme = command.Value;
+                }
+
+                graphUpdater.U.MarkChanged(command.Models);
             }
-            graphToolState.MarkChanged(command.Models);
         }
     }
 
@@ -144,10 +103,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         const string k_UndoStringPlural = "Change Sticky Notes Font Size";
 
         public UpdateStickyNoteTextSizeCommand()
-            : base(k_UndoStringSingular) {}
+            : base(k_UndoStringSingular) { }
 
         public UpdateStickyNoteTextSizeCommand(IStickyNoteModel[] stickyNoteModels, string textSize)
-            : base(k_UndoStringSingular, k_UndoStringPlural, stickyNoteModels, textSize) {}
+            : base(k_UndoStringSingular, k_UndoStringPlural, stickyNoteModels, textSize) { }
 
         public static void DefaultCommandHandler(GraphToolState graphToolState, UpdateStickyNoteTextSizeCommand command)
         {
@@ -156,11 +115,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             graphToolState.PushUndo(command);
 
-            foreach (var noteModel in command.Models)
+            using (var graphUpdater = graphToolState.GraphViewState.Updater)
             {
-                noteModel.TextSize = command.Value;
+                foreach (var noteModel in command.Models)
+                {
+                    noteModel.TextSize = command.Value;
+                }
+
+                graphUpdater.U.MarkChanged(command.Models);
             }
-            graphToolState.MarkChanged(command.Models);
         }
     }
 }

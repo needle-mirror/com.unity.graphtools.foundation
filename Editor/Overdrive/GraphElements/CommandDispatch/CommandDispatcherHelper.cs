@@ -2,9 +2,6 @@ using System;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    [Obsolete("2021-01-05 StoreHelper was renamed to CommandDispatcherHelper (UnityUpgradable) -> CommandDispatcherHelper", true)]
-    public static class StoreHelper {}
-
     public static class CommandDispatcherHelper
     {
         public static void RegisterDefaultCommandHandlers(CommandDispatcher commandDispatcher)
@@ -31,6 +28,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             commandDispatcher.RegisterCommandHandler<DeleteEdgeCommand>(DeleteEdgeCommand.DefaultCommandHandler);
             commandDispatcher.RegisterCommandHandler<BuildAllEditorCommand>(BuildAllEditorCommand.DefaultCommandHandler);
             commandDispatcher.RegisterCommandHandler<PasteSerializedDataCommand>(PasteSerializedDataCommand.DefaultCommandHandler);
+            commandDispatcher.RegisterCommandHandler<ReframeGraphViewCommand>(ReframeGraphViewCommand.DefaultCommandHandler);
 
             commandDispatcher.RegisterCommandHandler<AlignNodesCommand>(AlignNodesCommand.DefaultCommandHandler);
             commandDispatcher.RegisterCommandHandler<RenameElementCommand>(RenameElementCommand.DefaultCommandHandler);
@@ -41,16 +39,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             commandDispatcher.RegisterCommandHandler<AutoPlaceElementsCommand>(AutoPlaceElementsCommand.DefaultCommandHandler);
             commandDispatcher.RegisterCommandHandler<ChangeElementColorCommand>(ChangeElementColorCommand.DefaultCommandHandler);
             commandDispatcher.RegisterCommandHandler<ResetElementColorCommand>(ResetElementColorCommand.DefaultCommandHandler);
+            commandDispatcher.RegisterCommandHandler<ChangeElementLayoutCommand>(ChangeElementLayoutCommand.DefaultCommandHandler);
 
             commandDispatcher.RegisterCommandHandler<CreatePlacematCommand>(CreatePlacematCommand.DefaultCommandHandler);
             commandDispatcher.RegisterCommandHandler<TogglePortsCommand>(TogglePortsCommand.DefaultCommandHandler);
             commandDispatcher.RegisterCommandHandler<ToggleEdgePortsCommand>(ToggleEdgePortsCommand.DefaultCommandHandler);
-            commandDispatcher.RegisterCommandHandler<ChangePlacematLayoutCommand>(ChangePlacematLayoutCommand.DefaultCommandHandler);
             commandDispatcher.RegisterCommandHandler<ChangePlacematZOrdersCommand>(ChangePlacematZOrdersCommand.DefaultCommandHandler);
             commandDispatcher.RegisterCommandHandler<SetPlacematCollapsedCommand>(SetPlacematCollapsedCommand.DefaultCommandHandler);
 
             commandDispatcher.RegisterCommandHandler<CreateStickyNoteCommand>(CreateStickyNoteCommand.DefaultCommandHandler);
-            commandDispatcher.RegisterCommandHandler<ChangeStickyNoteLayoutCommand>(ChangeStickyNoteLayoutCommand.DefaultCommandHandler);
             commandDispatcher.RegisterCommandHandler<UpdateStickyNoteCommand>(UpdateStickyNoteCommand.DefaultCommandHandler);
             commandDispatcher.RegisterCommandHandler<UpdateStickyNoteThemeCommand>(UpdateStickyNoteThemeCommand.DefaultCommandHandler);
             commandDispatcher.RegisterCommandHandler<UpdateStickyNoteTextSizeCommand>(UpdateStickyNoteTextSizeCommand.DefaultCommandHandler);
@@ -59,8 +56,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             commandDispatcher.RegisterCommandHandler<CreateGraphVariableDeclarationCommand>(CreateGraphVariableDeclarationCommand.DefaultCommandHandler);
             commandDispatcher.RegisterCommandHandler<UpdateModelPropertyValueCommand>(UpdateModelPropertyValueCommand.DefaultCommandHandler);
             commandDispatcher.RegisterCommandHandler<ReorderGraphVariableDeclarationCommand>(ReorderGraphVariableDeclarationCommand.DefaultCommandHandler);
-            commandDispatcher.RegisterCommandHandler<ConvertVariableNodesToConstantNodesCommand>(ConvertVariableNodesToConstantNodesCommand.DefaultCommandHandler);
-            commandDispatcher.RegisterCommandHandler<ConvertConstantNodesToVariableNodesCommand>(ConvertConstantNodesToVariableNodesCommand.DefaultCommandHandler);
+            commandDispatcher.RegisterCommandHandler<ConvertConstantNodesAndVariableNodesCommand>(ConvertConstantNodesAndVariableNodesCommand.DefaultCommandHandler);
             commandDispatcher.RegisterCommandHandler<ItemizeNodeCommand>(ItemizeNodeCommand.DefaultCommandHandler);
             commandDispatcher.RegisterCommandHandler<ToggleLockConstantNodeCommand>(ToggleLockConstantNodeCommand.DefaultCommandHandler);
 
@@ -73,7 +69,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             commandDispatcher.RegisterCommandHandler<ToggleTracingCommand>(ToggleTracingCommand.DefaultCommandHandler);
 
-            // PF: Dubious commands since they do not act on the model.
+            commandDispatcher.RegisterCommandHandler<SelectElementsCommand>(SelectElementsCommand.DefaultCommandHandler);
+            commandDispatcher.RegisterCommandHandler<ClearSelectionCommand>(ClearSelectionCommand.DefaultCommandHandler);
+
             commandDispatcher.RegisterCommandHandler<LoadGraphAssetCommand>(LoadGraphAssetCommand.DefaultCommandHandler);
         }
     }

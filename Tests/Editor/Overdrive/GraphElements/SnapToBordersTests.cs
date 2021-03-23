@@ -92,7 +92,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             }
 
             float topToBottomDistance = m_ReferenceNode1.layout.yMax - m_SnappedNode.layout.yMin;
-            float offSetY =  topToBottomDistance - k_SnapDistance;
+            float offSetY = topToBottomDistance - k_SnapDistance;
             Vector2 moveOffset = new Vector2(10, offSetY);
 
             actions = MoveElementWithOffset(moveOffset);
@@ -212,7 +212,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             }
 
             float bottomToTopDistance = m_SnappedNode.layout.yMax - m_ReferenceNode1.layout.yMin;
-            float offSetY =  k_SnapDistance - bottomToTopDistance;
+            float offSetY = k_SnapDistance - bottomToTopDistance;
             Vector2 moveOffset = new Vector2(10, offSetY);
 
             actions = MoveElementWithOffset(moveOffset);
@@ -252,7 +252,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             }
 
             float bottomToBottomDistance = m_ReferenceNode1.layout.yMax - m_SnappedNode.layout.yMax;
-            float offSetY =  k_SnapDistance + bottomToBottomDistance;
+            float offSetY = k_SnapDistance + bottomToBottomDistance;
             Vector2 moveOffset = new Vector2(10, offSetY);
 
             actions = MoveElementWithOffset(moveOffset);
@@ -448,7 +448,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             }
 
             float bottomToTopDistance = m_SnappedNode.layout.yMax - m_ReferenceNode1.layout.yMin;
-            float offSetY =  (k_SnapDistance + 1) - bottomToTopDistance;
+            float offSetY = (k_SnapDistance + 1) - bottomToTopDistance;
             Vector2 moveOffset = new Vector2(10, offSetY);
 
             actions = MoveElementWithOffset(moveOffset);
@@ -821,7 +821,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
                 yield return null;
             }
 
-            Vector2 worldNodePos = graphView.contentViewContainer.LocalToWorld(m_SnappingNodePos);
+            Vector2 worldNodePos = graphView.ContentViewContainer.LocalToWorld(m_SnappingNodePos);
             Vector2 start = worldNodePos + m_SelectionOffset;
 
             float rightToRightDistance = m_ReferenceNode1.layout.xMax - m_SnappedNode.layout.xMax;
@@ -863,7 +863,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             m_SnappingNodePos = new Vector2(k_ReferenceNodePos.x + 50, k_ReferenceNodePos.y + 100);
             var placematModel = CreatePlacemat(new Rect(m_SnappingNodePos, new Vector2(200, 200)), "Placemat");
 
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
 
             // Get the UI nodes
@@ -876,7 +876,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             SetUINodeSize(ref m_ReferenceNode1, 100, 300);
             yield return null;
 
-            Vector2 worldNodePos = graphView.contentViewContainer.LocalToWorld(m_SnappingNodePos);
+            Vector2 worldNodePos = graphView.ContentViewContainer.LocalToWorld(m_SnappingNodePos);
             Vector2 start = worldNodePos + m_SelectionOffset;
 
             float rightToRightDistance = m_ReferenceNode1.layout.xMax - snappedPlacemat.layout.xMax;
@@ -920,11 +920,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Vector2 secondSelectedElementPos = new Vector2(m_SnappingNodePos.x + 200, m_SnappingNodePos.y + 100);
             var placematModel = CreatePlacemat(new Rect(secondSelectedElementPos, new Vector2(200, 200)), "Placemat");
 
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
 
-            Vector2 worldPosNode2 = graphView.contentViewContainer.LocalToWorld(m_SnappingNodePos);
-            Vector2 worldPosNode3 = graphView.contentViewContainer.LocalToWorld(secondSelectedElementPos);
+            Vector2 worldPosNode2 = graphView.ContentViewContainer.LocalToWorld(m_SnappingNodePos);
+            Vector2 worldPosNode3 = graphView.ContentViewContainer.LocalToWorld(secondSelectedElementPos);
 
             Vector2 selectionPosNode2 = worldPosNode2 + m_SelectionOffset;
             Vector2 selectionPosNode3 = worldPosNode3 + m_SelectionOffset;
@@ -994,7 +994,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             var nodeInsidePlacematPos = m_SnappingNodePos + new Vector2(60, 60);
             var nodeInsidePlacematModel = CreateNode("Node2", nodeInsidePlacematPos);
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
 
             // Get the UI nodes
@@ -1011,7 +1011,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             SetUINodeSize(ref nodeInsidePlacemat, 100, 100);
             yield return null;
 
-            Vector2 worldNodePos = graphView.contentViewContainer.LocalToWorld(m_SnappingNodePos);
+            Vector2 worldNodePos = graphView.ContentViewContainer.LocalToWorld(m_SnappingNodePos);
             Vector2 start = worldNodePos + m_SelectionOffset;
 
             float rightToRightDistance = m_ReferenceNode1.layout.xMax - snappedPlacemat.layout.xMax;

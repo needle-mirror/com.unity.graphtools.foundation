@@ -2,10 +2,10 @@
     "name": "Unity.GraphTools.Foundation.Overdrive.Editor",
     "references": [
         "Unity.Searcher.Editor",
-        "Unity.InternalAPIEngineBridgeDev.003",
         "Unity.Properties",
         "Unity.Properties.UI",
-        "Unity.Properties.UI.Editor"
+        "Unity.Properties.UI.Editor",
+        "Unity.InternalAPIEngineBridge.015"
     ],
     "includePlatforms": [
         "Editor"

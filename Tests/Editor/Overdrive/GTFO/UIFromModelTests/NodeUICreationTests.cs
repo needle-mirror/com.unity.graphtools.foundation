@@ -15,7 +15,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             yield return () => new SingleOutputNodeModel();
             yield return () =>
             {
-                var model = new IONodeModel {InputCount = 3, OuputCount = 5};
+                var model = new IONodeModel { InputCount = 3, OuputCount = 5 };
                 return model;
             };
         }
@@ -29,15 +29,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             var node = new Node();
             node.SetupBuildAndUpdate(nodeModel, null, null);
 
-            Assert.IsNotNull(node.Q<VisualElement>(Node.titleContainerPartName), "Title part was expected but not found");
-            Assert.IsNotNull(node.Q<VisualElement>(Node.portContainerPartName), "Port Container part was expected but not found");
+            Assert.IsNotNull(node.SafeQ<VisualElement>(Node.titleContainerPartName), "Title part was expected but not found");
+            Assert.IsNotNull(node.SafeQ<VisualElement>(Node.portContainerPartName), "Port Container part was expected but not found");
             if (nodeModel.GetType() == typeof(NodeModel))
             {
-                Assert.IsNull(node.Q<Port>(), "No Port were expected but at least one was found");
+                Assert.IsNull(node.SafeQ<Port>(), "No Port were expected but at least one was found");
             }
             else
             {
-                Assert.IsNotNull(node.Q<Port>(), "At least one Port was expected but none was found");
+                Assert.IsNotNull(node.SafeQ<Port>(), "At least one Port was expected but none was found");
             }
         }
 
@@ -50,26 +50,26 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             var node = new CollapsibleInOutNode();
             node.SetupBuildAndUpdate(nodeModel, null, null);
 
-            Assert.IsNotNull(node.Q<VisualElement>(CollapsibleInOutNode.titleIconContainerPartName), "Title part was expected but not found");
-            Assert.IsNotNull(node.Q<VisualElement>(Node.portContainerPartName), "Port Container part was expected but not found");
-            Assert.IsNotNull(node.Q<VisualElement>(CollapsibleInOutNode.collapseButtonPartName), "Collapsible Button part was expected but not found");
+            Assert.IsNotNull(node.SafeQ<VisualElement>(CollapsibleInOutNode.titleIconContainerPartName), "Title part was expected but not found");
+            Assert.IsNotNull(node.SafeQ<VisualElement>(Node.portContainerPartName), "Port Container part was expected but not found");
+            Assert.IsNotNull(node.SafeQ<VisualElement>(CollapsibleInOutNode.collapseButtonPartName), "Collapsible Button part was expected but not found");
 
             if (nodeModel.GetType() == typeof(NodeModel))
             {
-                Assert.IsNull(node.Q<Port>(), "No Port were expected but at least one was found");
+                Assert.IsNull(node.SafeQ<Port>(), "No Port were expected but at least one was found");
             }
             else if (nodeModel.GetType() == typeof(IONodeModel))
             {
-                var inputs = node.Q<VisualElement>(InOutPortContainerPart.inputPortsUssName);
-                var outputs = node.Q<VisualElement>(InOutPortContainerPart.outputPortsUssName);
+                var inputs = node.SafeQ<VisualElement>(InOutPortContainerPart.inputPortsUssName);
+                var outputs = node.SafeQ<VisualElement>(InOutPortContainerPart.outputPortsUssName);
                 Assert.IsNotNull(inputs, "Input Port Container part was expected but not found");
                 Assert.IsNotNull(outputs, "Output Port Container part was expected but not found");
-                Assert.IsNotNull(inputs.Q<Port>(), "At least one Input Port was expected but none were found");
-                Assert.IsNotNull(outputs.Q<Port>(), "At least one Output Port was expected but none were found");
+                Assert.IsNotNull(inputs.SafeQ<Port>(), "At least one Input Port was expected but none were found");
+                Assert.IsNotNull(outputs.SafeQ<Port>(), "At least one Output Port was expected but none were found");
             }
             else
             {
-                Assert.IsNotNull(node.Q<Port>(), "At least one Port was expected but none were found");
+                Assert.IsNotNull(node.SafeQ<Port>(), "At least one Port was expected but none were found");
             }
         }
 
@@ -82,26 +82,26 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             var node = new TokenNode();
             node.SetupBuildAndUpdate(nodeModel, null, null);
 
-            var inputs = node.Q<VisualElement>(TokenNode.inputPortContainerPartName);
-            var outputs = node.Q<VisualElement>(TokenNode.outputPortContainerPartName);
+            var inputs = node.SafeQ<VisualElement>(TokenNode.inputPortContainerPartName);
+            var outputs = node.SafeQ<VisualElement>(TokenNode.outputPortContainerPartName);
 
-            Assert.IsNotNull(node.Q<VisualElement>(TokenNode.titleIconContainerPartName), "Title part was expected but not found");
+            Assert.IsNotNull(node.SafeQ<VisualElement>(TokenNode.titleIconContainerPartName), "Title part was expected but not found");
 
             if (nodeModel.GetType() == typeof(SingleInputNodeModel))
             {
                 Assert.IsNotNull(inputs, "Input Port Container part was expected but not found");
                 Assert.IsNull(outputs, "Output Port Container part was not expected but was found");
-                Assert.IsNotNull(inputs.Q<Port>(), "At least one Port was expected but none were found");
+                Assert.IsNotNull(inputs.SafeQ<Port>(), "At least one Port was expected but none were found");
             }
             else if (nodeModel.GetType() == typeof(SingleOutputNodeModel))
             {
                 Assert.IsNull(inputs, "Input Port Container part was not expected but was found");
                 Assert.IsNotNull(outputs, "Output Port Container part was expected but not found");
-                Assert.IsNotNull(outputs.Q<Port>(), "At least one Port was expected but none were found");
+                Assert.IsNotNull(outputs.SafeQ<Port>(), "At least one Port was expected but none were found");
             }
             else
             {
-                Assert.IsNull(node.Q<Port>(), "No Port were expected but at least one was found");
+                Assert.IsNull(node.SafeQ<Port>(), "No Port were expected but at least one was found");
             }
         }
     }

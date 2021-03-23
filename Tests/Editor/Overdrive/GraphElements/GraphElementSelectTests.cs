@@ -41,7 +41,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator ElementCanBeSelected()
         {
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
             GetUI(out var node1, out var node2, out var node3);
 
@@ -49,15 +49,45 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             yield return null;
 
-            Assert.True(node1?.Selected);
-            Assert.False(node2?.Selected);
-            Assert.False(node3?.Selected);
+            Assert.True(node1?.IsSelected());
+            Assert.False(node2?.IsSelected());
+            Assert.False(node3?.IsSelected());
+        }
+
+        [UnityTest]
+        public IEnumerator ChangingElementLayerDoesntAffectSelection()
+        {
+            MarkGraphViewStateDirty();
+            yield return null;
+            GetUI(out var node1, out var node2, out var node3);
+
+            helpers.Click(node1);
+
+            yield return null;
+
+            Assert.True(node1?.IsSelected());
+            Assert.False(node2?.IsSelected());
+            Assert.False(node3?.IsSelected());
+
+            node1.Layer += 100;
+            yield return null;
+
+            Assert.True(node1?.IsSelected());
+            Assert.False(node2?.IsSelected());
+            Assert.False(node3?.IsSelected());
+
+            node1.Layer -= 200;
+            yield return null;
+
+            Assert.True(node1?.IsSelected());
+            Assert.False(node2?.IsSelected());
+            Assert.False(node3?.IsSelected());
         }
 
         [UnityTest]
         public IEnumerator SelectingNewElementUnselectsPreviousOne()
         {
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
             GetUI(out var node1, out var node2, out var node3);
 
@@ -66,60 +96,26 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             yield return null;
 
-            Assert.True(node1.Selected);
-            Assert.False(node2.Selected);
-            Assert.False(node3.Selected);
+            Assert.True(node1.IsSelected());
+            Assert.False(node2.IsSelected());
+            Assert.False(node3.IsSelected());
 
             // Select elem 2. All other elems should be unselected.
             helpers.Click(node2);
 
             yield return null;
 
-            Assert.False(node1.Selected);
-            Assert.True(node2.Selected);
-            Assert.False(node3.Selected);
+            Assert.False(node1.IsSelected());
+            Assert.True(node2.IsSelected());
+            Assert.False(node3.IsSelected());
         }
 
-        [UnityTest]
-        public IEnumerator SelectionSurvivesNodeRemoval()
-        {
-            const string key = "node42";
-            const string wrongKey = "node43";
-
-            // Create the node.
-            var nodeModel = CreateNode(key, new Vector2(200, 200));
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
-            yield return null;
-
-            var node = nodeModel.GetUI<Node>(graphView);
-            Assert.IsNotNull(node);
-            node.viewDataKey = key;
-
-            // Add to selection.
-            graphView.AddToSelection(node);
-            Assert.True(node.Selected);
-
-            // Remove node.
-            graphView.RemoveElement(node);
-            Assert.False(node.Selected);
-
-            // Add node back and restore selection.
-            graphView.AddElement(node);
-            Assert.True(node.Selected);
-
-            // Remove and add back but with a different viewDataKey.
-            graphView.RemoveElement(node);
-            node.viewDataKey = wrongKey;
-            graphView.AddElement(node);
-            Assert.False(node.Selected);
-        }
-
-        EventModifiers modifiers => Application.platform == RuntimePlatform.OSXEditor ? EventModifiers.Command : EventModifiers.Control;
+        EventModifiers CommandOrControl => Application.platform == RuntimePlatform.OSXEditor ? EventModifiers.Command : EventModifiers.Control;
 
         [UnityTest]
         public IEnumerator SelectingNewElementWithCommandAddsToSelection()
         {
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
             GetUI(out var node1, out var node2, out var node3);
 
@@ -129,19 +125,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             yield return null;
 
             // Select elem 2 with control. 1 and 2 should be selected
-            helpers.Click(node2, eventModifiers: modifiers);
+            helpers.Click(node2, eventModifiers: CommandOrControl);
 
             yield return null;
 
-            Assert.True(node1.Selected);
-            Assert.True(node2.Selected);
-            Assert.False(node3.Selected);
+            Assert.True(node1.IsSelected());
+            Assert.True(node2.IsSelected());
+            Assert.False(node3.IsSelected());
         }
 
         [UnityTest]
         public IEnumerator SelectingSelectedElementWithCommandModifierRemovesFromSelection()
         {
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
             GetUI(out var node1, out var node2, out var node3);
 
@@ -151,18 +147,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             yield return null;
 
             // Select elem 2 with control. 1 and 2 should be selected
-            helpers.Click(node2, eventModifiers: modifiers);
+            helpers.Click(node2, eventModifiers: CommandOrControl);
 
             yield return null;
 
             // Select elem 1 with control. Only 2 should be selected
-            helpers.Click(node1, eventModifiers: modifiers);
+            helpers.Click(node1, eventModifiers: CommandOrControl);
 
             yield return null;
 
-            Assert.False(node1.Selected);
-            Assert.True(node2.Selected);
-            Assert.False(node3.Selected);
+            Assert.False(node1.IsSelected());
+            Assert.True(node2.IsSelected());
+            Assert.False(node3.IsSelected());
         }
 
         // Taken from internal QuadTree utility
@@ -186,7 +182,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator ClickOnTwoOverlappingElementsSelectsTopOne()
         {
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
             GetUI(out var node1, out var node2, out var node3);
 
@@ -198,15 +194,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             yield return null;
 
-            Assert.False(node1.Selected);
-            Assert.False(node2.Selected);
-            Assert.True(node3.Selected);
+            Assert.False(node1.IsSelected());
+            Assert.False(node2.IsSelected());
+            Assert.True(node3.IsSelected());
         }
 
         [UnityTest]
         public IEnumerator RectangleSelectionWorks()
         {
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
             GetUI(out var node1, out var node2, out var node3);
 
@@ -216,39 +212,43 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             yield return null;
 
-            Assert.True(node1.Selected);
-            Assert.True(node2.Selected);
-            Assert.True(node3.Selected);
+            Assert.True(node1.IsSelected());
+            Assert.True(node2.IsSelected());
+            Assert.True(node3.IsSelected());
         }
 
         [UnityTest]
         public IEnumerator RectangleSelectionWithActionKeyWorks()
         {
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            graphView.DispatchFrameAllCommand();
+            yield return null;
+
+            MarkGraphViewStateDirty();
             yield return null;
             GetUI(out var node1, out var node2, out var node3);
 
-            graphView.AddToSelection(node1);
-            Assert.True(node1.Selected);
-            Assert.False(node2.Selected);
-            Assert.False(node3.Selected);
+            CommandDispatcher.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Add, m_Node1));
+            Assert.True(node1.IsSelected());
+            Assert.False(node2.IsSelected());
+            Assert.False(node3.IsSelected());
+            yield return null;
 
             Rect rectangle = RectAroundNodes(node1, node2, node3);
 
             // Reselect all.
-            helpers.DragTo(rectangle.min, rectangle.max, eventModifiers: modifiers);
-
+            helpers.DragTo(rectangle.min, rectangle.max, eventModifiers: CommandOrControl);
             yield return null;
 
-            Assert.False(node1.Selected);
-            Assert.True(node2.Selected);
-            Assert.True(node3.Selected);
+            GetUI(out node1, out node2, out node3);
+            Assert.False(node1.IsSelected());
+            Assert.True(node2.IsSelected());
+            Assert.True(node3.IsSelected());
         }
 
         [UnityTest]
         public IEnumerator FreehandSelectionWorks()
         {
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
             GetUI(out var node1, out var node2, out var node3);
 
@@ -261,15 +261,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             yield return null;
 
-            Assert.True(node1.Selected);
-            Assert.True(node2.Selected);
-            Assert.True(node3.Selected);
+            Assert.True(node1.IsSelected());
+            Assert.True(node2.IsSelected());
+            Assert.True(node3.IsSelected());
         }
 
         [UnityTest]
         public IEnumerator FreehandDeleteWorks()
         {
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
             GetUI(out var node1, out var node2, out var node3);
 
@@ -292,18 +292,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             graphView.RebuildUI(GraphModel, CommandDispatcher);
             GetUI(out var node1, out var node2, out _);
 
-            Assert.AreEqual(0, graphView.Selection.Count);
+            Assert.AreEqual(0, graphView.GetSelection().Count);
 
-            graphView.AddToSelection(node1);
-            Assert.AreEqual(1, graphView.Selection.Count);
+            CommandDispatcher.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Add, m_Node1));
+            Assert.AreEqual(1, graphView.GetSelection().Count);
 
             // Add same element again, should have no impact on selection
-            graphView.AddToSelection(node1);
-            Assert.AreEqual(1, graphView.Selection.Count);
+            CommandDispatcher.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Add, m_Node1));
+            Assert.AreEqual(1, graphView.GetSelection().Count);
 
             // Add other element
-            graphView.AddToSelection(node2);
-            Assert.AreEqual(2, graphView.Selection.Count);
+            CommandDispatcher.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Add, m_Node2));
+            Assert.AreEqual(2, graphView.GetSelection().Count);
         }
 
         [Test]
@@ -312,20 +312,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             graphView.RebuildUI(GraphModel, CommandDispatcher);
             GetUI(out var node1, out var node2, out _);
 
-            graphView.AddToSelection(node1);
-            graphView.AddToSelection(node2);
-            Assert.AreEqual(2, graphView.Selection.Count);
+            CommandDispatcher.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Add, m_Node1, m_Node2));
+            Assert.AreEqual(2, graphView.GetSelection().Count);
 
-            graphView.RemoveFromSelection(node2);
-            Assert.AreEqual(1, graphView.Selection.Count);
+            CommandDispatcher.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Remove, m_Node2));
+            Assert.AreEqual(1, graphView.GetSelection().Count);
 
             // Remove the same item again, should have no impact on selection
-            graphView.RemoveFromSelection(node2);
-            Assert.AreEqual(1, graphView.Selection.Count);
+            CommandDispatcher.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Remove, m_Node2));
+            Assert.AreEqual(1, graphView.GetSelection().Count);
 
             // Remove other element
-            graphView.RemoveFromSelection(node1);
-            Assert.AreEqual(0, graphView.Selection.Count);
+            CommandDispatcher.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Remove, m_Node1));
+            Assert.AreEqual(0, graphView.GetSelection().Count);
         }
     }
 }

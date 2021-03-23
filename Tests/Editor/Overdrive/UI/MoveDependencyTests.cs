@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.TestBridge;
+using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
@@ -36,9 +36,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             var node1 = GraphModel.CreateNode<Type0FakeNodeModel>(string.Empty, new Vector2(100, 100));
             GraphModel.CreateEdge(node1.Input0, node0.Output0);
 
-            CommandDispatcher.MarkStateDirty();
+            MarkGraphViewStateDirty();
             yield return null;
-            GraphView.FrameAll();
+            GraphView.DispatchFrameAllCommand();
             yield return null;
 
             bool needsMouseUp = false;
@@ -46,17 +46,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             {
                 using (var scheduler = GraphView.CreateTimerEventSchedulerWrapper())
                 {
-                    GraphElement stackNode = node0.GetUI<GraphElement>(GraphView);
-                    Vector2 startPos = stackNode.GetPosition().position;
+                    GraphElement node0UI = node0.GetUI<GraphElement>(GraphView);
+                    Vector2 startPos = node0UI.GetPosition().position;
                     Vector2 otherStartPos = node1.Position;
-                    Vector2 nodeRect = stackNode.hierarchy.parent.ChangeCoordinatesTo(Window.rootVisualElement, stackNode.layout.center);
+                    Vector2 nodeRect = node0UI.hierarchy.parent.ChangeCoordinatesTo(Window.rootVisualElement, node0UI.layout.center);
 
                     // Move the movable node.
                     Vector2 pos = nodeRect;
                     Vector2 target = new Vector2(Window.rootVisualElement.layout.xMax - 20, pos.y);
                     needsMouseUp = true;
-                    bool changed = false;
-                    GraphView.ViewTransformChangedCallback += view => changed = true;
+                    Vector3 pOrig = GraphView.ContentViewContainer.transform.position;
                     Helpers.MouseDownEvent(pos);
                     yield return null;
 
@@ -65,16 +64,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                     Helpers.MouseDragEvent(pos, target);
                     yield return null;
 
-                    scheduler.TimeSinceStartup += GraphViewTestHelpers.SelectionDraggerPanInterval;
+                    scheduler.TimeSinceStartup += SelectionDragger.panInterval;
                     scheduler.UpdateScheduledEvents();
 
                     Helpers.MouseUpEvent(target);
                     needsMouseUp = false;
-                    Assume.That(changed, Is.True);
-
+                    Vector3 p = GraphView.ContentViewContainer.transform.position;
+                    Assume.That(pOrig != p);
                     yield return null;
 
-                    Vector2 delta = stackNode.GetPosition().position - startPos;
+                    Vector2 delta = node0UI.GetPosition().position - startPos;
                     Assert.That(node1.Position, Is.EqualTo(otherStartPos + delta));
                 }
             }
@@ -114,7 +113,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                 {
                     for (int i = 0; i < expectedMovedDependencies.Length; i++)
                     {
-                        INodeModel model = GraphModel.NodesByGuid[expectedMovedDependencies[i].Guid];
+                        GraphModel.TryGetModelFromGuid(expectedMovedDependencies[i].Guid, out var elementModel);
+                        var model = elementModel as INodeModel;
                         GraphElement element = model.GetUI<GraphElement>(GraphView);
 
                         Assert.IsNotNull(element);
@@ -129,7 +129,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                     switch (frame)
                     {
                         case 0:
-                            List<ISelectableGraphElement> selectables = movedNodes.Select(x => x.GetUI(GraphView)).Cast<ISelectableGraphElement>().ToList();
+                            CommandDispatcher.GraphToolState.PushUndo(null);
+
+                            var selectables = movedNodes.Cast<IGraphElementModel>().ToList();
                             GraphView.PositionDependenciesManager.StartNotifyMove(selectables, startMousePos);
                             GraphView.PositionDependenciesManager.ProcessMovedNodes(startMousePos + mouseDelta);
                             for (int i = 0; i < expectedMovedDependencies.Length; i++)
@@ -151,7 +153,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                 {
                     for (int i = 0; i < expectedMovedDependencies.Length; i++)
                     {
-                        INodeModel model = GraphModel.NodesByGuid[expectedMovedDependencies[i].Guid];
+                        GraphModel.TryGetModelFromGuid(expectedMovedDependencies[i].Guid, out var elementModel);
+                        var model = elementModel as INodeModel;
                         GraphElement element = model.GetUI<GraphElement>(GraphView);
                         Assert.IsNotNull(element);
                         Assert.That(model.Position.x, Is.EqualTo(initPositions[i].x + mouseDelta.x).Within(epsilon), () => $"Model {model} was expected to have moved");
@@ -164,7 +167,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                     {
                         for (int i = 0; i < expectedUnmovedDependencies.Length; i++)
                         {
-                            INodeModel model = GraphModel.NodesByGuid[expectedUnmovedDependencies[i].Guid];
+                            GraphModel.TryGetModelFromGuid(expectedUnmovedDependencies[i].Guid, out var elementModel);
+                            var model = elementModel as INodeModel;
                             GraphElement element = model.GetUI<GraphElement>(GraphView);
                             Assert.IsNotNull(element);
                             Assert.That(model.Position.x, Is.EqualTo(initUnmovedPositions[i].x).Within(epsilon));

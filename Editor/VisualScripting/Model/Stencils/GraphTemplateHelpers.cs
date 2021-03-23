@@ -23,7 +23,7 @@ namespace UnityEditor.VisualScripting.Editor
 
             if (path.Length != 0)
             {
-                string fileName =  Path.GetFileNameWithoutExtension(path);
+                string fileName = Path.GetFileNameWithoutExtension(path);
                 store.Dispatch(new CreateGraphAssetAction(stencilType, fileName, path, graphTemplate: template));
             }
         }

@@ -7,10 +7,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class EdgeConnectorListener
     {
-        Action<CommandDispatcher, Edge, Vector2> m_OnDropOutsideDelegate;
+        Action<CommandDispatcher, IEnumerable<Edge>, IEnumerable<IPortModel>, Vector2> m_OnDropOutsideDelegate;
         Action<CommandDispatcher, Edge> m_OnDropDelegate;
 
-        public void SetDropOutsideDelegate(Action<CommandDispatcher, Edge, Vector2> action)
+        public void SetDropOutsideDelegate(Action<CommandDispatcher, IEnumerable<Edge>, IEnumerable<IPortModel>, Vector2> action)
         {
             m_OnDropOutsideDelegate = action;
         }
@@ -45,22 +45,25 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             return edgeModelsToDelete;
         }
 
-        public void OnDropOutsidePort(CommandDispatcher commandDispatcher, Edge edge, Vector2 position, Edge originalEdge)
+        public void OnDropOutsidePort(CommandDispatcher commandDispatcher, IEnumerable<Edge> edges, IEnumerable<IPortModel> ports, Vector2 position, Edge originalEdge)
         {
             if (m_OnDropOutsideDelegate != null)
             {
-                m_OnDropOutsideDelegate(commandDispatcher, edge, position);
+                m_OnDropOutsideDelegate(commandDispatcher, edges, ports, position);
             }
             else
             {
-                List<IEdgeModel> edgesToDelete = GetDropEdgeModelsToDelete(edge.EdgeModel);
+                List<IEdgeModel> edgesToDelete = new List<IEdgeModel>();
+                foreach (var edge in edges)
+                {
+                    edgesToDelete.AddRange(GetDropEdgeModelsToDelete(edge.EdgeModel));
+                    // when grabbing an existing edge's end, the edgeModel should be deleted
+                    if (!(edge.EdgeModel is GhostEdgeModel))
+                        edgesToDelete.Add(edge.EdgeModel);
 
-                // when grabbing an existing edge's end, the edgeModel should be deleted
-                if (!(edge.EdgeModel is GhostEdgeModel))
-                    edgesToDelete.Add(edge.EdgeModel);
-
-                if (originalEdge != null)
-                    edgesToDelete.Add(originalEdge.EdgeModel);
+                    if (originalEdge != null)
+                        edgesToDelete.Add(originalEdge.EdgeModel);
+                }
 
                 commandDispatcher.Dispatch(new DeleteEdgeCommand(edgesToDelete));
             }

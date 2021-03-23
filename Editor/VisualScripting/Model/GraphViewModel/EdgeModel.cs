@@ -57,7 +57,7 @@ namespace UnityEditor.VisualScripting.GraphViewModel
 
                 previousValue = null;
 
-//                Debug.Log($"OBS {NodeModel} {direction} {UniqueId}");
+                //                Debug.Log($"OBS {NodeModel} {direction} {UniqueId}");
 
                 var nodemodel2 = nodeModel.GraphModel.NodesByGuid[nodeModel.Guid];
                 if (nodemodel2 != nodeModel)

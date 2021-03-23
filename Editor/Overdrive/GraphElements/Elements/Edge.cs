@@ -130,16 +130,48 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             if (EdgeModel is IEditableEdge editableEdge)
                 EnableInClassList(editModeModifierUssClassName, editableEdge.EditMode);
+
+            if (EdgeModel.FromPort is IReorderableEdgesPortModel reorderableEdgesPort)
+            {
+                if (ShouldDisplayEdgeOrder(reorderableEdgesPort))
+                {
+                    EdgeModel.EdgeLabel = (reorderableEdgesPort.GetEdgeOrder(EdgeModel) + 1).ToString();
+                }
+                else
+                {
+                    EdgeModel.EdgeLabel = "";
+                }
+            }
+        }
+
+        bool ShouldDisplayEdgeOrder(IReorderableEdgesPortModel reorderableEdgesPort)
+        {
+            if (!reorderableEdgesPort.HasReorderableEdges)
+                return false;
+
+            var connectedEdges = reorderableEdgesPort.GetConnectedEdges().ToList();
+
+            if (connectedEdges.Count <= 1)
+                return false;
+
+            var nodeModel = reorderableEdgesPort.NodeModel;
+            if (CommandDispatcher.GraphToolState.SelectionState.IsSelected(nodeModel))
+            {
+                return true;
+            }
+
+            return connectedEdges.Any(
+                edgeModel => CommandDispatcher.GraphToolState.SelectionState.IsSelected(edgeModel));
         }
 
         public override void AddBackwardDependencies()
         {
             base.AddBackwardDependencies();
 
-            AddBackwardDependencies(EdgeModel.FromPort);
-            AddBackwardDependencies(EdgeModel.ToPort);
+            AddDependencies(EdgeModel.FromPort);
+            AddDependencies(EdgeModel.ToPort);
 
-            void AddBackwardDependencies(IPortModel portModel)
+            void AddDependencies(IPortModel portModel)
             {
                 if (portModel == null)
                     return;
@@ -168,44 +200,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public override bool ContainsPoint(Vector2 localPoint)
         {
             return EdgeControl.ContainsPoint(this.ChangeCoordinatesTo(EdgeControl, localPoint));
-        }
-
-        public override void OnSelected()
-        {
-            // PF FIXME: model modification should occur as part of a SelectElementCommand.
-            // Then the UpdateFromModel at the end would not be necessary.
-
-            base.OnSelected();
-
-            var edgeControlPart = PartList.GetPart(edgeControlPartName);
-            edgeControlPart?.UpdateFromModel();
-
-            if (EdgeModel.FromPort == null)
-                return;
-
-            EdgeModel.FromPort.NodeModel.RevealReorderableEdgesOrder(true, EdgeModel);
-            var nodeModel = EdgeModel.FromPort.NodeModel;
-            foreach (var edge in nodeModel.ConnectedPortsWithReorderableEdges().SelectMany(p => p.GetConnectedEdges()))
-                edge.GetUI<Edge>(GraphView)?.UpdateFromModel();
-        }
-
-        public override void OnUnselected()
-        {
-            // PF FIXME: model modification should occur as part of a SelectElementCommand
-            // Then the UpdateFromModel at the end would not be necessary.
-
-            base.OnUnselected();
-
-            var edgeControlPart = PartList.GetPart(edgeControlPartName);
-            edgeControlPart?.UpdateFromModel();
-
-            if (EdgeModel.FromPort == null)
-                return;
-
-            EdgeModel.FromPort.NodeModel.RevealReorderableEdgesOrder(false);
-            var nodeModel = EdgeModel.FromPort.NodeModel;
-            foreach (var edge in nodeModel.ConnectedPortsWithReorderableEdges().SelectMany(p => p.GetConnectedEdges()))
-                edge.GetUI<Edge>(GraphView)?.UpdateFromModel();
         }
 
         protected override void BuildContextualMenu(ContextualMenuPopulateEvent evt)
@@ -258,7 +252,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     });
                 }
 
-                if ((edge.EdgeModel.FromPort as IReorderableEdgesPort)?.HasReorderableEdges ?? false)
+                if ((edge.EdgeModel.FromPort as IReorderableEdgesPortModel)?.HasReorderableEdges ?? false)
                 {
                     if (!initialSeparatorAdded && initialMenuItemCount > 0)
                         evt.menu.AppendSeparator();

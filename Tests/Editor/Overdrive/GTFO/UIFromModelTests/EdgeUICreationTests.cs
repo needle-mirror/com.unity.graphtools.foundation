@@ -14,7 +14,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             var edge = new Edge();
             edge.SetupBuildAndUpdate(model, null, null);
 
-            Assert.IsNotNull(edge.Q<EdgeControl>(Edge.edgeControlPartName));
+            Assert.IsNotNull(edge.SafeQ<EdgeControl>(Edge.edgeControlPartName));
             Assert.IsFalse(edge.ClassListContains(Edge.editModeModifierUssClassName));
         }
 

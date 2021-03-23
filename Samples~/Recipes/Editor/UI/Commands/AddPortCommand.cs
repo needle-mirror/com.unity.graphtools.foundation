@@ -15,10 +15,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Recipes
         {
             state.PushUndo(command);
 
-            foreach (var nodeModel in command.Models)
+            using (var graphUpdater = state.GraphViewState.Updater)
             {
-                nodeModel.AddIngredientPort();
-                state.MarkChanged(nodeModel);
+                foreach (var nodeModel in command.Models)
+                {
+                    nodeModel.AddIngredientPort();
+                    graphUpdater.U.MarkChanged(nodeModel);
+                }
             }
         }
     }

@@ -1,14 +1,13 @@
-using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    internal class ElementResizer : MouseManipulator
+    class ElementResizer : MouseManipulator
     {
-        private readonly ResizerDirection direction;
+        readonly ResizerDirection direction;
 
-        private readonly VisualElement resizedElement;
+        readonly VisualElement resizedElement;
 
         public ElementResizer(VisualElement resizedElement, ResizerDirection direction)
         {
@@ -31,15 +30,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         Vector2 m_StartMouse;
         Vector2 m_StartSize;
+        Vector2 m_StartPosition;
 
         Vector2 m_MinSize;
         Vector2 m_MaxSize;
 
-        Vector2 m_StartPosition;
+        Rect m_NewRect;
 
-        bool m_DragStarted = false;
+        bool m_DragStarted;
 
-        bool m_Active = false;
+        bool m_Active;
 
         void OnMouseDown(MouseDownEvent e)
         {
@@ -66,6 +66,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             m_StartMouse = resizedBase.WorldToLocal(e.mousePosition);
             m_StartSize = new Vector2(resizedTarget.resolvedStyle.width, resizedTarget.resolvedStyle.height);
             m_StartPosition = new Vector2(resizedTarget.resolvedStyle.left, resizedTarget.resolvedStyle.top);
+            m_NewRect = new Rect(m_StartPosition, m_StartSize);
 
             bool minWidthDefined = resizedTarget.resolvedStyle.minWidth != StyleKeyword.Auto;
             bool maxWidthDefined = resizedTarget.resolvedStyle.maxWidth != StyleKeyword.None;
@@ -81,9 +82,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             m_DragStarted = false;
         }
 
-        ResizeFlags m_ResizeFlags;
-        Rect m_NewRect;
-
         void OnMouseMove(MouseMoveEvent e)
         {
             if (!m_Active)
@@ -98,101 +96,50 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 m_DragStarted = true;
             }
 
-            // PF: once we remove all calls to SetLayout(), we can remove this if and keep the else.
-            if (resizedTarget.IsLayoutManual())
+            if ((direction & ResizerDirection.Right) != 0)
             {
-                m_NewRect = resizedTarget.layout;
-                if ((direction & ResizerDirection.Right) != 0)
-                {
-                    m_NewRect.width = Mathf.Min(m_MaxSize.x, Mathf.Max(m_MinSize.x, m_StartSize.x + mousePos.x - m_StartMouse.x));
-                }
-                else if ((direction & ResizerDirection.Left) != 0)
-                {
-                    float delta = mousePos.x - m_StartMouse.x;
+                m_NewRect.width = Mathf.Min(m_MaxSize.x, Mathf.Max(m_MinSize.x, m_StartSize.x + mousePos.x - m_StartMouse.x));
 
-                    if (m_StartSize.x - delta < m_MinSize.x)
-                        delta = -m_MinSize.x + m_StartSize.x;
-                    else if (m_StartSize.x - delta > m_MaxSize.x)
-                        delta = -m_MaxSize.x + m_StartSize.x;
-
-                    m_NewRect.xMin = delta + m_StartPosition.x;
-                    m_NewRect.width = -delta + m_StartSize.x;
-                }
-                if ((direction & ResizerDirection.Bottom) != 0)
-                {
-                    m_NewRect.height = Mathf.Min(m_MaxSize.y, Mathf.Max(m_MinSize.y, m_StartSize.y + mousePos.y - m_StartMouse.y));
-                }
-                else if ((direction & ResizerDirection.Top) != 0)
-                {
-                    float delta = mousePos.y - m_StartMouse.y;
-
-                    if (m_StartSize.y - delta < m_MinSize.y)
-                        delta = -m_MinSize.y + m_StartSize.y;
-                    else if (m_StartSize.y - delta > m_MaxSize.y)
-                        delta = -m_MaxSize.y + m_StartSize.y;
-                    m_NewRect.yMin = delta + m_StartPosition.y;
-                    m_NewRect.height = -delta + m_StartSize.y;
-                }
-
-                if (direction != 0)
-                {
-                    resizedTarget.SetLayout(m_NewRect);
-                }
+                resizedTarget.style.width = m_NewRect.width;
             }
-            else
+            else if ((direction & ResizerDirection.Left) != 0)
             {
-                m_ResizeFlags = ResizeFlags.None;
-                m_NewRect = new Rect();
+                float delta = mousePos.x - m_StartMouse.x;
 
-                if ((direction & ResizerDirection.Right) != 0)
-                {
-                    m_ResizeFlags |= ResizeFlags.Width;
-                    m_NewRect.width = Mathf.Min(m_MaxSize.x, Mathf.Max(m_MinSize.x, m_StartSize.x + mousePos.x - m_StartMouse.x));
+                if (m_StartSize.x - delta < m_MinSize.x)
+                    delta = -m_MinSize.x + m_StartSize.x;
+                else if (m_StartSize.x - delta > m_MaxSize.x)
+                    delta = -m_MaxSize.x + m_StartSize.x;
 
-                    resizedTarget.style.width = m_NewRect.width;
-                }
-                else if ((direction & ResizerDirection.Left) != 0)
-                {
-                    float delta = mousePos.x - m_StartMouse.x;
+                m_NewRect.x = delta + m_StartPosition.x;
+                m_NewRect.width = -delta + m_StartSize.x;
 
-                    if (m_StartSize.x - delta < m_MinSize.x)
-                        delta = -m_MinSize.x + m_StartSize.x;
-                    else if (m_StartSize.x - delta > m_MaxSize.x)
-                        delta = -m_MaxSize.x + m_StartSize.x;
-
-                    m_ResizeFlags |= ResizeFlags.Left;
-                    m_ResizeFlags |= ResizeFlags.Width;
-                    m_NewRect.x = delta + m_StartPosition.x;
-                    m_NewRect.width = -delta + m_StartSize.x;
-
-                    resizedTarget.style.left = m_NewRect.x;
-                    resizedTarget.style.width = m_NewRect.width;
-                }
-                if ((direction & ResizerDirection.Bottom) != 0)
-                {
-                    m_ResizeFlags |= ResizeFlags.Height;
-                    m_NewRect.height =  Mathf.Min(m_MaxSize.y, Mathf.Max(m_MinSize.y, m_StartSize.y + mousePos.y - m_StartMouse.y));
-
-                    resizedTarget.style.height = m_NewRect.height;
-                }
-                else if ((direction & ResizerDirection.Top) != 0)
-                {
-                    float delta = mousePos.y - m_StartMouse.y;
-
-                    if (m_StartSize.y - delta < m_MinSize.y)
-                        delta = -m_MinSize.y + m_StartSize.y;
-                    else if (m_StartSize.y - delta > m_MaxSize.y)
-                        delta = -m_MaxSize.y + m_StartSize.y;
-
-                    m_ResizeFlags |= ResizeFlags.Top;
-                    m_ResizeFlags |= ResizeFlags.Height;
-                    m_NewRect.y = delta + m_StartPosition.y;
-                    m_NewRect.height = -delta + m_StartSize.y;
-
-                    resizedTarget.style.top = m_NewRect.y;
-                    resizedTarget.style.height = m_NewRect.height;
-                }
+                resizedTarget.style.left = m_NewRect.x;
+                resizedTarget.style.width = m_NewRect.width;
             }
+
+            if ((direction & ResizerDirection.Bottom) != 0)
+            {
+                m_NewRect.height = Mathf.Min(m_MaxSize.y, Mathf.Max(m_MinSize.y, m_StartSize.y + mousePos.y - m_StartMouse.y));
+
+                resizedTarget.style.height = m_NewRect.height;
+            }
+            else if ((direction & ResizerDirection.Top) != 0)
+            {
+                float delta = mousePos.y - m_StartMouse.y;
+
+                if (m_StartSize.y - delta < m_MinSize.y)
+                    delta = -m_MinSize.y + m_StartSize.y;
+                else if (m_StartSize.y - delta > m_MaxSize.y)
+                    delta = -m_MaxSize.y + m_StartSize.y;
+
+                m_NewRect.y = delta + m_StartPosition.y;
+                m_NewRect.height = -delta + m_StartSize.y;
+
+                resizedTarget.style.top = m_NewRect.y;
+                resizedTarget.style.height = m_NewRect.height;
+            }
+
             e.StopPropagation();
         }
 
@@ -204,12 +151,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (m_Active)
             {
                 VisualElement resizedTarget = resizedElement.parent;
-                if (m_ResizeFlags != ResizeFlags.None)
+                if (m_NewRect != new Rect(m_StartPosition, m_StartSize) &&
+                    resizedTarget is IGraphElement element &&
+                    element.Model is IResizable resizable &&
+                    element.Model.IsResizable())
                 {
-                    if (resizedTarget is IResizableGraphElement element)
-                    {
-                        element.OnResized(m_NewRect, m_ResizeFlags);
-                    }
+                    element.CommandDispatcher.Dispatch(new ChangeElementLayoutCommand(resizable, m_NewRect));
                 }
                 target.UnregisterCallback<MouseMoveEvent>(OnMouseMove);
                 target.ReleaseMouse();

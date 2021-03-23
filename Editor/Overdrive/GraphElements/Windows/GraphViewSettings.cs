@@ -43,12 +43,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             {
                 get =>
                     new Color
-                {
-                    r = EditorPrefs.GetFloat(k_SnappingLineColorRedKey, defaultSnappingLineColor.r),
-                    g = EditorPrefs.GetFloat(k_SnappingLineColorGreenKey, defaultSnappingLineColor.g),
-                    b = EditorPrefs.GetFloat(k_SnappingLineColorBlueKey, defaultSnappingLineColor.b),
-                    a = EditorPrefs.GetFloat(k_SnappingLineColorAlphaKey, defaultSnappingLineColor.a)
-                };
+                    {
+                        r = EditorPrefs.GetFloat(k_SnappingLineColorRedKey, defaultSnappingLineColor.r),
+                        g = EditorPrefs.GetFloat(k_SnappingLineColorGreenKey, defaultSnappingLineColor.g),
+                        b = EditorPrefs.GetFloat(k_SnappingLineColorBlueKey, defaultSnappingLineColor.b),
+                        a = EditorPrefs.GetFloat(k_SnappingLineColorAlphaKey, defaultSnappingLineColor.a)
+                    };
                 set
                 {
                     EditorPrefs.SetFloat(k_SnappingLineColorRedKey, value.r);

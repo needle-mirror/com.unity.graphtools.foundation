@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
@@ -19,6 +18,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         /// Whether or not the variable is exposed.
         /// </summary>
         public bool IsExposed;
+
+        /// <summary>
+        /// The type of variable to create.
+        /// </summary>
+        public Type VariableType;
 
         /// <summary>
         /// The type of the variable to create.
@@ -46,9 +50,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         /// <summary>
         /// Initializes a new CreateGraphVariableDeclarationCommand.
         /// </summary>
+        /// <remarks>This constructor will create the graph's default variable declaration.</remarks>
         /// <param name="name">The name of the variable to create.</param>
         /// <param name="isExposed">Whether or not the variable is exposed.</param>
-        /// <param name="typeHandle">The type of the variable to create.</param>
+        /// <param name="typeHandle">The type of data the new variable declaration to create represents.</param>
         /// <param name="modifierFlags">The modifiers to apply to the newly created variable.</param>
         /// <param name="guid">The SerializableGUID to assign to the newly created item. If none is provided, a new
         /// SerializableGUID will be generated for it.</param>
@@ -63,6 +68,23 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         }
 
         /// <summary>
+        /// Initializes a new CreateGraphVariableDeclarationCommand.
+        /// </summary>
+        /// <param name="name">The name of the variable to create.</param>
+        /// <param name="isExposed">Whether or not the variable is exposed.</param>
+        /// <param name="typeHandle">The type of data the new variable declaration to create represents.</param>
+        /// <param name="variableType">The type of variable declaration to create.</param>
+        /// <param name="modifierFlags">The modifiers to apply to the newly created variable.</param>
+        /// <param name="guid">The SerializableGUID to assign to the newly created item. If none is provided, a new
+        /// SerializableGUID will be generated for it.</param>
+        public CreateGraphVariableDeclarationCommand(string name, bool isExposed, TypeHandle typeHandle, Type variableType,
+                                                     ModifierFlags modifierFlags = ModifierFlags.None, SerializableGUID guid = default)
+            : this(name, isExposed, typeHandle, modifierFlags, guid)
+        {
+            VariableType = variableType;
+        }
+
+        /// <summary>
         /// Default command handler for CreateGraphVariableDeclarationCommand.
         /// </summary>
         /// <param name="graphToolState">The current graph tool state.</param>
@@ -71,11 +93,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             graphToolState.PushUndo(command);
 
-            var graphModel = graphToolState.GraphModel;
-            var newVD = graphModel.CreateGraphVariableDeclaration(command.TypeHandle, command.VariableName,
-                command.ModifierFlags, command.IsExposed, null, command.Guid);
+            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            {
+                var graphModel = graphToolState.GraphViewState.GraphModel;
+                IVariableDeclarationModel newVD;
+                if (command.VariableType != null)
+                    newVD = graphModel.CreateGraphVariableDeclaration(command.VariableType, command.TypeHandle, command.VariableName,
+                        command.ModifierFlags, command.IsExposed, null, command.Guid);
+                else
+                    newVD = graphModel.CreateGraphVariableDeclaration(command.TypeHandle, command.VariableName,
+                        command.ModifierFlags, command.IsExposed, null, command.Guid);
 
-            graphToolState.MarkNew(newVD);
+                graphUpdater.U.MarkNew(newVD);
+            }
         }
     }
 
@@ -99,10 +129,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public static void DefaultCommandHandler(GraphToolState graphToolState, ReorderGraphVariableDeclarationCommand command)
         {
             graphToolState.PushUndo(command);
-            graphToolState.GraphModel.MoveAfter(command.VariableDeclarationModelsToMove.ToList(), command.InsertAfter);
 
-            // PF FIXME: this is like a complete rebuild of the blackboard.
-            graphToolState.MarkChanged(graphToolState.BlackboardGraphModel);
+            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            {
+                graphToolState.GraphViewState.GraphModel.MoveAfter(command.VariableDeclarationModelsToMove.ToList(), command.InsertAfter);
+
+                // Since potentially the index of every VD changed, let's mark them all as changed.
+                graphUpdater.U.MarkChanged(graphToolState.GraphViewState.GraphModel.VariableDeclarations);
+            }
         }
     }
 
@@ -124,9 +158,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public static void DefaultCommandHandler(GraphToolState graphToolState, InitializeVariableCommand command)
         {
             graphToolState.PushUndo(command);
-            command.VariableDeclarationModel.CreateInitializationValue();
 
-            graphToolState.MarkChanged(command.VariableDeclarationModel);
+            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            {
+                command.VariableDeclarationModel.CreateInitializationValue();
+                graphUpdater.U.MarkChanged(command.VariableDeclarationModel);
+            }
         }
     }
 
@@ -148,25 +185,28 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public static void DefaultCommandHandler(GraphToolState graphToolState, ChangeVariableTypeCommand command)
         {
-            var graphModel = graphToolState.GraphModel;
+            var graphModel = graphToolState.GraphViewState.GraphModel;
 
             if (command.Handle.IsValid)
             {
                 graphToolState.PushUndo(command);
 
-                if (command.VariableDeclarationModel.DataType != command.Handle)
-                    command.VariableDeclarationModel.CreateInitializationValue();
-
-                command.VariableDeclarationModel.DataType = command.Handle;
-
-                var variableReferences = graphModel.FindReferencesInGraph<IVariableNodeModel>(command.VariableDeclarationModel).ToList();
-                foreach (var usage in variableReferences)
+                using (var graphUpdater = graphToolState.GraphViewState.Updater)
                 {
-                    usage.UpdateTypeFromDeclaration();
-                }
+                    if (command.VariableDeclarationModel.DataType != command.Handle)
+                        command.VariableDeclarationModel.CreateInitializationValue();
 
-                graphToolState.MarkChanged(variableReferences);
-                graphToolState.MarkChanged(command.VariableDeclarationModel);
+                    command.VariableDeclarationModel.DataType = command.Handle;
+
+                    var variableReferences = graphModel.FindReferencesInGraph<IVariableNodeModel>(command.VariableDeclarationModel).ToList();
+                    foreach (var usage in variableReferences)
+                    {
+                        usage.UpdateTypeFromDeclaration();
+                    }
+
+                    graphUpdater.U.MarkChanged(variableReferences);
+                    graphUpdater.U.MarkChanged(command.VariableDeclarationModel);
+                }
             }
         }
     }
@@ -193,9 +233,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             graphToolState.PushUndo(command);
 
-            command.VariableDeclarationModel.IsExposed = command.Exposed;
-
-            graphToolState.MarkChanged(command.VariableDeclarationModel);
+            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            {
+                command.VariableDeclarationModel.IsExposed = command.Exposed;
+                graphUpdater.U.MarkChanged(command.VariableDeclarationModel);
+            }
         }
     }
 
@@ -218,12 +260,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public static void DefaultCommandHandler(GraphToolState graphToolState, UpdateTooltipCommand command)
         {
             graphToolState.PushUndo(command);
-            command.VariableDeclarationModel.Tooltip = command.Tooltip;
 
-            var graphModel = graphToolState.GraphModel;
-            var references = graphModel.FindReferencesInGraph<IVariableNodeModel>(command.VariableDeclarationModel);
-            graphToolState.MarkChanged(references);
-            graphToolState.MarkChanged(command.VariableDeclarationModel);
+            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            {
+                command.VariableDeclarationModel.Tooltip = command.Tooltip;
+
+                var graphModel = graphToolState.GraphViewState.GraphModel;
+                var references = graphModel.FindReferencesInGraph<IVariableNodeModel>(command.VariableDeclarationModel);
+                graphUpdater.U.MarkChanged(references);
+                graphUpdater.U.MarkChanged(command.VariableDeclarationModel);
+            }
         }
     }
 
@@ -239,7 +285,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public ExpandOrCollapseBlackboardRowCommand(bool expand, IVariableDeclarationModel row) : this()
         {
-            this.Row = row;
+            Row = row;
             Expand = expand;
 
             UndoString = Expand ? "Collapse Variable Declaration" : "Expand Variable Declaration";
@@ -249,9 +295,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             graphToolState.PushUndo(command);
 
-            graphToolState.BlackboardViewState.SetVariableDeclarationModelExpanded(command.Row, command.Expand);
-
-            graphToolState.MarkChanged(command.Row);
+            using (var bbUpdater = graphToolState.BlackboardViewState.Updater)
+            {
+                bbUpdater.U.SetVariableDeclarationModelExpanded(command.Row, command.Expand);
+            }
         }
     }
 }

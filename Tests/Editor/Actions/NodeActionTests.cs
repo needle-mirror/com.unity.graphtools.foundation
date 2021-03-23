@@ -221,7 +221,7 @@ namespace UnityEditor.VisualScriptingTests.Actions
                     Assert.That(GetEdgeCount(), Is.EqualTo(2));
                     Assert.That(nodeToDeleteAndBypass.Input0, Is.ConnectedTo(constantA.OutputPort));
                     Assert.That(binary1.InputPortA, Is.ConnectedTo(nodeToDeleteAndBypass.Output0));
-                    return new RemoveNodesAction(new INodeModel[] {nodeToDeleteAndBypass}, new INodeModel[] {nodeToDeleteAndBypass});
+                    return new RemoveNodesAction(new INodeModel[] { nodeToDeleteAndBypass }, new INodeModel[] { nodeToDeleteAndBypass });
                 },
                 () =>
                 {

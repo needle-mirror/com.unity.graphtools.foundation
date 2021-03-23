@@ -26,16 +26,20 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public readonly string AssetPath;
         public readonly GameObject BoundObject;
         public readonly Type LoadType;
-        public readonly long FileId = 0L;
+        public readonly long FileId;
+        public readonly PluginRepository PluginRepository;
+        public readonly int TruncateHistoryIndex;
 
-        public LoadGraphAssetCommand(string assetPath, GameObject boundObject = null,
-                                     Type loadType = Type.Replace, long filedId = 0L)
+        public LoadGraphAssetCommand(string assetPath, PluginRepository pluginRepository, GameObject boundObject = null,
+                                     Type loadType = Type.Replace, long filedId = 0L, int truncateHistoryIndex = -1)
         {
             Asset = null;
             AssetPath = assetPath;
             BoundObject = boundObject;
             LoadType = loadType;
             FileId = filedId;
+            PluginRepository = pluginRepository;
+            TruncateHistoryIndex = truncateHistoryIndex;
         }
 
         public LoadGraphAssetCommand(IGraphAssetModel assetModel, GameObject boundObject = null,
@@ -45,95 +49,100 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             Asset = assetModel;
             BoundObject = boundObject;
             LoadType = loadType;
+            TruncateHistoryIndex = -1;
         }
 
         public static void DefaultCommandHandler(GraphToolState graphToolState, LoadGraphAssetCommand command)
         {
-            if (ReferenceEquals(Selection.activeObject, graphToolState.AssetModel))
+            if (ReferenceEquals(Selection.activeObject, graphToolState.WindowState.AssetModel))
                 Selection.activeObject = null;
 
-            if (graphToolState.GraphModel != null)
+            if (graphToolState.WindowState.GraphModel != null)
             {
-                var graphProcessingStateComponent = graphToolState.GraphProcessingStateComponent;
+                var graphProcessingStateComponent = graphToolState.GraphProcessingState;
                 // force queued graph processing to happen now when unloading a graph
                 if (graphProcessingStateComponent.GraphProcessingPending)
                 {
                     // Do not force graph processing if it's the same graph
-                    if ((command.AssetPath != null && graphToolState.AssetModel.GetPath() != command.AssetPath) ||
-                        (command.Asset != null && graphToolState.AssetModel != command.Asset))
+                    if ((command.AssetPath != null && graphToolState.WindowState.AssetModel.GetPath() != command.AssetPath) ||
+                        (command.Asset != null && graphToolState.WindowState.AssetModel != command.Asset))
                     {
-                        graphProcessingStateComponent.RequestGraphProcessing(RequestGraphProcessingOptions.Default);
+                        GraphProcessingHelper.ProcessGraph(graphToolState.WindowState.GraphModel, command.PluginRepository,
+                            RequestGraphProcessingOptions.Default, graphToolState.TracingControlState);
                     }
-                    graphProcessingStateComponent.GraphProcessingPending = false;
+
+                    using (var graphProcessingStateUpdater = graphToolState.GraphProcessingState.Updater)
+                    {
+                        graphProcessingStateUpdater.U.GraphProcessingPending = false;
+                    }
                 }
             }
 
-            // PF: FIXME: could this be updated by an observer?
-            // PF: FIXME: how to notify the owner of the viewGUID that it should update itself?
-            switch (command.LoadType)
+            using (var windowStateUpdater = graphToolState.WindowState.Updater)
             {
-                case Type.Replace:
-                    graphToolState.WindowState.ClearHistory();
-                    break;
-                case Type.PushOnStack:
-                    graphToolState.WindowState.PushCurrentGraph();
-                    break;
-                case Type.KeepHistory:
-                    break;
-            }
+                if (command.TruncateHistoryIndex >= 0)
+                    windowStateUpdater.U.TruncateHistory(command.TruncateHistoryIndex);
 
-            graphToolState.AssetModel?.Dispose();
-
-            var asset = command.Asset;
-            if (asset == null)
-            {
-                if (command.FileId != 0L)
+                switch (command.LoadType)
                 {
-                    var assets = AssetDatabase.LoadAllAssetsAtPath(command.AssetPath);
-                    foreach (var a in assets)
+                    case Type.Replace:
+                        windowStateUpdater.U.ClearHistory();
+                        break;
+                    case Type.PushOnStack:
+                        windowStateUpdater.U.PushCurrentGraph();
+                        break;
+                    case Type.KeepHistory:
+                        break;
+                }
+
+                var asset = command.Asset;
+                if (asset == null)
+                {
+                    if (command.FileId != 0L)
                     {
-                        if (!AssetDatabase.TryGetGUIDAndLocalFileIdentifier(a, out _, out long localId))
-                            continue;
-                        if (localId == command.FileId)
+                        var assets = AssetDatabase.LoadAllAssetsAtPath(command.AssetPath);
+                        foreach (var a in assets)
                         {
-                            asset = a as IGraphAssetModel;
-                            break;
+                            if (!AssetDatabase.TryGetGUIDAndLocalFileIdentifier(a, out _, out long localId))
+                                continue;
+                            if (localId == command.FileId)
+                            {
+                                asset = a as IGraphAssetModel;
+                                break;
+                            }
                         }
                     }
+                    else
+                    {
+                        // PF FIXME: load the right asset type (not GraphAssetModel)
+                        asset = (IGraphAssetModel)AssetDatabase.LoadAssetAtPath(command.AssetPath, typeof(GraphAssetModel));
+                    }
                 }
-                else
+
+                if (asset == null)
                 {
-                    // PF FIXME: load the right asset type (not GraphAssetModel)
-                    asset = (IGraphAssetModel)AssetDatabase.LoadAssetAtPath(command.AssetPath, typeof(GraphAssetModel));
+                    Debug.LogError($"Could not load visual scripting asset at path '{command.AssetPath}'");
+                    return;
                 }
+
+                graphToolState.LoadGraphAsset(asset, command.BoundObject);
+
+                var graphModel = graphToolState.WindowState.GraphModel;
+                graphModel?.Stencil?.PreProcessGraph(graphToolState.WindowState.GraphModel);
+
+                CheckGraphIntegrity(graphToolState);
             }
-
-            if (asset == null)
-            {
-                Debug.LogError($"Could not load visual scripting asset at path '{command.AssetPath}'");
-                return;
-            }
-
-            graphToolState.LoadGraphAsset(asset, command.BoundObject);
-            graphToolState.BlackboardGraphModel.AssetModel = asset;
-
-            graphToolState.RequestUIRebuild();
-
-            var graphModel = graphToolState.GraphModel;
-            graphModel?.Stencil?.PreProcessGraph(graphToolState.GraphModel);
-
-            CheckGraphIntegrity(graphToolState);
         }
 
         static void CheckGraphIntegrity(GraphToolState graphToolState)
         {
-            var graphModel = graphToolState.GraphModel;
+            var graphModel = graphToolState.WindowState.GraphModel;
             if (graphModel == null)
                 return;
 
             var invalidNodeCount = graphModel.NodeModels.Count(n => n == null);
             var invalidEdgeCount = graphModel.EdgeModels.Count(n => n == null);
-            var invalidStickyCount = graphToolState.GraphModel.StickyNoteModels.Count(n => n == null);
+            var invalidStickyCount = graphToolState.WindowState.GraphModel.StickyNoteModels.Count(n => n == null);
 
             var countMessage = new StringBuilder();
             countMessage.Append(invalidNodeCount == 0 ? string.Empty : $"{invalidNodeCount} invalid node(s) found.\n");

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
-using UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting;
+using UnityEditor.GraphToolsFoundation.Overdrive.Plugins.Debugging;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
 {
@@ -32,44 +32,44 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
 
             index = TracingTimeline.IndexFramesPerNode(ref cached, stencil, graphTrace, 0, 2, 0, out bool invalidated);
             Assert.IsTrue(invalidated);
-            CollectionAssert.AreEqual(new List<(int, int)> {(0, 2)}, index[n1]);
-            CollectionAssert.AreEqual(new List<(int, int)> {(0, 1)}, index[n2]);
-            CollectionAssert.AreEqual(new List<(int, int)> {(1, 3)}, index[n3]);
+            CollectionAssert.AreEqual(new List<(int, int)> { (0, 2) }, index[n1]);
+            CollectionAssert.AreEqual(new List<(int, int)> { (0, 1) }, index[n2]);
+            CollectionAssert.AreEqual(new List<(int, int)> { (1, 3) }, index[n3]);
             CheckGetDebuggingStepsCallCount(3);
 
             index = TracingTimeline.IndexFramesPerNode(ref cached, stencil, graphTrace, 0, 2, 0, out invalidated);
             Assert.IsFalse(invalidated);
-            CollectionAssert.AreEqual(new List<(int, int)> {(0, 2)}, index[n1]);
-            CollectionAssert.AreEqual(new List<(int, int)> {(0, 1)}, index[n2]);
-            CollectionAssert.AreEqual(new List<(int, int)> {(1, 3)}, index[n3]);
+            CollectionAssert.AreEqual(new List<(int, int)> { (0, 2) }, index[n1]);
+            CollectionAssert.AreEqual(new List<(int, int)> { (0, 1) }, index[n2]);
+            CollectionAssert.AreEqual(new List<(int, int)> { (1, 3) }, index[n3]);
             CheckGetDebuggingStepsCallCount(0);
 
             index = TracingTimeline.IndexFramesPerNode(ref cached, stencil, graphTrace, 0, 3, 0, out invalidated);
             Assert.IsTrue(invalidated);
-            CollectionAssert.AreEqual(new List<(int, int)> {(0, 2), (3, 4)}, index[n1]);
-            CollectionAssert.AreEqual(new List<(int, int)> {(0, 1)}, index[n2]);
-            CollectionAssert.AreEqual(new List<(int, int)> {(1, 3)}, index[n3]);
+            CollectionAssert.AreEqual(new List<(int, int)> { (0, 2), (3, 4) }, index[n1]);
+            CollectionAssert.AreEqual(new List<(int, int)> { (0, 1) }, index[n2]);
+            CollectionAssert.AreEqual(new List<(int, int)> { (1, 3) }, index[n3]);
             CheckGetDebuggingStepsCallCount(1);
 
             index = TracingTimeline.IndexFramesPerNode(ref cached, stencil, graphTrace, 0, 4, 0, out invalidated);
             Assert.IsTrue(invalidated);
-            CollectionAssert.AreEqual(new List<(int, int)> {(0, 2), (3, 5)}, index[n1]);
-            CollectionAssert.AreEqual(new List<(int, int)> {(0, 1), (4, 5)}, index[n2]);
-            CollectionAssert.AreEqual(new List<(int, int)> {(1, 3)}, index[n3]);
+            CollectionAssert.AreEqual(new List<(int, int)> { (0, 2), (3, 5) }, index[n1]);
+            CollectionAssert.AreEqual(new List<(int, int)> { (0, 1), (4, 5) }, index[n2]);
+            CollectionAssert.AreEqual(new List<(int, int)> { (1, 3) }, index[n3]);
             CheckGetDebuggingStepsCallCount(1);
 
             // drop first frame
             index = TracingTimeline.IndexFramesPerNode(ref cached, stencil, graphTrace, 1, 4, 0, out invalidated);
             Assert.IsTrue(invalidated);
-            CollectionAssert.AreEqual(new List<(int, int)> {(/*0 not removed, should be 1 now*/ 0, 2), (3, 5)}, index[n1]);
-            CollectionAssert.AreEqual(new List<(int, int)> {(4, 5)}, index[n2]);
-            CollectionAssert.AreEqual(new List<(int, int)> {(1, 3)}, index[n3]);
+            CollectionAssert.AreEqual(new List<(int, int)> { (/*0 not removed, should be 1 now*/ 0, 2), (3, 5) }, index[n1]);
+            CollectionAssert.AreEqual(new List<(int, int)> { (4, 5) }, index[n2]);
+            CollectionAssert.AreEqual(new List<(int, int)> { (1, 3) }, index[n3]);
             CheckGetDebuggingStepsCallCount(0);
 
             index = TracingTimeline.IndexFramesPerNode(ref cached, stencil, graphTrace, 3, 4, 0, out invalidated);
             Assert.IsTrue(invalidated);
-            CollectionAssert.AreEqual(new List<(int, int)> {(3, 5)}, index[n1]);
-            CollectionAssert.AreEqual(new List<(int, int)> {(4, 5)}, index[n2]);
+            CollectionAssert.AreEqual(new List<(int, int)> { (3, 5) }, index[n1]);
+            CollectionAssert.AreEqual(new List<(int, int)> { (4, 5) }, index[n2]);
             CollectionAssert.IsEmpty(index[n3]); // still there.
             CheckGetDebuggingStepsCallCount(0);
 
@@ -116,7 +116,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
                 Frame = frame;
                 _steps = _activeNodes == null
                     ? new TracingStep[0]
-                    : _activeNodes.Select(activeNode => TracingStep.ExecutedNode(new Type0FakeNodeModel {Guid = activeNode}, 0)).ToArray();
+                    : _activeNodes.Select(activeNode => TracingStep.ExecutedNode(new Type0FakeNodeModel { Guid = activeNode }, 0)).ToArray();
             }
 
             public IEnumerable<TracingStep> GetDebuggingSteps(Stencil stencil)
@@ -128,10 +128,24 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
 
         class TestStencil : Stencil
         {
+            public static string toolName = "GTF Tracing Tests";
+
+            public override string ToolName => toolName;
+
             public override ISearcherDatabaseProvider GetSearcherDatabaseProvider() => null;
             public override Type GetConstantNodeValueType(TypeHandle typeHandle)
             {
                 return TypeToConstantMapper.GetConstantNodeType(typeHandle);
+            }
+
+            public override IGraphProcessingErrorModel CreateProcessingErrorModel(GraphProcessingError error)
+            {
+                if (error.SourceNode != null && !error.SourceNode.Destroyed)
+                {
+                    return new GraphProcessingErrorModel(error);
+                }
+
+                return null;
             }
         }
     }

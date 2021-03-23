@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
+using UnityEngine.Assertions;
 using UnityEngine.Scripting.APIUpdating;
 using UnityEngine.Serialization;
 
@@ -13,11 +13,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
     [Serializable]
     //[MovedFrom(false, "UnityEditor.VisualScripting.GraphViewModel", "Unity.GraphTools.Foundation.Overdrive.Editor")]
     [MovedFrom("UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel")]
-    public class EdgeModel : IEditableEdge, ISerializationCallbackReceiver
+    public class EdgeModel : GraphElementModel, IEditableEdge
     {
-        [SerializeField]
-        GraphAssetModel m_GraphAssetModel;
-
         [SerializeField, FormerlySerializedAs("m_OutputPortReference")]
         PortReference m_FromPortReference;
 
@@ -33,33 +30,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         [SerializeField]
         protected string m_EdgeLabel;
 
-        [SerializeField]
-        SerializableGUID m_Guid;
-
-        [SerializeField]
-        List<string> m_SerializedCapabilities;
-
-        protected List<Capabilities> m_Capabilities;
-
         IPortModel m_FromPortModelCache;
 
         IPortModel m_ToPortModelCache;
-
-        public IGraphAssetModel AssetModel
-        {
-            get => m_GraphAssetModel;
-            set => m_GraphAssetModel = (GraphAssetModel)value;
-        }
-
-        public virtual IGraphModel GraphModel
-        {
-            get
-            {
-                if (m_GraphAssetModel != null)
-                    return m_GraphAssetModel.GraphModel;
-                return null;
-            }
-        }
 
         public Vector2 Position
         {
@@ -124,8 +97,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             set => m_EditMode = value;
         }
 
-        public virtual IReadOnlyList<Capabilities> Capabilities => m_Capabilities;
-
         public EdgeModel()
         {
             InternalInitCapabilities();
@@ -133,8 +104,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
         public virtual void SetPorts(IPortModel toPortModel, IPortModel fromPortModel)
         {
+            Assert.IsNotNull(toPortModel);
+            Assert.IsNotNull(toPortModel.NodeModel);
+            Assert.IsNotNull(fromPortModel);
+            Assert.IsNotNull(fromPortModel.NodeModel);
+
             FromPort = fromPortModel;
             ToPort = toPortModel;
+
+            toPortModel.NodeModel.OnConnection(toPortModel, fromPortModel);
+            fromPortModel.NodeModel.OnConnection(fromPortModel, toPortModel);
         }
 
         public void InsertEdgeControlPoint(int atIndex, Vector2 point, float tightness)
@@ -232,43 +211,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             return (inputResult, outputResult);
         }
 
-        /// <summary>
-        /// The unique identifier of the edge.
-        /// </summary>
-        public SerializableGUID Guid
-        {
-            get
-            {
-                if (!m_Guid.Valid)
-                    AssignNewGuid();
-                return m_Guid;
-            }
-            set => m_Guid = value;
-        }
-
-        /// <summary>
-        /// Assign a newly generated GUID to the model.
-        /// </summary>
-        public void AssignNewGuid()
-        {
-            m_Guid = SerializableGUID.Generate();
-        }
-
-        public void OnBeforeSerialize()
-        {
-            m_SerializedCapabilities = m_Capabilities?.Select(c => c.Name).ToList() ?? new List<string>();
-        }
-
-        public void OnAfterDeserialize()
-        {
-            if (!m_SerializedCapabilities.Any())
-                // If we're reloading an older node
-                InitCapabilities();
-            else
-                m_Capabilities = m_SerializedCapabilities.Select(Overdrive.Capabilities.Get).ToList();
-        }
-
-        protected virtual void InitCapabilities()
+        /// <inheritdoc />
+        protected override void InitCapabilities()
         {
             InternalInitCapabilities();
         }

@@ -63,7 +63,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Recipes
             var i = 0;
 
             // ReSharper disable once AccessToModifiedClosure
-            while (commandDispatcher.GraphToolState.GraphModel.VariableDeclarations.Any(v => v.Title == finalName))
+            while (commandDispatcher.GraphToolState.WindowState.GraphModel.VariableDeclarations.Any(v => v.Title == finalName))
                 finalName = name + i++;
 
             commandDispatcher.Dispatch(new CreateGraphVariableDeclarationCommand(finalName, true, type));

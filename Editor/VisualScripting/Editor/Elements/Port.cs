@@ -309,10 +309,10 @@ namespace UnityEditor.VisualScripting.Editor
             // If this becomes a bottleneck we can revert to use 2 foreach() and break
             // when we have a successful connection test
             return (from edge in connections
-                from otherEdge in other.connections
-                where
-                otherEdge.input == edge.input && otherEdge.output == edge.output
-                select edge).Any();
+                    from otherEdge in other.connections
+                    where
+                    otherEdge.input == edge.input && otherEdge.output == edge.output
+                    select edge).Any();
         }
 
         void OnCustomStyleResolved(CustomStyleResolvedEvent evt)

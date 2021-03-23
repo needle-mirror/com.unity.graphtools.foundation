@@ -1,12 +1,15 @@
 using System;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.Searcher;
+using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
 {
     [Serializable]
     class Type0FakeNodeModel : NodeModel, IFakeNode
     {
+        public override Color DefaultColor => Color.clear;
+
         public static void AddToSearcherDatabase(GraphElementSearcherDatabase db)
         {
             SearcherItem parent = SearcherItemUtility.GetItemFromPath(db.Items, "Fake");
@@ -40,5 +43,5 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
         }
     }
 
-    interface IFakeNode : INodeModel {}
+    interface IFakeNode : INodeModel { }
 }

@@ -12,6 +12,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         public string ErrorMessage => m_ErrorMessage;
 
         public ErrorBadgeModel(IGraphElementModel parentModel)
-            : base(parentModel) {}
+            : base(parentModel) { }
     }
 }

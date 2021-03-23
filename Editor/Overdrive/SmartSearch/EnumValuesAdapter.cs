@@ -17,6 +17,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         }
 
         public EnumValuesAdapter(string title)
-            : base(title) {}
+            : base(title) { }
     }
 }

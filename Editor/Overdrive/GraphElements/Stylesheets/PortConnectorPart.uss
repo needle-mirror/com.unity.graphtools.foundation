@@ -23,3 +23,8 @@
     margin-left: 4px;
     margin-right: 4px;
 }
+
+.ge-vertical-port-container-part {
+    flex-direction: row;
+    justify-content: center;
+}

@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEditor.VisualScripting.Editor.SmartSearch;
 using UnityEditor.VisualScripting.GraphViewModel;
 
@@ -45,6 +47,23 @@ namespace UnityEditor.VisualScripting.Model.Stencils
                 .WithVisualScriptingNodes()
                 .WithFields(type)
                 .WithUnaryOperators(type, portModel.NodeModel is IConstantNodeModel)
+                .WithBinaryOperators(type)
+                .WithMethods(type)
+                .WithProperties(type)
+                .WithGraphAsset(assetModel);
+        }
+
+        public SearcherFilter GetOutputToGraphSearcherFilter(IEnumerable<IPortModel> portModel)
+        {
+            // TODO : Need to be handled by TypeHandle.Resolve
+            TypeHandle typeHandle = portModel.First().DataType == TypeHandle.ThisType ? m_Stencil.GetThisType() : portModel.First().DataType;
+            Type type = typeHandle.Resolve(m_Stencil);
+            VSGraphAssetModel assetModel = portModel.First().AssetModel as VSGraphAssetModel;
+
+            return new SearcherFilter(SearcherContext.Graph)
+                .WithVisualScriptingNodes()
+                .WithFields(type)
+                .WithUnaryOperators(type, portModel.Any(t => t is IConstantNodeModel))
                 .WithBinaryOperators(type)
                 .WithMethods(type)
                 .WithProperties(type)

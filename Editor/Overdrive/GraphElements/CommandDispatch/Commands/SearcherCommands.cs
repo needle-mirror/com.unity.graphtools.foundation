@@ -57,16 +57,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             graphToolState.PushUndo(command);
 
-            var newModels = command.SelectedItem.CreateElements.Invoke(
-                new GraphNodeCreationData(graphToolState.GraphModel, command.Position, guid: command.Guid));
+            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            {
+                var newModels = command.SelectedItem.CreateElements.Invoke(
+                    new GraphNodeCreationData(graphToolState.GraphViewState.GraphModel, command.Position, guid: command.Guid));
 
-            graphToolState.MarkNew(newModels);
+                graphUpdater.U.MarkNew(newModels);
+            }
         }
     }
 
     public class CreateNodeFromPortCommand : Command
     {
-        public IPortModel PortModel;
+        public IEnumerable<IPortModel> PortModels;
         public Vector2 Position;
         public GraphNodeModelSearcherItem SelectedItem;
         public IReadOnlyList<IEdgeModel> EdgesToDelete;
@@ -77,10 +80,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             UndoString = "Create Node";
         }
 
-        public CreateNodeFromPortCommand(IPortModel portModel, Vector2 position, GraphNodeModelSearcherItem selectedItem,
+        public CreateNodeFromPortCommand(IReadOnlyList<IPortModel> portModel, Vector2 position, GraphNodeModelSearcherItem selectedItem,
                                          IReadOnlyList<IEdgeModel> edgesToDelete = null, bool itemizeSourceNode = true) : this()
         {
-            PortModel = portModel;
+            PortModels = portModel;
             Position = position;
             SelectedItem = selectedItem;
             EdgesToDelete = edgesToDelete;
@@ -91,50 +94,56 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             graphToolState.PushUndo(command);
 
-            var graphModel = graphToolState.GraphModel;
-            if (command.EdgesToDelete != null)
+            using (var graphUpdater = graphToolState.GraphViewState.Updater)
             {
-                var deletedModels = graphModel.DeleteEdges(command.EdgesToDelete);
-                graphToolState.MarkDeleted(deletedModels);
-            }
+                var graphModel = graphToolState.GraphViewState.GraphModel;
 
-            var position = command.Position - Vector2.up * EdgeCommandConfig.nodeOffset;
-            var elementModels = command.SelectedItem.CreateElements.Invoke(
-                new GraphNodeCreationData(graphModel, position));
+                var position = command.Position - Vector2.up * EdgeCommandConfig.nodeOffset;
+                var elementModels = command.SelectedItem.CreateElements.Invoke(
+                    new GraphNodeCreationData(graphModel, position));
 
-            graphToolState.MarkNew(elementModels);
+                graphUpdater.U.MarkNew(elementModels);
 
-            if (!elementModels.Any() || !(elementModels[0] is IPortNode selectedNodeModel))
-                return;
+                if (!elementModels.Any() || !(elementModels[0] is IPortNodeModel selectedNodeModel))
+                    return;
 
-            var otherPortModel = selectedNodeModel.GetPortFitToConnectTo(command.PortModel);
+                var otherPortModel = selectedNodeModel.GetPortFitToConnectTo(command.PortModels.First());
 
-            if (otherPortModel == null)
-                return;
+                if (otherPortModel == null)
+                    return;
 
-            var thisPortModel = command.PortModel;
-
-            IEdgeModel newEdge;
-            if (thisPortModel.Direction == Direction.Output)
-            {
-                if (command.ItemizeSourceNode)
+                foreach (var portModel in command.PortModels)
                 {
-                    graphModel.CreateItemizedNode(graphToolState, EdgeCommandConfig.nodeOffset, ref thisPortModel);
-                    graphToolState.RequestUIRebuild();
+                    var thisPortModel = portModel;
+                    IEdgeModel newEdge;
+                    if (thisPortModel.Direction == Direction.Output)
+                    {
+                        if (command.ItemizeSourceNode)
+                        {
+                            var newNode = graphModel.CreateItemizedNode(graphToolState, EdgeCommandConfig.nodeOffset, ref thisPortModel);
+                            graphUpdater.U.MarkNew(newNode);
+                        }
+
+                        newEdge = graphModel.CreateEdge(otherPortModel, thisPortModel);
+                        graphUpdater.U.MarkNew(newEdge);
+                    }
+                    else
+                    {
+                        newEdge = graphModel.CreateEdge(thisPortModel, otherPortModel);
+                        graphUpdater.U.MarkNew(newEdge);
+                    }
+
+                    if (command.EdgesToDelete != null)
+                    {
+                        var deletedModels = graphModel.DeleteEdges(command.EdgesToDelete);
+                        graphUpdater.U.MarkDeleted(deletedModels);
+                    }
+
+                    if (newEdge != null && graphToolState.Preferences.GetBool(BoolPref.AutoAlignDraggedEdges))
+                    {
+                        graphUpdater.U.MarkModelToAutoAlign(newEdge);
+                    }
                 }
-
-                newEdge = graphModel.CreateEdge(otherPortModel, thisPortModel);
-                graphToolState.MarkNew(newEdge);
-            }
-            else
-            {
-                newEdge = graphModel.CreateEdge(thisPortModel, otherPortModel);
-                graphToolState.MarkNew(newEdge);
-            }
-
-            if (newEdge != null && graphToolState.Preferences.GetBool(BoolPref.AutoAlignDraggedEdges))
-            {
-                graphToolState.MarkModelToAutoAlign(newEdge);
             }
         }
     }
@@ -198,42 +207,45 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             graphToolState.PushUndo(command);
 
-            var edgeInput = command.EdgeModel.ToPort;
-            var edgeOutput = command.EdgeModel.FromPort;
-
-            // Instantiate node
-            var graphModel = graphToolState.GraphModel;
-
-            var position = command.Position - Vector2.up * EdgeCommandConfig.nodeOffset;
-
-            var elementModels = command.SelectedItem.CreateElements.Invoke(
-                new GraphNodeCreationData(graphModel, position, guid: command.Guid));
-
-            graphToolState.MarkNew(elementModels);
-
-            if (elementModels.Length == 0 || !(elementModels[0] is IInOutPortsNode selectedNodeModel))
-                return;
-
-            // Delete old edge
-            var deletedModels = graphModel.DeleteEdge(command.EdgeModel);
-            graphToolState.MarkDeleted(deletedModels);
-
-            // Connect input port
-            var inputPortModel = selectedNodeModel.InputsByDisplayOrder.FirstOrDefault(p => p?.PortType == edgeOutput?.PortType);
-
-            if (inputPortModel != null)
+            using (var graphUpdater = graphToolState.GraphViewState.Updater)
             {
-                var newEdge = graphModel.CreateEdge(inputPortModel, edgeOutput);
-                graphToolState.MarkNew(newEdge);
-            }
+                var edgeInput = command.EdgeModel.ToPort;
+                var edgeOutput = command.EdgeModel.FromPort;
 
-            // Find first matching output type and connect it
-            var outputPortModel = selectedNodeModel.GetPortFitToConnectTo(edgeInput);
+                // Instantiate node
+                var graphModel = graphToolState.GraphViewState.GraphModel;
 
-            if (outputPortModel != null)
-            {
-                var newEdge = graphModel.CreateEdge(edgeInput, outputPortModel);
-                graphToolState.MarkNew(newEdge);
+                var position = command.Position - Vector2.up * EdgeCommandConfig.nodeOffset;
+
+                var elementModels = command.SelectedItem.CreateElements.Invoke(
+                    new GraphNodeCreationData(graphModel, position, guid: command.Guid));
+
+                graphUpdater.U.MarkNew(elementModels);
+
+                if (elementModels.Length == 0 || !(elementModels[0] is IInputOutputPortsNodeModel selectedNodeModel))
+                    return;
+
+                // Delete old edge
+                var deletedModels = graphModel.DeleteEdge(command.EdgeModel);
+                graphUpdater.U.MarkDeleted(deletedModels);
+
+                // Connect input port
+                var inputPortModel = selectedNodeModel.InputsByDisplayOrder.FirstOrDefault(p => p?.PortType == edgeOutput?.PortType);
+
+                if (inputPortModel != null)
+                {
+                    var newEdge = graphModel.CreateEdge(inputPortModel, edgeOutput);
+                    graphUpdater.U.MarkNew(newEdge);
+                }
+
+                // Find first matching output type and connect it
+                var outputPortModel = selectedNodeModel.GetPortFitToConnectTo(edgeInput);
+
+                if (outputPortModel != null)
+                {
+                    var newEdge = graphModel.CreateEdge(edgeInput, outputPortModel);
+                    graphUpdater.U.MarkNew(newEdge);
+                }
             }
         }
     }

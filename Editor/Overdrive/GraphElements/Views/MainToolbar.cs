@@ -9,6 +9,36 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class MainToolbar : Toolbar
     {
+        class UpdateObserver : StateObserver
+        {
+            MainToolbar m_Toolbar;
+
+            public UpdateObserver(MainToolbar toolbar)
+                : base(nameof(GraphToolState.WindowState))
+            {
+                m_Toolbar = toolbar;
+            }
+
+            public override void Observe(GraphToolState state)
+            {
+                if (m_Toolbar?.panel != null && m_Toolbar?.m_CommandDispatcher?.GraphToolState != null)
+                {
+                    using (var observation = this.ObserveState(m_Toolbar.m_CommandDispatcher.GraphToolState.WindowState))
+                    {
+                        if (observation.UpdateType != UpdateType.None)
+                        {
+                            m_Toolbar.UpdateCommonMenu();
+                            m_Toolbar.UpdateBreadcrumbMenu();
+                        }
+                    }
+                }
+            }
+        }
+
+        public new static readonly string ussClassName = "ge-main-toolbar";
+
+        UpdateObserver m_UpdateObserver;
+
         protected ToolbarBreadcrumbs m_Breadcrumb;
         protected ToolbarButton m_NewGraphButton;
         protected ToolbarButton m_SaveAllButton;
@@ -29,7 +59,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public MainToolbar(CommandDispatcher commandDispatcher, GraphView graphView) : base(commandDispatcher, graphView)
         {
-            name = "vseMenu";
+            AddToClassList(ussClassName);
+
             this.AddStylesheet("MainToolbar.uss");
 
             var tpl = GraphElementHelper.LoadUXML("MainToolbar.uxml");
@@ -59,23 +90,39 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             m_EnableTracingButton = this.MandatoryQ<ToolbarToggle>(EnableTracingButton);
             m_EnableTracingButton.tooltip = "Toggle Tracing For Current Instance";
-            m_EnableTracingButton.SetValueWithoutNotify(m_CommandDispatcher.GraphToolState.TracingState.TracingEnabled);
             m_EnableTracingButton.RegisterValueChangedCallback(e => m_CommandDispatcher.Dispatch(new ToggleTracingCommand(e.newValue)));
 
             m_OptionsButton = this.MandatoryQ<ToolbarButton>(OptionsButton);
             m_OptionsButton.tooltip = "Options";
             m_OptionsButton.ChangeClickEvent(OnOptionsButton);
+
+            RegisterCallback<AttachToPanelEvent>(OnEnterPanel);
+            RegisterCallback<DetachFromPanelEvent>(OnLeavePanel);
         }
 
-        public virtual void UpdateUI()
+        /// <summary>
+        /// AttachToPanelEvent event callback.
+        /// </summary>
+        /// <param name="e">The event.</param>
+        protected virtual void OnEnterPanel(AttachToPanelEvent e)
         {
-            bool isEnabled = m_CommandDispatcher.GraphToolState.GraphModel != null;
-            UpdateCommonMenu(isEnabled);
-            UpdateBreadcrumbMenu(isEnabled);
+            if (m_UpdateObserver == null)
+                m_UpdateObserver = new UpdateObserver(this);
+            m_CommandDispatcher?.RegisterObserver(m_UpdateObserver);
         }
 
-        void UpdateBreadcrumbMenu(bool isEnabled)
+        /// <summary>
+        /// DetachFromPanelEvent event callback.
+        /// </summary>
+        /// <param name="e">The event.</param>
+        protected virtual void OnLeavePanel(DetachFromPanelEvent e)
         {
+            m_CommandDispatcher?.UnregisterObserver(m_UpdateObserver);
+        }
+
+        void UpdateBreadcrumbMenu()
+        {
+            bool isEnabled = m_CommandDispatcher.GraphToolState.WindowState.GraphModel != null;
             m_Breadcrumb.SetEnabled(isEnabled);
 
             var i = 0;
@@ -120,15 +167,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (i < graphModels.Count)
                 graphToLoad = graphModels[i];
 
-            state.WindowState.TruncateHistory(i);
-            OnBreadcrumbClick(graphToLoad);
+            OnBreadcrumbClick(graphToLoad, i);
         }
 
-        protected virtual void OnBreadcrumbClick(OpenedGraph graphToLoad)
+        /// <summary>
+        /// Callback for when the user clicks on a breadcrumb element.
+        /// </summary>
+        /// <param name="graphToLoad">The graph to load.</param>
+        /// <param name="breadcrumbIndex">The index of the breadcrumb element clicked.</param>
+        protected virtual void OnBreadcrumbClick(OpenedGraph graphToLoad, int breadcrumbIndex)
         {
             if (graphToLoad.GraphName != null)
-                m_CommandDispatcher.Dispatch(new LoadGraphAssetCommand(graphToLoad.GraphAssetModelPath,
-                    graphToLoad.BoundObject, LoadGraphAssetCommand.Type.KeepHistory, graphToLoad.FileId));
+                m_CommandDispatcher.Dispatch(new LoadGraphAssetCommand(graphToLoad.GraphAssetModelPath, m_GraphView.Window.PluginRepository,
+                    graphToLoad.BoundObject, LoadGraphAssetCommand.Type.KeepHistory, graphToLoad.FileId, breadcrumbIndex));
         }
 
         void ShowGraphViewToolWindow<T>() where T : GraphViewToolWindow
@@ -140,13 +191,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 existingToolWindow.Focus();
         }
 
-        protected virtual void UpdateCommonMenu(bool enabled)
+        /// <summary>
+        /// Updates the state of the toolbar common buttons.
+        /// </summary>
+        protected virtual void UpdateCommonMenu()
         {
+            bool enabled = m_CommandDispatcher.GraphToolState.WindowState.GraphModel != null;
+
             m_NewGraphButton.SetEnabled(enabled);
             m_SaveAllButton.SetEnabled(enabled);
             m_BuildAllButton.SetEnabled(enabled);
 
-            var stencil = m_CommandDispatcher.GraphToolState?.GraphModel?.Stencil;
+            var stencil = m_CommandDispatcher.GraphToolState?.WindowState.GraphModel?.Stencil;
             var toolbarProvider = stencil?.GetToolbarProvider();
 
             if (!(toolbarProvider?.ShowButton(NewGraphButton) ?? true))
@@ -198,7 +254,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         void OnNewGraphButton()
         {
             var minimap = ConsoleWindowBridge.FindBoundGraphViewToolWindow<GraphViewMinimapWindow>(m_GraphView);
-            minimap?.Repaint();
+            if (minimap != null)
+            {
+                minimap.Repaint();
+            }
 
             m_GraphView?.Window.UnloadGraph();
         }
@@ -239,18 +298,21 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
                     menu.AddItem(new GUIContent("Reload Graph"), false, () =>
                     {
-                        if (m_CommandDispatcher.GraphToolState?.GraphModel != null)
+                        if (m_CommandDispatcher.GraphToolState?.WindowState.GraphModel != null)
                         {
-                            var path = m_CommandDispatcher.GraphToolState.AssetModel.GetPath();
+                            var path = m_CommandDispatcher.GraphToolState.WindowState.AssetModel.GetPath();
                             Selection.activeObject = null;
-                            Resources.UnloadAsset((Object)m_CommandDispatcher.GraphToolState.AssetModel);
-                            m_CommandDispatcher.Dispatch(new LoadGraphAssetCommand(path));
+                            Resources.UnloadAsset((Object)m_CommandDispatcher.GraphToolState.WindowState.AssetModel);
+                            m_CommandDispatcher.Dispatch(new LoadGraphAssetCommand(path, m_GraphView.Window.PluginRepository));
                         }
                     });
 
                     menu.AddItem(new GUIContent("Rebuild GraphView"), false, () =>
                     {
-                        m_CommandDispatcher.MarkStateDirty();
+                        using (var updater = m_CommandDispatcher.GraphToolState.GraphViewState.Updater)
+                        {
+                            updater.U.ForceCompleteUpdate();
+                        }
                     });
                     menu.AddItem(new GUIContent("Rebuild Blackboard"), false, () =>
                     {

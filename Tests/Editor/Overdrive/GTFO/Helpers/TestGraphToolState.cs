@@ -2,8 +2,24 @@ using System;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO
 {
-    public class TestGraphToolState : GraphToolState
+    class WindowStateComponent : Overdrive.WindowStateComponent
     {
+        internal IGraphModel m_GraphModel;
+
+        public override IGraphModel GraphModel => m_GraphModel;
+    }
+
+    class GraphViewStateComponent : Overdrive.GraphViewStateComponent
+    {
+        internal IGraphModel m_GraphModel;
+
+        public override IGraphModel GraphModel => m_GraphModel;
+    }
+
+    class TestGraphToolState : GraphToolState
+    {
+        IGraphModel m_GraphModel;
+
         static Preferences CreatePreferences()
         {
             var prefs = Preferences.CreatePreferences("GraphToolsFoundationTests.");
@@ -12,8 +28,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO
             return prefs;
         }
 
-        IGraphModel m_GraphModel;
-        public override IGraphModel GraphModel => m_GraphModel;
+        private protected override Overdrive.WindowStateComponent CreateWindowStateComponent(GUID guid)
+        {
+            var state = PersistedState.GetOrCreateViewStateComponent<WindowStateComponent>(guid, nameof(WindowState));
+            state.m_GraphModel = m_GraphModel;
+            return state;
+        }
+
+        private protected override Overdrive.GraphViewStateComponent CreateGraphViewStateComponent()
+        {
+            var state = PersistedState.GetOrCreateAssetStateComponent<GraphViewStateComponent>(nameof(GraphViewState));
+            state.m_GraphModel = m_GraphModel;
+            return state;
+        }
 
         public TestGraphToolState(GUID graphViewEditorWindowGUID, IGraphModel graphModel)
             : base(graphViewEditorWindowGUID, CreatePreferences())

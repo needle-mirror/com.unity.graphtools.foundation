@@ -16,16 +16,16 @@ namespace UnityEditor.VisualScripting.Editor
     {
         public delegate void RebuildCallback(RebuildMode rebuildMode);
 
-// TODO: Enable when GraphView supports it
-//        [Serializable]
-//        class PersistedProperties
-//        {
-//            public Vector3 position = Vector3.zero;
-//            public Vector2 size = Vector2.zero;
-//            public bool isAutoDimOpacityEnabled = false;
-//        }
-//
-//        PersistedProperties m_PersistedProperties;
+        // TODO: Enable when GraphView supports it
+        //        [Serializable]
+        //        class PersistedProperties
+        //        {
+        //            public Vector3 position = Vector3.zero;
+        //            public Vector2 size = Vector2.zero;
+        //            public bool isAutoDimOpacityEnabled = false;
+        //        }
+        //
+        //        PersistedProperties m_PersistedProperties;
 
         public enum RebuildMode
         {
@@ -208,47 +208,47 @@ namespace UnityEditor.VisualScripting.Editor
 
         public void UpdatePersistedProperties()
         {
-// TODO: Enable when GraphView supports it
-//            UpdatePersistedProperties(layout.position, layout.size, this.IsAutoDimOpacityEnabled());
+            // TODO: Enable when GraphView supports it
+            //            UpdatePersistedProperties(layout.position, layout.size, this.IsAutoDimOpacityEnabled());
         }
 
-//
-//        void UpdatePersistedProperties(Vector2 position, Vector2 size, bool isAutoDimOpacityEnabled)
-//        {
-//            if (m_PersistedProperties == null)
-//                return;
-//
-//            m_PersistedProperties.position = position;
-//            m_PersistedProperties.size = size;
-//            m_PersistedProperties.isAutoDimOpacityEnabled = isAutoDimOpacityEnabled;
-//
-//            schedule.Execute(DelayedSaveViewData);
-//        }
-//
-//        void DelayedSaveViewData()
-//        {
-//            if (string.IsNullOrEmpty(viewDataKey))
-//            {
-//                var graphModel = (VSGraphModel)m_Store.GetState()?.currentGraphModel;
-//                SetPersistenceKeyFromGraphModel(graphModel);
-//            }
-//
-//            SaveViewData();
-//        }
-//
-//        public override void OnViewDataReady()
-//        {
-//            schedule.Execute(DelayedOnViewDataReady);
-//        }
+        //
+        //        void UpdatePersistedProperties(Vector2 position, Vector2 size, bool isAutoDimOpacityEnabled)
+        //        {
+        //            if (m_PersistedProperties == null)
+        //                return;
+        //
+        //            m_PersistedProperties.position = position;
+        //            m_PersistedProperties.size = size;
+        //            m_PersistedProperties.isAutoDimOpacityEnabled = isAutoDimOpacityEnabled;
+        //
+        //            schedule.Execute(DelayedSaveViewData);
+        //        }
+        //
+        //        void DelayedSaveViewData()
+        //        {
+        //            if (string.IsNullOrEmpty(viewDataKey))
+        //            {
+        //                var graphModel = (VSGraphModel)m_Store.GetState()?.currentGraphModel;
+        //                SetPersistenceKeyFromGraphModel(graphModel);
+        //            }
+        //
+        //            SaveViewData();
+        //        }
+        //
+        //        public override void OnViewDataReady()
+        //        {
+        //            schedule.Execute(DelayedOnViewDataReady);
+        //        }
 
-//        void DelayedOnViewDataReady()
-//        {
-//            base.OnViewDataReady();
-//
-//            string key = GetFullHierarchicalViewDataKey();
-//            m_PersistedProperties = GetOrCreateViewData<PersistedProperties>(m_PersistedProperties, key);
-//            UpdateProperties(m_PersistedProperties);
-//        }
+        //        void DelayedOnViewDataReady()
+        //        {
+        //            base.OnViewDataReady();
+        //
+        //            string key = GetFullHierarchicalViewDataKey();
+        //            m_PersistedProperties = GetOrCreateViewData<PersistedProperties>(m_PersistedProperties, key);
+        //            UpdateProperties(m_PersistedProperties);
+        //        }
 
         public void UpdatePinning()
         {
@@ -257,25 +257,25 @@ namespace UnityEditor.VisualScripting.Editor
 
         public bool NeedStoreDispatch => false;
 
-// TODO: Enable when GraphView supports it
-//        void UpdateProperties(PersistedProperties properties)
-//        {
-//            var newPosition = properties.position;
-//            var newSize = properties.size;
-//            var newAutoDimOpacityEnabled = properties.isAutoDimOpacityEnabled;
-//
-//            float validateFloat = newPosition.x + newPosition.y + newPosition.z + newSize.x + newSize.y;
-//            if (float.IsInfinity(validateFloat) || float.IsNaN(validateFloat) || newSize.x < float.Epsilon || newSize.y < float.Epsilon)
-//                return;
-//
-//            SetPosition(new Rect(newPosition, newSize));
-//
-//            if ((this.IsAutoDimOpacityEnabled() && !newAutoDimOpacityEnabled) ||
-//                (!this.IsAutoDimOpacityEnabled() && newAutoDimOpacityEnabled))
-//                this.ToggleAutoDimOpacity(VisualElementExtensions.StartingOpacity.Min);
-//
-//            UpdatePersistedProperties(newPosition, newSize, newAutoDimOpacityEnabled);
-//        }
+        // TODO: Enable when GraphView supports it
+        //        void UpdateProperties(PersistedProperties properties)
+        //        {
+        //            var newPosition = properties.position;
+        //            var newSize = properties.size;
+        //            var newAutoDimOpacityEnabled = properties.isAutoDimOpacityEnabled;
+        //
+        //            float validateFloat = newPosition.x + newPosition.y + newPosition.z + newSize.x + newSize.y;
+        //            if (float.IsInfinity(validateFloat) || float.IsNaN(validateFloat) || newSize.x < float.Epsilon || newSize.y < float.Epsilon)
+        //                return;
+        //
+        //            SetPosition(new Rect(newPosition, newSize));
+        //
+        //            if ((this.IsAutoDimOpacityEnabled() && !newAutoDimOpacityEnabled) ||
+        //                (!this.IsAutoDimOpacityEnabled() && newAutoDimOpacityEnabled))
+        //                this.ToggleAutoDimOpacity(VisualElementExtensions.StartingOpacity.Min);
+        //
+        //            UpdatePersistedProperties(newPosition, newSize, newAutoDimOpacityEnabled);
+        //        }
 
         void OnAddItemRequested(Experimental.GraphView.Blackboard blackboard)
         {
@@ -287,7 +287,7 @@ namespace UnityEditor.VisualScripting.Editor
         {
             // TODO: Workaround to prevent moving item above a BlackboardThisField, as all check code is executed
             // within UnityEditor.Experimental.GraphView.BlackboardSection in private or internal functions
-            bool hasBlackboardThisField = (blackboard as Blackboard)?.Sections ? [0]?.Children()
+            bool hasBlackboardThisField = (blackboard as Blackboard)?.Sections?[0]?.Children()
                 ?.Any(x => x is BlackboardThisField) ?? false;
             if (index == 0 && hasBlackboardThisField)
                 return;

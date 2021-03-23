@@ -21,7 +21,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             var model1 = creator(declarationModel, Vector2.zero);
             var model2 = creator(declarationModel, Vector2.one * 50);
 
-            CommandDispatcher.MarkStateDirty();
+            MarkGraphViewStateDirty();
             yield return null;
 
             var token1 = model1.GetUI<E>(GraphView);
@@ -30,8 +30,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Assert.IsNotNull(token1);
             Assert.IsNotNull(token2);
 
-            var selectionBorder1 = token1.Q(null, "ge-selection-border");
-            var selectionBorder2 = token2.Q(null, "ge-selection-border");
+            var selectionBorder1 = token1.SafeQ(null, "ge-selection-border");
+            var selectionBorder2 = token2.SafeQ(null, "ge-selection-border");
 
             Assert.IsNotNull(selectionBorder1);
             Assert.IsNotNull(selectionBorder2);
@@ -40,16 +40,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             Assert.AreEqual(Color.clear, selectionBorder1.resolvedStyle.borderBottomColor);
             Assert.AreEqual(Color.clear, selectionBorder2.resolvedStyle.borderBottomColor);
 
-            GraphView.AddToSelection(token1);
-
-            CommandDispatcher.MarkStateDirty();
+            CommandDispatcher.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Add, model1));
             yield return null;
 
             token1 = model1.GetUI<E>(GraphView);
             token2 = model2.GetUI<E>(GraphView);
 
-            selectionBorder1 = token1.Q(null, "ge-selection-border");
-            selectionBorder2 = token2.Q(null, "ge-selection-border");
+            selectionBorder1 = token1.SafeQ(null, "ge-selection-border");
+            selectionBorder2 = token2.SafeQ(null, "ge-selection-border");
 
             // There should be a selection at this point.
             // The borders should not be black and should be different from one another (one selected, one highlighted).

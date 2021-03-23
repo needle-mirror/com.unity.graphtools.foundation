@@ -53,7 +53,7 @@ namespace UnityEditor.VisualScripting.Model
         {
             Assert.IsNotNull(type);
             Assert.IsNotNull(memberName);
-            var member = new TypeMember(type.GenerateTypeHandle(Stencil), new List<string> {memberName});
+            var member = new TypeMember(type.GenerateTypeHandle(Stencil), new List<string> { memberName });
 
             m_Members.Add(member);
             DefineNode();

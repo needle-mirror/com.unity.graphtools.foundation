@@ -24,7 +24,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         /// <param name="a">The first part of the GUID.</param>
         /// <param name="b">The second part of the GUID.</param>
         /// <returns>A new SerializableGUID.</returns>
-        public static SerializableGUID FromParts(ulong a, ulong b) => new SerializableGUID { m_Value0 = a, m_Value1 = b};
+        public static SerializableGUID FromParts(ulong a, ulong b) => new SerializableGUID { m_Value0 = a, m_Value1 = b };
 
         /// <summary>
         /// Determines whether two SerializableGUIDs are equal.
@@ -64,7 +64,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         /// <param name="left">The left SerializableGUID to compare.</param>
         /// <param name="right">The right SerializableGUID to compare.</param>
         /// <returns>True if both specified SerializableGUIDs are equal; otherwise, false.</returns>
-        public static bool operator==(SerializableGUID left, SerializableGUID right)
+        public static bool operator ==(SerializableGUID left, SerializableGUID right)
         {
             return left.Equals(right);
         }
@@ -75,7 +75,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         /// <param name="left">The left SerializableGUID to compare.</param>
         /// <param name="right">The right SerializableGUID to compare.</param>
         /// <returns>True if the specified SerializableGUIDs are not equal; otherwise, false.</returns>
-        public static bool operator!=(SerializableGUID left, SerializableGUID right)
+        public static bool operator !=(SerializableGUID left, SerializableGUID right)
         {
             return !left.Equals(right);
         }
@@ -130,7 +130,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 #if UNITY_EDITOR
             return new SerializableGUID {m_Guid = GUID.Generate()};
 #else
-            return new SerializableGUID {m_Hash128 = Hash128.Compute(Guid.NewGuid().ToByteArray())};
+            return new SerializableGUID { m_Hash128 = Hash128.Compute(Guid.NewGuid().ToByteArray()) };
 #endif
         }
 
@@ -162,7 +162,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         /// </summary>
         /// <param name="hash">The <see cref="Hash128"/> to cast.</param>
         /// <returns>The cast value.</returns>
-        public static implicit operator SerializableGUID(Hash128 hash) => new SerializableGUID{m_Hash128 = hash};
+        public static implicit operator SerializableGUID(Hash128 hash) => new SerializableGUID { m_Hash128 = hash };
 
 #if UNITY_EDITOR
         /// <summary>

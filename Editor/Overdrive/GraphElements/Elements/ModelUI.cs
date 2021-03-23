@@ -1,12 +1,9 @@
-using System;
-using Unity.Properties;
-using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public abstract class ModelUI : VisualElementBridge, IModelUI
+    public abstract class ModelUI : VisualElement, IModelUI
     {
         public IGraphElementModel Model { get; private set; }
 
@@ -38,7 +35,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             set => this.ReplaceManipulator(ref m_ContextualMenuManipulator, value);
         }
 
-        protected virtual void BuildPartList() {}
+        /// <summary>
+        /// Builds the list of parts for this UI Element.
+        /// </summary>
+        protected virtual void BuildPartList() { }
 
         public void SetupBuildAndUpdate(IGraphElementModel model, CommandDispatcher commandDispatcher, GraphView graphView, string context = null)
         {
@@ -53,9 +53,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             CommandDispatcher = commandDispatcher;
             GraphView = graphView;
             Context = context;
-
-            // Used by graph view to restore selection on graph rebuild.
-            viewDataKey = Model != null ? Model.Guid.ToString() : Guid.NewGuid().ToString();
 
             PartList = new ModelUIPartList();
             BuildPartList();
@@ -83,7 +80,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             if (CommandDispatcher?.GraphToolState?.Preferences.GetBool(BoolPref.LogUIUpdate) ?? false)
             {
-                Debug.LogWarning($"Rebuilding {this}");
+                Debug.Log($"Rebuilding {this}");
                 if (GraphView == null)
                 {
                     Debug.LogWarning($"Updating a graph element that is not attached to a graph view: {this}");
@@ -113,11 +110,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
         }
 
+        /// <summary>
+        /// Update the element to reflect the state of the attached model.
+        /// </summary>
         protected virtual void UpdateElementFromModel()
         {
         }
 
-        private void OnCustomStyleResolved(CustomStyleResolvedEvent evt)
+        void OnCustomStyleResolved(CustomStyleResolvedEvent evt)
         {
             Dependencies.OnCustomStyleResolved(evt);
         }

@@ -17,7 +17,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         }
 
         protected NodeCollapseButtonPart(string name, IGraphElementModel model, IModelUI ownerElement, string parentClassName)
-            : base(name, model, ownerElement, parentClassName) {}
+            : base(name, model, ownerElement, parentClassName) { }
 
         protected override void UpdatePartFromModel()
         {
@@ -25,7 +25,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             if (CollapseButton != null)
             {
-                if (m_Model is IPortNode portHolder && portHolder.Ports != null)
+                if (m_Model is IPortNodeModel portHolder && portHolder.Ports != null)
                 {
                     var allPortConnected = portHolder.Ports.All(port => port.IsConnected());
                     CollapseButton?.SetDisabledPseudoState(allPortConnected);

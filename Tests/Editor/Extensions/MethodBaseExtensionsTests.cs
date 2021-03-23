@@ -11,9 +11,9 @@ namespace UnityEditor.VisualScriptingTests.Extensions
         class FakeObject
         {
             [UsedImplicitly]
-            public FakeObject() {}
+            public FakeObject() { }
             public int FakeMethod(string a, float b) { return 0; }
-            public static void StaticFakeMethod() {}
+            public static void StaticFakeMethod() { }
         }
 
         [Test]

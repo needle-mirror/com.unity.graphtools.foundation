@@ -45,7 +45,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         private void InitRoot(VisualElement container)
         {
-            m_Root = new VisualElement {name = PartName};
+            m_Root = new VisualElement { name = PartName };
             m_Root.AddToClassList(m_ParentClassName.WithUssElement(PartName));
 
             container.Add(m_Root);

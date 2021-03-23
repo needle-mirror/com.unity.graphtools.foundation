@@ -58,7 +58,7 @@ namespace UnityEditor.VisualScripting.Editor
         public void Add(INodeModel parent, IDependency child)
         {
             if (!m_DependenciesByNode.TryGetValue(parent.Guid, out Dictionary<GUID, IDependency> link))
-                m_DependenciesByNode.Add(parent.Guid, new Dictionary<GUID, IDependency> { {child.DependentNode.Guid, child }});
+                m_DependenciesByNode.Add(parent.Guid, new Dictionary<GUID, IDependency> { { child.DependentNode.Guid, child } });
             else
             {
                 if (link.TryGetValue(child.DependentNode.Guid, out IDependency dependency))
@@ -378,7 +378,7 @@ namespace UnityEditor.VisualScripting.Editor
                             position = new Vector2(
                                 prev.Position.x + (linked.ParentPort.Direction == Direction.Output
                                     ? parentUI.layout.width + k_AlignHorizontalOffset
-                                    : -k_AlignHorizontalOffset - depUI.layout.width) ,
+                                    : -k_AlignHorizontalOffset - depUI.layout.width),
                                 inputPos.y + inputPortPos.y - outputPortPos.y
                             );
                             Log($"  pos {position} parent NOT stackNode");

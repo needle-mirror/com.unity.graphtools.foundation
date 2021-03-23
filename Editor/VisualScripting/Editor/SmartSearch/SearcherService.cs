@@ -16,7 +16,7 @@ namespace UnityEditor.VisualScripting.Editor.SmartSearch
 
         static readonly SearcherWindow.Alignment k_FindAlignment = new SearcherWindow.Alignment(
             SearcherWindow.Alignment.Vertical.Top, SearcherWindow.Alignment.Horizontal.Center);
-        static readonly TypeSearcherAdapter k_TypeAdapter =  new TypeSearcherAdapter("Pick a type");
+        static readonly TypeSearcherAdapter k_TypeAdapter = new TypeSearcherAdapter("Pick a type");
         static readonly Comparison<SearcherItem> k_GraphElementSort = (x, y) =>
         {
             var xRoot = GetRoot(x);
@@ -292,7 +292,7 @@ namespace UnityEditor.VisualScripting.Editor.SmartSearch
                         res &= GetFilterResult(filter, typeItem.Data);
 
                     if (userFilter != null)
-                        res &= GetFilterResult(userFilter , typeItem.Data);
+                        res &= GetFilterResult(userFilter, typeItem.Data);
 
                     return res;
                 };
@@ -323,19 +323,19 @@ namespace UnityEditor.VisualScripting.Editor.SmartSearch
             {
                 // TODO virtual property in NodeModel formatting what's displayed in the find window
                 case IConstantNodeModel _:
-                {
-                    var nodeTitle = node is StringConstantModel ? $"\"{node.Title}\"" : node.Title;
-                    title = $"Const {((ConstantNodeModel)node).Type.Name} {nodeTitle}";
-                    break;
-                }
+                    {
+                        var nodeTitle = node is StringConstantModel ? $"\"{node.Title}\"" : node.Title;
+                        title = $"Const {((ConstantNodeModel)node).Type.Name} {nodeTitle}";
+                        break;
+                    }
 
                 case PropertyGroupBaseNodeModel prop:
-                {
-                    title = node is GetPropertyGroupNodeModel ? "Get " : "Set ";
-                    children = prop.Members.Select(m =>
-                        (SearcherItem) new FindInGraphAdapter.FindSearcherItem(node, m.ToString())).ToList();
-                    break;
-                }
+                    {
+                        title = node is GetPropertyGroupNodeModel ? "Get " : "Set ";
+                        children = prop.Members.Select(m =>
+                            (SearcherItem)new FindInGraphAdapter.FindSearcherItem(node, m.ToString())).ToList();
+                        break;
+                    }
             }
 
             // find current function/event

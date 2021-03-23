@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace  UnityEditor.GraphToolsFoundation.Overdrive
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class GraphProcessingResult
     {
@@ -15,7 +15,7 @@ namespace  UnityEditor.GraphToolsFoundation.Overdrive
 
         public void AddError(string description, INodeModel node = null, QuickFix quickFix = null)
         {
-            AddError(description, node,  false, quickFix);
+            AddError(description, node, false, quickFix);
         }
 
         public void AddWarning(string description, INodeModel node = null, QuickFix quickFix = null)

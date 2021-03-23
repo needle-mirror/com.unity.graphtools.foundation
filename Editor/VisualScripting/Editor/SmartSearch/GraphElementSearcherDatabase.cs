@@ -130,7 +130,7 @@ namespace UnityEditor.VisualScripting.Editor.SmartSearch
 
             TypeHandle voidTypeHandle = typeof(void).GenerateTypeHandle(Stencil);
 
-            foreach (var(graphModel, functionModel) in methods)
+            foreach (var (graphModel, functionModel) in methods)
             {
                 string graphName = graphModel.AssetModel.Name;
                 SearcherItem graphRoot = SearcherItemUtility.GetItemFromPath(Items, $"{k_Graphs}/{graphName}");
@@ -207,26 +207,26 @@ namespace UnityEditor.VisualScripting.Editor.SmartSearch
                     switch (attribute.Context)
                     {
                         case SearcherContext.Graph:
-                        {
-                            var node = new GraphNodeModelSearcherItem(
-                                new NodeSearcherItemData(type),
-                                data => data.CreateNode(type, name),
-                                name
-                            );
-                            Items.AddAtPath(node, path);
-                            break;
-                        }
+                            {
+                                var node = new GraphNodeModelSearcherItem(
+                                    new NodeSearcherItemData(type),
+                                    data => data.CreateNode(type, name),
+                                    name
+                                );
+                                Items.AddAtPath(node, path);
+                                break;
+                            }
 
                         case SearcherContext.Stack:
-                        {
-                            var node = new StackNodeModelSearcherItem(
-                                new NodeSearcherItemData(type),
-                                data => data.CreateNode(type, name),
-                                name
-                            );
-                            Items.AddAtPath(node, path);
-                            break;
-                        }
+                            {
+                                var node = new StackNodeModelSearcherItem(
+                                    new NodeSearcherItemData(type),
+                                    data => data.CreateNode(type, name),
+                                    name
+                                );
+                                Items.AddAtPath(node, path);
+                                break;
+                            }
 
                         default:
                             Debug.LogWarning($"The node {type} is not a {SearcherContext.Stack} or " +

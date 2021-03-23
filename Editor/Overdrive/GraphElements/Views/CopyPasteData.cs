@@ -13,10 +13,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public List<INodeModel> nodes;
         public List<IEdgeModel> edges;
-        public List<VariableDeclarationModel> variableDeclarations;
+        public List<IVariableDeclarationModel> variableDeclarations;
         public Vector2 topLeftNodePosition;
-        public List<StickyNoteModel> stickyNotes;
-        public List<PlacematModel> placemats;
+        public List<IStickyNoteModel> stickyNotes;
+        public List<IPlacematModel> placemats;
 
         public string ToJson()
         {
@@ -30,16 +30,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             var originalNodes = graphElementModels.OfType<INodeModel>().ToList();
 
-            List<VariableDeclarationModel> variableDeclarationsToCopy = graphElementModels
-                .OfType<VariableDeclarationModel>()
+            List<IVariableDeclarationModel> variableDeclarationsToCopy = graphElementModels
+                .OfType<IVariableDeclarationModel>()
                 .ToList();
 
-            List<StickyNoteModel> stickyNotesToCopy = graphElementModels
-                .OfType<StickyNoteModel>()
+            List<IStickyNoteModel> stickyNotesToCopy = graphElementModels
+                .OfType<IStickyNoteModel>()
                 .ToList();
 
-            List<PlacematModel> placematsToCopy = graphElementModels
-                .OfType<PlacematModel>()
+            List<IPlacematModel> placematsToCopy = graphElementModels
+                .OfType<IPlacematModel>()
                 .ToList();
 
             List<IEdgeModel> edgesToCopy = graphElementModels
@@ -77,15 +77,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             return copyPasteData;
         }
 
-        static INodeModel PasteNode(string operationName, INodeModel copiedNode, IGraphModel graph,
-            SelectionStateComponent selectionState, Vector2 delta)
-        {
-            var pastedNodeModel = graph.DuplicateNode(copiedNode, delta);
-            selectionState?.SelectElementsUponCreation(new[] { pastedNodeModel }, true);
-            return pastedNodeModel;
-        }
-
-        internal static void PasteSerializedData(IGraphModel graph, TargetInsertionInfo targetInfo, SelectionStateComponent selectionState, CopyPasteData copyPasteData)
+        internal static void PasteSerializedData(IGraphModel graph, TargetInsertionInfo targetInfo,
+            GraphViewStateComponent.StateUpdater graphViewUpdater,
+            SelectionStateComponent.StateUpdater selectionStateUpdater,
+            CopyPasteData copyPasteData)
         {
             var elementMapping = new Dictionary<string, IGraphElementModel>();
 
@@ -100,7 +95,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     duplicatedModels.Add(graph.DuplicateGraphVariableDeclaration(sourceModel));
                 }
 
-                selectionState?.SelectElementsUponCreation(duplicatedModels, true);
+                graphViewUpdater?.MarkNew(duplicatedModels);
+                selectionStateUpdater?.SelectElements(duplicatedModels, true);
             }
 
             var nodeMapping = new Dictionary<INodeModel, INodeModel>();
@@ -109,10 +105,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 if (!graph.Stencil.CanPasteNode(originalModel, graph))
                     continue;
 
-                var pastedNode = PasteNode(targetInfo.OperationName, originalModel, graph, selectionState, targetInfo.Delta);
+                var pastedNode = graph.DuplicateNode(originalModel, targetInfo.Delta);
+                graphViewUpdater.MarkNew(pastedNode);
+                selectionStateUpdater?.SelectElements(new[] { pastedNode }, true);
                 nodeMapping[originalModel] = pastedNode;
             }
 
+            // PF FIXME we could do this in the foreach above
             foreach (var nodeModel in nodeMapping)
             {
                 elementMapping.Add(nodeModel.Key.Guid.ToString(), nodeModel.Value);
@@ -120,41 +119,44 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             foreach (var edge in copyPasteData.edges)
             {
-                elementMapping.TryGetValue(edge.ToNodeGuid.ToString(), out var newInput);
-                elementMapping.TryGetValue(edge.FromNodeGuid.ToString(), out var newOutput);
+                elementMapping.TryGetValue(edge.ToPort.NodeModel.Guid.ToString(), out var newInput);
+                elementMapping.TryGetValue(edge.FromPort.NodeModel.Guid.ToString(), out var newOutput);
 
                 var copiedEdge = graph.DuplicateEdge(edge, newInput as INodeModel, newOutput as INodeModel);
                 if (copiedEdge != null)
                 {
                     elementMapping.Add(edge.Guid.ToString(), copiedEdge);
-                    selectionState?.SelectElementsUponCreation(new[] { copiedEdge }, true);
+                    graphViewUpdater?.MarkNew(copiedEdge);
+                    selectionStateUpdater?.SelectElements(new[] { copiedEdge }, true);
                 }
             }
 
             foreach (var stickyNote in copyPasteData.stickyNotes)
             {
                 var newPosition = new Rect(stickyNote.PositionAndSize.position + targetInfo.Delta, stickyNote.PositionAndSize.size);
-                var pastedStickyNote = (StickyNoteModel)graph.CreateStickyNote(newPosition);
+                var pastedStickyNote = (IStickyNoteModel)graph.CreateStickyNote(newPosition);
                 pastedStickyNote.Title = stickyNote.Title;
                 pastedStickyNote.Contents = stickyNote.Contents;
                 pastedStickyNote.Theme = stickyNote.Theme;
                 pastedStickyNote.TextSize = stickyNote.TextSize;
-                selectionState?.SelectElementsUponCreation(new[] { pastedStickyNote }, true);
+                graphViewUpdater.MarkNew(pastedStickyNote);
+                selectionStateUpdater?.SelectElements(new[] { pastedStickyNote }, true);
                 elementMapping.Add(stickyNote.Guid.ToString(), pastedStickyNote);
             }
 
-            List<PlacematModel> pastedPlacemats = new List<PlacematModel>();
+            List<IPlacematModel> pastedPlacemats = new List<IPlacematModel>();
             // Keep placemats relative order
             foreach (var placemat in copyPasteData.placemats.OrderBy(p => p.ZOrder))
             {
                 var newPosition = new Rect(placemat.PositionAndSize.position + targetInfo.Delta, placemat.PositionAndSize.size);
                 var newTitle = "Copy of " + placemat.Title;
-                var pastedPlacemat = (PlacematModel)graph.CreatePlacemat(newPosition);
+                var pastedPlacemat = (IPlacematModel)graph.CreatePlacemat(newPosition);
                 pastedPlacemat.Title = newTitle;
                 pastedPlacemat.Color = placemat.Color;
                 pastedPlacemat.Collapsed = placemat.Collapsed;
-                pastedPlacemat.HiddenElementsGuid = placemat.HiddenElementsGuid;
-                selectionState?.SelectElementsUponCreation(new[] { pastedPlacemat }, true);
+                pastedPlacemat.HiddenElements = placemat.HiddenElements;
+                graphViewUpdater.MarkNew(pastedPlacemat);
+                selectionStateUpdater?.SelectElements(new[] { pastedPlacemat }, true);
                 pastedPlacemats.Add(pastedPlacemat);
                 elementMapping.Add(placemat.Guid.ToString(), pastedPlacemat);
             }
@@ -164,17 +166,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             {
                 if (pastedPlacemat.Collapsed)
                 {
-                    List<string> pastedHiddenContent = new List<string>();
-                    foreach (var guid in pastedPlacemat.HiddenElementsGuid)
+                    List<IGraphElementModel> pastedHiddenContent = new List<IGraphElementModel>();
+                    foreach (var elementGUID in pastedPlacemat.HiddenElements.Select(t => t.Guid.ToString()))
                     {
                         IGraphElementModel pastedElement;
-                        if (elementMapping.TryGetValue(guid, out pastedElement))
+                        if (elementMapping.TryGetValue(elementGUID, out pastedElement))
                         {
-                            pastedHiddenContent.Add(pastedElement.Guid.ToString());
+                            pastedHiddenContent.Add(pastedElement);
                         }
                     }
 
-                    pastedPlacemat.HiddenElementsGuid = pastedHiddenContent;
+                    pastedPlacemat.HiddenElements = pastedHiddenContent;
                 }
             }
         }

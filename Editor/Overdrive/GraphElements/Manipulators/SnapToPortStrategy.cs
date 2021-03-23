@@ -177,13 +177,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
 
             // We don't want to snap non existing ports and ports with different orientations (to be determined)
-            if (sourcePort == null || snappablePort == null || sourcePort.Orientation != snappablePort.Orientation)
+            if (sourcePort == null || snappablePort == null ||
+                ((IPortModel)sourcePort.Model).Orientation != ((IPortModel)snappablePort.Model).Orientation)
             {
                 return null;
             }
 
             float offset;
-            if (snappablePort.Orientation == Orientation.Horizontal)
+            if (((IPortModel)snappablePort.Model).Orientation == Orientation.Horizontal)
             {
                 offset = m_ConnectedPortsPos[sourcePort].y - m_ConnectedPortsPos[snappablePort].y;
             }
@@ -194,7 +195,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             SnapToPortResult minResult = new SnapToPortResult
             {
-                PortOrientation = snappablePort.Orientation,
+                PortOrientation = ((IPortModel)snappablePort.Model).Orientation,
                 Offset = offset
             };
 

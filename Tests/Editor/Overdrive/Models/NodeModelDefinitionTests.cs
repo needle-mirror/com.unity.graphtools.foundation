@@ -17,7 +17,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
     class NodeModelDefinitionTests
     {
         NodeModel m_Node;
-        public void M1(int i) {}
+        public void M1(int i) { }
         public int M3(int i, bool b) => 0;
 
         [Test]
@@ -109,7 +109,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
             asset.CreateGraph("asd");
             var g = asset.GraphModel;
 
-            m_Node = g.CreateNode<TestNodeModelWithCustomPorts>("test", Vector2.zero, preDefineSetup: ports => ports.CreatePortFunc = createPort(ports));
+            m_Node = g.CreateNode<TestNodeModelWithCustomPorts>("test", Vector2.zero, initializationCallback: ports => ports.CreatePortFunc = createPort(ports));
             Assert.That(getValue(m_Node.InputsByDisplayOrder.Single().EmbeddedValue), Is.EqualTo(expectedValue));
         }
 

@@ -6,6 +6,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
     class TestGraphViewWindow : GraphViewEditorWindow
     {
+        public const string toolName = "GTF Tests";
+
+        [InitializeOnLoadMethod]
+        static void RegisterTool()
+        {
+            ShortcutHelper.RegisterDefaultShortcuts<TestGraphViewWindow>(toolName);
+        }
+
         public IGraphModel GraphModel { get; private set; }
 
         public TestGraphViewWindow()
@@ -16,7 +24,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
         protected override Overdrive.GraphToolState CreateInitialState()
         {
-            GraphModel = new GraphModel {StencilType = typeof(TestStencil)};
+            GraphModel = new GraphModel { StencilType = typeof(TestStencil) };
             return new GraphToolState(GUID, GraphModel);
         }
 

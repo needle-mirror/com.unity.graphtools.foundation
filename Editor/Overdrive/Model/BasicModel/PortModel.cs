@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 using UnityEngine.Scripting.APIUpdating;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
@@ -12,27 +11,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
     [Serializable]
     //[MovedFrom(false, "UnityEditor.VisualScripting.GraphViewModel", "Unity.GraphTools.Foundation.Overdrive.Editor")]
     [MovedFrom("UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel")]
-    public class PortModel : IReorderableEdgesPort, IHasTitle, ISerializationCallbackReceiver
+    public class PortModel : GraphElementModel, IReorderableEdgesPortModel, IHasTitle
     {
-        [SerializeField]
-        SerializableGUID m_Guid;
-
-        [SerializeField]
-        List<string> m_SerializedCapabilities;
-
         string m_UniqueId;
 
-        protected List<Capabilities> m_Capabilities;
-
-        public IGraphAssetModel AssetModel
-        {
-            get => GraphModel?.AssetModel;
-            set => throw new NotImplementedException();
-        }
-
-        public virtual IGraphModel GraphModel => NodeModel?.GraphModel;
-
-        public IPortNode NodeModel { get; set; }
+        public IPortNodeModel NodeModel { get; set; }
 
         public string Title { get; set; }
 
@@ -40,7 +23,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
         public string UniqueName
         {
-            get => m_UniqueId ?? Title ?? m_Guid.ToString();
+            get => m_UniqueId ?? Title ?? Guid.ToString();
             set => m_UniqueId = value;
         }
 
@@ -118,39 +101,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             }
 
             // We don't support setting the tooltip for base port models.
-            set {}
+            set { }
+        }
+
+        /// <inheritdoc />
+        public override void OnAfterDeserialize()
+        {
+            base.OnAfterDeserialize();
+            if (AssetModel == null && NodeModel != null)
+                AssetModel = NodeModel.AssetModel;
         }
 
         public virtual bool CreateEmbeddedValueIfNeeded => PortType == PortType.Data;
-
-        /// <summary>
-        /// The unique identifier of the port.
-        /// </summary>
-        public SerializableGUID Guid
-        {
-            get
-            {
-                if (!m_Guid.Valid)
-                    AssignNewGuid();
-                return m_Guid;
-            }
-            set => m_Guid = value;
-        }
-
-        public PortModel()
-        {
-            InternalInitCapabilities();
-        }
-
-        /// <summary>
-        /// Assign a newly generated GUID to the model.
-        /// </summary>
-        public void AssignNewGuid()
-        {
-            m_Guid = SerializableGUID.Generate();
-        }
-
-        public virtual IReadOnlyList<Capabilities> Capabilities => m_Capabilities;
 
         public override string ToString()
         {
@@ -184,31 +146,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             ReorderableEdgesPortDefaultImplementations.MoveEdgeLast(this, edge);
         }
 
-        public void OnBeforeSerialize()
+        /// <summary>
+        /// Get the order of the edge on this port.
+        /// </summary>
+        /// <param name="edge">The edge for with to get the order.</param>
+        /// <returns>The edge order.</returns>
+        public int GetEdgeOrder(IEdgeModel edge)
         {
-            m_SerializedCapabilities = m_Capabilities?.Select(c => c.Name).ToList() ?? new List<string>();
-        }
-
-        public void OnAfterDeserialize()
-        {
-            if (!m_SerializedCapabilities.Any())
-                // If we're reloading an older node
-                InitCapabilities();
-            else
-                m_Capabilities = m_SerializedCapabilities.Select(Overdrive.Capabilities.Get).ToList();
-        }
-
-        protected virtual void InitCapabilities()
-        {
-            InternalInitCapabilities();
-        }
-
-        void InternalInitCapabilities()
-        {
-            m_Capabilities = new List<Capabilities>
-            {
-                Overdrive.Capabilities.NoCapabilities
-            };
+            return ReorderableEdgesPortDefaultImplementations.GetEdgeOrder(this, edge);
         }
     }
 }

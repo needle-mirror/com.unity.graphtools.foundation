@@ -35,8 +35,8 @@ namespace UnityEditor.VisualScripting.Editor
             // The matching semantic node' instance ID is stored to allow for easy panning to the node when selecting a code line.
 
             IList<string> splitSourceCode = pluginIndex != null ?
-                compilationResult.pluginSourceCode ? [pluginIndex]?.Split(new[] {"\r\n", "\r", "\n"}, StringSplitOptions.None) :
-                compilationResult.sourceCode ? [(int)sourceIndex]?.Split(new[] {"\r\n", "\r", "\n"}, StringSplitOptions.None);
+                compilationResult.pluginSourceCode?[pluginIndex]?.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None) :
+                compilationResult.sourceCode?[(int)sourceIndex]?.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
 
             if (splitSourceCode == null || !splitSourceCode.Any())
                 return;

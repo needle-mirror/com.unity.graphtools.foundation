@@ -138,17 +138,17 @@ namespace UnityEditor.VisualScripting.Model
             return data.GraphModel.CreateNode(nodeType, name, data.Position, data.SpawnFlags, preDefineSetup, data.Guid);
         }
 
-        public static INodeModel CreateNode(this IStackedNodeCreationData data, Type nodeType, string name = null,  Action<NodeModel> preDefineSetup = null)
+        public static INodeModel CreateNode(this IStackedNodeCreationData data, Type nodeType, string name = null, Action<NodeModel> preDefineSetup = null)
         {
             return data.StackModel.CreateStackedNode(nodeType, name, data.Index, data.SpawnFlags, preDefineSetup, data.Guid);
         }
 
-        public static T CreateNode<T>(this IGraphNodeCreationData data, string name = null,  Action<T> preDefineSetup = null) where T : NodeModel
+        public static T CreateNode<T>(this IGraphNodeCreationData data, string name = null, Action<T> preDefineSetup = null) where T : NodeModel
         {
             return data.GraphModel.CreateNode(name, data.Position, data.SpawnFlags, preDefineSetup, data.Guid);
         }
 
-        public static T CreateNode<T>(this IStackedNodeCreationData data, string name = null,  Action<T> preDefineSetup = null) where T : NodeModel
+        public static T CreateNode<T>(this IStackedNodeCreationData data, string name = null, Action<T> preDefineSetup = null) where T : NodeModel
         {
             return data.StackModel.CreateStackedNode(name, data.Index, data.SpawnFlags, preDefineSetup, data.Guid);
         }

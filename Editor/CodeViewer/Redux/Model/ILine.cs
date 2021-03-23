@@ -7,6 +7,6 @@ namespace UnityEditor.CodeViewer
     {
         int LineNumber { get; }
         string Text { get; }
-        IReadOnlyList<ILineDecorator> Decorators  { get; }
+        IReadOnlyList<ILineDecorator> Decorators { get; }
     }
 }

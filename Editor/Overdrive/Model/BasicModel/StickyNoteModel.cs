@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.Scripting.APIUpdating;
 
@@ -12,7 +11,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
     [Serializable]
     //[MovedFrom(false, "UnityEditor.VisualScripting.GraphViewModel", "Unity.GraphTools.Foundation.Overdrive.Editor")]
     [MovedFrom("UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel")]
-    public class StickyNoteModel : IStickyNoteModel, ISerializationCallbackReceiver, IGuidUpdate
+    public class StickyNoteModel : GraphElementModel, IStickyNoteModel
     {
         [SerializeField]
         string m_Title;
@@ -20,49 +19,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         [SerializeField]
         string m_Contents;
 
-        [SerializeField, Obsolete]
-#pragma warning disable 649 // Field is never assigned to.
-        StickyNoteColorTheme m_Theme;
-#pragma warning restore 649
-
         [SerializeField]
         string m_ThemeName = String.Empty;
-
-        [SerializeField, Obsolete]
-#pragma warning disable 649 // Field is never assigned to.
-        StickyNoteTextSize m_TextSize;
-#pragma warning restore 649
 
         [SerializeField]
         string m_TextSizeName = String.Empty;
 
         [SerializeField]
         Rect m_Position;
-
-        [SerializeField, Obsolete]
-        GraphModel m_GraphModel;
-
-        [SerializeField, HideInInspector]
-        GraphAssetModel m_GraphAssetModel;
-
-        [SerializeField]
-        SerializableGUID m_Guid;
-
-        [SerializeField, Obsolete]
-        string m_Id = "";
-
-        [SerializeField]
-        List<string> m_SerializedCapabilities;
-
-        List<Capabilities> m_Capabilities;
-
-        public IGraphAssetModel AssetModel
-        {
-            get => m_GraphAssetModel;
-            set => m_GraphAssetModel = (GraphAssetModel)value;
-        }
-
-        public virtual IGraphModel GraphModel => m_GraphAssetModel.GraphModel;
 
         public Rect PositionAndSize
         {
@@ -118,20 +82,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             set => m_TextSizeName = value;
         }
 
-        /// <summary>
-        /// The unique identifier of the sticky note.
-        /// </summary>
-        public SerializableGUID Guid
-        {
-            get
-            {
-                if (!m_Guid.Valid)
-                    AssignNewGuid();
-                return m_Guid;
-            }
-            set => m_Guid = value;
-        }
-
         public bool Destroyed { get; private set; }
 
         public StickyNoteModel()
@@ -162,61 +112,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             Title = newName;
         }
 
-        /// <summary>
-        /// Assign a newly generated GUID to the model.
-        /// </summary>
-        public void AssignNewGuid()
-        {
-            m_Guid = SerializableGUID.Generate();
-        }
-
-        /// <summary>
-        /// Assign a GUID to the model.
-        /// </summary>
-        /// <param name="guidString">A string representation of the guid to be parsed.</param>
-        void IGuidUpdate.AssignGuid(string guidString)
-        {
-            m_Guid = new SerializableGUID(guidString);
-            if (!m_Guid.Valid)
-                AssignNewGuid();
-        }
-
-        public IReadOnlyList<Capabilities> Capabilities => m_Capabilities;
-
-        public void OnBeforeSerialize()
-        {
-            m_SerializedCapabilities = m_Capabilities?.Select(c => c.Name).ToList() ?? new List<string>();
-        }
-
-        public void OnAfterDeserialize()
-        {
-#pragma warning disable 612
-            if (!m_Guid.Valid)
-            {
-                if (!String.IsNullOrEmpty(m_Id))
-                {
-                    (GraphModel as GraphModel)?.AddGuidToUpdate(this, m_Id);
-                }
-            }
-
-            if (String.IsNullOrEmpty(m_ThemeName))
-                m_ThemeName = m_Theme.ToString();
-
-            if (String.IsNullOrEmpty(m_TextSizeName))
-                m_TextSizeName = m_TextSize.ToString();
-
-            m_GraphAssetModel = (GraphAssetModel)m_GraphModel?.AssetModel;
-            m_GraphModel = null;
-#pragma warning restore 612
-
-            if (!m_SerializedCapabilities.Any())
-                // If we're reloading an older node
-                InitCapabilities();
-            else
-                m_Capabilities = m_SerializedCapabilities.Select(Overdrive.Capabilities.Get).ToList();
-        }
-
-        protected virtual void InitCapabilities()
+        /// <inheritdoc />
+        protected override void InitCapabilities()
         {
             InternalInitCapabilities();
         }

@@ -17,7 +17,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     /// </example>
     public class NodeModelProxy<T> : ScriptableObject, INodeModelProxy where T : IGraphElementModel
     {
-        public ScriptableObject ScriptableObject() { return this;}
+        public ScriptableObject ScriptableObject() { return this; }
 
         public void SetModel(IGraphElementModel model) { Model = (T)model; }
 

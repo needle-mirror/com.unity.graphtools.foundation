@@ -6,11 +6,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         bool CanCreateOppositePortal();
     }
 
-    public interface IEdgePortalEntryModel : IEdgePortalModel, ISingleInputPortNode
+    public interface IEdgePortalEntryModel : IEdgePortalModel, ISingleInputPortNodeModel
     {
     }
 
-    public interface IEdgePortalExitModel : IEdgePortalModel, ISingleOutputPortNode
+    public interface IEdgePortalExitModel : IEdgePortalModel, ISingleOutputPortNodeModel
     {
     }
 }

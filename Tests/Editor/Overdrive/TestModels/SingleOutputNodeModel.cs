@@ -1,9 +1,8 @@
 using System.Linq;
-using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels
 {
-    class SingleOutputNodeModel : NodeModel, ISingleOutputPortNode
+    class SingleOutputNodeModel : NodeModel, ISingleOutputPortNodeModel
     {
         protected override void OnDefineNode()
         {

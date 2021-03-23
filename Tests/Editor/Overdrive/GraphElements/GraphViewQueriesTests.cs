@@ -8,10 +8,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
     class GraphViewQueriesTests : GraphViewTester
     {
-        IInOutPortsNode m_Node1;
-        IInOutPortsNode m_Node2;
-        IInOutPortsNode m_Node3;
-        IInOutPortsNode m_Node4;
+        IInputOutputPortsNodeModel m_Node1;
+        IInputOutputPortsNodeModel m_Node2;
+        IInputOutputPortsNodeModel m_Node3;
+        IInputOutputPortsNodeModel m_Node4;
         IEdgeModel m_Edge1;
         IEdgeModel m_Edge2;
 
@@ -53,10 +53,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         public void QueryAllElements()
         {
             graphView.RebuildUI(GraphModel, CommandDispatcher);
-            List<GraphElement> allElements = graphView.GraphElements.ToList();
+            var allElements = graphView.GraphElements.ToList();
 
             Assert.AreEqual(6, allElements.Count);
-            Assert.IsFalse(allElements.OfType<Port>().Any());
 
             foreach (var e in GetElements<GraphElement>())
             {

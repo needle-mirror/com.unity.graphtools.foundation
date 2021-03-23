@@ -16,14 +16,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
     class TestGraphToolState : GraphToolState
     {
         public TestGraphToolState(GUID graphViewEditorWindowGUID, Preferences preferences)
-            : base(graphViewEditorWindowGUID, preferences) {}
+            : base(graphViewEditorWindowGUID, preferences) { }
 
-        public override void PostDispatchCommand(Command command)
+        protected internal override void PostDispatchCommand(Command command)
         {
             base.PostDispatchCommand(command);
 
-            if (GraphModel != null)
-                Assert.IsTrue(GraphModel.CheckIntegrity(Verbosity.Errors));
+            if (WindowState.GraphModel != null)
+                Assert.IsTrue(WindowState.GraphModel.CheckIntegrity(Verbosity.Errors));
         }
     }
 
@@ -49,7 +49,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
         protected CommandDispatcher m_CommandDispatcher;
         protected const string k_GraphPath = "Assets/test.asset";
 
-        protected GraphModel GraphModel => (GraphModel)m_CommandDispatcher.GraphToolState.GraphModel;
+        protected GraphModel GraphModel => (GraphModel)m_CommandDispatcher.GraphToolState.WindowState.GraphModel;
         protected Stencil Stencil => GraphModel.Stencil;
 
         protected abstract bool CreateGraphOnStartup { get; }
@@ -131,7 +131,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
 
         protected void TestPrereqCommandPostreq<T>(TestingMode mode, Func<T> checkReqsAndProvideCommand, Action checkPostReqs) where T : Command
         {
-            TestPrereqCommandPostreq(mode, () => {}, checkReqsAndProvideCommand, checkPostReqs);
+            TestPrereqCommandPostreq(mode, () => { }, checkReqsAndProvideCommand, checkPostReqs);
         }
 
         [SetUp]
@@ -167,10 +167,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
         {
             GraphToolState graphToolState = m_CommandDispatcher.GraphToolState;
 
-            if (graphToolState.GraphModel != null)
-                AssetWatcher.Instance.UnwatchGraphAssetAtPath(graphToolState.GraphModel.AssetModel?.GetPath());
+            if (graphToolState.WindowState.GraphModel != null)
+                AssetWatcher.Instance.UnwatchGraphAssetAtPath(graphToolState.WindowState.GraphModel.AssetModel?.GetPath());
 
-            graphToolState.UnloadCurrentGraphAsset();
+            graphToolState.LoadGraphAsset(null, null);
         }
 
         protected void AssertIntegrity()
@@ -292,7 +292,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
 
         protected void EnableUndoRedoModificationsLogging()
         {
-            m_CommandDispatcher.RegisterObserver(a => Debug.Log("Command " + a.GetType().Name));
+            m_CommandDispatcher.RegisterCommandObserver(a => Debug.Log("Command " + a.GetType().Name));
             // TODO : Undo.postprocessModifications += PostprocessModifications;
         }
 
@@ -303,7 +303,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
 
         public void RefreshReference<T>(ref T model) where T : class, INodeModel
         {
-            model = GraphModel.NodesByGuid.TryGetValue(model.Guid, out var newOne) ? (T)newOne : model;
+            model = GraphModel.TryGetModelFromGuid(model.Guid, out var newOne) ? (T)newOne : model;
         }
 
         public void RefreshReference(ref IEdgeModel model)

@@ -11,7 +11,7 @@ namespace UnityEditor.VisualScripting.Editor
 
         protected void AddRow(string labelText, VisualElement control)
         {
-            var row = new VisualElement {name = "blackboardExtendedFieldViewRow"};
+            var row = new VisualElement { name = "blackboardExtendedFieldViewRow" };
             row.AddToClassList("row");
 
             // TODO: Replace this with a variable pill/token and set isExposed appropriately

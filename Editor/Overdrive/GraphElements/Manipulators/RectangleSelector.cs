@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -9,7 +10,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class RectangleSelector : MouseManipulator
     {
-        private readonly RectangleSelect m_Rectangle;
+        readonly RectangleSelect m_Rectangle;
         bool m_Active;
 
         public RectangleSelector()
@@ -62,7 +63,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             target.UnregisterCallback<MouseCaptureOutEvent>(OnMouseCaptureOutEvent);
         }
 
-        void OnMouseCaptureOutEvent(MouseCaptureOutEvent e)
+        protected void OnMouseCaptureOutEvent(MouseCaptureOutEvent e)
         {
             if (m_Active)
             {
@@ -71,7 +72,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        private void OnMouseDown(MouseDownEvent e)
+        protected void OnMouseDown(MouseDownEvent e)
         {
             if (m_Active)
             {
@@ -87,7 +88,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             {
                 if (!e.actionKey)
                 {
-                    graphView.ClearSelection();
+                    graphView.CommandDispatcher.Dispatch(new ClearSelectionCommand());
                 }
 
                 graphView.Add(m_Rectangle);
@@ -101,7 +102,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        private void OnMouseUp(MouseUpEvent e)
+        protected void OnMouseUp(MouseUpEvent e)
         {
             if (!m_Active)
                 return;
@@ -123,38 +124,29 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 max = new Vector2(Math.Max(m_Rectangle.start.x, m_Rectangle.end.x), Math.Max(m_Rectangle.start.y, m_Rectangle.end.y))
             };
 
-            selectionRect = ComputeAxisAlignedBound(selectionRect, graphView.viewTransform.matrix.inverse);
-
-            List<ISelectableGraphElement> selection = graphView.Selection;
+            selectionRect = ComputeAxisAlignedBound(selectionRect, graphView.ViewTransform.matrix.inverse);
 
             // a copy is necessary because Add To selection might cause a SendElementToFront which will change the order.
-            List<ISelectableGraphElement> newSelection = new List<ISelectableGraphElement>();
+            List<IGraphElement> newSelection = new List<IGraphElement>();
             graphView.GraphElements.ForEach(child =>
             {
-                var localSelRect = graphView.contentViewContainer.ChangeCoordinatesTo(child, selectionRect);
-                if (child.IsSelectable() && child.Overlaps(localSelRect))
+                var localSelRect = graphView.ContentViewContainer.ChangeCoordinatesTo(child, selectionRect);
+                if (child.Model.IsSelectable() && child.Overlaps(localSelRect))
                 {
                     newSelection.Add(child);
                 }
             });
 
-            foreach (var selectable in newSelection)
-            {
-                if (selection.Contains(selectable))
-                {
-                    if (e.actionKey) // invert selection on shift only
-                        graphView.RemoveFromSelection(selectable);
-                }
-                else
-                    graphView.AddToSelection(selectable);
-            }
+            var mode = e.actionKey ? SelectElementsCommand.SelectionMode.Toggle : SelectElementsCommand.SelectionMode.Add;
+            var newSelectedModels = newSelection.Select(elem => elem.Model).ToList();
+            graphView.CommandDispatcher.Dispatch(new SelectElementsCommand(mode, newSelectedModels));
 
             m_Active = false;
             target.ReleaseMouse();
             e.StopPropagation();
         }
 
-        private void OnMouseMove(MouseMoveEvent e)
+        protected void OnMouseMove(MouseMoveEvent e)
         {
             if (!m_Active)
                 return;
@@ -163,7 +155,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             e.StopPropagation();
         }
 
-        private class RectangleSelect : ImmediateModeElement
+        class RectangleSelect : ImmediateModeElement
         {
             public Vector2 start { get; set; }
             public Vector2 end { get; set; }
@@ -210,7 +202,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 GUI.skin.label.Draw(new Rect(screenEnd.x - 80.0f, screenEnd.y + 5.0f, 200.0f, 20.0f), new GUIContent(str), 0);
             }
 
-            private void DrawDottedLine(Vector3 p1, Vector3 p2, float segmentsLength, Color col)
+            void DrawDottedLine(Vector3 p1, Vector3 p2, float segmentsLength, Color col)
             {
                 GraphViewStaticBridge.ApplyWireMaterial();
 

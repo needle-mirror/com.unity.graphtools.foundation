@@ -26,9 +26,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         Huge
     }
 
-    public class StickyNote : GraphElement, IResizableGraphElement
+    public class StickyNote : GraphElement
     {
-        public new class UxmlFactory : UxmlFactory<StickyNote> {}
+        public new class UxmlFactory : UxmlFactory<StickyNote> { }
 
         public static readonly Vector2 defaultSize = new Vector2(200, 160);
 
@@ -47,11 +47,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public override VisualElement contentContainer => m_ContentContainer ?? this;
 
         public IStickyNoteModel StickyNoteModel => Model as IStickyNoteModel;
-
-        public StickyNote()
-        {
-            Layer = -100;
-        }
 
         protected override void BuildPartList()
         {
@@ -101,29 +96,23 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public static IEnumerable<string> GetThemes()
         {
-            foreach (var s in Enum.GetNames(typeof(StickyNoteTheme)))
-            {
-                yield return s;
-            }
+            return Enum.GetNames(typeof(StickyNoteTheme));
         }
 
         public static IEnumerable<string> GetSizes()
         {
-            foreach (var s in Enum.GetNames(typeof(StickyNoteFontSize)))
-            {
-                yield return s;
-            }
+            return Enum.GetNames(typeof(StickyNoteFontSize));
         }
 
-        void OnFitToText(DropdownMenuAction a)
+        void OnFitToText()
         {
             FitText(false);
         }
 
         void FitText(bool onlyIfSmaller)
         {
-            var titleField = this.Q(titleContainerPartName).Q<Label>();
-            var contentField = this.Q(contentContainerPartName).Q<Label>();
+            var titleField = this.SafeQ(titleContainerPartName).SafeQ<Label>();
+            var contentField = this.SafeQ(contentContainerPartName).SafeQ<Label>();
 
             Vector2 preferredTitleSize = Vector2.zero;
             if (!string.IsNullOrEmpty(StickyNoteModel.DisplayTitle))
@@ -141,8 +130,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             extraSpace += titleField.ChangeCoordinatesTo(this, Vector2.zero);
             preferredContentsSizeOneLine += extraSpace;
 
-            float width = 0;
-            float height = 0;
+            float width;
+            float height;
             // The content in one line is smaller than the current width.
             // Set the width to fit both title and content.
             // Set the height to have only one line in the content
@@ -162,31 +151,22 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 height = preferredTitleSize.y + preferredContentsSize.y + extraSpace.y;
             }
 
-            ResizeFlags resizeWhat = ResizeFlags.None;
+            Rect newRect = StickyNoteModel.PositionAndSize;
             if (!onlyIfSmaller || resolvedStyle.width < width)
             {
-                resizeWhat |= ResizeFlags.Width;
+                newRect.width = width;
                 style.width = width;
             }
 
             if (!onlyIfSmaller || resolvedStyle.height < height)
             {
-                resizeWhat |= ResizeFlags.Height;
+                newRect.height = height;
                 style.height = height;
             }
 
-            if (this is IResizableGraphElement && resizeWhat != ResizeFlags.None)
+            if (newRect != StickyNoteModel.PositionAndSize)
             {
-                Rect newRect = new Rect(0, 0, width, height);
-                (this as IResizableGraphElement).OnResized(newRect, resizeWhat);
-            }
-        }
-
-        public virtual void OnResized(Rect newRect, ResizeFlags resizeWhat)
-        {
-            if (resizeWhat != ResizeFlags.None)
-            {
-                CommandDispatcher.Dispatch(new ChangeStickyNoteLayoutCommand(StickyNoteModel, newRect, resizeWhat));
+                CommandDispatcher.Dispatch(new ChangeElementLayoutCommand(StickyNoteModel, newRect));
             }
         }
 

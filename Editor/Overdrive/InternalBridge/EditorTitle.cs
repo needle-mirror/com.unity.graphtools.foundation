@@ -45,7 +45,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
                             startInfo.RedirectStandardOutput = true;
                             startInfo.Arguments = "rev-parse --abbrev-ref HEAD";
 
-                            using (Process process = new Process {StartInfo = startInfo})
+                            using (Process process = new Process { StartInfo = startInfo })
                             {
                                 process.Start();
                                 string gitbranch = process.StandardOutput.ReadLine();

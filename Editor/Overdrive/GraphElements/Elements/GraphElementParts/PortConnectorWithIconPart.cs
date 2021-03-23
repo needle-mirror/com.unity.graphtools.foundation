@@ -21,7 +21,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         Image m_Icon;
 
         protected PortConnectorWithIconPart(string name, IGraphElementModel model, IModelUI ownerElement, string parentClassName)
-            : base(name, model, ownerElement, parentClassName) {}
+            : base(name, model, ownerElement, parentClassName) { }
 
         protected override void BuildPartUI(VisualElement container)
         {

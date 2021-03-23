@@ -4,5 +4,5 @@ using UnityEngine;
 namespace UnityEditor.VisualScripting.Model
 {
     [Serializable]
-    public class QuaternionConstantModel : ConstantNodeModel<Quaternion> {}
+    public class QuaternionConstantModel : ConstantNodeModel<Quaternion> { }
 }

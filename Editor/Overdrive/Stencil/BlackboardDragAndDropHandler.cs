@@ -12,8 +12,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     /// </summary>
     public class BlackboardDragAndDropHandler : DragAndDropHandler
     {
-        public Stencil Stencil => Dispatcher.GraphToolState.GraphModel.Stencil;
-        protected ISelection Selection { get; }
+        const float DragDropSpacer = 25f;
+
+        public Stencil Stencil => Dispatcher.GraphToolState.WindowState.GraphModel.Stencil;
+        protected IDragSource DragSource { get; }
         protected CommandDispatcher Dispatcher { get; }
 
         public BlackboardDragAndDropHandler(GraphView graphView)
@@ -27,9 +29,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         }
 
         [PublicAPI]
-        public BlackboardDragAndDropHandler(ISelection selection, CommandDispatcher dispatcher)
+        public BlackboardDragAndDropHandler(IDragSource dragSource, CommandDispatcher dispatcher)
         {
-            Selection = selection;
+            DragSource = dragSource;
             Dispatcher = dispatcher;
         }
 
@@ -40,22 +42,21 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public override void OnDragPerform(DragPerformEvent e)
         {
-            var dragSelectionList = Selection.Selection.ToList();
+            var dropElements = DragSource.GetSelection();
 
-            var dropElements = dragSelectionList.OfType<GraphElement>().ToList();
-
-            var contentViewContainer = (e.target as GraphView)?.contentViewContainer ?? e.target as VisualElement;
+            var contentViewContainer = (e.target as GraphView)?.ContentViewContainer ?? e.target as VisualElement;
 
             var variablesToCreate = dropElements
+                .OfType<IVariableDeclarationModel>()
                 .Select((e1, i) => (
-                    Stencil.ExtractVariableFromGraphElement(e1),
+                    e1,
                     (SerializableGUID)GUID.Generate(),
-                    contentViewContainer.WorldToLocal(e.mousePosition) + i * GraphView.DragDropSpacer * Vector2.down))
+                    contentViewContainer.WorldToLocal(e.mousePosition) + i * DragDropSpacer * Vector2.down))
                 .ToList();
 
-            var droppedNodes = dropElements.OfType<CollapsibleInOutNode>().ToList();
+            var droppedNodes = dropElements.OfType<INodeModel>();
 
-            if (droppedNodes.Any(e2 => !(e2.NodeModel is IVariableNodeModel)) && variablesToCreate.Any())
+            if (droppedNodes.Any(e2 => !(e2 is IVariableNodeModel)) && variablesToCreate.Any())
             {
                 // no way to handle this ATM
                 throw new ArgumentException("Unhandled case, dropping blackboard/variables fields and nodes at the same time");

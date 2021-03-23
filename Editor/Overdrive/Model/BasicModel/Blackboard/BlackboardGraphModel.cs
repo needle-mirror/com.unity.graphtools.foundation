@@ -8,7 +8,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
     /// <summary>
     /// A model that represents a blackboard for a graph.
     /// </summary>
-    public class BlackboardGraphModel : IBlackboardGraphModel
+    public class BlackboardGraphModel : GraphElementModel, IBlackboardGraphModel
     {
         public bool Valid => GraphModel != null;
 
@@ -38,33 +38,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
                 var finalName = newItemName;
                 var i = 0;
                 // ReSharper disable once AccessToModifiedClosure
-                while (commandDispatcher.GraphToolState.GraphModel.VariableDeclarations.Any(v => v.Title == finalName))
+                while (commandDispatcher.GraphToolState.WindowState.GraphModel.VariableDeclarations.Any(v => v.Title == finalName))
                     finalName = newItemName + i++;
 
                 commandDispatcher.Dispatch(new CreateGraphVariableDeclarationCommand(finalName, true, TypeHandle.Float));
             });
         }
-
-        public IGraphModel GraphModel => AssetModel?.GraphModel;
-
-        /// <summary>
-        /// The unique identifier of the blackboard.
-        /// </summary>
-        public SerializableGUID Guid { get; set; }
-
-        public IGraphAssetModel AssetModel { get; set; }
-
-        /// <summary>
-        /// Assign a newly generated GUID to the model.
-        /// </summary>
-        public void AssignNewGuid()
-        {
-            Guid = SerializableGUID.Generate();
-        }
-
-        public IReadOnlyList<Capabilities> Capabilities => new List<Capabilities>
-        {
-            Overdrive.Capabilities.NoCapabilities
-        };
     }
 }

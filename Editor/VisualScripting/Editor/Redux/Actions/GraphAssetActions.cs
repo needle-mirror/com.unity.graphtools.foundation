@@ -60,5 +60,5 @@ namespace UnityEditor.VisualScripting.Editor
         }
     }
 
-    public class UnloadGraphAssetAction : IAction {}
+    public class UnloadGraphAssetAction : IAction { }
 }

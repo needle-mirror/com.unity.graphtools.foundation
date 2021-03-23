@@ -3,6 +3,13 @@ using System.Collections.Generic;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
+    /// <summary>
+    /// Capabilities objects can have.
+    /// </summary>
+    /// <remarks>
+    /// Mostly used on <see cref="IGraphElementModel"/>.
+    /// Acts as an extensible enum.
+    /// </remarks>
     // ReSharper disable InconsistentNaming
     [InitializeOnLoad]
     public class Capabilities : Enumeration
@@ -15,16 +22,55 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         static int s_NextId;
 
+        /// <summary>
+        /// No capabilities.
+        /// </summary>
         public static readonly Capabilities NoCapabilities;
 
+        /// <summary>
+        /// Can be selected.
+        /// </summary>
         public static readonly Capabilities Selectable;
+
+        /// <summary>.
+        /// Can be deleted
+        /// </summary>
         public static readonly Capabilities Deletable;
+
+        /// <summary>
+        /// Can be dropped.
+        /// </summary>
         public static readonly Capabilities Droppable;
+
+        /// <summary>
+        /// Can be copied.
+        /// </summary>
         public static readonly Capabilities Copiable;
+
+        /// <summary>
+        /// Can be renamed.
+        /// </summary>
         public static readonly Capabilities Renamable;
+
+        /// <summary>
+        /// Can be moved.
+        /// </summary>
         public static readonly Capabilities Movable;
+
+        /// <summary>
+        /// Can be resized.
+        /// </summary>
         public static readonly Capabilities Resizable;
+
+        /// <summary>
+        /// Can be collapsed.
+        /// </summary>
         public static readonly Capabilities Collapsible;
+
+        /// <summary>
+        /// Can change color.
+        /// </summary>
+        public static readonly Capabilities Colorable;
 
         static Capabilities()
         {
@@ -43,11 +89,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             Movable = new Capabilities(nameof(Movable));
             Resizable = new Capabilities(nameof(Resizable));
             Collapsible = new Capabilities(nameof(Collapsible));
+            Colorable = new Capabilities(nameof(Colorable));
         }
 
         protected Capabilities(string name, string prefix = k_CapabilityPrefix)
             : this(s_NextId++, prefix + "." + name)
-        {}
+        { }
 
         Capabilities(int id, string name) : base(id, name)
         {

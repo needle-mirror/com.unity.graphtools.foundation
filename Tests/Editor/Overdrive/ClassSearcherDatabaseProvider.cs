@@ -59,6 +59,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
             return new List<SearcherDatabaseBase>();
         }
 
+        public virtual List<SearcherDatabaseBase> GetDynamicSearcherDatabases(IEnumerable<IPortModel> portModel)
+        {
+            return new List<SearcherDatabaseBase>();
+        }
+
         public virtual void ClearGraphElementsSearcherDatabases()
         {
             m_GraphElementsSearcherDatabases = null;
@@ -69,8 +74,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
             m_StaticTypesSearcherDatabase = null;
         }
 
-        public virtual void ClearTypeMembersSearcherDatabases() {}
+        public virtual void ClearTypeMembersSearcherDatabases() { }
 
-        public virtual void ClearGraphVariablesSearcherDatabases() {}
+        public virtual void ClearGraphVariablesSearcherDatabases() { }
     }
 }

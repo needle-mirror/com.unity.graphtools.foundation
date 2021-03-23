@@ -4,6 +4,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class GraphViewBlackboardWindow : GraphViewToolWindow
     {
+        [InitializeOnLoadMethod]
+        static void RegisterTool()
+        {
+            ShortcutHelper.RegisterDefaultShortcutsForBlackboard<GraphViewBlackboardWindow>(k_ToolName);
+        }
+
         Blackboard m_Blackboard;
 
         const string k_ToolName = "Blackboard";

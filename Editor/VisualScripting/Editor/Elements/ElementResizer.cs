@@ -71,7 +71,7 @@ namespace UnityEditor.VisualScripting.Editor
             m_StartSize = new Vector2(resizedTarget.resolvedStyle.width, resizedTarget.resolvedStyle.height);
             m_StartPosition = new Vector2(resizedTarget.resolvedStyle.left, resizedTarget.resolvedStyle.top);
 
-            m_MinSize = resizedTarget.customStyle.TryGetValue(m_MinSizeX, out var minSizeX)  &&
+            m_MinSize = resizedTarget.customStyle.TryGetValue(m_MinSizeX, out var minSizeX) &&
                 resizedTarget.customStyle.TryGetValue(m_MinSizeY, out var minSizeY) ? new Vector2(minSizeX, minSizeY) : k_DefaultMinSize;
             m_MaxSize = resizedTarget.customStyle.TryGetValue(m_MaxSizeX, out _) &&
                 resizedTarget.customStyle.TryGetValue(m_MaxSizeY, out var maxSizeY) ? new Vector2(minSizeX, maxSizeY) : k_DefaultMaxSize;

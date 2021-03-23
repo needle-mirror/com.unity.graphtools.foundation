@@ -38,5 +38,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             return new List<SearcherDatabaseBase>();
         }
+
+        public virtual List<SearcherDatabaseBase> GetDynamicSearcherDatabases(IEnumerable<IPortModel> portModel)
+        {
+            return new List<SearcherDatabaseBase>();
+        }
     }
 }

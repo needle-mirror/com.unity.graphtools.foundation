@@ -6,6 +6,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Recipes
 {
     public class RecipeGraphWindow : GraphViewEditorWindow
     {
+        [InitializeOnLoadMethod]
+        static void RegisterTool()
+        {
+            ShortcutHelper.RegisterDefaultShortcuts<RecipeGraphWindow>(RecipeStencil.toolName);
+        }
+
         [MenuItem("GTF Samples/Recipe Editor", false)]
         public static void ShowRecipeGraphWindow()
         {
@@ -15,7 +21,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Recipes
         protected override void OnEnable()
         {
             base.OnEnable();
-            titleContent = new GUIContent("Recipe Editor");
+
+            EditorToolName = "Recipe Editor";
         }
 
         protected override void RegisterCommandHandlers()

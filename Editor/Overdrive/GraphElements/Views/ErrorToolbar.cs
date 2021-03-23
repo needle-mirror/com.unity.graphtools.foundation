@@ -10,6 +10,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         ToolbarButton m_PreviousErrorButton;
         ToolbarButton m_NextErrorButton;
         Label m_ErrorCounterLabel;
+        int m_CurrentErrorIndex;
 
         public ErrorToolbar(CommandDispatcher commandDispatcher, GraphView graphView) : base(commandDispatcher, graphView)
         {
@@ -30,36 +31,55 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             m_NextErrorButton.ChangeClickEvent(OnNextErrorButton);
 
             m_ErrorCounterLabel = this.MandatoryQ<Label>("errorCounterLabel");
+
+            m_CurrentErrorIndex = 0;
         }
 
         void OnPreviousErrorButton()
         {
-            m_GraphView.FramePrev(HasErrorBadge);
+            var errors = m_CommandDispatcher.GraphToolState.GraphProcessingState.RawResults?.Errors;
+            var errorCount = errors?.Count ?? 0;
+            if (errors != null && errorCount > 0)
+            {
+                m_CurrentErrorIndex--;
+                if (m_CurrentErrorIndex < 0)
+                    m_CurrentErrorIndex = errorCount - 1;
+
+                FrameAndSelectElement(errors[m_CurrentErrorIndex].SourceNodeGuid);
+            }
         }
 
         void OnNextErrorButton()
         {
-            m_GraphView.FrameNext(HasErrorBadge);
+            var errors = m_CommandDispatcher.GraphToolState.GraphProcessingState.RawResults?.Errors;
+            var errorCount = errors?.Count ?? 0;
+            if (errors != null && errorCount > 0)
+            {
+                m_CurrentErrorIndex++;
+                if (m_CurrentErrorIndex >= errorCount)
+                    m_CurrentErrorIndex = 0;
+
+                FrameAndSelectElement(errors[m_CurrentErrorIndex].SourceNodeGuid);
+            }
         }
 
-        static bool HasErrorBadge(GraphElement element)
+        void FrameAndSelectElement(SerializableGUID errorModelGuid)
         {
-            return element.ClassListContains(ErrorBadge.hasErrorUssClassName);
+            if (m_GraphView.GraphModel.TryGetModelFromGuid(errorModelGuid, out var errorModel))
+            {
+                var ui = errorModel.GetUI<GraphElement>(m_GraphView);
+                if (ui != null)
+                {
+                    m_GraphView.DispatchFrameAndSelectElementsCommand(true, ui);
+                }
+            }
         }
 
         public void UpdateUI()
         {
-            bool enabled = m_CommandDispatcher.GraphToolState.GraphModel != null;
-
-            int errorCount = 0;
-
-            IGraphModel graphModel = m_CommandDispatcher.GraphToolState.GraphModel;
-            if (graphModel != null)
-            {
-                errorCount = (m_CommandDispatcher.GraphToolState.GraphProcessingStateComponent.GetLastResult()?.Errors?.Count).GetValueOrDefault(0);
-            }
-
-            enabled &= errorCount > 0;
+            IGraphModel graphModel = m_CommandDispatcher.GraphToolState.WindowState.GraphModel;
+            int errorCount = m_CommandDispatcher.GraphToolState.GraphProcessingState.RawResults?.Errors?.Count ?? 0;
+            bool enabled = (graphModel != null) && (errorCount > 0);
 
             m_ErrorIconLabel.SetEnabled(enabled);
             m_PreviousErrorButton.SetEnabled(enabled);

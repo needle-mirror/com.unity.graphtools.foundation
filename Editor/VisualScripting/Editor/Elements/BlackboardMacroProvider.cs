@@ -33,7 +33,7 @@ namespace UnityEditor.VisualScripting.Editor
         {
             BlackboardSection CreateSection(string sectionTitle, ModifierFlags modifier)
             {
-                var section = new BlackboardSection {title = sectionTitle };
+                var section = new BlackboardSection { title = sectionTitle };
                 var queriesSectionHeader = section.Q("sectionHeader");
                 queriesSectionHeader.Add(new Button(() =>
                 {
@@ -44,7 +44,8 @@ namespace UnityEditor.VisualScripting.Editor
                     while (((VSGraphModel)m_Store.GetState().CurrentGraphModel).GraphVariableModels.Any(v => v.Name == finalName))
                         finalName = actionName + i++;
                     m_Store.Dispatch(new CreateGraphVariableDeclarationAction(finalName, true, typeof(float).GenerateTypeHandle(m_Stencil), modifier));
-                }) { name = "addButton", text = "+" });
+                })
+                { name = "addButton", text = "+" });
 
                 return section;
             }
@@ -127,6 +128,6 @@ namespace UnityEditor.VisualScripting.Editor
         }
 
         public bool CanAddItems => false;
-        public void BuildContextualMenu(DropdownMenu evtMenu, VisualElement visualElement, Store store, Vector2 mousePosition) {}
+        public void BuildContextualMenu(DropdownMenu evtMenu, VisualElement visualElement, Store store, Vector2 mousePosition) { }
     }
 }

@@ -78,13 +78,24 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
+        /// <summary>
+        /// Creates the UI for this part.
+        /// </summary>
+        /// <param name="parent">The parent element to attach the created UI to.</param>
         protected abstract void BuildPartUI(VisualElement parent);
 
-        protected virtual void PostBuildPartUI() {}
+        /// <summary>
+        /// Finalizes the building of the UI.
+        /// </summary>
+        /// <remarks>This is a good place to add stylesheets that need to have a higher priority than the stylesheets of the children.</remarks>
+        protected virtual void PostBuildPartUI() { }
 
+        /// <summary>
+        /// Updates the part to reflect the assigned model.
+        /// </summary>
         protected abstract void UpdatePartFromModel();
 
-        protected virtual void PartOwnerAddedToView() {}
-        protected virtual void PartOwnerRemovedFromView() {}
+        protected virtual void PartOwnerAddedToView() { }
+        protected virtual void PartOwnerRemovedFromView() { }
     }
 }

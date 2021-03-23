@@ -7,10 +7,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
     class AutoPlacementTestHelper : GraphViewTester
     {
-        protected IInOutPortsNode FirstNodeModel { get; set; }
-        protected IInOutPortsNode SecondNodeModel { get; set; }
-        protected IInOutPortsNode ThirdNodeModel { get; set; }
-        protected IInOutPortsNode FourthNodeModel { get; set; }
+        protected IInputOutputPortsNodeModel FirstNodeModel { get; set; }
+        protected IInputOutputPortsNodeModel SecondNodeModel { get; set; }
+        protected IInputOutputPortsNodeModel ThirdNodeModel { get; set; }
+        protected IInputOutputPortsNodeModel FourthNodeModel { get; set; }
         protected IPlacematModel PlacematModel { get; private set; }
         protected IStickyNoteModel StickyNoteModel { get; private set; }
 
@@ -44,7 +44,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             ThirdNodeModel = CreateNode("Node3", thirdNodePos, 0, 0, 1, 1, orientation);
             FourthNodeModel = CreateNode("Node4", fourthNodePos, 0, 0, 1, 0, orientation);
 
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
 
             IPortModel outputPortFirstNode = FirstNodeModel.OutputsByDisplayOrder[0];
@@ -97,7 +97,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             PlacematModel = CreatePlacemat(new Rect(placematPos, new Vector2(200, smallerSize ? 100 : 200)), "Placemat");
             StickyNoteModel = CreateSticky("Sticky", "", new Rect(stickyNotePos, smallerSize ? new Vector2(100, 100) : new Vector2(200, 200)));
 
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
 
             // Get the UI elements
@@ -113,18 +113,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
         protected void SelectConnectedNodes()
         {
-            graphView.Selection.Add(m_FirstNode);
-            graphView.Selection.Add(m_SecondNode);
-            graphView.Selection.Add(m_ThirdNode);
-            graphView.Selection.Add(m_FourthNode);
+            CommandDispatcher.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Add, FirstNodeModel, SecondNodeModel, ThirdNodeModel, FourthNodeModel));
         }
 
         void SelectElements()
         {
-            graphView.Selection.Add(m_FirstNode);
-            graphView.Selection.Add(m_SecondNode);
-            graphView.Selection.Add(m_Placemat);
-            graphView.Selection.Add(m_StickyNote);
+            CommandDispatcher.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Add, FirstNodeModel, SecondNodeModel, PlacematModel, StickyNoteModel));
         }
 
         protected IEnumerator SelectElement(Vector2 selectedElementPos)

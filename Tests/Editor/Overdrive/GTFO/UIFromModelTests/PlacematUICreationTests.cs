@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
@@ -30,13 +31,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         [Test]
         public void PlacematHasExpectedParts()
         {
-            var placematModel = m_GraphModel.CreatePlacemat();
+            var placematModel = m_GraphModel.CreatePlacemat(Rect.zero);
             var placemat = new Placemat();
             placemat.SetupBuildAndUpdate(placematModel, m_CommandDispatcher, m_GraphView);
 
-            Assert.IsNotNull(placemat.Q<VisualElement>(Placemat.titleContainerPartName));
-            Assert.IsNotNull(placemat.Q<VisualElement>(Placemat.collapseButtonPartName));
-            Assert.IsNotNull(placemat.Q<VisualElement>(Placemat.resizerPartName));
+            Assert.IsNotNull(placemat.SafeQ<VisualElement>(Placemat.titleContainerPartName));
+            Assert.IsNotNull(placemat.SafeQ<VisualElement>(Placemat.collapseButtonPartName));
+            Assert.IsNotNull(placemat.SafeQ<VisualElement>(Placemat.resizerPartName));
         }
     }
 }

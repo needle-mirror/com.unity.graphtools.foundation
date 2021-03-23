@@ -73,13 +73,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         [UnityTest]
         public IEnumerator TestHighlightTokenSelection()
         {
-            CommandDispatcher.MarkStateDirty();
+            MarkGraphViewStateDirty();
             yield return null;
 
             GetUI(out TokenNode intToken1, out TokenNode intToken2, out TokenNode stringToken1, out TokenNode stringToken2,
                 out IHighlightable intField, out IHighlightable stringField);
 
-            intToken1.Select(GraphView, false);
+            CommandDispatcher.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Replace, intToken1.Model));
             yield return null;
 
             Assert.IsFalse(intToken1.Highlighted, "1. intToken1.highlighted");
@@ -89,7 +89,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             Assert.IsFalse(stringToken2.Highlighted, "1. stringToken2.highlighted");
             Assert.IsFalse(stringField.Highlighted, "1. m_StringField.highlighted");
 
-            intToken1.Unselect(GraphView);
+            CommandDispatcher.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Remove, intToken1.Model));
             yield return null;
 
             Assert.IsFalse(intToken1.Highlighted, "2. intToken1.highlighted");
@@ -103,13 +103,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         [UnityTest]
         public IEnumerator TestHighlightFieldSelection()
         {
-            CommandDispatcher.MarkStateDirty();
+            MarkGraphViewStateDirty();
             yield return null;
 
             GetUI(out var intToken1, out _, out var stringToken1, out _,
                 out var intField, out var stringField);
 
-            (intField as GraphElement)?.Select(GraphView, false);
+            CommandDispatcher.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Replace, (intField as GraphElement)?.Model));
             yield return null;
 
             Assert.IsTrue(intToken1.Highlighted, "1. intToken1.highlighted");
@@ -117,7 +117,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             Assert.IsFalse(stringToken1.Highlighted, "1. stringToken1.highlighted");
             Assert.IsFalse(stringField.Highlighted, "1. m_StringField.highlighted");
 
-            (stringField as GraphElement)?.Select(GraphView, true);
+            CommandDispatcher.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Add, (stringField as GraphElement)?.Model));
             yield return null;
 
             Assert.IsTrue(intToken1.Highlighted, "2. intToken1.highlighted");
@@ -125,7 +125,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             Assert.IsTrue(stringToken1.Highlighted, "2. stringToken1.highlighted");
             Assert.IsFalse(stringField.Highlighted, "2. m_StringField.highlighted");
 
-            (intField as GraphElement)?.Unselect(GraphView);
+            CommandDispatcher.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Remove, (intField as GraphElement)?.Model));
             yield return null;
 
             Assert.IsFalse(intToken1.Highlighted, "3. intToken1.highlighted");
@@ -133,7 +133,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             Assert.IsTrue(stringToken1.Highlighted, "3. stringToken1.highlighted");
             Assert.IsFalse(stringField.Highlighted, "3. m_StringField.highlighted");
 
-            (stringField as GraphElement)?.Unselect(GraphView);
+            CommandDispatcher.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Remove, (stringField as GraphElement)?.Model));
             yield return null;
 
             Assert.IsFalse(intToken1.Highlighted, "4. intToken1.highlighted");

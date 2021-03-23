@@ -36,7 +36,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             m_GraphView = selectedElement.GraphView;
 
-            m_GridSpacing =  m_GraphView.Q<GridBackground>().Spacing;
+            m_GridSpacing = m_GraphView.SafeQ<GridBackground>().Spacing;
         }
 
         public override Rect GetSnappedRect(ref Vector2 snappingOffset, Rect sourceRect, GraphElement selectedElement, float scale, Vector2 mousePanningDelta = default)

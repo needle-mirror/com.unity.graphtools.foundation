@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -10,60 +9,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
     /// A model that represents a declaration (e.g. a variable) in a graph.
     /// </summary>
     [Serializable]
-    public class DeclarationModel : IDeclarationModel, IRenamable, ISerializationCallbackReceiver, IGuidUpdate
+    public class DeclarationModel : GraphElementModel, IDeclarationModel, IRenamable
     {
-        [SerializeField]
-        GraphAssetModel m_AssetModel;
-
-        [SerializeField]
-        string m_Id = "";
-
-        [SerializeField]
-        SerializableGUID m_Guid;
-
-        [SerializeField]
-        List<string> m_SerializedCapabilities;
-
         [FormerlySerializedAs("name")]
         [SerializeField]
         string m_Name;
 
-        protected List<Capabilities> m_Capabilities;
-
-        public IGraphAssetModel AssetModel
-        {
-            get => m_AssetModel;
-            set => m_AssetModel = (GraphAssetModel)value;
-        }
-
-        public IGraphModel GraphModel => m_AssetModel ? m_AssetModel.GraphModel : null;
-
-        /// <summary>
-        /// The unique identifier of the declaration.
-        /// </summary>
-        public SerializableGUID Guid
-        {
-            get
-            {
-                if (!m_Guid.Valid)
-                    AssignNewGuid();
-                return m_Guid;
-            }
-            set => m_Guid = value;
-        }
-
-        /// <summary>
-        /// Assign a newly generated GUID to the model.
-        /// </summary>
-        public void AssignNewGuid()
-        {
-            if (!String.IsNullOrEmpty(m_Id))
-                m_Guid = Hash128.Parse(m_Id.Replace("-", null));
-            else
-                m_Guid = SerializableGUID.Generate();
-        }
-
-        public IReadOnlyList<Capabilities> Capabilities => m_Capabilities;
         public string Title
         {
             get => m_Name;
@@ -71,7 +22,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         }
 
         public virtual string DisplayTitle => Title.Nicify();
-
 
         public DeclarationModel()
         {
@@ -86,36 +36,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             SetNameFromUserName(newName);
         }
 
-        public void OnBeforeSerialize()
-        {
-            m_SerializedCapabilities = m_Capabilities?.Select(c => c.Name).ToList() ?? new List<string>();
-        }
-
-        public void OnAfterDeserialize()
-        {
-            if (!m_Guid.Valid)
-            {
-                if (!String.IsNullOrEmpty(m_Id))
-                {
-                    (GraphModel as GraphModel)?.AddGuidToUpdate(this, m_Id);
-                }
-            }
-
-            if (!m_SerializedCapabilities.Any())
-                // If we're reloading an older node
-                InitCapabilities();
-            else
-                m_Capabilities = m_SerializedCapabilities.Select(Overdrive.Capabilities.Get).ToList();
-        }
-
-        public void AssignGuid(string guidString)
-        {
-            m_Guid = Hash128.Parse(guidString);
-            if (!m_Guid.Valid)
-                AssignNewGuid();
-        }
-
-        protected virtual void InitCapabilities()
+        /// <inheritdoc />
+        protected override void InitCapabilities()
         {
             InternalInitCapabilities();
         }

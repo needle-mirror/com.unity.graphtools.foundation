@@ -6,12 +6,12 @@ using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    // Inspired by UnityEditor.StateCache<T>, but this internal class was lacking the
+    // Inspired by UnityEditor.StateCache<T>, which (1) is internal and (2) is lacking the
     // ability to hold different state types.
     class EditorStateCache
     {
         string m_CacheFolder;
-        Dictionary<Hash128, EditorStateComponent> m_Cache = new Dictionary<Hash128, EditorStateComponent>();
+        Dictionary<Hash128, IStateComponent> m_Cache = new Dictionary<Hash128, IStateComponent>();
 
         public EditorStateCache(string cacheFolder)
         {
@@ -47,13 +47,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             foreach (var pair in m_Cache)
             {
-                var json = JsonUtility.ToJson(pair.Value);
+                if (pair.Value == null)
+                    continue;
+
                 var filePath = GetFilePathForKey(pair.Key);
                 try
                 {
                     var directory = Path.GetDirectoryName(filePath);
-                    Directory.CreateDirectory(directory);
-                    File.WriteAllText(filePath, json, Encoding.UTF8); // Persist state
+                    if (directory != null)
+                    {
+                        Directory.CreateDirectory(directory);
+                        var serializedData = StateComponentHelper.Serialize(pair.Value);
+                        File.WriteAllText(filePath, serializedData, Encoding.UTF8);
+                    }
                 }
                 catch (Exception e)
                 {
@@ -64,45 +70,52 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             m_Cache.Clear();
         }
 
-        public T GetState<T>(Hash128 key, T defaultValue = null) where T : EditorStateComponent
+        public TComponent GetState<TComponent>(Hash128 key, Func<TComponent> defaultValueCreator = null) where TComponent : class, IStateComponent
         {
             ThrowIfInvalid(key);
 
             if (m_Cache.TryGetValue(key, out var vsc))
-                return vsc as T ?? defaultValue;
+                return vsc as TComponent ?? defaultValueCreator?.Invoke();
 
             var filePath = GetFilePathForKey(key);
             if (File.Exists(filePath))
             {
-                string jsonString;
+                string serializedData;
                 try
                 {
-                    jsonString = File.ReadAllText(filePath, Encoding.UTF8);
+                    serializedData = File.ReadAllText(filePath, Encoding.UTF8);
                 }
                 catch (Exception e)
                 {
                     Debug.LogError($"Error loading file {filePath}. Error: {e}");
-                    return defaultValue;
+                    return defaultValueCreator?.Invoke();
                 }
 
-                T obj;
+                TComponent obj;
                 try
                 {
-                    obj = JsonUtility.FromJson<T>(jsonString);
+                    obj = StateComponentHelper.Deserialize<TComponent>(serializedData);
                 }
                 catch (ArgumentException exception)
                 {
                     Debug.LogError($"Invalid file content for {filePath}. Removing file. Error: {exception}");
                     RemoveState(key);
-                    return defaultValue;
+                    return defaultValueCreator?.Invoke();
                 }
 
                 m_Cache[key] = obj;
                 return obj;
             }
 
+            var defaultValue = defaultValueCreator?.Invoke();
             m_Cache[key] = defaultValue;
             return defaultValue;
+        }
+
+        public void SetState(Hash128 key, IStateComponent state)
+        {
+            ThrowIfInvalid(key);
+            m_Cache[key] = state;
         }
 
         public void RemoveState(Hash128 key)
@@ -122,7 +135,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 throw new ArgumentException("Hash128 key is invalid: " + key);
         }
 
-        string GetFilePathForKey(Hash128 key)
+        internal string GetFilePathForKey(Hash128 key)
         {
             // Hashed folder structure to ensure we scale with large amounts of state files.
             // See: https://medium.com/eonian-technologies/file-name-hashing-creating-a-hashed-directory-structure-eabb03aa4091

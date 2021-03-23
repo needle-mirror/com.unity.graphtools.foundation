@@ -12,7 +12,7 @@ namespace UnityEditor.VisualScripting.Model
 {
     // Use this attribute to tag classes containing static extension methods you want to cache in an ExtensionMethodCache
     [MeansImplicitUse(ImplicitUseTargetFlags.WithMembers)]
-    public class GraphtoolsExtensionMethodsAttribute : Attribute {}
+    public class GraphtoolsExtensionMethodsAttribute : Attribute { }
 
     public static class ModelUtility
     {
@@ -81,11 +81,11 @@ namespace UnityEditor.VisualScripting.Model
                 //for this type
                 if (extension != null)
                     s_FactoryMethods[targetType] = extension;
-//                else
-//                {
-//                    if (extendedType.BaseType != null)
-//                        return GetExtensionMethodOf<TAttribute>(extendedType.BaseType, t, filterMethods, keySelector);
-//                }
+                //                else
+                //                {
+                //                    if (extendedType.BaseType != null)
+                //                        return GetExtensionMethodOf<TAttribute>(extendedType.BaseType, t, filterMethods, keySelector);
+                //                }
 
                 return extension;
             }

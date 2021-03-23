@@ -8,7 +8,7 @@ namespace UnityEditor.VisualScripting.Editor
     public class HighLevelNode : Node
     {
         public HighLevelNode(INodeModel model, Store store, GraphView graphView)
-            : base(model, store, graphView) {}
+            : base(model, store, graphView) { }
 
         protected override void UpdateFromModel()
         {

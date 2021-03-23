@@ -13,7 +13,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             var node = new CollapsibleInOutNode();
             node.SetupBuildAndUpdate(nodeModel, null, null);
 
-            var collapseButton = node.Q<CollapseButton>(CollapsibleInOutNode.collapseButtonPartName);
+            var collapseButton = node.SafeQ<CollapseButton>(CollapsibleInOutNode.collapseButtonPartName);
             Assert.IsFalse(collapseButton.value);
 
             nodeModel.Collapsed = true;
@@ -31,7 +31,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             var node = new CollapsibleInOutNode();
             node.SetupBuildAndUpdate(nodeModel, null, null);
 
-            var titleLabel = node.Q<Label>(EditableTitlePart.titleLabelName);
+            var titleLabel = node.SafeQ<Label>(EditableTitlePart.titleLabelName);
             Assert.AreEqual(initialTitle, titleLabel.text);
 
             nodeModel.Title = newTitle;
@@ -49,7 +49,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             var node = new Node();
             node.SetupBuildAndUpdate(nodeModel, null, null);
 
-            var titleLabel = node.Q(EditableTitlePart.titleLabelName).Q<Label>(EditableLabel.labelName);
+            var titleLabel = node.SafeQ(EditableTitlePart.titleLabelName).SafeQ<Label>(EditableLabel.labelName);
             Assert.AreEqual(initialTitle, titleLabel.text);
 
             nodeModel.Title = newTitle;
@@ -62,7 +62,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         {
             const int originalInputPortCount = 3;
             const int originalOutputPortCount = 2;
-            var nodeModel = new IONodeModel {InputCount = originalInputPortCount, OuputCount = originalOutputPortCount};
+            var nodeModel = new IONodeModel { InputCount = originalInputPortCount, OuputCount = originalOutputPortCount };
             nodeModel.DefineNode();
             var node = new Node();
             node.SetupBuildAndUpdate(nodeModel, null, null);
@@ -86,15 +86,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         {
             const int originalInputPortCount = 3;
             const int originalOutputPortCount = 2;
-            var nodeModel = new IONodeModel {InputCount = originalInputPortCount, OuputCount = originalOutputPortCount};
+            var nodeModel = new IONodeModel { InputCount = originalInputPortCount, OuputCount = originalOutputPortCount };
             nodeModel.DefineNode();
             var node = new CollapsibleInOutNode();
             node.SetupBuildAndUpdate(nodeModel, null, null);
 
-            var ports = node.Q("inputs").Query(className: "ge-port").ToList();
+            var ports = node.SafeQ("inputs").Query(className: "ge-port").ToList();
             Assert.AreEqual(originalInputPortCount, ports.Count);
 
-            ports = node.Q("outputs").Query(className: "ge-port").ToList();
+            ports = node.SafeQ("outputs").Query(className: "ge-port").ToList();
             Assert.AreEqual(originalOutputPortCount, ports.Count);
 
             const int newInputPortCount = 1;
@@ -104,10 +104,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
             nodeModel.DefineNode();
             node.UpdateFromModel();
 
-            ports = node.Q("inputs").Query(className: "ge-port").ToList();
+            ports = node.SafeQ("inputs").Query(className: "ge-port").ToList();
             Assert.AreEqual(newInputPortCount, ports.Count);
 
-            ports = node.Q("outputs").Query(className: "ge-port").ToList();
+            ports = node.SafeQ("outputs").Query(className: "ge-port").ToList();
             Assert.AreEqual(newOutputPortCount, ports.Count);
         }
     }

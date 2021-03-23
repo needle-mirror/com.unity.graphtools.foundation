@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using JetBrains.Annotations;
-using UnityEngine;
 
 // ReSharper disable InconsistentNaming
 
@@ -8,16 +7,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class BoolPref : Enumeration
     {
-        public static readonly BoolPref FullUIRebuildOnChange = new BoolPref(0, nameof(FullUIRebuildOnChange));
+        // 0 was FullUIRebuildOnChange, now unused
         public static readonly BoolPref WarnOnUIFullRebuild = new BoolPref(1, nameof(WarnOnUIFullRebuild));
         public static readonly BoolPref LogUIBuildTime = new BoolPref(2, nameof(LogUIBuildTime));
         // 3 was BoundObjectLogging, now unused
-        public static readonly BoolPref AutoProcess = new BoolPref(4, nameof(AutoProcess), new[] {"AutoRecompile"});
+        public static readonly BoolPref AutoProcess = new BoolPref(4, nameof(AutoProcess), new[] { "AutoRecompile" });
         public static readonly BoolPref AutoAlignDraggedEdges = new BoolPref(5, nameof(AutoAlignDraggedEdges));
         public static readonly BoolPref DependenciesLogging = new BoolPref(6, nameof(DependenciesLogging));
         public static readonly BoolPref ErrorOnRecursiveDispatch = new BoolPref(7, nameof(ErrorOnRecursiveDispatch));
         public static readonly BoolPref ErrorOnMultipleDispatchesPerFrame = new BoolPref(8, nameof(ErrorOnMultipleDispatchesPerFrame));
-        public static readonly BoolPref LogAllDispatchedActions = new BoolPref(9, nameof(LogAllDispatchedActions));
+        public static readonly BoolPref LogAllDispatchedCommands = new BoolPref(9, nameof(LogAllDispatchedCommands), new[] { "LogAllDispatchedActions" });
         public static readonly BoolPref ShowUnusedNodes = new BoolPref(10, nameof(ShowUnusedNodes));
         public static readonly BoolPref SearcherInRegularWindow = new BoolPref(11, nameof(SearcherInRegularWindow));
         public static readonly BoolPref LogUIUpdate = new BoolPref(12, nameof(LogUIUpdate));

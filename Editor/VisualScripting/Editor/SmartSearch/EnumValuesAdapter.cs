@@ -17,6 +17,6 @@ namespace UnityEditor.VisualScripting.Editor.SmartSearch
         }
 
         public EnumValuesAdapter(string title)
-            : base(title) {}
+            : base(title) { }
     }
 }

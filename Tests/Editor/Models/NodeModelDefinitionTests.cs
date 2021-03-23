@@ -18,7 +18,7 @@ namespace UnityEditor.VisualScriptingTests.Models
     class NodeModelDefinitionTests
     {
         NodeModel m_Node;
-        public void M1(int i) {}
+        public void M1(int i) { }
         public int M3(int i, bool b) => 0;
 
         [Test]

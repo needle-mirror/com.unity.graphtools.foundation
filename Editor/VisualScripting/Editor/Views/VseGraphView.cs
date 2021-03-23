@@ -565,10 +565,10 @@ namespace UnityEditor.VisualScripting.Editor
                 var outputNodeInstanceId = original.OutputPortModel.NodeModel.Guid;
                 var matchingNodes = nodesToCopy.Concat(implicitStackedNodesToCopy.Select(sns => sns.stackedNodeModel))
                     .ToList();
-                var newOutputPortModel = matchingNodes.FirstOrDefault(newCopy => newCopy.OriginalInstanceId == outputNodeInstanceId) ?
+                var newOutputPortModel = matchingNodes.FirstOrDefault(newCopy => newCopy.OriginalInstanceId == outputNodeInstanceId)?
                     .OutputsById[original.OutputId];
                 var inputNodeInstanceId = original.InputPortModel.NodeModel.Guid;
-                var newInputPortModel = matchingNodes.FirstOrDefault(nodeCopy => nodeCopy.OriginalInstanceId == inputNodeInstanceId) ?
+                var newInputPortModel = matchingNodes.FirstOrDefault(nodeCopy => nodeCopy.OriginalInstanceId == inputNodeInstanceId)?
                     .InputsById[original.InputId];
 
                 return newInputPortModel != null && newOutputPortModel != null ? new EdgeModel(original.GraphModel, newInputPortModel, newOutputPortModel) { EdgeLabel = String.Empty } : null;
@@ -868,7 +868,7 @@ namespace UnityEditor.VisualScripting.Editor
 
                     var newIndex = node.FindIndexInStack();
                     if (node.selectedIndex != newIndex)
-                        m_Store.Dispatch(new MoveStackedNodesAction(new[] {node.model}, node.Stack.stackModel, newIndex));
+                        m_Store.Dispatch(new MoveStackedNodesAction(new[] { node.model }, node.Stack.stackModel, newIndex));
                 }
             }
 
@@ -921,14 +921,14 @@ namespace UnityEditor.VisualScripting.Editor
         // TODO: Seems like something that should be moved to BlackboardField.OnDragStarting
         // TODO: Revive this code when we can truly drag objects on screen using GraphView
         // SelectionDragger or SelectionDropper
-//        GraphElement DetachConvertedBlackboardField(IVisualScriptingField field)
-//        {
-//            GraphView gView = blackboardField.GetFirstAncestorOfType<GraphView>();
-//            var newTokenDeclaration = new TokenDeclaration(m_Store, blackboardField.graphElementModel as IVariableDeclarationModel) {instantAdd = true};
-//            gView.Add(newTokenDeclaration);
-//            return newTokenDeclaration;
-//            return null;
-//        }
+        //        GraphElement DetachConvertedBlackboardField(IVisualScriptingField field)
+        //        {
+        //            GraphView gView = blackboardField.GetFirstAncestorOfType<GraphView>();
+        //            var newTokenDeclaration = new TokenDeclaration(m_Store, blackboardField.graphElementModel as IVariableDeclarationModel) {instantAdd = true};
+        //            gView.Add(newTokenDeclaration);
+        //            return newTokenDeclaration;
+        //            return null;
+        //        }
 
         void DragSetup(IMouseEvent mouseEvent, IEnumerable<ISelectable> dragSelection, IDropTarget dropTarget, ISelection dragSource)
         {
@@ -1259,8 +1259,8 @@ namespace UnityEditor.VisualScripting.Editor
             // A bit of cleanup (stack nodes, when selected, should override any child selection state)
             switch (selectable)
             {
-                case TokenDeclaration _ :
-                case IVisualScriptingField _ :
+                case TokenDeclaration _:
+                case IVisualScriptingField _:
                     {
                         var parentFunction = (selectable as VisualElement)?.GetFirstAncestorOfType<FunctionNode>();
                         if (parentFunction != null && selection.Contains(parentFunction))
@@ -1336,7 +1336,7 @@ namespace UnityEditor.VisualScripting.Editor
 
         public void AddPositionDependency(IStackModel stack, INodeModel node)
         {
-            PositionDependenciesManagers.Add(stack, new StackedNodeDependency {DependentNode =  node});
+            PositionDependenciesManagers.Add(stack, new StackedNodeDependency { DependentNode = node });
         }
 
         public void RemovePositionDependencies(GUID stackModel, IEnumerable<INodeModel> removedNodes)

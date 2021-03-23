@@ -17,7 +17,7 @@ namespace UnityEditor.VisualScripting.Model
         bool IsExposed { get; }
         IConstantNodeModel InitializationModel { get; }
         IHasVariableDeclaration Owner { get; }
-        ModifierFlags Modifiers { get;  }
+        ModifierFlags Modifiers { get; }
         string Tooltip { get; }
     }
 }

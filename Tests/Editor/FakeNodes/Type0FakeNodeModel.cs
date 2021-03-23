@@ -27,5 +27,5 @@ namespace UnityEditor.VisualScriptingTests
         }
     }
 
-    interface IFakeNode : INodeModel {}
+    interface IFakeNode : INodeModel { }
 }

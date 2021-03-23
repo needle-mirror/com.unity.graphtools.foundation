@@ -2,5 +2,5 @@ using System;
 
 namespace UnityEditor.VisualScripting.Model.Stencils
 {
-    public interface IHasOrderedStacks {}
+    public interface IHasOrderedStacks { }
 }

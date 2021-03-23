@@ -3,7 +3,7 @@ using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels
 {
-    class SingleInputNodeModel : NodeModel,  ISingleInputPortNode
+    class SingleInputNodeModel : NodeModel, ISingleInputPortNodeModel
     {
         protected override void OnDefineNode()
         {

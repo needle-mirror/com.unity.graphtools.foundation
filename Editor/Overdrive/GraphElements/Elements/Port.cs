@@ -6,13 +6,14 @@ using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
+// ReSharper disable InconsistentNaming
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     /// <summary>
-    /// UI for a IPortModel
-    /// Allows connection of Edges
-    /// Handles dropping of elements on top of them to create an edge
+    /// UI for a <see cref="IPortModel"/>.
+    /// Allows connection of <see cref="Edge"/>s.
+    /// Handles dropping of elements on top of them to create an edge.
     /// </summary>
     public class Port : DropTarget
     {
@@ -29,6 +30,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public static readonly string portDataTypeClassNamePrefix = ussClassName.WithUssModifier("data-type-");
         public static readonly string portTypeModifierClassNamePrefix = ussClassName.WithUssModifier("type-");
 
+        /// <summary>
+        /// The USS class name used for vertical ports.
+        /// </summary>
+        public static readonly string verticalModifierUssClassName = ussClassName.WithUssModifier("vertical");
+
         public static readonly string connectorPartName = "connector-container";
         public static readonly string constantEditorPartName = "constant-editor";
 
@@ -43,7 +49,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             get => m_EdgeConnector;
             protected set
             {
-                var connectorElement = this.Q(PortConnectorPart.connectorUssName) ?? this.Q(connectorPartName) ?? this;
+                var connectorElement = this.SafeQ(PortConnectorPart.connectorUssName) ?? this.SafeQ(connectorPartName) ?? this;
                 connectorElement.ReplaceManipulator(ref m_EdgeConnector, value);
             }
         }
@@ -66,18 +72,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        public Orientation Orientation { get; private set; }
-
         public Color PortColor { get; private set; }
 
-        private string m_CurrentDropHighlightClass = dropHighlightAcceptedClass;
+        string m_CurrentDropHighlightClass = dropHighlightAcceptedClass;
 
         public Port()
         {
             RegisterCallback<CustomStyleResolvedEvent>(OnCustomStyleResolved);
         }
 
-        public override bool CanAcceptSelectionDrop(IReadOnlyList<ISelectableGraphElement> dragSelection)
+        public override bool CanAcceptSelectionDrop(IReadOnlyList<IGraphElementModel> dragSelection)
         {
             return dragSelection.Count == 1
                 && PortModel.PortType == PortType.Data
@@ -104,12 +108,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (GraphView == null)
                 return;
 
-            var selectable = GraphView.Selection.Single(); // we already check earlier that we only have one
+            var selectable = GraphView.GetSelection().Single(); // we already check earlier that we only have one
 
-            if (selectable is BlackboardField field)
-                OnDropBlackboardField(field, evt.mousePosition);
+            if (selectable is IVariableDeclarationModel variable)
+                OnDropVariableDeclarationModel(variable, evt.mousePosition);
             else
-                OnDropElement(selectable);
+                OnDropModel(selectable);
         }
 
         protected override void BuildPartList()
@@ -154,11 +158,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             return portTypeModifierClassNamePrefix + t.ToString().ToLower();
         }
 
+        /// <inheritdoc />
         protected override void UpdateElementFromModel()
         {
-            Orientation = PortModel?.Orientation ?? Orientation.Horizontal;
-
-            var hidden = PortModel.Options.HasFlag(PortModelOptions.Hidden);
+            var hidden = PortModel?.Options.HasFlag(PortModelOptions.Hidden) ?? false;
             EnableInClassList(hiddenModifierUssClassName, hidden);
 
             EnableInClassList(connectedModifierUssClassName, PortModel.IsConnected());
@@ -167,13 +170,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             EnableInClassList(inputModifierUssClassName, PortModel.Direction == Direction.Input);
             EnableInClassList(outputModifierUssClassName, PortModel.Direction == Direction.Output);
 
+            EnableInClassList(verticalModifierUssClassName, PortModel.Orientation == Orientation.Vertical);
+
             this.PrefixRemoveFromClassList(portDataTypeClassNamePrefix);
             AddToClassList(GetClassNameForDataType(PortModel.PortDataType));
 
             this.PrefixRemoveFromClassList(portTypeModifierClassNamePrefix);
             AddToClassList(GetClassNameModifierForType(PortModel.PortType));
 
-            tooltip = PortModel.ToolTip;
+            tooltip = PortModel.Orientation == Orientation.Horizontal ? PortModel.ToolTip :
+                string.IsNullOrEmpty(PortModel.ToolTip) ? PortModel.UniqueName :
+                PortModel.UniqueName + "\n" + PortModel.ToolTip;
         }
 
         static string GetClassNameForDataType(Type thisPortType)
@@ -216,79 +223,68 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public VisualElement GetConnector()
         {
             var portConnector = PartList.GetPart(connectorPartName) as PortConnectorPart;
-            var connector = portConnector?.Root.Q(PortConnectorPart.connectorUssName) ?? portConnector?.Root ?? this;
+            var connector = portConnector?.Root.SafeQ(PortConnectorPart.connectorUssName) ?? portConnector?.Root ?? this;
             return connector;
         }
 
-        void OnDropOutsideCallback(CommandDispatcher commandDispatcher, Edge edge, Vector2 pos)
+        void OnDropOutsideCallback(CommandDispatcher commandDispatcher, IEnumerable<Edge> edges, IEnumerable<IPortModel> ports, Vector2 pos)
         {
-            if (commandDispatcher.GraphToolState?.GraphModel?.Stencil == null)
+            if (commandDispatcher.GraphToolState?.WindowState.GraphModel?.Stencil == null)
                 return;
 
-            Vector2 localPos = GraphView.contentViewContainer.WorldToLocal(pos);
+            Vector2 localPos = GraphView.ContentViewContainer.WorldToLocal(pos);
 
-            List<IEdgeModel> edgesToDelete = EdgeConnectorListener.GetDropEdgeModelsToDelete(edge.EdgeModel);
+            List<IEdgeModel> edgesToDelete = new List<IEdgeModel>();
+            List<IPortModel> existingPortModels = new List<IPortModel>();
 
-            // when grabbing an existing edge's end, the edgeModel should be deleted
-            if (edge.EdgeModel != null && !(edge.EdgeModel is GhostEdgeModel))
-                edgesToDelete.Add(edge.EdgeModel);
-
-            IPortModel existingPortModel;
-            // warning: when dragging the end of an existing edge, both ports are non null.
-            if (edge.Input != null && edge.Output != null)
+            foreach (var edge in edges.Zip(ports, (a, b) => new { edge = a, port = b }))
             {
-                float distanceToOutput = Vector2.Distance(edge.From, pos);
-                float distanceToInput = Vector2.Distance(edge.To, pos);
-                // note: if the user was able to stack perfectly both ports, we'd be in trouble
-                if (distanceToOutput < distanceToInput)
-                    existingPortModel = edge.Input;
-                else
-                    existingPortModel = edge.Output;
-            }
-            else
-            {
-                existingPortModel = edge.Input ?? edge.Output;
+                if (edge.edge != null) // edge.edge == null means we are creating a new edge not changing an existing one, so no deletion needed.
+                {
+                    edgesToDelete.AddRange(EdgeConnectorListener.GetDropEdgeModelsToDelete(edge.edge.EdgeModel));
+
+                    // when grabbing an existing edge's end, the edgeModel should be deleted
+                    if (edge.edge.EdgeModel != null && !(edge.edge.EdgeModel is GhostEdgeModel))
+                        edgesToDelete.Add(edge.edge.EdgeModel);
+                }
+
+                existingPortModels.Add(edge.port);
             }
 
-            commandDispatcher.GraphToolState.GraphModel.Stencil.CreateNodesFromPort(commandDispatcher,
-                existingPortModel, localPos, pos, edgesToDelete);
+            commandDispatcher.GraphToolState.WindowState.GraphModel.Stencil.CreateNodesFromPort(commandDispatcher,
+                existingPortModels, localPos, pos, edgesToDelete);
         }
 
-        IPortModel GetPortToConnect(ISelectableGraphElement selectable)
+        IPortModel GetPortToConnect(IGraphElementModel modelToDrop)
         {
-            if (selectable is GraphElement graphElement)
+            switch (modelToDrop)
             {
-                var modelToDrop = graphElement.Model;
-                if (modelToDrop is ISingleOutputPortNode singleOutputPortNode && PortModel.Direction == Direction.Input)
+                case ISingleOutputPortNodeModel singleOutputPortNode when PortModel.Direction == Direction.Input:
                     return singleOutputPortNode.OutputPort;
-                if (modelToDrop is ISingleInputPortNode singleInputPortModelNode &&
-                    PortModel.Direction == Direction.Output)
+                case ISingleInputPortNodeModel singleInputPortModelNode when PortModel.Direction == Direction.Output:
                     return singleInputPortModelNode.InputPort;
+                default:
+                    return null;
             }
-
-            return null;
         }
 
-        bool HasModelToDrop(ISelectableGraphElement selectable)
+        bool HasModelToDrop(IGraphElementModel selectable)
         {
             var portToConnect = GetPortToConnect(selectable);
             return portToConnect != null && !ReferenceEquals(PortModel.NodeModel, portToConnect.NodeModel);
         }
 
-        protected virtual void OnDropElement(ISelectableGraphElement selectable)
+        protected virtual void OnDropModel(IGraphElementModel droppedModel)
         {
-            var portToConnect = GetPortToConnect(selectable);
+            var portToConnect = GetPortToConnect(droppedModel);
             Assert.IsNotNull(portToConnect);
 
             CommandDispatcher.Dispatch(new CreateEdgeCommand(PortModel, portToConnect, portAlignment: Direction.Input));
         }
 
-        protected virtual void OnDropBlackboardField(BlackboardField blackboardField, Vector2 mousePosition)
+        protected virtual void OnDropVariableDeclarationModel(IVariableDeclarationModel variable, Vector2 mousePosition)
         {
-            var stencil = GraphView.CommandDispatcher.GraphToolState.AssetModel.GraphModel.Stencil;
-            var variablesToCreate = stencil.ExtractVariableFromGraphElement(blackboardField);
-
-            CommandDispatcher.Dispatch(new CreateVariableNodesCommand(variablesToCreate, mousePosition, connectAfterCreation: PortModel, autoAlign: true));
+            CommandDispatcher.Dispatch(new CreateVariableNodesCommand(variable, mousePosition, connectAfterCreation: PortModel, autoAlign: true));
         }
     }
 }

@@ -1,11 +1,13 @@
-using System;
-using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEngine.UIElements;
+// ReSharper disable InconsistentNaming
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
+    /// <summary>
+    /// UI for a <see cref="INodeModel"/>.
+    /// </summary>
     public class Node : GraphElement, IHighlightable
     {
         public new static readonly string ussClassName = "ge-node";
@@ -20,7 +22,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public static readonly string selectionBorderElementName = "selection-border";
         public static readonly string disabledOverlayElementName = "disabled-overlay";
         public static readonly string titleContainerPartName = "title-container";
-        public static readonly string portContainerPartName = "port-top-container";
+
+        /// <summary>
+        /// The name of the port container part.
+        /// </summary>
+        public static readonly string portContainerPartName = "port-container";
 
         VisualElement m_ContentContainer;
 
@@ -73,7 +79,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             EnableInClassList(emptyModifierUssClassName, childCount == 0);
             EnableInClassList(disabledModifierUssClassName, NodeModel.State == ModelState.Disabled);
 
-            if (NodeModel is IPortNode portHolder && portHolder.Ports != null)
+            if (NodeModel is IPortNodeModel portHolder && portHolder.Ports != null)
             {
                 bool noPortConnected = portHolder.Ports.All(port => !port.IsConnected());
                 EnableInClassList(notConnectedModifierUssClassName, noPortConnected);
@@ -99,36 +105,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 border.style.backgroundColor = StyleKeyword.Null;
                 border.style.backgroundImage = StyleKeyword.Null;
             }
+
+            if (!IsSelected())
+                // GraphView is sometimes null in tests.
+                GraphView?.ClearGraphElementsHighlight(ShouldHighlightItemUsage);
         }
 
         public virtual bool ShouldHighlightItemUsage(IGraphElementModel graphElementModel)
         {
             return false;
-        }
-
-        public override void OnSelected()
-        {
-            base.OnSelected();
-            if (!(NodeModel is IPortNode hasPorts))
-                return;
-            hasPorts.RevealReorderableEdgesOrder(true);
-        }
-
-        public override void OnUnselected()
-        {
-            base.OnUnselected();
-
-            GraphView.ClearGraphElementsHighlight(ShouldHighlightItemUsage);
-
-            if (!(NodeModel is IPortNode hasPorts))
-                return;
-
-            hasPorts.RevealReorderableEdgesOrder(false);
-        }
-
-        public override bool IsSelected(VisualElement selectionContainer)
-        {
-            return GraphView.Selection.Contains(this);
         }
 
         public virtual void EditTitle()

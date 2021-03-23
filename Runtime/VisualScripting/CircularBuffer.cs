@@ -34,7 +34,7 @@ namespace UnityEngine.VisualScripting
         int m_Size;
 
         public CircularBuffer(int capacity)
-            : this(capacity, new T[] {})
+            : this(capacity, new T[] { })
         {
         }
 
@@ -148,7 +148,7 @@ namespace UnityEngine.VisualScripting
         /// When the buffer is full, the element at Front()/this[0] will be
         /// popped to allow for this new element to fit.
         /// </summary>
-        /// <param name="item">Item to push to the back of the buffer</param>
+        /// <param name="item">Item to push to the back of the buffer.</param>
         public void PushBack(T item)
         {
             if (IsFull)
@@ -173,7 +173,7 @@ namespace UnityEngine.VisualScripting
         /// When the buffer is full, the element at Back()/this[Size-1] will be
         /// popped to allow for this new element to fit.
         /// </summary>
-        /// <param name="item">Item to push to the front of the buffer</param>
+        /// <param name="item">Item to push to the front of the buffer.</param>
         public void PushFront(T item)
         {
             if (IsFull)

@@ -15,7 +15,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
         Attacher CreateAttachedElement<T>(TestGraphViewWindow window) where T : VisualElement
         {
-            T target = graphView.Q<T>();
+            T target = graphView.SafeQ<T>();
 
             Attacher attacher = null;
             if (target != null)
@@ -40,30 +40,39 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         }
 
         [UnityTest]
-        public IEnumerator AttachedElementIsPlacedProperly()
+        public IEnumerator AttachedElementIsPlacedProperlyAndFollowsNode()
         {
             // Create node.
-            var node = new Node();
-            node.SetPosition(k_NodeRect);
+            var nodeModel = CreateNode("Node 1", k_NodeRect.position);
+            CommandDispatcher.Dispatch(new ReframeGraphViewCommand(Vector3.zero, Vector3.one));
+            yield return null;
+
+            var node = nodeModel.GetUI<Node>(graphView);
             node.style.width = k_NodeRect.width;
             node.style.height = k_NodeRect.height;
 
-            graphView.AddElement(node);
-
             var attacher = CreateAttachedElement<Node>(window);
             Assert.AreNotEqual(null, attacher);
+            yield return null;
 
+            var initialPosition = nodeModel.Position;
+            Assert.AreEqual(attacher.Target.layout.center.y, attacher.Element.layout.center.y);
+            Assert.AreNotEqual(attacher.Target.layout.center.x, attacher.Element.layout.center.x);
+
+            var mouseDownPosition = initialPosition + k_NodeRect.size / 2;
+            mouseDownPosition = graphView.contentContainer.LocalToWorld(mouseDownPosition);
+            var delta = Vector2.one * 10;
             // Move the movable node.
-            helpers.MouseDownEvent(new Vector2(k_NodeRect.x + 5, k_NodeRect.y + 25));
+            helpers.MouseDownEvent(mouseDownPosition);
             yield return null;
 
-            helpers.MouseDragEvent(new Vector2(k_NodeRect.x + 5, k_NodeRect.y + 25),
-                new Vector2(k_NodeRect.x + 15, k_NodeRect.y + 15));
+            helpers.MouseDragEvent(mouseDownPosition, mouseDownPosition + delta);
             yield return null;
 
-            helpers.MouseUpEvent(new Vector2(k_NodeRect.x + 15, k_NodeRect.y + 15));
+            helpers.MouseUpEvent(mouseDownPosition + delta);
             yield return null;
 
+            Assert.AreNotEqual(initialPosition, nodeModel.Position);
             Assert.AreEqual(attacher.Target.layout.center.y, attacher.Element.layout.center.y);
             Assert.AreNotEqual(attacher.Target.layout.center.x, attacher.Element.layout.center.x);
 

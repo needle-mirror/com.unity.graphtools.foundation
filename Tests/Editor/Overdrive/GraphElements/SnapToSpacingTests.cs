@@ -38,7 +38,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             //              +-----+         +-----+
             //
 
-            var actions = SetUpUIElements(new Vector2(0,  100), new Vector2(300, 100), new Vector2(450, 100));
+            var actions = SetUpUIElements(new Vector2(0, 100), new Vector2(300, 100), new Vector2(450, 100));
             while (actions.MoveNext())
             {
                 yield return null;
@@ -78,7 +78,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             //              +-----+         +-----+
             //
 
-            var actions = SetUpUIElements(new Vector2(0,  100), new Vector2(300, 100), new Vector2(450, 100));
+            var actions = SetUpUIElements(new Vector2(0, 100), new Vector2(300, 100), new Vector2(450, 100));
             while (actions.MoveNext())
             {
                 yield return null;
@@ -117,7 +117,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             //              +-----+         +-----+
             //
 
-            var actions = SetUpUIElements(new Vector2(0,  100), new Vector2(300, 100), new Vector2(450, 100));
+            var actions = SetUpUIElements(new Vector2(0, 100), new Vector2(300, 100), new Vector2(450, 100));
             while (actions.MoveNext())
             {
                 yield return null;
@@ -158,7 +158,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             //              +-----+         +-----+
             //
 
-            var actions = SetUpUIElements(new Vector2(0,  100), new Vector2(300, 100), new Vector2(450, 100));
+            var actions = SetUpUIElements(new Vector2(0, 100), new Vector2(300, 100), new Vector2(450, 100));
             while (actions.MoveNext())
             {
                 yield return null;
@@ -198,7 +198,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             //              +-----+         +-----+
             //
 
-            var actions = SetUpUIElements(new Vector2(0,  100), new Vector2(300, 100), new Vector2(450, 100));
+            var actions = SetUpUIElements(new Vector2(0, 100), new Vector2(300, 100), new Vector2(450, 100));
             while (actions.MoveNext())
             {
                 yield return null;
@@ -239,7 +239,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             //              +-----+         +-----+
             //
 
-            var actions = SetUpUIElements(new Vector2(0,  100), new Vector2(300, 100), new Vector2(450, 100));
+            var actions = SetUpUIElements(new Vector2(0, 100), new Vector2(300, 100), new Vector2(450, 100));
             while (actions.MoveNext())
             {
                 yield return null;
@@ -285,7 +285,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             //  +-----+
 
 
-            var actions = SetUpUIElements(new Vector2(100,  0), new Vector2(100, 300), new Vector2(100, 450));
+            var actions = SetUpUIElements(new Vector2(100, 0), new Vector2(100, 300), new Vector2(100, 450));
             while (actions.MoveNext())
             {
                 yield return null;
@@ -327,7 +327,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             //  |  1  |
             //  +-----+
 
-            var actions = SetUpUIElements(new Vector2(100,  0), new Vector2(100, 300), new Vector2(100, 450));
+            var actions = SetUpUIElements(new Vector2(100, 0), new Vector2(100, 300), new Vector2(100, 450));
             while (actions.MoveNext())
             {
                 yield return null;
@@ -374,7 +374,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             //     C
             //
 
-            var actions = SetUpUIElements(new Vector2(100,  0), new Vector2(100, 100), new Vector2(100, 250));
+            var actions = SetUpUIElements(new Vector2(100, 0), new Vector2(100, 100), new Vector2(100, 250));
             while (actions.MoveNext())
             {
                 yield return null;
@@ -420,7 +420,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             //  +-----+
 
 
-            var actions = SetUpUIElements(new Vector2(100,  0), new Vector2(100, 300), new Vector2(100, 450));
+            var actions = SetUpUIElements(new Vector2(100, 0), new Vector2(100, 300), new Vector2(100, 450));
             while (actions.MoveNext())
             {
                 yield return null;
@@ -462,7 +462,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             //  +-----+
             //
 
-            var actions = SetUpUIElements(new Vector2(100,  0), new Vector2(100, 300), new Vector2(100, 450));
+            var actions = SetUpUIElements(new Vector2(100, 0), new Vector2(100, 300), new Vector2(100, 450));
             while (actions.MoveNext())
             {
                 yield return null;
@@ -506,7 +506,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             //     C
             //
 
-            var actions = SetUpUIElements(new Vector2(100,  0), new Vector2(100, 100), new Vector2(100, 250));
+            var actions = SetUpUIElements(new Vector2(100, 0), new Vector2(100, 100), new Vector2(100, 250));
             while (actions.MoveNext())
             {
                 yield return null;

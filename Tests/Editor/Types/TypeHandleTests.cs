@@ -16,15 +16,15 @@ namespace UnityEditor.VisualScriptingTests.Types
     namespace NewNamespace
     {
         [MovedFrom(false, sourceNamespace: "UnityEditor.VisualScriptingTests.Types.OldNamespace", sourceClassName: "OldTypeName", sourceAssembly: "Unity.OldAssemblyName.Foundation.Editor.Tests")]
-        class NewTypeName {}
+        class NewTypeName { }
 
         class EnclosingType
         {
             [MovedFrom(false, sourceClassName: "EnclosingType/InnerOld", sourceNamespace: "UnityEditor.VisualScriptingTests.Types.OldNamespace", sourceAssembly: "Unity.OldAssemblyName.Foundation.Editor.Tests")]
-            public class InnerNew {}
+            public class InnerNew { }
 
             [MovedFrom(false, sourceNamespace: "UnityEditor.VisualScriptingTests.Types.OldNamespace", sourceAssembly: "Unity.OldAssemblyName.Foundation.Editor.Tests")]
-            public class InnerTypeUnchanged {}
+            public class InnerTypeUnchanged { }
         }
     }
 
@@ -77,9 +77,9 @@ namespace UnityEditor.VisualScriptingTests.Types
             Assert.That(th, Is.EqualTo(TypeHandle.Unknown));
         }
 
-        class A {}
+        class A { }
 
-        class B {}
+        class B { }
 
         [Test]
         public void Test_TypeHandleDeserializationOfRenamedType()

@@ -33,7 +33,7 @@ namespace UnityEditor.VisualScripting.Editor
         {
             m_GraphView = graphView;
             m_Store = store;
-            m_IconsParent = new VisualElement { name = "iconsParent"};
+            m_IconsParent = new VisualElement { name = "iconsParent" };
             m_IconsParent.style.overflow = Overflow.Visible;
             Blackboard = new Blackboard(m_Store, m_GraphView, windowed: true);
             m_LastGraphModel = null;
@@ -212,7 +212,7 @@ namespace UnityEditor.VisualScripting.Editor
                     m_GraphView.RemovePositionDependency(e.model);
                     break;
                 case Node n when n.Stack != null:
-                    m_GraphView.RemovePositionDependencies(n.Stack.stackModel.Guid, new[] {n.model});
+                    m_GraphView.RemovePositionDependencies(n.Stack.stackModel.Guid, new[] { n.model });
                     break;
             }
 
@@ -529,33 +529,33 @@ namespace UnityEditor.VisualScripting.Editor
                 switch (x)
                 {
                     case Token token:
-                    {
-                        var declarationModel = (token.GraphElementModel as IVariableModel)?.DeclarationModel as VariableDeclarationModel;
-                        if (declarationModel != null && declarationModel.FunctionModel != null)
-                            FetchVariableDeclarationModelsFromFunctionModel(declarationModel.FunctionModel, ref declarationModelTuples);
-                    }
-                    break;
+                        {
+                            var declarationModel = (token.GraphElementModel as IVariableModel)?.DeclarationModel as VariableDeclarationModel;
+                            if (declarationModel != null && declarationModel.FunctionModel != null)
+                                FetchVariableDeclarationModelsFromFunctionModel(declarationModel.FunctionModel, ref declarationModelTuples);
+                        }
+                        break;
                     case TokenDeclaration tokenDeclaration when tokenDeclaration.Declaration is VariableDeclarationModel declarationModel &&
                         declarationModel.FunctionModel != null:
                         FetchVariableDeclarationModelsFromFunctionModel(declarationModel.FunctionModel, ref declarationModelTuples);
                         break;
                     case StackNode stackNode:
-                    {
-                        if (stackNode is FunctionNode functionNode)
                         {
-                            FetchVariableDeclarationModelsFromFunctionModel(functionNode.m_FunctionModel, ref declarationModelTuples);
+                            if (stackNode is FunctionNode functionNode)
+                            {
+                                FetchVariableDeclarationModelsFromFunctionModel(functionNode.m_FunctionModel, ref declarationModelTuples);
+                            }
+                            else
+                            {
+                                List<ISelectable> connectedInputNodes = new List<ISelectable>();
+                                foreach (var inputPortModel in stackNode.stackModel.InputsById.Values)
+                                    foreach (var connectedPortModel in inputPortModel.ConnectionPortModels)
+                                        if (visited.Add(connectedPortModel.NodeModel) && connectedPortModel.NodeModel != stackNode.stackModel)
+                                            connectedInputNodes.Add(ModelsToNodeMapping[connectedPortModel.NodeModel]);
+                                FindVariableDeclarationsFromSelection(connectedInputNodes, visited, declarationModelTuples);
+                            }
                         }
-                        else
-                        {
-                            List<ISelectable> connectedInputNodes = new List<ISelectable>();
-                            foreach (var inputPortModel in stackNode.stackModel.InputsById.Values)
-                                foreach (var connectedPortModel in inputPortModel.ConnectionPortModels)
-                                    if (visited.Add(connectedPortModel.NodeModel) && connectedPortModel.NodeModel != stackNode.stackModel)
-                                        connectedInputNodes.Add(ModelsToNodeMapping[connectedPortModel.NodeModel]);
-                            FindVariableDeclarationsFromSelection(connectedInputNodes, visited, declarationModelTuples);
-                        }
-                    }
-                    break;
+                        break;
                     case Node node:
                         if (node.Stack != null && visited.Add(node.Stack.stackModel))
                         {
@@ -567,12 +567,12 @@ namespace UnityEditor.VisualScripting.Editor
 
                         break;
                     case BlackboardVariableField blackboardVariableField:
-                    {
-                        var declarationModel = blackboardVariableField.VariableDeclarationModel as VariableDeclarationModel;
-                        if (declarationModel != null && declarationModel.FunctionModel != null)
-                            FetchVariableDeclarationModelsFromFunctionModel(declarationModel.FunctionModel, ref declarationModelTuples);
-                    }
-                    break;
+                        {
+                            var declarationModel = blackboardVariableField.VariableDeclarationModel as VariableDeclarationModel;
+                            if (declarationModel != null && declarationModel.FunctionModel != null)
+                                FetchVariableDeclarationModelsFromFunctionModel(declarationModel.FunctionModel, ref declarationModelTuples);
+                        }
+                        break;
                 }
             }
         }

@@ -8,17 +8,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class Unknown
     {
-        Unknown() {}
+        Unknown() { }
     }
 
     public class MissingPort
     {
-        MissingPort() {}
+        MissingPort() { }
     }
 
     public class ExecutionFlow
     {
-        ExecutionFlow() {}
+        ExecutionFlow() { }
     }
 
     [Serializable]
@@ -29,9 +29,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     {
         //TODO figure how to implement
         public static TypeHandle MissingType { get; } = TypeSerializer.GenerateCustomTypeHandle("__MISSINGTYPE");
-        public static TypeHandle Unknown { get; }  = TypeSerializer.GenerateCustomTypeHandle(typeof(Unknown), "__UNKNOWN");
+        public static TypeHandle Unknown { get; } = TypeSerializer.GenerateCustomTypeHandle(typeof(Unknown), "__UNKNOWN");
         public static TypeHandle ExecutionFlow { get; } = TypeSerializer.GenerateCustomTypeHandle(typeof(ExecutionFlow), "__EXECUTIONFLOW");
-        public static TypeHandle MissingPort { get; }  = TypeSerializer.GenerateTypeHandle(typeof(MissingPort));
+        public static TypeHandle MissingPort { get; } = TypeSerializer.GenerateTypeHandle(typeof(MissingPort));
         public static TypeHandle Bool { get; } = TypeSerializer.GenerateTypeHandle(typeof(bool));
         public static TypeHandle Void { get; } = TypeSerializer.GenerateTypeHandle(typeof(void));
         public static TypeHandle Char { get; } = TypeSerializer.GenerateTypeHandle(typeof(char));
@@ -83,12 +83,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             return $"TypeName:{Identification}";
         }
 
-        public static bool operator==(TypeHandle left, TypeHandle right)
+        public static bool operator ==(TypeHandle left, TypeHandle right)
         {
             return left.Equals(right);
         }
 
-        public static bool operator!=(TypeHandle left, TypeHandle right)
+        public static bool operator !=(TypeHandle left, TypeHandle right)
         {
             return !left.Equals(right);
         }

@@ -53,7 +53,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         static IGraphElementModel ExtractInputPortModel(IGraphElementModel model)
         {
-            if (model is ISingleInputPortNode inputPortHolder && inputPortHolder.InputPort != null)
+            if (model is ISingleInputPortNodeModel inputPortHolder && inputPortHolder.InputPort != null)
             {
                 Debug.Assert(inputPortHolder.InputPort.Direction == Direction.Input);
                 return inputPortHolder.InputPort;
@@ -64,25 +64,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         static IGraphElementModel ExtractOutputPortModel(IGraphElementModel model)
         {
-            if (model is ISingleOutputPortNode outputPortHolder && outputPortHolder.OutputPort != null)
+            if (model is ISingleOutputPortNodeModel outputPortHolder && outputPortHolder.OutputPort != null)
             {
                 Debug.Assert(outputPortHolder.OutputPort.Direction == Direction.Output);
                 return outputPortHolder.OutputPort;
             }
 
             return null;
-        }
-
-        public override bool IsRenamable()
-        {
-            if (!base.IsRenamable())
-                return false;
-
-            if (NodeModel is IRenamable)
-                return true;
-
-            var declarationModel = (NodeModel as IVariableNodeModel)?.VariableDeclarationModel;
-            return declarationModel is IRenamable;
         }
 
         public override bool ShouldHighlightItemUsage(IGraphElementModel elementModel)

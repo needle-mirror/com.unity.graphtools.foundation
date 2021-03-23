@@ -17,8 +17,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             UnregisterCallback<ValidateCommandEvent>(OnValidateCommand);
             UnregisterCallback<ExecuteCommandEvent>(OnExecuteCommand);
-
-            ShortcutHandler = null;
         }
     }
 }

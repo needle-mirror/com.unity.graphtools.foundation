@@ -29,8 +29,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Graph
             AssumeIntegrity();
 
             AssetDatabase.SaveAssets();
-            Resources.UnloadAsset(m_CommandDispatcher.GraphToolState.AssetModel as Object);
-            m_CommandDispatcher.Dispatch(new LoadGraphAssetCommand(k_GraphPath));
+            Resources.UnloadAsset(m_CommandDispatcher.GraphToolState.WindowState.AssetModel as Object);
+            m_CommandDispatcher.Dispatch(new LoadGraphAssetCommand(k_GraphPath, null));
             Assert.AreEqual(k_GraphPath, AssetDatabase.GetAssetPath((Object)GraphModel.AssetModel));
             AssertIntegrity();
 
@@ -60,7 +60,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Graph
 
             GraphModel graph = AssetDatabase.LoadAssetAtPath<GraphAssetModel>(k_GraphPath)?.GraphModel as GraphModel;
             Resources.UnloadAsset((Object)graph?.AssetModel);
-            m_CommandDispatcher.Dispatch(new LoadGraphAssetCommand(k_GraphPath));
+            m_CommandDispatcher.Dispatch(new LoadGraphAssetCommand(k_GraphPath, null));
 
             AssertIntegrity();
 

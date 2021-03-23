@@ -54,9 +54,23 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         [Serializable]
         class TestStencil : Stencil
         {
+            public static string toolName = "GTF UI Tests";
+
+            public override string ToolName => toolName;
+
             public override Type GetConstantNodeValueType(TypeHandle typeHandle)
             {
                 return TypeToConstantMapper.GetConstantNodeType(typeHandle);
+            }
+
+            public override IGraphProcessingErrorModel CreateProcessingErrorModel(GraphProcessingError error)
+            {
+                if (error.SourceNode != null && !error.SourceNode.Destroyed)
+                {
+                    return new GraphProcessingErrorModel(error);
+                }
+
+                return null;
             }
 
             public override ISearcherDatabaseProvider GetSearcherDatabaseProvider()
@@ -163,28 +177,28 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             // Create a entry portal
             var portalEntry = GraphModel.CreateNode<ExecutionEdgePortalEntryModel>("Portal", Vector2.zero);
             portalEntry.DeclarationModel = portalDecl;
-            CommandDispatcher.MarkStateDirty();
+            MarkGraphViewStateDirty();
             yield return null;
             TestEntryDependencies(portalEntry, new ExecutionEdgePortalExitModel[0]);
 
             // Create a first exit portal connected to the entry
             var portalExit = (ExecutionEdgePortalExitModel)GraphModel.CreateOppositePortal(portalEntry);
-            CommandDispatcher.MarkStateDirty();
+            MarkGraphViewStateDirty();
             yield return null;
-            TestEntryDependencies(portalEntry, new[] {portalExit});
+            TestEntryDependencies(portalEntry, new[] { portalExit });
 
             // Create a second exit portal connected to the entry
             var portalExit2 = (ExecutionEdgePortalExitModel)GraphModel.CreateOppositePortal(portalEntry);
-            CommandDispatcher.MarkStateDirty();
+            MarkGraphViewStateDirty();
             yield return null;
-            TestEntryDependencies(portalEntry, new[] {portalExit, portalExit2});
+            TestEntryDependencies(portalEntry, new[] { portalExit, portalExit2 });
 
             // Create a second entry for the existing exits
             var portalEntry2 = (ExecutionEdgePortalEntryModel)GraphModel.CreateOppositePortal(portalExit);
-            CommandDispatcher.MarkStateDirty();
+            MarkGraphViewStateDirty();
             yield return null;
-            TestEntryDependencies(portalEntry, new[] {portalExit, portalExit2});
-            TestEntryDependencies(portalEntry2, new[] {portalExit, portalExit2});
+            TestEntryDependencies(portalEntry, new[] { portalExit, portalExit2 });
+            TestEntryDependencies(portalEntry2, new[] { portalExit, portalExit2 });
         }
 
         [UnityTest]
@@ -198,35 +212,35 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             var portalExit = (ExecutionEdgePortalExitModel)GraphModel.CreateOppositePortal(portalEntry);
             var portalExit2 = (ExecutionEdgePortalExitModel)GraphModel.CreateOppositePortal(portalEntry);
             var portalEntry2 = (ExecutionEdgePortalEntryModel)GraphModel.CreateOppositePortal(portalExit);
-            CommandDispatcher.MarkStateDirty();
+            MarkGraphViewStateDirty();
             yield return null;
-            TestEntryDependencies(portalEntry, new[] {portalExit, portalExit2});
-            TestEntryDependencies(portalEntry2, new[] {portalExit, portalExit2});
+            TestEntryDependencies(portalEntry, new[] { portalExit, portalExit2 });
+            TestEntryDependencies(portalEntry2, new[] { portalExit, portalExit2 });
 
             // Delete the second entry portal. Attempting to get its dependencies should return null
             GraphModel.DeleteNode(portalEntry2, deleteConnections: true);
-            CommandDispatcher.MarkStateDirty();
+            MarkGraphViewStateDirty();
             yield return null;
-            TestEntryDependencies(portalEntry, new[] {portalExit, portalExit2});
+            TestEntryDependencies(portalEntry, new[] { portalExit, portalExit2 });
             Assert.IsNull(GraphView.PositionDependenciesManager.GetPortalDependencies(portalEntry2));
 
             // Delete the second exit.
             GraphModel.DeleteNode(portalExit2, deleteConnections: true);
-            CommandDispatcher.MarkStateDirty();
+            MarkGraphViewStateDirty();
             yield return null;
-            TestEntryDependencies(portalEntry, new[] {portalExit});
+            TestEntryDependencies(portalEntry, new[] { portalExit });
             Assert.IsNull(GraphView.PositionDependenciesManager.GetPortalDependencies(portalEntry2));
 
             // Delete the first exit. There should be no dependencies to the remaining entry
             GraphModel.DeleteNode(portalExit, deleteConnections: true);
-            CommandDispatcher.MarkStateDirty();
+            MarkGraphViewStateDirty();
             yield return null;
             TestEntryDependencies(portalEntry, new ExecutionEdgePortalExitModel[0]);
             Assert.IsNull(GraphView.PositionDependenciesManager.GetPortalDependencies(portalEntry2));
 
             // Delete the first entry. There should be no more dependencies registered in the manager.
             GraphModel.DeleteNode(portalEntry, deleteConnections: true);
-            CommandDispatcher.MarkStateDirty();
+            MarkGraphViewStateDirty();
             yield return null;
             Assert.IsNull(GraphView.PositionDependenciesManager.GetPortalDependencies(portalEntry));
             Assert.IsNull(GraphView.PositionDependenciesManager.GetPortalDependencies(portalEntry2));
@@ -269,7 +283,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             GraphModel.CreateEdge(dataPortalEntry.InputPort, dataNode.DataOut0);
             GraphModel.CreateEdge(node0.DataIn0, dataPortalExit.OutputPort);
 
-            CommandDispatcher.MarkStateDirty();
+            MarkGraphViewStateDirty();
 
             yield return null;
 

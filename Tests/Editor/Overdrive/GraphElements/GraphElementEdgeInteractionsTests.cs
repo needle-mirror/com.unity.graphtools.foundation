@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Linq;
 using NUnit.Framework;
+using UnityEditor.GraphToolsFoundation.Overdrive;
 using UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -44,7 +45,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             var vInPort = verticalNode.InputsByDisplayOrder[0];
             var vOutPort = verticalNode.OutputsByDisplayOrder[0];
 
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
 
             var actions = ConnectPorts(hOutPort, vInPort);
@@ -93,7 +94,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator EdgeConnectOnSinglePortOutputToInputWorks()
         {
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
 
             // We start without any connection
@@ -126,7 +127,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator EdgeConnectOnSinglePortInputToOutputWorks()
         {
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
 
             // We start without any connection
@@ -158,7 +159,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             bool searcherInvoked = false;
             (GraphModel.Stencil as TestStencil)?.SetOnGetSearcherDatabaseProviderCallback(() => searcherInvoked = true);
 
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
 
             var actions = ConnectPorts(startPort, endPort);
@@ -208,7 +209,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             bool searcherInvoked = false;
             (GraphModel.Stencil as TestStencil)?.SetOnGetSearcherDatabaseProviderCallback(() => searcherInvoked = true);
 
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
 
             var startPortUI = startPort.GetUI<Port>(graphView);
@@ -253,7 +254,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator EdgeReconnectInputWorks()
         {
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
 
             var endPortUI = endPort.GetUI<Port>(graphView);
@@ -308,7 +309,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator EdgeReconnectOutputWorks()
         {
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
 
             var startPortUI = startPort.GetUI<Port>(graphView);
@@ -356,7 +357,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator CanCancelEdgeManipulationOnInput()
         {
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
 
             var startPortUI = startPort.GetUI<Port>(graphView);
@@ -417,7 +418,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator CanCancelEdgeManipulationOnOutput()
         {
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
 
             var startPortUI = startPort.GetUI<Port>(graphView);
@@ -478,7 +479,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         [UnityTest]
         public IEnumerator EdgeConnectionUnderThresholdDistanceNotEffective()
         {
-            CommandDispatcher.GraphToolState.RequestUIRebuild();
+            MarkGraphViewStateDirty();
             yield return null;
 
             Port startPortUI = startPort.GetUI<Port>(graphView);
@@ -488,6 +489,164 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             yield return null;
 
             Assert.AreEqual(0, secondNode.GetInputPorts().First().GetConnectedEdges().Count());
+        }
+
+        [UnityTest]
+        public IEnumerator EdgeConnectDragMultipleEdgesFromPortOutputToInputWorks()
+        {
+            MarkGraphViewStateDirty();
+            yield return null;
+
+            // We start without any connection
+            Assert.AreEqual(0, startPort.GetConnectedEdges().Count());
+            Assert.AreEqual(0, endPort.GetConnectedEdges().Count());
+            Assert.AreEqual(0, endPortTwo.GetConnectedEdges().Count());
+
+
+            Port startPortUI = startPort.GetUI<Port>(graphView);
+            Port endPortUI = endPort.GetUI<Port>(graphView);
+            Port endPortTwoUI = endPortTwo.GetUI<Port>(graphView);
+
+            // Drag an edge between the two ports
+            helpers.DragTo(startPortUI.GetGlobalCenter(), endPortUI.GetGlobalCenter());
+            helpers.DragTo(startPortUI.GetGlobalCenter(), endPortTwoUI.GetGlobalCenter());
+
+            // Allow one frame for the edge to be placed onto a layer
+            yield return null;
+
+            // Allow one frame for the edge to be rendered and process its layout a first time
+            yield return null;
+
+            // Check that the edge exists and that it connects the two ports.
+            Assert.AreEqual(2, startPort.GetConnectedEdges().Count());
+            Assert.AreEqual(1, endPort.GetConnectedEdges().Count());
+            Assert.AreEqual(1, endPortTwo.GetConnectedEdges().Count());
+
+            graphView.CommandDispatcher.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Replace, startPort.GetConnectedEdges().First(), startPort.GetConnectedEdges().Skip(1).First()));
+
+            Port startPortTwoUI = startPortTwo.GetUI<Port>(graphView);
+            helpers.DragTo(startPortUI.GetGlobalCenter() + new Vector3(k_EdgeSelectionOffset, 0, 0), startPortTwoUI.GetGlobalCenter());
+
+            // Allow one frame for the edge to be placed onto a layer
+            yield return null;
+
+            // Allow one frame for the edge to be rendered and process its layout a first time
+            yield return null;
+
+            Assert.AreEqual(2, startPortTwo.GetConnectedEdges().Count());
+            Assert.AreEqual(1, endPort.GetConnectedEdges().Count());
+            Assert.AreEqual(1, endPortTwo.GetConnectedEdges().Count());
+        }
+
+        [UnityTest]
+        public IEnumerator EdgeConnectDragMultipleEdgesFromExecutionPortOutputToInputWorks()
+        {
+            IONodeModel exeStartNode = CreateNode("First Out Exe node", new Vector2(100, 100), 0, 0, 0, 1);
+            IONodeModel exeStartNode2 = CreateNode("Second Out Exe node", new Vector2(100, 400), 0, 0, 0, 1);
+            IONodeModel exeEndNode = CreateNode("First In Exe node", new Vector2(400, 100), 0, 0, 1, 0);
+            IONodeModel exeEndNode2 = CreateNode("Second In Exe node", new Vector2(400, 400), 0, 0, 1, 0);
+
+            IPortModel startPort = exeStartNode.GetPorts(Direction.Output, PortType.Execution).First();
+            IPortModel startPort2 = exeStartNode2.GetPorts(Direction.Output, PortType.Execution).First();
+            IPortModel endPort = exeEndNode.GetPorts(Direction.Input, PortType.Execution).First();
+            IPortModel endPort2 = exeEndNode2.GetPorts(Direction.Input, PortType.Execution).First();
+
+            // We start without any connection
+            Assert.AreEqual(0, startPort.GetConnectedEdges().Count());
+            Assert.AreEqual(0, endPort.GetConnectedEdges().Count());
+            Assert.AreEqual(0, endPort2.GetConnectedEdges().Count());
+
+            MarkGraphViewStateDirty();
+            yield return null;
+
+            Port startPortUI = startPort.GetUI<Port>(graphView);
+            Port startPort2UI = startPort2.GetUI<Port>(graphView);
+            Port endPortUI = endPort.GetUI<Port>(graphView);
+            Port endPort2UI = endPort2.GetUI<Port>(graphView);
+
+            // Drag an edge between the two ports
+            helpers.DragTo(startPortUI.GetGlobalCenter(), endPortUI.GetGlobalCenter());
+            helpers.DragTo(startPortUI.GetGlobalCenter(), endPort2UI.GetGlobalCenter());
+
+            // Allow one frame for the edge to be placed onto a layer
+            yield return null;
+
+            // Allow one frame for the edge to be rendered and process its layout a first time
+            yield return null;
+
+            // Check that the edge exists and that it connects the two ports.
+            Assert.AreEqual(2, startPort.GetConnectedEdges().Count());
+            Assert.AreEqual(1, endPort.GetConnectedEdges().Count());
+            Assert.AreEqual(1, endPort2.GetConnectedEdges().Count());
+
+            graphView.CommandDispatcher.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Replace, startPort.GetConnectedEdges().First(), startPort.GetConnectedEdges().Skip(1).First()));
+
+            helpers.DragTo(startPortUI.GetGlobalCenter() + new Vector3(k_EdgeSelectionOffset, 0, 0), startPort2UI.GetGlobalCenter());
+
+            // Allow one frame for the edge to be placed onto a layer
+            yield return null;
+
+            // Allow one frame for the edge to be rendered and process its layout a first time
+            yield return null;
+            Assert.AreEqual(2, startPort2.GetConnectedEdges().Count());
+            Assert.AreEqual(1, endPort.GetConnectedEdges().Count());
+            Assert.AreEqual(1, endPort2.GetConnectedEdges().Count());
+        }
+
+        [UnityTest]
+        public IEnumerator EdgeConnectDragMultipleEdgesFromExecutionPortInputToOutputWorks()
+        {
+            IONodeModel exeStartNode = CreateNode("First Out Exe node", new Vector2(100, 100), 0, 0, 0, 1);
+            IONodeModel exeStartNode2 = CreateNode("Second Out Exe node", new Vector2(100, 400), 0, 0, 0, 1);
+            IONodeModel exeEndNode = CreateNode("First In Exe node", new Vector2(400, 100), 0, 0, 1, 0);
+            IONodeModel exeEndNode2 = CreateNode("Second In Exe node", new Vector2(400, 400), 0, 0, 1, 0);
+
+            IPortModel startPort = exeStartNode.GetPorts(Direction.Output, PortType.Execution).First();
+            IPortModel startPort2 = exeStartNode2.GetPorts(Direction.Output, PortType.Execution).First();
+            IPortModel endPort = exeEndNode.GetPorts(Direction.Input, PortType.Execution).First();
+            IPortModel endPort2 = exeEndNode2.GetPorts(Direction.Input, PortType.Execution).First();
+
+            // We start without any connection
+            Assert.AreEqual(0, startPort.GetConnectedEdges().Count());
+            Assert.AreEqual(0, endPort.GetConnectedEdges().Count());
+            Assert.AreEqual(0, endPort2.GetConnectedEdges().Count());
+
+            MarkGraphViewStateDirty();
+            yield return null;
+
+            Port startPortUI = startPort.GetUI<Port>(graphView);
+            Port startPort2UI = startPort2.GetUI<Port>(graphView);
+            Port endPortUI = endPort.GetUI<Port>(graphView);
+            Port endPort2UI = endPort2.GetUI<Port>(graphView);
+
+            // Drag an edge between the two ports
+            helpers.DragTo(startPortUI.GetGlobalCenter(), endPortUI.GetGlobalCenter());
+            helpers.DragTo(startPort2UI.GetGlobalCenter(), endPortUI.GetGlobalCenter());
+
+            // Allow one frame for the edge to be placed onto a layer
+            yield return null;
+
+            // Allow one frame for the edge to be rendered and process its layout a first time
+            yield return null;
+
+            // Check that the edge exists and that it connects the two ports.
+            Assert.AreEqual(1, startPort.GetConnectedEdges().Count());
+            Assert.AreEqual(1, startPort2.GetConnectedEdges().Count());
+            Assert.AreEqual(2, endPort.GetConnectedEdges().Count());
+
+            graphView.CommandDispatcher.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Replace, endPort.GetConnectedEdges().First(), endPort.GetConnectedEdges().Skip(1).First()));
+
+            helpers.DragTo(endPortUI.GetGlobalCenter() - new Vector3(k_EdgeSelectionOffset, 0, 0), endPort2UI.GetGlobalCenter());
+
+            // Allow one frame for the edge to be placed onto a layer
+            yield return null;
+
+            // Allow one frame for the edge to be rendered and process its layout a first time
+            yield return null;
+
+            Assert.AreEqual(1, startPort.GetConnectedEdges().Count());
+            Assert.AreEqual(1, startPort2.GetConnectedEdges().Count());
+            Assert.AreEqual(2, endPort2.GetConnectedEdges().Count());
         }
     }
 }

@@ -13,7 +13,7 @@ namespace UnityEditor.VisualScripting.Editor.SmartSearch
         protected VisualElement m_DetailsPanel;
         protected Label m_DetailsTitle;
 
-        protected GraphElementSearcherAdapter(string title) : base(title) {}
+        protected GraphElementSearcherAdapter(string title) : base(title) { }
 
         public override void InitDetailsPanel(VisualElement detailsPanel)
         {

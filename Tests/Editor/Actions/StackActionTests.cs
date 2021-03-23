@@ -62,7 +62,7 @@ namespace UnityEditor.VisualScriptingTests.Actions
             {
                 // Test ForEach node creation
                 yield return MakeStackSearcherItemTestCase(
-                    testingMode, typeof(ForEachNodeModel), new[] {typeof(ForEachHeaderModel)},
+                    testingMode, typeof(ForEachNodeModel), new[] { typeof(ForEachHeaderModel) },
                     (stencil, stack) =>
                     {
                         var db = new GraphElementSearcherDatabase(stencil).AddControlFlows().Build();
@@ -73,7 +73,7 @@ namespace UnityEditor.VisualScriptingTests.Actions
                 // Test If node creation (complete)
                 yield return MakeStackSearcherItemTestCase(
                     testingMode, typeof(IfConditionNodeModel),
-                    new[] {typeof(StackModel), typeof(StackModel), typeof(StackModel)},
+                    new[] { typeof(StackModel), typeof(StackModel), typeof(StackModel) },
                     (stencil, stack) =>
                     {
                         var db = new GraphElementSearcherDatabase(stencil).AddControlFlows().Build();
@@ -402,7 +402,7 @@ namespace UnityEditor.VisualScriptingTests.Actions
                     Assert.That(nodeB, Has.IndexInStack(1, stack));
                     Assert.That(nodeC, Has.IndexInStack(2, stack));
                     Assert.That(nodeD, Has.IndexInStack(3, stack));
-                    return new MoveStackedNodesAction(new[] {nodeA}, stack, 2);
+                    return new MoveStackedNodesAction(new[] { nodeA }, stack, 2);
                 },
                 () =>
                 {
@@ -471,7 +471,7 @@ namespace UnityEditor.VisualScriptingTests.Actions
                     Assert.That(nodeB, Has.IndexInStack(1, stack));
                     Assert.That(nodeC, Has.IndexInStack(2, stack));
                     Assert.That(nodeD, Has.IndexInStack(3, stack));
-                    return new MoveStackedNodesAction(new[] {nodeA, nodeC}, stack, 2);
+                    return new MoveStackedNodesAction(new[] { nodeA, nodeC }, stack, 2);
                 },
                 () =>
                 {
@@ -502,7 +502,7 @@ namespace UnityEditor.VisualScriptingTests.Actions
                     Assert.That(nodeD, Has.IndexInStack(1, stack));
                     Assert.That(nodeA, Has.IndexInStack(2, stack));
                     Assert.That(nodeC, Has.IndexInStack(3, stack));
-                    return new MoveStackedNodesAction(new[] {nodeD, nodeC}, stack, 0);
+                    return new MoveStackedNodesAction(new[] { nodeD, nodeC }, stack, 0);
                 },
                 () =>
                 {
@@ -533,7 +533,7 @@ namespace UnityEditor.VisualScriptingTests.Actions
                     Assert.That(nodeC, Has.IndexInStack(1, stack));
                     Assert.That(nodeB, Has.IndexInStack(2, stack));
                     Assert.That(nodeA, Has.IndexInStack(3, stack));
-                    return new MoveStackedNodesAction(new[] {nodeA, nodeB, nodeC, nodeD}, stack, 0);
+                    return new MoveStackedNodesAction(new[] { nodeA, nodeB, nodeC, nodeD }, stack, 0);
                 },
                 () =>
                 {
@@ -583,7 +583,7 @@ namespace UnityEditor.VisualScriptingTests.Actions
                     Assert.That(nodeD, Has.IndexInStack(0, stack1));
                     Assert.That(nodeE, Has.IndexInStack(1, stack1));
                     Assert.That(nodeF, Has.IndexInStack(2, stack1));
-                    return new MoveStackedNodesAction(new[] {nodeA}, stack1, 1);
+                    return new MoveStackedNodesAction(new[] { nodeA }, stack1, 1);
                 },
                 () =>
                 {
@@ -626,7 +626,7 @@ namespace UnityEditor.VisualScriptingTests.Actions
                     Assert.That(nodeA, Has.IndexInStack(1, stack1));
                     Assert.That(nodeE, Has.IndexInStack(2, stack1));
                     Assert.That(nodeF, Has.IndexInStack(3, stack1));
-                    return new MoveStackedNodesAction(new[] {nodeF}, stack0, 0);
+                    return new MoveStackedNodesAction(new[] { nodeF }, stack0, 0);
                 },
                 () =>
                 {
@@ -682,7 +682,7 @@ namespace UnityEditor.VisualScriptingTests.Actions
                     Assert.That(nodeD, Has.IndexInStack(0, stack1));
                     Assert.That(nodeE, Has.IndexInStack(1, stack1));
                     Assert.That(nodeF, Has.IndexInStack(2, stack1));
-                    return new MoveStackedNodesAction(new[] {nodeA, nodeC}, stack1, 1);
+                    return new MoveStackedNodesAction(new[] { nodeA, nodeC }, stack1, 1);
                 },
                 () =>
                 {
@@ -725,7 +725,7 @@ namespace UnityEditor.VisualScriptingTests.Actions
                     Assert.That(nodeC, Has.IndexInStack(2, stack1));
                     Assert.That(nodeE, Has.IndexInStack(3, stack1));
                     Assert.That(nodeF, Has.IndexInStack(4, stack1));
-                    return new MoveStackedNodesAction(new[] {nodeF, nodeD}, stack0, 0);
+                    return new MoveStackedNodesAction(new[] { nodeF, nodeD }, stack0, 0);
                 },
                 () =>
                 {
@@ -768,7 +768,7 @@ namespace UnityEditor.VisualScriptingTests.Actions
                     Assert.That(nodeA, Has.IndexInStack(0, stack1));
                     Assert.That(nodeC, Has.IndexInStack(1, stack1));
                     Assert.That(nodeE, Has.IndexInStack(2, stack1));
-                    return new MoveStackedNodesAction(new[] {nodeF, nodeC}, stack1, 2);
+                    return new MoveStackedNodesAction(new[] { nodeF, nodeC }, stack1, 2);
                 },
                 () =>
                 {
@@ -799,8 +799,8 @@ namespace UnityEditor.VisualScriptingTests.Actions
             var nodeA = stack0.CreateStackedNode<Type0FakeNodeModel>("A");
             var nodeB = stack0.CreateStackedNode<Type0FakeNodeModel>("B");
 
-//            GraphModel.CreateEdge(stack0.InputPorts[0], stack0.OutputPorts.First());
-//            GraphModel.CreateEdge(stack2.InputPorts[0], stack0.OutputPorts.First());
+            //            GraphModel.CreateEdge(stack0.InputPorts[0], stack0.OutputPorts.First());
+            //            GraphModel.CreateEdge(stack2.InputPorts[0], stack0.OutputPorts.First());
 
             TestPrereqActionPostreq(mode,
                 () =>
@@ -904,7 +904,7 @@ namespace UnityEditor.VisualScriptingTests.Actions
                     Assert.That(sIf.OutputPorts[1], Is.ConnectedTo(sElse.InputPorts[0]));
                     Assert.That(ifNode.ThenPort, Is.ConnectedTo(sThen.InputPorts[0]));
                     Assert.That(ifNode.ElsePort, Is.ConnectedTo(sElse.InputPorts[0]));
-                    return new MoveStackedNodesAction(new[] {ifNode}, s1, 0);
+                    return new MoveStackedNodesAction(new[] { ifNode }, s1, 0);
                 },
                 () =>
                 {
@@ -991,7 +991,7 @@ namespace UnityEditor.VisualScriptingTests.Actions
                     Assert.That(ifStack.OutputPorts[1], Is.ConnectedTo(elseStack.InputPorts[0]));
                     Assert.That(ifNode.ThenPort, Is.ConnectedTo(thenStack.InputPorts[0]));
                     Assert.That(ifNode.ElsePort, Is.ConnectedTo(elseStack.InputPorts[0]));
-                    return new CreateStacksForNodesAction(new List<StackCreationOptions> { new StackCreationOptions(Vector2.zero, new List<INodeModel> {ifNode}) });
+                    return new CreateStacksForNodesAction(new List<StackCreationOptions> { new StackCreationOptions(Vector2.zero, new List<INodeModel> { ifNode }) });
                 },
                 () =>
                 {
@@ -1148,7 +1148,7 @@ namespace UnityEditor.VisualScriptingTests.Actions
             Stencil stencil = GraphModel.Stencil;
 
             var functionModel = GraphModel.CreateFunction("function", new Vector2(200, 50));
-            var functionVariable  = functionModel.CreateFunctionVariableDeclaration("l", typeof(int).GenerateTypeHandle(stencil));
+            var functionVariable = functionModel.CreateFunctionVariableDeclaration("l", typeof(int).GenerateTypeHandle(stencil));
             var functionParameter = functionModel.CreateAndRegisterFunctionParameterDeclaration("a", typeof(int).GenerateTypeHandle(stencil));
 
             var stackModel1 = GraphModel.CreateStack("stack1", new Vector2(200, 200));

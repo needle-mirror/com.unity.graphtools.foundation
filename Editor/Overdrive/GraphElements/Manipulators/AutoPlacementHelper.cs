@@ -40,11 +40,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         void GetSelectedElementModels()
         {
             m_SelectedElementModels.Clear();
-
-            foreach (GraphElement element in m_GraphView.Selection.OfType<GraphElement>().Where(element => !(element is Edge)))
-            {
-                m_SelectedElementModels.Add(element.Model);
-            }
+            m_SelectedElementModels.AddRange(m_GraphView.GetSelection().Where(element => !(element is IEdgeModel)));
             m_LeftOverElementModels = new HashSet<IGraphElementModel>(m_SelectedElementModels);
         }
 
@@ -289,7 +285,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             Dictionary<IGraphElementModel, Vector2> deltas = new Dictionary<IGraphElementModel, Vector2>();
 
-            foreach (var(boundingRect, elements) in boundingRectsList)
+            foreach (var (boundingRect, elements) in boundingRectsList)
             {
                 Vector2 delta = GetDelta(boundingRect, referencePosition);
                 foreach (var element in elements.Where(element => !deltas.ContainsKey(element)))

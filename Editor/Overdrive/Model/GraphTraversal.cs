@@ -48,7 +48,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             visitedNodes.Add(nodeModel);
 
-            if (nodeModel is IInOutPortsNode portHolder)
+            if (nodeModel is IInputOutputPortsNodeModel portHolder)
             {
                 foreach (var inputPortModel in portHolder.InputsById.Values)
                 {
@@ -62,6 +62,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        protected virtual void VisitVariableDeclaration(IVariableDeclarationModel variableDeclarationModel) {}
+        protected virtual void VisitVariableDeclaration(IVariableDeclarationModel variableDeclarationModel) { }
     }
 }

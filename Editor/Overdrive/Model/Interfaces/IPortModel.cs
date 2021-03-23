@@ -21,7 +21,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     // ReSharper disable once InconsistentNaming
     public interface IPortModel : IGraphElementModel
     {
-        IPortNode NodeModel { get; set; }
+        IPortNodeModel NodeModel { get; set; }
         Direction Direction { get; set; }
         PortType PortType { get; set; }
         Orientation Orientation { get; set; }
@@ -30,7 +30,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         PortModelOptions Options { get; set; }
 
         TypeHandle DataTypeHandle { get; set; }
-        string ToolTip { get; set;  }
+        string ToolTip { get; set; }
 
         bool CreateEmbeddedValueIfNeeded { get; }
 

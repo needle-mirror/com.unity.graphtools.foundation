@@ -21,7 +21,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         EdgeControl m_EdgeControl;
 
         protected EdgeControlPart(string name, IGraphElementModel model, IModelUI ownerElement, string parentClassName)
-            : base(name, model, ownerElement, parentClassName) {}
+            : base(name, model, ownerElement, parentClassName) { }
 
         protected override void BuildPartUI(VisualElement container)
         {
@@ -53,7 +53,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             var parent = m_OwnerElement as Edge;
 
-            if (parent?.Selected ?? false)
+            if (parent?.IsSelected() ?? false)
             {
                 m_EdgeControl.ResetColor();
             }

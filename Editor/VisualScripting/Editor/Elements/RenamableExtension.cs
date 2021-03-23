@@ -14,7 +14,7 @@ namespace UnityEditor.VisualScripting.Editor.Renamable
             var clickable = new SimpleClickable(renamable.Rename);
             clickable.activators.Clear();
             clickable.activators.Add(
-                new ManipulatorActivationFilter {button = MouseButton.LeftMouse, clickCount = 1});
+                new ManipulatorActivationFilter { button = MouseButton.LeftMouse, clickCount = 1 });
             renamable.TitleElement.AddManipulator(clickable);
         }
 

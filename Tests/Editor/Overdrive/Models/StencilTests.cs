@@ -9,7 +9,7 @@ using UnityEngine.TestTools;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
 {
-    public class DummyTestType {}
+    public class DummyTestType { }
 
     class StencilTests
     {

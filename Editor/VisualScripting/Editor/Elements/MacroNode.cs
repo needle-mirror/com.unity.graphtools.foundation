@@ -24,7 +24,7 @@ namespace UnityEditor.VisualScripting.Editor
             var clickable = new Clickable(DoAction);
             clickable.activators.Clear();
             clickable.activators.Add(
-                new ManipulatorActivationFilter {button = MouseButton.LeftMouse, clickCount = 2});
+                new ManipulatorActivationFilter { button = MouseButton.LeftMouse, clickCount = 2 });
             this.AddManipulator(clickable);
 
             IGraphElementModel elementModelToRename = m_Store.GetState().EditorDataModel.ElementModelToRename;

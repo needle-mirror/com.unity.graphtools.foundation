@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEditor.GraphToolsFoundation.Overdrive.InternalModels;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -24,7 +26,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public virtual EdgeDragHelper edgeDragHelper => m_EdgeDragHelper;
 
-        public void SetDropOutsideDelegate(Action<CommandDispatcher, Edge, Vector2> action)
+        public void SetDropOutsideDelegate(Action<CommandDispatcher, IEnumerable<Edge>, IEnumerable<IPortModel>, Vector2> action)
         {
             m_EdgeConnectorListener.SetDropOutsideDelegate(action);
         }
@@ -109,7 +111,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             try
             {
                 if (CanPerformConnection(e.localMousePosition))
-                    m_EdgeDragHelper.HandleMouseUp(e);
+                    m_EdgeDragHelper.HandleMouseUp(e, true, Enumerable.Empty<Edge>(), Enumerable.Empty<IPortModel>());
                 else
                     Abort();
             }

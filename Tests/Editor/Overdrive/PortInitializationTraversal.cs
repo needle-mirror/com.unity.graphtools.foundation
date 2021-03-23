@@ -12,7 +12,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
             // recurse first
             base.VisitNode(nodeModel, visitedNodes);
 
-            if (!(nodeModel is IInOutPortsNode node))
+            if (!(nodeModel is IInputOutputPortsNodeModel node))
                 return;
 
             foreach (var callback in Callbacks)

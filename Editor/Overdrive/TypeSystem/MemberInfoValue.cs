@@ -45,12 +45,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        public static bool operator==(MemberInfoValue left, MemberInfoValue right)
+        public static bool operator ==(MemberInfoValue left, MemberInfoValue right)
         {
             return left.Equals(right);
         }
 
-        public static bool operator!=(MemberInfoValue left, MemberInfoValue right)
+        public static bool operator !=(MemberInfoValue left, MemberInfoValue right)
         {
             return !left.Equals(right);
         }

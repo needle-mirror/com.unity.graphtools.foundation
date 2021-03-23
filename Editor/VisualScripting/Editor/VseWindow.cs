@@ -343,7 +343,7 @@ namespace UnityEditor.VisualScripting.Editor
 
         protected virtual VseMenu CreateMenu()
         {
-            return new VseMenu(m_Store, m_GraphView){OnToggleTracing = OnToggleTracing};
+            return new VseMenu(m_Store, m_GraphView) { OnToggleTracing = OnToggleTracing };
         }
 
         protected virtual VseGraphView CreateGraphView()
@@ -391,7 +391,7 @@ namespace UnityEditor.VisualScripting.Editor
 
             SetupWindow();
 
-            m_CompilationPendingLabel = new Label("Compilation Pending"){name = "compilationPendingLabel"};
+            m_CompilationPendingLabel = new Label("Compilation Pending") { name = "compilationPendingLabel" };
 
             m_GraphContainer.Add(m_GraphView);
             Dictionary<Event, ShortcutDelegate> dictionaryShortcuts = GetShortcutDictionary();
@@ -669,7 +669,7 @@ namespace UnityEditor.VisualScripting.Editor
             if (results != null && results.errors.Count == 0)
             {
                 // TODO : Add delegate to register to compilation Done
-//                VSCompilationService.NotifyChange((ISourceProvider)vsGraphModel.assetModel);
+                //                VSCompilationService.NotifyChange((ISourceProvider)vsGraphModel.assetModel);
             }
         }
 
@@ -763,11 +763,11 @@ namespace UnityEditor.VisualScripting.Editor
 
             if (graphModel != null && currentUpdateFlags.HasFlag(UpdateFlags.RequestRebuild))
             {
-//                var editors = Resources.FindObjectsOfTypeAll<VisualBehaviourInspector>();
-//                foreach (var editor in editors)
-//                {
-//                    editor.Repaint();
-//                }
+                //                var editors = Resources.FindObjectsOfTypeAll<VisualBehaviourInspector>();
+                //                foreach (var editor in editors)
+                //                {
+                //                    editor.Repaint();
+                //                }
             }
 
             if (graphModel != null && graphModel.LastChanges.ModelsToAutoAlign.Any())
@@ -993,8 +993,8 @@ namespace UnityEditor.VisualScripting.Editor
         {
             throw new NotImplementedException();
 
-//            var gameObject = EditorUtility.InstanceIDToObject(objectInstanceId) as GameObject;
-//            SetCurrentSelection(gameObject, OpenMode.Open);
+            //            var gameObject = EditorUtility.InstanceIDToObject(objectInstanceId) as GameObject;
+            //            SetCurrentSelection(gameObject, OpenMode.Open);
         }
 
         EventPropagation OnSpaceKeyDown()

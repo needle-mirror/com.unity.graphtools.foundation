@@ -145,9 +145,9 @@ namespace UnityEditor.VisualScripting.Editor
         void BuildBlackboardContextualMenu()
         {
             // Nothing at the moment.
-//            var blackboard = (m_Evt.target as VisualElement)?.GetFirstOfType<Blackboard>();
-//            if (blackboard == null)
-//                return;
+            //            var blackboard = (m_Evt.target as VisualElement)?.GetFirstOfType<Blackboard>();
+            //            if (blackboard == null)
+            //                return;
         }
 
         void BuildNodeContextualMenu(Dictionary<IGraphElementModel, IHasGraphElementModel> selectedModels)
@@ -213,11 +213,11 @@ namespace UnityEditor.VisualScripting.Editor
                 }, eventBase => DropdownMenuAction.Status.Normal);
             }
 
-//TODO reenable and make it work after 0.3
-//            evt.menu.AppendAction("Documentation...", menuAction =>
-//                {
-//                    m_Store.Dispatch(new OpenDocumentationAction(models));
-//                }, x => DropdownMenuAction.Status.Normal);
+            //TODO reenable and make it work after 0.3
+            //            evt.menu.AppendAction("Documentation...", menuAction =>
+            //                {
+            //                    m_Store.Dispatch(new OpenDocumentationAction(models));
+            //                }, x => DropdownMenuAction.Status.Normal);
 
 #if UNITY_2020_1_OR_NEWER
             var placemats = selectedModelsKeys.OfType<PlacematModel>().ToArray();
@@ -283,7 +283,7 @@ namespace UnityEditor.VisualScripting.Editor
                         defaultColor = models[0].Color;
                     }
 
-                    m?.Invoke(null, new object[] { (Action<Color>)ChangeNodesColor, defaultColor, true, false});
+                    m?.Invoke(null, new object[] { (Action<Color>)ChangeNodesColor, defaultColor, true, false });
                 }, eventBase => DropdownMenuAction.Status.Normal);
 
                 m_Evt.menu.AppendAction("Color/Reset", menuAction =>
@@ -296,7 +296,7 @@ namespace UnityEditor.VisualScripting.Editor
             }
             else
             {
-                m_Evt.menu.AppendAction("Color", menuAction => {}, eventBase => DropdownMenuAction.Status.Disabled);
+                m_Evt.menu.AppendAction("Color", menuAction => { }, eventBase => DropdownMenuAction.Status.Disabled);
             }
 #endif
         }

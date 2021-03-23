@@ -184,7 +184,7 @@ namespace UnityEditor.VisualScripting.Model
             c.Flush();
         }
 
-        protected virtual void OnCreateLoopVariables(VariableCreator variableCreator, IPortModel connectedPortModel) {}
+        protected virtual void OnCreateLoopVariables(VariableCreator variableCreator, IPortModel connectedPortModel) { }
 
         [SuppressMessage("ReSharper", "NonReadonlyMemberInGetHashCode")]
         [SuppressMessage("ReSharper", "BaseObjectGetHashCodeCallInGetHashCode")]

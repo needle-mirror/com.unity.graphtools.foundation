@@ -4,5 +4,5 @@ using UnityEngine;
 namespace UnityEditor.VisualScripting.Model
 {
     [Serializable]
-    public class CurveConstantNodeModel : ConstantNodeModel<AnimationCurve> {}
+    public class CurveConstantNodeModel : ConstantNodeModel<AnimationCurve> { }
 }

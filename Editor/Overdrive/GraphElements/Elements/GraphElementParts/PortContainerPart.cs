@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
@@ -10,7 +11,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public static PortContainerPart Create(string name, IGraphElementModel model, IModelUI modelUI, string parentClassName)
         {
-            if (model is IPortNode)
+            if (model is IPortNodeModel)
             {
                 return new PortContainerPart(name, model, modelUI, parentClassName);
             }
@@ -25,11 +26,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public override VisualElement Root => m_Root;
 
         protected PortContainerPart(string name, IGraphElementModel model, IModelUI ownerElement, string parentClassName)
-            : base(name, model, ownerElement, parentClassName) {}
+            : base(name, model, ownerElement, parentClassName) { }
 
         protected override void BuildPartUI(VisualElement container)
         {
-            if (m_Model is IPortNode)
+            if (m_Model is IPortNodeModel portHolder)
             {
                 m_Root = new VisualElement { name = PartName };
                 m_Root.AddToClassList(ussClassName);
@@ -38,6 +39,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 PortContainer = new PortContainer { name = portsUssName };
                 PortContainer.AddToClassList(m_ParentClassName.WithUssElement(portsUssName));
                 m_Root.Add(PortContainer);
+
+                var ports = portHolder.Ports.Where(p => p.Orientation == Orientation.Horizontal);
+                PortContainer?.UpdatePorts(ports, m_OwnerElement.GraphView, m_OwnerElement.CommandDispatcher);
 
                 container.Add(m_Root);
             }
@@ -51,9 +55,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         protected override void UpdatePartFromModel()
         {
-            if (m_Model is IPortNode portHolder)
+            if (m_Model is IPortNodeModel portHolder)
             {
-                PortContainer?.UpdatePorts(portHolder.Ports, m_OwnerElement.GraphView, m_OwnerElement.CommandDispatcher);
+                var ports = portHolder.Ports.Where(p => p.Orientation == Orientation.Horizontal);
+                PortContainer?.UpdatePorts(ports, m_OwnerElement.GraphView, m_OwnerElement.CommandDispatcher);
             }
         }
     }

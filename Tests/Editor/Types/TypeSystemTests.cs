@@ -11,7 +11,7 @@ namespace UnityEditor.VisualScriptingTests.Types
     [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
     sealed class FakeBinaryOverload
     {
-        public static FakeBinaryOverload operator+(FakeBinaryOverload a, FakeBinaryOverload b)
+        public static FakeBinaryOverload operator +(FakeBinaryOverload a, FakeBinaryOverload b)
         {
             return a;
         }
@@ -20,19 +20,19 @@ namespace UnityEditor.VisualScriptingTests.Types
     [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
     sealed class FakeUnaryOverload
     {
-        public static bool operator!(FakeUnaryOverload a)
+        public static bool operator !(FakeUnaryOverload a)
         {
             return true;
         }
     }
 
-    sealed class FakeNoOverload {}
+    sealed class FakeNoOverload { }
 
     [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
     static class FakeNoOverloadExtension
     {
-        public static void Ext1(this FakeNoOverload o) {}
-        public static void Ext2(this FakeNoOverload[] o) {}
+        public static void Ext1(this FakeNoOverload o) { }
+        public static void Ext2(this FakeNoOverload[] o) { }
     }
 
     sealed class TypeSystemTests
@@ -108,20 +108,20 @@ namespace UnityEditor.VisualScriptingTests.Types
             Assert.IsFalse(extensions.TryGetValue(typeof(FakeNoOverload), out _));
         }
 
-        [TestCase(typeof(float),   typeof(int),     BinaryOperatorKind.Multiply,   true)]
-        [TestCase(typeof(float),   typeof(Vector2), BinaryOperatorKind.Multiply,   true)]
-        [TestCase(typeof(Vector2), typeof(float),   BinaryOperatorKind.Multiply,   true)]
-        [TestCase(typeof(Vector2), typeof(int),     BinaryOperatorKind.Multiply,   true)]
-        [TestCase(typeof(int),     typeof(Vector2), BinaryOperatorKind.Multiply,   true)]
-        [TestCase(typeof(Vector2), typeof(int),     BinaryOperatorKind.Add,        false)]
-        [TestCase(typeof(Vector2), typeof(float),   BinaryOperatorKind.Divide,     true)]
-        [TestCase(typeof(float),   typeof(Vector2), BinaryOperatorKind.Divide,     false)]
-        [TestCase(typeof(Vector2), typeof(Vector2), BinaryOperatorKind.Add,        true)]
-        [TestCase(typeof(Vector2), typeof(Vector2), BinaryOperatorKind.Modulo,     false)]
-        [TestCase(typeof(float),   typeof(string),  BinaryOperatorKind.Add,        false)]
-        [TestCase(typeof(Vector2), typeof(bool),    BinaryOperatorKind.Multiply,   false)]
-        [TestCase(typeof(Vector2), typeof(KeyCode), BinaryOperatorKind.Divide,     false)]
-        [TestCase(typeof(KeyCode), typeof(KeyCode), BinaryOperatorKind.Equals,     true)]
+        [TestCase(typeof(float), typeof(int), BinaryOperatorKind.Multiply, true)]
+        [TestCase(typeof(float), typeof(Vector2), BinaryOperatorKind.Multiply, true)]
+        [TestCase(typeof(Vector2), typeof(float), BinaryOperatorKind.Multiply, true)]
+        [TestCase(typeof(Vector2), typeof(int), BinaryOperatorKind.Multiply, true)]
+        [TestCase(typeof(int), typeof(Vector2), BinaryOperatorKind.Multiply, true)]
+        [TestCase(typeof(Vector2), typeof(int), BinaryOperatorKind.Add, false)]
+        [TestCase(typeof(Vector2), typeof(float), BinaryOperatorKind.Divide, true)]
+        [TestCase(typeof(float), typeof(Vector2), BinaryOperatorKind.Divide, false)]
+        [TestCase(typeof(Vector2), typeof(Vector2), BinaryOperatorKind.Add, true)]
+        [TestCase(typeof(Vector2), typeof(Vector2), BinaryOperatorKind.Modulo, false)]
+        [TestCase(typeof(float), typeof(string), BinaryOperatorKind.Add, false)]
+        [TestCase(typeof(Vector2), typeof(bool), BinaryOperatorKind.Multiply, false)]
+        [TestCase(typeof(Vector2), typeof(KeyCode), BinaryOperatorKind.Divide, false)]
+        [TestCase(typeof(KeyCode), typeof(KeyCode), BinaryOperatorKind.Equals, true)]
         [TestCase(typeof(KeyCode), typeof(KeyCode), BinaryOperatorKind.BitwiseAnd, true)]
         public void TestIsBinaryOperationPossible(Type a, Type b, BinaryOperatorKind kind, bool result)
         {

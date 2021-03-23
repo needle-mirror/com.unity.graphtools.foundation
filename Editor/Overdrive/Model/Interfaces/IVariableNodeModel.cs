@@ -1,6 +1,6 @@
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public interface IVariableNodeModel : ISingleInputPortNode, ISingleOutputPortNode, IHasDeclarationModel, IHasTitle
+    public interface IVariableNodeModel : ISingleInputPortNodeModel, ISingleOutputPortNodeModel, IHasDeclarationModel, IHasTitle
     {
         IVariableDeclarationModel VariableDeclarationModel { get; }
         void UpdateTypeFromDeclaration();
