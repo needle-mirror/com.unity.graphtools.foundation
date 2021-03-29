@@ -9,17 +9,29 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     public static class VisualElementExtensions
     {
         /// <summary>
-        /// Removes all USS classes that start with <paramref name="classNamePrefix"/>.
+        /// Removes all USS classes that start with <paramref name="classNamePrefix"/> and add
+        /// a USS class name <paramref name="classNamePrefix"/> + <paramref name="classNameSuffix"/>.
         /// </summary>
         /// <param name="ve">The VisualElement to act upon.</param>
         /// <param name="classNamePrefix">The class name prefix.</param>
-        public static void PrefixRemoveFromClassList(this VisualElement ve, string classNamePrefix)
+        /// <param name="classNameSuffix">The class name suffix.</param>
+        public static void PrefixEnableInClassList(this VisualElement ve, string classNamePrefix, string classNameSuffix)
         {
             var toRemove = ve.GetClasses().Where(c => c.StartsWith(classNamePrefix)).ToList();
-            foreach (var c in toRemove)
+
+            var className = classNamePrefix + classNameSuffix;
+            var classAlreadyPresent = toRemove.Remove(className);
+
+            if (toRemove.Count > 0)
             {
-                ve.RemoveFromClassList(c);
+                foreach (var c in toRemove)
+                {
+                    ve.RemoveFromClassList(c);
+                }
             }
+
+            if (!classAlreadyPresent)
+                ve.AddToClassList(className);
         }
 
         /// <summary>

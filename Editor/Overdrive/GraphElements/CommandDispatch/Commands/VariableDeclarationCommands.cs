@@ -93,7 +93,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             graphToolState.PushUndo(command);
 
-            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            using (var graphUpdater = graphToolState.GraphViewState.UpdateScope)
             {
                 var graphModel = graphToolState.GraphViewState.GraphModel;
                 IVariableDeclarationModel newVD;
@@ -104,7 +104,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     newVD = graphModel.CreateGraphVariableDeclaration(command.TypeHandle, command.VariableName,
                         command.ModifierFlags, command.IsExposed, null, command.Guid);
 
-                graphUpdater.U.MarkNew(newVD);
+                graphUpdater.MarkNew(newVD);
             }
         }
     }
@@ -130,12 +130,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             graphToolState.PushUndo(command);
 
-            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            using (var graphUpdater = graphToolState.GraphViewState.UpdateScope)
             {
                 graphToolState.GraphViewState.GraphModel.MoveAfter(command.VariableDeclarationModelsToMove.ToList(), command.InsertAfter);
 
                 // Since potentially the index of every VD changed, let's mark them all as changed.
-                graphUpdater.U.MarkChanged(graphToolState.GraphViewState.GraphModel.VariableDeclarations);
+                graphUpdater.MarkChanged(graphToolState.GraphViewState.GraphModel.VariableDeclarations);
             }
         }
     }
@@ -159,10 +159,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             graphToolState.PushUndo(command);
 
-            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            using (var graphUpdater = graphToolState.GraphViewState.UpdateScope)
             {
                 command.VariableDeclarationModel.CreateInitializationValue();
-                graphUpdater.U.MarkChanged(command.VariableDeclarationModel);
+                graphUpdater.MarkChanged(command.VariableDeclarationModel);
             }
         }
     }
@@ -191,7 +191,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             {
                 graphToolState.PushUndo(command);
 
-                using (var graphUpdater = graphToolState.GraphViewState.Updater)
+                using (var graphUpdater = graphToolState.GraphViewState.UpdateScope)
                 {
                     if (command.VariableDeclarationModel.DataType != command.Handle)
                         command.VariableDeclarationModel.CreateInitializationValue();
@@ -204,8 +204,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                         usage.UpdateTypeFromDeclaration();
                     }
 
-                    graphUpdater.U.MarkChanged(variableReferences);
-                    graphUpdater.U.MarkChanged(command.VariableDeclarationModel);
+                    graphUpdater.MarkChanged(variableReferences);
+                    graphUpdater.MarkChanged(command.VariableDeclarationModel);
                 }
             }
         }
@@ -233,10 +233,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             graphToolState.PushUndo(command);
 
-            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            using (var graphUpdater = graphToolState.GraphViewState.UpdateScope)
             {
                 command.VariableDeclarationModel.IsExposed = command.Exposed;
-                graphUpdater.U.MarkChanged(command.VariableDeclarationModel);
+                graphUpdater.MarkChanged(command.VariableDeclarationModel);
             }
         }
     }
@@ -261,14 +261,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             graphToolState.PushUndo(command);
 
-            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            using (var graphUpdater = graphToolState.GraphViewState.UpdateScope)
             {
                 command.VariableDeclarationModel.Tooltip = command.Tooltip;
 
                 var graphModel = graphToolState.GraphViewState.GraphModel;
                 var references = graphModel.FindReferencesInGraph<IVariableNodeModel>(command.VariableDeclarationModel);
-                graphUpdater.U.MarkChanged(references);
-                graphUpdater.U.MarkChanged(command.VariableDeclarationModel);
+                graphUpdater.MarkChanged(references);
+                graphUpdater.MarkChanged(command.VariableDeclarationModel);
             }
         }
     }
@@ -295,9 +295,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             graphToolState.PushUndo(command);
 
-            using (var bbUpdater = graphToolState.BlackboardViewState.Updater)
+            using (var bbUpdater = graphToolState.BlackboardViewState.UpdateScope)
             {
-                bbUpdater.U.SetVariableDeclarationModelExpanded(command.Row, command.Expand);
+                bbUpdater.SetVariableDeclarationModelExpanded(command.Row, command.Expand);
             }
         }
     }

@@ -84,6 +84,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         protected Vector2 m_LastMousePosition;
 
         UpdateObserver m_UpdateObserver;
+        EdgeOrderObserver m_EdgeOrderObserver;
 
         /// <summary>
         /// The VisualElement that contains all the views.
@@ -780,9 +781,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 evt.menu.AppendSeparator();
                 evt.menu.AppendAction("Internal/Refresh All UI", _ =>
                 {
-                    using (var updater = CommandDispatcher.GraphToolState.GraphViewState.Updater)
+                    using (var updater = CommandDispatcher.GraphToolState.GraphViewState.UpdateScope)
                     {
-                        updater.U.ForceCompleteUpdate();
+                        updater.ForceCompleteUpdate();
                     }
                 });
 
@@ -791,9 +792,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     evt.menu.AppendAction("Internal/Refresh Selected Element(s)",
                         _ =>
                         {
-                            using (var graphUpdater = CommandDispatcher.GraphToolState.GraphViewState.Updater)
+                            using (var graphUpdater = CommandDispatcher.GraphToolState.GraphViewState.UpdateScope)
                             {
-                                graphUpdater.U.MarkChanged(selection);
+                                graphUpdater.MarkChanged(selection);
                             }
                         });
                 }
@@ -826,12 +827,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             if (m_UpdateObserver == null)
                 m_UpdateObserver = new UpdateObserver(this);
+
+            if (m_EdgeOrderObserver == null)
+                m_EdgeOrderObserver = new EdgeOrderObserver();
+
             CommandDispatcher?.RegisterObserver(m_UpdateObserver);
+            CommandDispatcher?.RegisterObserver(m_EdgeOrderObserver);
         }
 
         void UnregisterObservers()
         {
             CommandDispatcher?.UnregisterObserver(m_UpdateObserver);
+            CommandDispatcher?.UnregisterObserver(m_EdgeOrderObserver);
         }
 
         protected void OnEnterPanel(AttachToPanelEvent e)
@@ -1639,9 +1646,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                         var elementsToAlign = gvChangeSet.ModelsToAutoAlign.ToList();
                         schedule.Execute(() =>
                         {
-                            using (CommandDispatcher.GraphToolState.GraphViewState.Updater)
+                            using (var graphUpdater = CommandDispatcher.GraphToolState.GraphViewState.UpdateScope)
                             {
-                                PositionDependenciesManager.AlignNodes(true, elementsToAlign);
+                                PositionDependenciesManager.AlignNodes(true, elementsToAlign, graphUpdater);
                             }
                         });
                     }

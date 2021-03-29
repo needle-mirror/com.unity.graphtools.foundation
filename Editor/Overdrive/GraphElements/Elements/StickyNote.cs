@@ -87,11 +87,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             style.width = newPos.width;
             style.height = newPos.height;
 
-            this.PrefixRemoveFromClassList(themeClassNamePrefix);
-            AddToClassList(themeClassNamePrefix + StickyNoteModel.Theme.ToKebabCase());
-
-            this.PrefixRemoveFromClassList(sizeClassNamePrefix);
-            AddToClassList(sizeClassNamePrefix + StickyNoteModel.TextSize.ToKebabCase());
+            this.PrefixEnableInClassList(themeClassNamePrefix, StickyNoteModel.Theme.ToKebabCase());
+            this.PrefixEnableInClassList(sizeClassNamePrefix, StickyNoteModel.TextSize.ToKebabCase());
         }
 
         public static IEnumerable<string> GetThemes()

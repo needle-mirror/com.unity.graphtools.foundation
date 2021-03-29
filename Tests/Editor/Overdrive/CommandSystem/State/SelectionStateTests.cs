@@ -14,17 +14,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.CommandSystem
 
             var viewGuid1 = GUID.Generate();
             var state = new GraphToolState(viewGuid1, null);
-            using (var selectionUpdater = state.SelectionState.Updater)
+            using (var selectionUpdater = state.SelectionState.UpdateScope)
             {
-                selectionUpdater.U.ClearSelection(state.WindowState.GraphModel);
+                selectionUpdater.ClearSelection(state.WindowState.GraphModel);
             }
 
             Assert.IsFalse(state.SelectionState.IsSelected(node1));
             Assert.IsFalse(state.SelectionState.IsSelected(node2));
 
-            using (var selectionUpdater = state.SelectionState.Updater)
+            using (var selectionUpdater = state.SelectionState.UpdateScope)
             {
-                selectionUpdater.U.SelectElements(new[] { node1 }, true);
+                selectionUpdater.SelectElements(new[] { node1 }, true);
             }
 
             Assert.IsTrue(state.SelectionState.IsSelected(node1));
@@ -40,18 +40,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.CommandSystem
             var viewGuid1 = GUID.Generate();
             var state = new GraphToolState(viewGuid1, null);
 
-            using (var selectionUpdater = state.SelectionState.Updater)
+            using (var selectionUpdater = state.SelectionState.UpdateScope)
             {
-                selectionUpdater.U.ClearSelection(state.WindowState.GraphModel);
-                selectionUpdater.U.SelectElements(new[] { node1, node2 }, true);
+                selectionUpdater.ClearSelection(state.WindowState.GraphModel);
+                selectionUpdater.SelectElements(new[] { node1, node2 }, true);
             }
 
             Assert.IsTrue(state.SelectionState.IsSelected(node1));
             Assert.IsTrue(state.SelectionState.IsSelected(node2));
 
-            using (var selectionUpdater = state.SelectionState.Updater)
+            using (var selectionUpdater = state.SelectionState.UpdateScope)
             {
-                selectionUpdater.U.SelectElements(new[] { node1 }, false);
+                selectionUpdater.SelectElements(new[] { node1 }, false);
             }
 
             Assert.IsFalse(state.SelectionState.IsSelected(node1));
@@ -67,18 +67,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.CommandSystem
             var viewGuid1 = GUID.Generate();
             var state = new GraphToolState(viewGuid1, null);
 
-            using (var selectionUpdater = state.SelectionState.Updater)
+            using (var selectionUpdater = state.SelectionState.UpdateScope)
             {
-                selectionUpdater.U.ClearSelection(state.WindowState.GraphModel);
-                selectionUpdater.U.SelectElements(new[] { node1, node2 }, true);
+                selectionUpdater.ClearSelection(state.WindowState.GraphModel);
+                selectionUpdater.SelectElements(new[] { node1, node2 }, true);
             }
 
             Assert.IsTrue(state.SelectionState.IsSelected(node1));
             Assert.IsTrue(state.SelectionState.IsSelected(node2));
 
-            using (var selectionUpdater = state.SelectionState.Updater)
+            using (var selectionUpdater = state.SelectionState.UpdateScope)
             {
-                selectionUpdater.U.ClearSelection(state.WindowState.GraphModel);
+                selectionUpdater.ClearSelection(state.WindowState.GraphModel);
             }
 
             Assert.IsFalse(state.SelectionState.IsSelected(node1));

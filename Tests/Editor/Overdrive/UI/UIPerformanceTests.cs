@@ -15,10 +15,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
     {
         public static void DefaultCommandHandler(GraphToolState graphToolState, CommandThatMarksNew command)
         {
-            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            using (var graphUpdater = graphToolState.GraphViewState.UpdateScope)
             {
                 var placematModel = graphToolState.GraphViewState.GraphModel.CreatePlacemat(Rect.zero);
-                graphUpdater.U.MarkNew(placematModel);
+                graphUpdater.MarkNew(placematModel);
             }
         }
     }
@@ -27,11 +27,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
     {
         public static void DefaultCommandHandler(GraphToolState graphToolState, CommandThatMarksChanged command)
         {
-            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            using (var graphUpdater = graphToolState.GraphViewState.UpdateScope)
             {
                 var placemat = graphToolState.GraphViewState.GraphModel.PlacematModels.FirstOrDefault();
                 Debug.Assert(placemat != null);
-                graphUpdater.U.MarkChanged(placemat);
+                graphUpdater.MarkChanged(placemat);
             }
         }
     }
@@ -40,12 +40,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
     {
         public static void DefaultCommandHandler(GraphToolState graphToolState, CommandThatMarksDeleted command)
         {
-            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            using (var graphUpdater = graphToolState.GraphViewState.UpdateScope)
             {
                 var placemat = graphToolState.GraphViewState.GraphModel.PlacematModels.FirstOrDefault();
                 graphToolState.GraphViewState.GraphModel.DeletePlacemats(new[] { placemat });
                 Debug.Assert(placemat != null);
-                graphUpdater.U.MarkDeleted(placemat);
+                graphUpdater.MarkDeleted(placemat);
             }
         }
     }
@@ -54,9 +54,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
     {
         public static void DefaultCommandHandler(GraphToolState graphToolState, CommandThatRebuildsAll command)
         {
-            using (var updater = graphToolState.GraphViewState.Updater)
+            using (var updater = graphToolState.GraphViewState.UpdateScope)
             {
-                updater.U.ForceCompleteUpdate();
+                updater.ForceCompleteUpdate();
             }
         }
     }
@@ -145,10 +145,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         {
             m_GraphViewStateObserver.UpdateType = UpdateType.None;
             Type0FakeNodeModel model;
-            using (var updater = CommandDispatcher.GraphToolState.GraphViewState.Updater)
+            using (var updater = CommandDispatcher.GraphToolState.GraphViewState.UpdateScope)
             {
                 model = GraphModel.CreateNode<Type0FakeNodeModel>("Node 0", Vector2.zero);
-                updater.U.MarkNew(model);
+                updater.MarkNew(model);
             }
             yield return null;
             Assert.That(m_GraphViewStateObserver.UpdateType, Is.EqualTo(UpdateType.Complete));

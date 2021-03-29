@@ -27,12 +27,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             graphToolState.PushUndo(command);
 
-            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            using (var graphUpdater = graphToolState.GraphViewState.UpdateScope)
             {
                 foreach (var portalModel in portalsToOpen)
                 {
                     var newPortal = graphToolState.GraphViewState.GraphModel.CreateOppositePortal(portalModel);
-                    graphUpdater.U.MarkNew(newPortal);
+                    graphUpdater.MarkNew(newPortal);
                 }
             }
         }

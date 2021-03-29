@@ -50,12 +50,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Plugins.Debugging
             m_Overlay.HandleEvents();
             int timeChangedByTimeline = TimelineState.TimeToFrame(m_State.CurrentTime);
 
-            using (var updater = tracingControlState.Updater)
+            using (var updater = tracingControlState.UpdateScope)
             {
                 // force graph update
                 if (timeChangedByTimeline != tracingControlState.CurrentTracingFrame)
-                    updater.U.CurrentTracingStep = -1;
-                updater.U.CurrentTracingFrame = timeChangedByTimeline;
+                    updater.CurrentTracingStep = -1;
+                updater.CurrentTracingFrame = timeChangedByTimeline;
             }
 
             GUI.BeginGroup(timeRect);

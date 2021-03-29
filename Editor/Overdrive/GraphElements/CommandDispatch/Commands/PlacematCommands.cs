@@ -25,13 +25,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             graphToolState.PushUndo(command);
 
-            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            using (var graphUpdater = graphToolState.GraphViewState.UpdateScope)
             {
                 var placematModel = graphToolState.GraphViewState.GraphModel.CreatePlacemat(command.Position);
                 if (command.Title != null)
                     placematModel.Title = command.Title;
 
-                graphUpdater.U.MarkNew(placematModel);
+                graphUpdater.MarkNew(placematModel);
             }
         }
     }
@@ -62,7 +62,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             graphToolState.PushUndo(command);
 
-            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            using (var graphUpdater = graphToolState.GraphViewState.UpdateScope)
             {
                 for (var index = 0; index < command.Models.Count; index++)
                 {
@@ -71,7 +71,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     placematModel.ZOrder = zOrder;
                 }
 
-                graphUpdater.U.MarkChanged(command.Models);
+                graphUpdater.MarkChanged(command.Models);
             }
         }
     }
@@ -101,12 +101,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             graphToolState.PushUndo(command);
 
-            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            using (var graphUpdater = graphToolState.GraphViewState.UpdateScope)
             {
                 command.PlacematModel.Collapsed = command.Collapse;
                 command.PlacematModel.HiddenElements = command.PlacematModel.Collapsed ? command.CollapsedElements : null;
 
-                graphUpdater.U.MarkChanged(command.PlacematModel);
+                graphUpdater.MarkChanged(command.PlacematModel);
             }
         }
     }

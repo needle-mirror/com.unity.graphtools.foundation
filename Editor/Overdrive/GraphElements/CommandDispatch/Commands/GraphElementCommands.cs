@@ -40,14 +40,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             if (command.Models != null)
             {
-                using (var updater = graphToolState.GraphViewState.Updater)
+                using (var updater = graphToolState.GraphViewState.UpdateScope)
                 {
                     foreach (var model in command.Models.Where(c => c.IsColorable()))
                     {
                         model.ResetColor();
                     }
 
-                    updater.U.MarkChanged(command.Models);
+                    updater.MarkChanged(command.Models);
                 }
             }
         }
@@ -92,14 +92,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             if (command.Models != null)
             {
-                using (var updater = graphToolState.GraphViewState.Updater)
+                using (var updater = graphToolState.GraphViewState.UpdateScope)
                 {
                     foreach (var model in command.Models.Where(c => c.IsColorable()))
                     {
                         model.Color = command.Color;
                     }
 
-                    updater.U.MarkChanged(command.Models);
+                    updater.MarkChanged(command.Models);
                 }
             }
         }
@@ -159,10 +159,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (command.Nodes.Any())
             {
                 graphToolState.PushUndo(command);
-                using (var stateUpdater = graphToolState.GraphViewState.Updater)
+                using (var stateUpdater = graphToolState.GraphViewState.UpdateScope)
                 {
-                    command.GraphView.PositionDependenciesManager.AlignNodes(command.Follow, command.Nodes);
-                    stateUpdater.U.ForceCompleteUpdate();
+                    command.GraphView.PositionDependenciesManager.AlignNodes(command.Follow, command.Nodes, stateUpdater);
+                    stateUpdater.ForceCompleteUpdate();
                 }
             }
         }
@@ -255,24 +255,24 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             state.PushUndo(command);
 
-            using (var selectionUpdater = state.SelectionState.Updater)
+            using (var selectionUpdater = state.SelectionState.UpdateScope)
             {
                 switch (command.Mode)
                 {
                     case SelectionMode.Replace:
-                        selectionUpdater.U.ClearSelection(state.GraphViewState.GraphModel);
-                        selectionUpdater.U.SelectElements(command.Models, true);
+                        selectionUpdater.ClearSelection(state.GraphViewState.GraphModel);
+                        selectionUpdater.SelectElements(command.Models, true);
                         break;
                     case SelectionMode.Add:
-                        selectionUpdater.U.SelectElements(command.Models, true);
+                        selectionUpdater.SelectElements(command.Models, true);
                         break;
                     case SelectionMode.Remove:
-                        selectionUpdater.U.SelectElements(command.Models, false);
+                        selectionUpdater.SelectElements(command.Models, false);
                         break;
                     case SelectionMode.Toggle:
                         var toSelect = command.Models.Where(m => !state.SelectionState.IsSelected(m)).ToList();
-                        selectionUpdater.U.SelectElements(command.Models, false);
-                        selectionUpdater.U.SelectElements(toSelect, true);
+                        selectionUpdater.SelectElements(command.Models, false);
+                        selectionUpdater.SelectElements(toSelect, true);
                         break;
                 }
             }
@@ -307,9 +307,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             state.PushUndo(command);
 
-            using (var selectionUpdater = state.SelectionState.Updater)
+            using (var selectionUpdater = state.SelectionState.UpdateScope)
             {
-                selectionUpdater.U.ClearSelection(state.GraphViewState.GraphModel);
+                selectionUpdater.ClearSelection(state.GraphViewState.GraphModel);
             }
         }
     }
@@ -362,10 +362,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             graphToolState.PushUndo(command);
 
-            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            using (var graphUpdater = graphToolState.GraphViewState.UpdateScope)
             {
                 command.Model.PositionAndSize = command.Layout;
-                graphUpdater.U.MarkChanged(command.Model as IGraphElementModel);
+                graphUpdater.MarkChanged(command.Model as IGraphElementModel);
             }
         }
     }

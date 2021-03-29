@@ -45,7 +45,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         /// <param name="pluginRepository">The plugin repository.</param>
         /// <param name="options">Graph processing options.</param>
         /// <param name="tracingControlStateComponent">The tracing state component.</param>
-        /// <returns></returns>
+        /// <returns>The result of a graph processing.</returns>
         public static GraphProcessingResult ProcessGraph(this IGraphModel graphModel, PluginRepository pluginRepository, RequestGraphProcessingOptions options, TracingControlStateComponent tracingControlStateComponent)
         {
             if (graphModel?.Stencil == null)

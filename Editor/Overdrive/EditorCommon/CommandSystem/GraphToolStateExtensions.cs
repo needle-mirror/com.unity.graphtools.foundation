@@ -10,27 +10,27 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         [Obsolete("2021-02-19 Use IGraphViewStateComponentUpdater.MarkNew() instead.")]
         public static void MarkNew(this GraphToolState graphToolState, IGraphElementModel model)
         {
-            using (var stateUpdater = graphToolState.GraphViewState.Updater)
+            using (var stateUpdater = graphToolState.GraphViewState.UpdateScope)
             {
-                stateUpdater.U.MarkNew(model);
+                stateUpdater.MarkNew(model);
             }
         }
 
         [Obsolete("2021-02-19 Use IGraphViewStateComponentUpdater.MarkChanged() instead.")]
         public static void MarkChanged(this GraphToolState graphToolState, IGraphElementModel model)
         {
-            using (var stateUpdater = graphToolState.GraphViewState.Updater)
+            using (var stateUpdater = graphToolState.GraphViewState.UpdateScope)
             {
-                stateUpdater.U.MarkChanged(model);
+                stateUpdater.MarkChanged(model);
             }
         }
 
         [Obsolete("2021-02-19 Use IGraphViewStateComponentUpdater.MarkDeleted() instead.")]
         public static void MarkDeleted(this GraphToolState graphToolState, IGraphElementModel model)
         {
-            using (var stateUpdater = graphToolState.GraphViewState.Updater)
+            using (var stateUpdater = graphToolState.GraphViewState.UpdateScope)
             {
-                stateUpdater.U.MarkDeleted(model);
+                stateUpdater.MarkDeleted(model);
             }
         }
     }

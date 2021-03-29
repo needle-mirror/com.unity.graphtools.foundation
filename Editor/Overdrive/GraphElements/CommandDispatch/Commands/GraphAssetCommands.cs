@@ -71,25 +71,25 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                             RequestGraphProcessingOptions.Default, graphToolState.TracingControlState);
                     }
 
-                    using (var graphProcessingStateUpdater = graphToolState.GraphProcessingState.Updater)
+                    using (var graphProcessingStateUpdater = graphToolState.GraphProcessingState.UpdateScope)
                     {
-                        graphProcessingStateUpdater.U.GraphProcessingPending = false;
+                        graphProcessingStateUpdater.GraphProcessingPending = false;
                     }
                 }
             }
 
-            using (var windowStateUpdater = graphToolState.WindowState.Updater)
+            using (var windowStateUpdater = graphToolState.WindowState.UpdateScope)
             {
                 if (command.TruncateHistoryIndex >= 0)
-                    windowStateUpdater.U.TruncateHistory(command.TruncateHistoryIndex);
+                    windowStateUpdater.TruncateHistory(command.TruncateHistoryIndex);
 
                 switch (command.LoadType)
                 {
                     case Type.Replace:
-                        windowStateUpdater.U.ClearHistory();
+                        windowStateUpdater.ClearHistory();
                         break;
                     case Type.PushOnStack:
-                        windowStateUpdater.U.PushCurrentGraph();
+                        windowStateUpdater.PushCurrentGraph();
                         break;
                     case Type.KeepHistory:
                         break;

@@ -131,15 +131,26 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             this.AddStylesheet("Port.uss");
         }
 
+        /// <inheritdoc/>
         public override void AddModelDependencies()
         {
             if (PortModel.IsConnected())
             {
                 foreach (var edgeModel in PortModel.GetConnectedEdges())
                 {
-                    Dependencies.AddModelDependency(edgeModel);
+                    AddDependencyToEdgeModel(edgeModel);
                 }
             }
+        }
+
+        /// <summary>
+        /// Add <paramref name="edgeModel"/> as a model dependency to this element.
+        /// </summary>
+        /// <param name="edgeModel">The model to add as a dependency.</param>
+        public void AddDependencyToEdgeModel(IEdgeModel edgeModel)
+        {
+            // When edge is created/deleted, port connector needs to be updated (filled/unfilled).
+            Dependencies.AddModelDependency(edgeModel);
         }
 
         void OnCustomStyleResolved(CustomStyleResolvedEvent evt)
@@ -153,9 +164,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        static string GetClassNameModifierForType(PortType t)
+        static string GetClassNameSuffixForType(PortType t)
         {
-            return portTypeModifierClassNamePrefix + t.ToString().ToLower();
+            return t.ToString().ToLower();
         }
 
         /// <inheritdoc />
@@ -172,39 +183,37 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             EnableInClassList(verticalModifierUssClassName, PortModel.Orientation == Orientation.Vertical);
 
-            this.PrefixRemoveFromClassList(portDataTypeClassNamePrefix);
-            AddToClassList(GetClassNameForDataType(PortModel.PortDataType));
+            this.PrefixEnableInClassList(portDataTypeClassNamePrefix, GetClassNameSuffixForDataType(PortModel.PortDataType));
 
-            this.PrefixRemoveFromClassList(portTypeModifierClassNamePrefix);
-            AddToClassList(GetClassNameModifierForType(PortModel.PortType));
+            this.PrefixEnableInClassList(portTypeModifierClassNamePrefix, GetClassNameSuffixForType(PortModel.PortType));
 
             tooltip = PortModel.Orientation == Orientation.Horizontal ? PortModel.ToolTip :
                 string.IsNullOrEmpty(PortModel.ToolTip) ? PortModel.UniqueName :
                 PortModel.UniqueName + "\n" + PortModel.ToolTip;
         }
 
-        static string GetClassNameForDataType(Type thisPortType)
+        static string GetClassNameSuffixForDataType(Type thisPortType)
         {
             if (thisPortType == null)
                 return String.Empty;
 
             if (thisPortType.IsSubclassOf(typeof(Component)))
-                return portDataTypeClassNamePrefix + "component";
+                return "component";
             if (thisPortType.IsSubclassOf(typeof(GameObject)))
-                return portDataTypeClassNamePrefix + "game-object";
+                return "game-object";
             if (thisPortType.IsSubclassOf(typeof(Rigidbody)) || thisPortType.IsSubclassOf(typeof(Rigidbody2D)))
-                return portDataTypeClassNamePrefix + "rigidbody";
+                return "rigidbody";
             if (thisPortType.IsSubclassOf(typeof(Transform)))
-                return portDataTypeClassNamePrefix + "transform";
+                return "transform";
             if (thisPortType.IsSubclassOf(typeof(Texture)) || thisPortType.IsSubclassOf(typeof(Texture2D)))
-                return portDataTypeClassNamePrefix + "texture2d";
+                return "texture2d";
             if (thisPortType.IsSubclassOf(typeof(KeyCode)))
-                return portDataTypeClassNamePrefix + "key-code";
+                return "key-code";
             if (thisPortType.IsSubclassOf(typeof(Material)))
-                return portDataTypeClassNamePrefix + "material";
+                return "material";
             if (thisPortType == typeof(Object))
-                return portDataTypeClassNamePrefix + "object";
-            return portDataTypeClassNamePrefix + thisPortType.Name.ToKebabCase();
+                return "object";
+            return thisPortType.Name.ToKebabCase();
         }
 
         public Vector3 GetGlobalCenter()

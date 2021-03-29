@@ -775,13 +775,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public static void DefaultCommandHandler(UnityEditor.GraphToolsFoundation.Overdrive.GraphToolState graphToolState, UnityEditor.GraphToolsFoundation.Overdrive.DisconnectNodeCommand command);
     }
 
-    [System.Runtime.CompilerServices.IsReadOnly] public struct DisposableStateComponentUpdater<T> : System.IDisposable where T : class, UnityEditor.GraphToolsFoundation.Overdrive.IStateComponentUpdater
-    {
-        public T U { get; }
-        public DisposableStateComponentUpdater(T wrapped) {}
-        public virtual void Dispose();
-    }
-
     public abstract class DragAndDropHandler : UnityEditor.GraphToolsFoundation.Overdrive.IDragAndDropHandler
     {
         protected DragAndDropHandler() {}
@@ -835,6 +828,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public UnityEngine.Vector2 To { get; }
         public Edge() {}
         public virtual void AddBackwardDependencies();
+        public virtual void AddModelDependencies();
         protected virtual void BuildContextualMenu(UnityEngine.UIElements.ContextualMenuPopulateEvent evt);
         protected virtual void BuildPartList();
         public virtual bool ContainsPoint(UnityEngine.Vector2 localPoint);
@@ -1581,12 +1575,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             public StateUpdater() {}
             public void LoadGraphAsset(UnityEditor.GraphToolsFoundation.Overdrive.IGraphAssetModel assetModel);
             public void MarkChanged(System.Collections.Generic.IEnumerable<UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel> models);
-            public void MarkChanged(params UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel[] models);
+            public void MarkChanged(UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel model);
             public void MarkDeleted(System.Collections.Generic.IEnumerable<UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel> models);
-            public void MarkDeleted(params UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel[] models);
+            public void MarkDeleted(UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel model);
             public void MarkModelToAutoAlign(UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel model);
             public void MarkNew(System.Collections.Generic.IEnumerable<UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel> models);
-            public void MarkNew(params UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel[] models);
+            public void MarkNew(UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel model);
         }
     }
 
@@ -2191,11 +2185,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public abstract void PurgeOldChangesets(System.UInt32 untilVersion);
     }
 
-    public interface IStateComponentUpdater
+    public interface IStateComponentUpdater : System.IDisposable
     {
-        public abstract UnityEditor.GraphToolsFoundation.Overdrive.IStateComponent StateComponent { set; }
-        public abstract void BeginStateChange();
-        public abstract void EndStateChange();
+        public abstract void Initialize(UnityEditor.GraphToolsFoundation.Overdrive.IStateComponent state);
     }
 
     public interface IStateObserver
@@ -2696,6 +2688,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public UnityEditor.GraphToolsFoundation.Overdrive.IPortModel PortModel { get; }
         public bool WillConnect { set; }
         public Port() {}
+        public void AddDependencyToEdgeModel(UnityEditor.GraphToolsFoundation.Overdrive.IEdgeModel edgeModel);
         public virtual void AddModelDependencies();
         protected virtual void BuildPartList();
         public virtual bool CanAcceptSelectionDrop(System.Collections.Generic.IReadOnlyList<UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel> dragSelection);
@@ -3293,7 +3286,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     {
         public virtual System.UInt32 CurrentVersion { get; }
         public virtual string StateSlotName { get; set; }
-        public UnityEditor.GraphToolsFoundation.Overdrive.DisposableStateComponentUpdater<TUpdater> Updater { get; }
+        [System.Obsolete(@"Use UpdateScope instead. Added in 0.9. (UnityUpgradable) -> UpdateScope")] public TUpdater Updater { get; }
+        public TUpdater UpdateScope { get; }
         protected StateComponent() {}
         public virtual void AfterDeserialize();
         public virtual void BeforeSerialize();
@@ -3305,13 +3299,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public virtual void PurgeOldChangesets(System.UInt32 untilVersion);
         protected virtual void PushChangeset(System.UInt32 version);
         protected void SetUpdateType(UnityEditor.GraphToolsFoundation.Overdrive.UpdateType type, bool force = False);
-        public abstract class BaseUpdater<TUpdater, TStateComponent> : UnityEditor.GraphToolsFoundation.Overdrive.IStateComponentUpdater where TUpdater : class, UnityEditor.GraphToolsFoundation.Overdrive.IStateComponentUpdater, new() where TStateComponent : UnityEditor.GraphToolsFoundation.Overdrive.StateComponent<TUpdater>
+        public abstract class BaseUpdater<TUpdater, TStateComponent> : System.IDisposable, UnityEditor.GraphToolsFoundation.Overdrive.IStateComponentUpdater where TUpdater : class, UnityEditor.GraphToolsFoundation.Overdrive.IStateComponentUpdater, new() where TStateComponent : UnityEditor.GraphToolsFoundation.Overdrive.StateComponent<TUpdater>
         {
             protected TStateComponent m_State;
             protected BaseUpdater() {}
-            public virtual void BeginStateChange();
-            public virtual void EndStateChange();
+            public virtual void Dispose();
+            protected virtual void Dispose(bool disposing);
+            protected virtual void Finalize();
             public void ForceCompleteUpdate();
+            public virtual void Initialize(UnityEditor.GraphToolsFoundation.Overdrive.IStateComponent state);
         }
     }
 
@@ -3866,7 +3862,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         [System.Runtime.CompilerServices.Extension] public static UnityEngine.Rect GetRect(UnityEngine.UIElements.VisualElement ve);
         [System.Runtime.CompilerServices.Extension] public static T MandatoryQ<T>(UnityEngine.UIElements.VisualElement e, string name = default(string), string className = default(string)) where T : UnityEngine.UIElements.VisualElement;
         [System.Runtime.CompilerServices.Extension] public static UnityEngine.UIElements.VisualElement MandatoryQ(UnityEngine.UIElements.VisualElement e, string name = default(string), string className = default(string));
-        [System.Runtime.CompilerServices.Extension] public static void PrefixRemoveFromClassList(UnityEngine.UIElements.VisualElement ve, string classNamePrefix);
+        [System.Runtime.CompilerServices.Extension] public static void PrefixEnableInClassList(UnityEngine.UIElements.VisualElement ve, string classNamePrefix, string classNameSuffix);
         [System.Runtime.CompilerServices.Extension] public static void ReplaceManipulator<T>(UnityEngine.UIElements.VisualElement ve, ref T manipulator, T newManipulator) where T : UnityEngine.UIElements.Manipulator;
         [System.Runtime.CompilerServices.Extension] public static T SafeQ<T>(UnityEngine.UIElements.VisualElement e, string name = default(string), string className = default(string)) where T : UnityEngine.UIElements.VisualElement;
         [System.Runtime.CompilerServices.Extension] public static UnityEngine.UIElements.VisualElement SafeQ(UnityEngine.UIElements.VisualElement e, string name = default(string), string className = default(string));

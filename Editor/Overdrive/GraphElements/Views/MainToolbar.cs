@@ -309,9 +309,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
                     menu.AddItem(new GUIContent("Rebuild GraphView"), false, () =>
                     {
-                        using (var updater = m_CommandDispatcher.GraphToolState.GraphViewState.Updater)
+                        using (var updater = m_CommandDispatcher.GraphToolState.GraphViewState.UpdateScope)
                         {
-                            updater.U.ForceCompleteUpdate();
+                            updater.ForceCompleteUpdate();
                         }
                     });
                     menu.AddItem(new GUIContent("Rebuild Blackboard"), false, () =>

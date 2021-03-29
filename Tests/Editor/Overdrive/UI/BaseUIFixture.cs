@@ -82,9 +82,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
 
         protected void MarkGraphViewStateDirty()
         {
-            using (var updater = CommandDispatcher.GraphToolState.GraphViewState.Updater)
+            using (var updater = CommandDispatcher.GraphToolState.GraphViewState.UpdateScope)
             {
-                updater.U.ForceCompleteUpdate();
+                updater.ForceCompleteUpdate();
             }
         }
 

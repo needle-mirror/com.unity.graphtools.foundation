@@ -1286,11 +1286,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             Assert.AreEqual(newRect, pm.layout);
 
-            using (var graphUpdater = CommandDispatcher.GraphToolState.GraphViewState.Updater)
+            using (var graphUpdater = CommandDispatcher.GraphToolState.GraphViewState.UpdateScope)
             {
                 pmModel.PositionAndSize = newRect;
                 pmModel.Collapsed = true;
-                graphUpdater.U.MarkChanged(pmModel);
+                graphUpdater.MarkChanged(pmModel);
             }
             yield return null;
 
@@ -1317,11 +1317,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             var node = nodeModel.GetUI<Node>(graphView);
             Assert.IsFalse(node.style.visibility == Visibility.Hidden);
 
-            using (var graphUpdater = CommandDispatcher.GraphToolState.GraphViewState.Updater)
+            using (var graphUpdater = CommandDispatcher.GraphToolState.GraphViewState.UpdateScope)
             {
                 pmModel.Collapsed = true;
                 pmModel.HiddenElements = new[] { nodeModel };
-                graphUpdater.U.MarkChanged(pmModel);
+                graphUpdater.MarkChanged(pmModel);
             }
             yield return null;
 

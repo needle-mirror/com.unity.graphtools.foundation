@@ -23,11 +23,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.CommandSystem
             state.LoadGraphAsset(m_Asset1, null);
             var initialDirtyCount = EditorUtility.GetDirtyCount(m_Asset1 as Object);
 
-            using (var graphUpdater = state.GraphViewState.Updater)
+            using (var graphUpdater = state.GraphViewState.UpdateScope)
             {
-                graphUpdater.U.MarkNew(Enumerable.Empty<IGraphElementModel>());
-                graphUpdater.U.MarkChanged(Enumerable.Empty<IGraphElementModel>());
-                graphUpdater.U.MarkDeleted(Enumerable.Empty<IGraphElementModel>());
+                graphUpdater.MarkNew(Enumerable.Empty<IGraphElementModel>());
+                graphUpdater.MarkChanged(Enumerable.Empty<IGraphElementModel>());
+                graphUpdater.MarkDeleted(Enumerable.Empty<IGraphElementModel>());
             }
 
             Assert.AreEqual(initialDirtyCount, EditorUtility.GetDirtyCount(m_Asset1 as Object));
@@ -40,17 +40,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.CommandSystem
             var state = new GraphToolState(viewGuid1, null);
             state.LoadGraphAsset(m_Asset1, null);
             var dummyModel = new TestNodeModel();
-            using (var graphUpdater = state.GraphViewState.Updater)
+            using (var graphUpdater = state.GraphViewState.UpdateScope)
             {
-                graphUpdater.U.MarkChanged(dummyModel);
+                graphUpdater.MarkChanged(dummyModel);
             }
 
             var changes = state.GraphViewState.GetAggregatedChangeset(0);
             Assert.IsTrue(changes.ChangedModels.Contains(dummyModel));
 
-            using (var graphUpdater = state.GraphViewState.Updater)
+            using (var graphUpdater = state.GraphViewState.UpdateScope)
             {
-                graphUpdater.U.MarkNew(dummyModel);
+                graphUpdater.MarkNew(dummyModel);
             }
 
             changes = state.GraphViewState.GetAggregatedChangeset(0);
@@ -65,17 +65,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.CommandSystem
             var state = new GraphToolState(viewGuid1, null);
             state.LoadGraphAsset(m_Asset1, null);
             var dummyModel = new TestNodeModel();
-            using (var graphUpdater = state.GraphViewState.Updater)
+            using (var graphUpdater = state.GraphViewState.UpdateScope)
             {
-                graphUpdater.U.MarkDeleted(dummyModel);
+                graphUpdater.MarkDeleted(dummyModel);
             }
 
             var changes = state.GraphViewState.GetAggregatedChangeset(0);
             Assert.IsTrue(changes.DeletedModels.Contains(dummyModel));
 
-            using (var graphUpdater = state.GraphViewState.Updater)
+            using (var graphUpdater = state.GraphViewState.UpdateScope)
             {
-                graphUpdater.U.MarkNew(dummyModel);
+                graphUpdater.MarkNew(dummyModel);
             }
 
             changes = state.GraphViewState.GetAggregatedChangeset(0);
@@ -89,17 +89,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.CommandSystem
             var state = new GraphToolState(viewGuid1, null);
             state.LoadGraphAsset(m_Asset1, null);
             var dummyModel = new TestNodeModel();
-            using (var graphUpdater = state.GraphViewState.Updater)
+            using (var graphUpdater = state.GraphViewState.UpdateScope)
             {
-                graphUpdater.U.MarkNew(dummyModel);
+                graphUpdater.MarkNew(dummyModel);
             }
 
             var changes = state.GraphViewState.GetAggregatedChangeset(0);
             Assert.IsTrue(changes.NewModels.Contains(dummyModel));
 
-            using (var graphUpdater = state.GraphViewState.Updater)
+            using (var graphUpdater = state.GraphViewState.UpdateScope)
             {
-                graphUpdater.U.MarkChanged(dummyModel);
+                graphUpdater.MarkChanged(dummyModel);
             }
 
             changes = state.GraphViewState.GetAggregatedChangeset(0);
@@ -113,17 +113,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.CommandSystem
             var state = new GraphToolState(viewGuid1, null);
             state.LoadGraphAsset(m_Asset1, null);
             var dummyModel = new TestNodeModel();
-            using (var graphUpdater = state.GraphViewState.Updater)
+            using (var graphUpdater = state.GraphViewState.UpdateScope)
             {
-                graphUpdater.U.MarkDeleted(dummyModel);
+                graphUpdater.MarkDeleted(dummyModel);
             }
 
             var changes = state.GraphViewState.GetAggregatedChangeset(0);
             Assert.IsTrue(changes.DeletedModels.Contains(dummyModel));
 
-            using (var graphUpdater = state.GraphViewState.Updater)
+            using (var graphUpdater = state.GraphViewState.UpdateScope)
             {
-                graphUpdater.U.MarkChanged(dummyModel);
+                graphUpdater.MarkChanged(dummyModel);
             }
 
             changes = state.GraphViewState.GetAggregatedChangeset(0);
@@ -137,17 +137,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.CommandSystem
             var state = new GraphToolState(viewGuid1, null);
             state.LoadGraphAsset(m_Asset1, null);
             var dummyModel = new TestNodeModel();
-            using (var graphUpdater = state.GraphViewState.Updater)
+            using (var graphUpdater = state.GraphViewState.UpdateScope)
             {
-                graphUpdater.U.MarkNew(dummyModel);
+                graphUpdater.MarkNew(dummyModel);
             }
 
             var changes = state.GraphViewState.GetAggregatedChangeset(0);
             Assert.IsTrue(changes.NewModels.Contains(dummyModel));
 
-            using (var graphUpdater = state.GraphViewState.Updater)
+            using (var graphUpdater = state.GraphViewState.UpdateScope)
             {
-                graphUpdater.U.MarkDeleted(dummyModel);
+                graphUpdater.MarkDeleted(dummyModel);
             }
 
             changes = state.GraphViewState.GetAggregatedChangeset(0);
@@ -162,17 +162,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.CommandSystem
             var state = new GraphToolState(viewGuid1, null);
             state.LoadGraphAsset(m_Asset1, null);
             var dummyModel = new TestNodeModel();
-            using (var graphUpdater = state.GraphViewState.Updater)
+            using (var graphUpdater = state.GraphViewState.UpdateScope)
             {
-                graphUpdater.U.MarkChanged(dummyModel);
+                graphUpdater.MarkChanged(dummyModel);
             }
 
             var changes = state.GraphViewState.GetAggregatedChangeset(0);
             Assert.IsTrue(changes.ChangedModels.Contains(dummyModel));
 
-            using (var graphUpdater = state.GraphViewState.Updater)
+            using (var graphUpdater = state.GraphViewState.UpdateScope)
             {
-                graphUpdater.U.MarkDeleted(dummyModel);
+                graphUpdater.MarkDeleted(dummyModel);
             }
 
             changes = state.GraphViewState.GetAggregatedChangeset(0);

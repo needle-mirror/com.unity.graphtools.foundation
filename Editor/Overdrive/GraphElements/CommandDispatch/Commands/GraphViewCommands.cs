@@ -23,7 +23,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             graphToolState.PushUndo(command);
 
-            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            using (var graphUpdater = graphToolState.GraphViewState.UpdateScope)
             {
                 var movingNodes = command.Models.OfType<INodeModel>().ToList();
 
@@ -37,7 +37,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     movable.Move(command.Value);
                 }
 
-                graphUpdater.U.MarkChanged(command.Models.OfType<IGraphElementModel>());
+                graphUpdater.MarkChanged(command.Models.OfType<IGraphElementModel>());
             }
         }
     }
@@ -65,7 +65,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             graphToolState.PushUndo(command);
 
-            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            using (var graphUpdater = graphToolState.GraphViewState.UpdateScope)
             {
                 for (int i = 0; i < command.Models.Count; ++i)
                 {
@@ -74,7 +74,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     model.Move(delta);
                 }
 
-                graphUpdater.U.MarkChanged(command.Models.OfType<IGraphElementModel>());
+                graphUpdater.MarkChanged(command.Models.OfType<IGraphElementModel>());
             }
         }
     }
@@ -99,18 +99,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             graphToolState.PushUndo(command);
 
-            using (var selectionUpdater = graphToolState.SelectionState.Updater)
-            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            using (var selectionUpdater = graphToolState.SelectionState.UpdateScope)
+            using (var graphUpdater = graphToolState.GraphViewState.UpdateScope)
             {
                 var deletedModels = graphToolState.GraphViewState.GraphModel.DeleteElements(command.Models).ToList();
 
                 var selectedModels = deletedModels.Where(m => graphToolState.SelectionState.IsSelected(m)).ToList();
                 if (selectedModels.Any())
                 {
-                    selectionUpdater.U.SelectElements(selectedModels, false);
+                    selectionUpdater.SelectElements(selectedModels, false);
                 }
 
-                graphUpdater.U.MarkDeleted(deletedModels);
+                graphUpdater.MarkDeleted(deletedModels);
             }
         }
     }
@@ -156,12 +156,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             {
                 graphToolState.PushUndo(command);
 
-                using (var graphViewUpdater = graphToolState.GraphViewState.Updater)
-                using (var selectionUpdater = graphToolState.SelectionState.Updater)
+                using (var graphViewUpdater = graphToolState.GraphViewState.UpdateScope)
+                using (var selectionUpdater = graphToolState.SelectionState.UpdateScope)
                 {
-                    selectionUpdater.U.ClearSelection(graphToolState.GraphViewState.GraphModel);
+                    selectionUpdater.ClearSelection(graphToolState.GraphViewState.GraphModel);
 
-                    CopyPasteData.PasteSerializedData(graphToolState.GraphViewState.GraphModel, command.Info, graphViewUpdater.U, selectionUpdater.U, command.Data);
+                    CopyPasteData.PasteSerializedData(graphToolState.GraphViewState.GraphModel, command.Info, graphViewUpdater, selectionUpdater, command.Data);
                 }
             }
         }
@@ -216,16 +216,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             state.PushUndo(command);
 
-            using (var selectionUpdater = state.SelectionState.Updater)
-            using (var graphUpdater = state.GraphViewState.Updater)
+            using (var selectionUpdater = state.SelectionState.UpdateScope)
+            using (var graphUpdater = state.GraphViewState.UpdateScope)
             {
-                graphUpdater.U.Position = command.Position;
-                graphUpdater.U.Scale = command.Scale;
+                graphUpdater.Position = command.Position;
+                graphUpdater.Scale = command.Scale;
 
                 if (command.NewSelection != null)
                 {
-                    selectionUpdater.U.ClearSelection(state.GraphViewState.GraphModel);
-                    selectionUpdater.U.SelectElements(command.NewSelection, true);
+                    selectionUpdater.ClearSelection(state.GraphViewState.GraphModel);
+                    selectionUpdater.SelectElements(command.NewSelection, true);
                 }
             }
         }

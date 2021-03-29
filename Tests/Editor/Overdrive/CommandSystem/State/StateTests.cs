@@ -25,7 +25,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.CommandSystem
             state.PurgeAllChangesets();
             Assert.IsFalse((state.FooBarStateComponent as IStateComponent).HasChanges());
 
-            using (state.FooBarStateComponent.Updater)
+            using (state.FooBarStateComponent.UpdateScope)
             {
                 // This block intentionally left blank.
             }
@@ -39,7 +39,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.CommandSystem
             var state = new TestGraphToolState(42);
 
             // Make some changes.
-            using (state.FooBarStateComponent.Updater)
+            using (state.FooBarStateComponent.UpdateScope)
             {
                 state.FooBarStateComponent.SetUpdateType(UpdateType.Complete);
             }
@@ -56,7 +56,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.CommandSystem
             var version = state.FooBarStateComponent.GetStateComponentVersion();
 
             // Make some changes.
-            using (state.FooBarStateComponent.Updater)
+            using (state.FooBarStateComponent.UpdateScope)
             {
                 state.FooBarStateComponent.SetUpdateType(UpdateType.Complete);
             }
@@ -75,7 +75,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.CommandSystem
             state.PurgeAllChangesets();
             Assert.AreEqual(UpdateType.None, state.FooBarStateComponent.GetUpdateType(version));
 
-            using (state.FooBarStateComponent.Updater)
+            using (state.FooBarStateComponent.UpdateScope)
             {
                 state.FooBarStateComponent.SetUpdateType(UpdateType.Partial);
             }
@@ -92,7 +92,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.CommandSystem
             state.PurgeAllChangesets();
             Assert.AreEqual(UpdateType.None, state.FooBarStateComponent.GetUpdateType(version));
 
-            using (state.FooBarStateComponent.Updater)
+            using (state.FooBarStateComponent.UpdateScope)
             {
                 state.FooBarStateComponent.SetUpdateType(UpdateType.Complete);
             }
@@ -109,7 +109,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.CommandSystem
             state.PurgeAllChangesets();
             Assert.AreEqual(UpdateType.None, state.FooBarStateComponent.GetUpdateType(version));
 
-            using (state.FooBarStateComponent.Updater)
+            using (state.FooBarStateComponent.UpdateScope)
             {
                 state.FooBarStateComponent.SetUpdateType(UpdateType.None);
             }
@@ -126,7 +126,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.CommandSystem
             state.PurgeAllChangesets();
             Assert.AreEqual(UpdateType.None, state.FooBarStateComponent.GetUpdateType(version));
 
-            using (state.FooBarStateComponent.Updater)
+            using (state.FooBarStateComponent.UpdateScope)
             {
                 // This block intentionally left blank.
             }

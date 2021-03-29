@@ -96,9 +96,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     var shouldRebuild = gvUpdateType.Combine(tsObservation.UpdateType) != UpdateType.None;
                     if (state.GraphProcessingState.GraphProcessingPending != shouldRebuild)
                     {
-                        using (var updater = state.GraphProcessingState.Updater)
+                        using (var updater = state.GraphProcessingState.UpdateScope)
                         {
-                            updater.U.GraphProcessingPending = shouldRebuild;
+                            updater.GraphProcessingPending = shouldRebuild;
                         }
                     }
                 }
@@ -126,12 +126,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
                     if (results != null || state.GraphProcessingState.GraphProcessingPending)
                     {
-                        using (var updater = state.GraphProcessingState.Updater)
+                        using (var updater = state.GraphProcessingState.UpdateScope)
                         {
-                            updater.U.GraphProcessingPending = false;
+                            updater.GraphProcessingPending = false;
 
                             if (results != null)
-                                updater.U.SetResults(results,
+                                updater.SetResults(results,
                                     GraphProcessingHelper.GetErrors(state.GraphViewState.GraphModel.Stencil, results));
                         }
                     }

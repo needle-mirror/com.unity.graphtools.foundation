@@ -29,9 +29,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.CommandSystem
             var state = new GraphToolState(viewGuid1, null);
             state.LoadGraphAsset(m_Asset1, null);
             Assert.IsNotNull(state.SelectionState);
-            using (var selectionUpdater = state.SelectionState.Updater)
+            using (var selectionUpdater = state.SelectionState.UpdateScope)
             {
-                selectionUpdater.U.SelectElements(new[] { node }, true);
+                selectionUpdater.SelectElements(new[] { node }, true);
             }
             Assert.IsTrue(state.SelectionState.IsSelected(node));
 

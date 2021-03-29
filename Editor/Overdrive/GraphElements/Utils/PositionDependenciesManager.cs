@@ -182,7 +182,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             Profiler.EndSample();
         }
 
-        void ProcessDependencyModel(INodeModel nodeModel, Action<IDependency, INodeModel> dependencyCallback)
+        void ProcessDependencyModel(INodeModel nodeModel, GraphViewStateComponent.StateUpdater graphUpdater,
+            Action<IDependency, INodeModel, GraphViewStateComponent.StateUpdater> dependencyCallback)
         {
             Log($"ProcessDependencyModel {nodeModel}");
 
@@ -199,18 +200,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     continue;
                 }
 
-                dependencyCallback(dependency.Value, nodeModel);
-                ProcessDependencyModel(dependency.Value.DependentNode, dependencyCallback);
+                dependencyCallback(dependency.Value, nodeModel, graphUpdater);
+                ProcessDependencyModel(dependency.Value.DependentNode, graphUpdater, dependencyCallback);
             }
         }
 
-        void ProcessMovedNodeModels(Action<IDependency, INodeModel> dependencyCallback)
+        void ProcessMovedNodeModels(Action<IDependency, INodeModel, GraphViewStateComponent.StateUpdater> dependencyCallback, GraphViewStateComponent.StateUpdater graphUpdater)
         {
             Profiler.BeginSample("GTF.ProcessMovedNodeModel");
 
             m_TempMovedModels.Clear();
             foreach (INodeModel nodeModel in m_ModelsToMove)
-                ProcessDependencyModel(nodeModel, dependencyCallback);
+                ProcessDependencyModel(nodeModel, graphUpdater, dependencyCallback);
 
             Profiler.EndSample();
         }
@@ -317,20 +318,20 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (m_GraphModel == null)
                 return;
 
-            using (var graphUpdater = m_GraphView.CommandDispatcher.GraphToolState.GraphViewState.Updater)
+            using (var graphUpdater = m_GraphView.CommandDispatcher.GraphToolState.GraphViewState.UpdateScope)
             {
                 ProcessMovedNodes(Vector2.zero, (element, model, _, __) =>
                 {
                     model.DependentNode.Position = element.GetPosition().position;
                     // ReSharper disable once AccessToDisposedClosure
-                    graphUpdater.U.MarkChanged(model.DependentNode);
+                    graphUpdater.MarkChanged(model.DependentNode);
                 });
             }
 
             m_ModelsToMove.Clear();
         }
 
-        void AlignDependency(IDependency dependency, INodeModel prev)
+        void AlignDependency(IDependency dependency, INodeModel prev, GraphViewStateComponent.StateUpdater graphUpdater)
         {
             // Warning: Don't try to use the VisualElement.layout Rect as it is not up to date yet.
             // Use Node.GetPosition() when possible
@@ -377,16 +378,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                         }
 
                         linked.DependentNode.Position = position;
-                        using (var graphUpdater = m_GraphView.CommandDispatcher.GraphToolState.GraphViewState.Updater)
-                        {
-                            graphUpdater.U.MarkChanged(linked.DependentNode);
-                        }
+                        graphUpdater.MarkChanged(linked.DependentNode);
                     }
                     break;
             }
         }
 
-        public void AlignNodes(bool follow, IReadOnlyList<IGraphElementModel> entryPoints)
+        public void AlignNodes(bool follow, IReadOnlyList<IGraphElementModel> entryPoints, GraphViewStateComponent.StateUpdater graphUpdater)
         {
             HashSet<INodeModel> topMostModels = new HashSet<INodeModel>();
 
@@ -399,7 +397,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     continue;
                 anyEdge = true;
 
-                AlignDependency(dependency, parent);
+                AlignDependency(dependency, parent, graphUpdater);
                 topMostModels.Add(dependency.DependentNode);
             }
 
@@ -423,7 +421,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                         continue;
                     foreach (var dependency in dependencies)
                     {
-                        AlignDependency(dependency.Value, model);
+                        AlignDependency(dependency.Value, model, graphUpdater);
                     }
                 }
             }
@@ -431,7 +429,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             {
                 // Align recursively
                 m_ModelsToMove.AddRange(topMostModels);
-                ProcessMovedNodeModels(AlignDependency);
+                ProcessMovedNodeModels(AlignDependency, graphUpdater);
             }
 
             m_ModelsToMove.Clear();

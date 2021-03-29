@@ -21,10 +21,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             graphToolState.PushUndo(command);
 
-            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            using (var graphUpdater = graphToolState.GraphViewState.UpdateScope)
             {
                 var stickyNote = graphToolState.GraphViewState.GraphModel.CreateStickyNote(command.Position);
-                graphUpdater.U.MarkNew(stickyNote);
+                graphUpdater.MarkNew(stickyNote);
             }
         }
     }
@@ -54,7 +54,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             graphToolState.PushUndo(command);
 
-            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            using (var graphUpdater = graphToolState.GraphViewState.UpdateScope)
             {
                 if (command.Title != null)
                     command.StickyNoteModel.Title = command.Title;
@@ -62,7 +62,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 if (command.Contents != null)
                     command.StickyNoteModel.Contents = command.Contents;
 
-                graphUpdater.U.MarkChanged(command.StickyNoteModel);
+                graphUpdater.MarkChanged(command.StickyNoteModel);
             }
         }
     }
@@ -85,14 +85,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             graphToolState.PushUndo(command);
 
-            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            using (var graphUpdater = graphToolState.GraphViewState.UpdateScope)
             {
                 foreach (var noteModel in command.Models)
                 {
                     noteModel.Theme = command.Value;
                 }
 
-                graphUpdater.U.MarkChanged(command.Models);
+                graphUpdater.MarkChanged(command.Models);
             }
         }
     }
@@ -115,14 +115,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             graphToolState.PushUndo(command);
 
-            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            using (var graphUpdater = graphToolState.GraphViewState.UpdateScope)
             {
                 foreach (var noteModel in command.Models)
                 {
                     noteModel.TextSize = command.Value;
                 }
 
-                graphUpdater.U.MarkChanged(command.Models);
+                graphUpdater.MarkChanged(command.Models);
             }
         }
     }

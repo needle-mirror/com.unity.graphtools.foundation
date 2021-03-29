@@ -73,8 +73,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 }
             }
 
-            this.PrefixRemoveFromClassList(portCountClassNamePrefix);
-            AddToClassList(portCountClassNamePrefix + portViewModels.Count);
+            this.PrefixEnableInClassList(portCountClassNamePrefix, portViewModels.Count.ToString());
         }
     }
 }

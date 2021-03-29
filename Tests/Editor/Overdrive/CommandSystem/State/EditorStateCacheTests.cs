@@ -7,12 +7,12 @@ using UnityEngine;
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.CommandSystem
 {
     [Serializable]
-    class CacheStateComponent : StateComponent<CacheStateComponent.Updater>
+    class CacheStateComponent : StateComponent<CacheStateComponent.StateUpdater>
     {
         [SerializeField]
         int m_Value = 42;
 
-        public new class Updater : BaseUpdater<CacheStateComponent>
+        public class StateUpdater : BaseUpdater<CacheStateComponent>
         {
             public int Value
             {

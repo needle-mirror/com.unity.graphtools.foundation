@@ -40,7 +40,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             {
                 graphToolState.PushUndo(command);
 
-                using (var graphUpdater = graphToolState.GraphViewState.Updater)
+                using (var graphUpdater = graphToolState.GraphViewState.UpdateScope)
                 {
                     var edgesToDelete = command.EdgeModelsToDelete ?? new List<IEdgeModel>();
 
@@ -56,7 +56,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     if (edgesToDelete.Any())
                     {
                         graphToolState.GraphViewState.GraphModel.DeleteEdges(edgesToDelete);
-                        graphUpdater.U.MarkDeleted(edgesToDelete);
+                        graphUpdater.MarkDeleted(edgesToDelete);
                     }
 
                     foreach (var (variableDeclarationModel, guid, position) in command.VariablesToCreate)
@@ -64,16 +64,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                         var vsGraphModel = graphToolState.GraphViewState.GraphModel;
 
                         var newVariable = vsGraphModel.CreateVariableNode(variableDeclarationModel, position, guid: guid);
-                        graphUpdater.U.MarkNew(newVariable);
+                        graphUpdater.MarkNew(newVariable);
 
                         if (portToConnect != null)
                         {
                             var newEdge =
                                 graphToolState.GraphViewState.GraphModel.CreateEdge(portToConnect, newVariable.OutputPort);
-                            graphUpdater.U.MarkNew(newEdge);
+                            graphUpdater.MarkNew(newEdge);
                             if (command.AutoAlign)
                             {
-                                graphUpdater.U.MarkModelToAutoAlign(newEdge);
+                                graphUpdater.MarkModelToAutoAlign(newEdge);
                             }
                         }
                     }
@@ -159,8 +159,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             graphToolState.PushUndo(command);
 
-            using (var graphUpdater = graphToolState.GraphViewState.Updater)
-            using (var selectionUpdater = graphToolState.SelectionState.Updater)
+            using (var graphUpdater = graphToolState.GraphViewState.UpdateScope)
+            using (var selectionUpdater = graphToolState.SelectionState.UpdateScope)
             {
                 var graphModel = graphToolState.GraphViewState.GraphModel;
 
@@ -170,12 +170,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                         constantModel.Type.GenerateTypeHandle(),
                         StringExtensions.CodifyString(constantModel.Type.FriendlyName()), ModifierFlags.None, true,
                         constantModel.Value.CloneConstant());
-                    graphUpdater.U.MarkNew(declarationModel);
+                    graphUpdater.MarkNew(declarationModel);
 
                     if (graphModel.CreateVariableNode(declarationModel, constantModel.Position) is IVariableNodeModel variableModel)
                     {
-                        graphUpdater.U.MarkNew(variableModel);
-                        selectionUpdater.U.SelectElement(variableModel, true);
+                        graphUpdater.MarkNew(variableModel);
+                        selectionUpdater.SelectElement(variableModel, true);
 
                         variableModel.State = constantModel.State;
                         if (constantModel.HasUserColor)
@@ -185,15 +185,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                             var newEdge = graphModel.CreateEdge(edge.ToPort, variableModel.OutputPort);
                             var deletedModels = graphModel.DeleteEdge(edge);
 
-                            graphUpdater.U.MarkNew(newEdge);
-                            graphUpdater.U.MarkDeleted(deletedModels);
-                            selectionUpdater.U.SelectElements(deletedModels, false);
+                            graphUpdater.MarkNew(newEdge);
+                            graphUpdater.MarkDeleted(deletedModels);
+                            selectionUpdater.SelectElements(deletedModels, false);
                         }
                     }
 
                     var deletedElements = graphModel.DeleteNode(constantModel, deleteConnections: false);
-                    graphUpdater.U.MarkDeleted(deletedElements);
-                    selectionUpdater.U.SelectElements(deletedElements, false);
+                    graphUpdater.MarkDeleted(deletedElements);
+                    selectionUpdater.SelectElements(deletedElements, false);
                 }
 
                 foreach (var variableModel in command.VariableModels ?? Enumerable.Empty<IVariableNodeModel>())
@@ -205,22 +205,22 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     constantModel.State = variableModel.State;
                     if (variableModel.HasUserColor)
                         constantModel.Color = variableModel.Color;
-                    graphUpdater.U.MarkNew(constantModel);
-                    selectionUpdater.U.SelectElement(constantModel, true);
+                    graphUpdater.MarkNew(constantModel);
+                    selectionUpdater.SelectElement(constantModel, true);
 
                     var edgeModels = graphModel.GetEdgesConnections(variableModel.OutputPort).ToList();
                     foreach (var edge in edgeModels)
                     {
                         var newEdge = graphModel.CreateEdge(edge.ToPort, constantModel.OutputPort);
                         var deletedModels = graphModel.DeleteEdge(edge);
-                        graphUpdater.U.MarkNew(newEdge);
-                        graphUpdater.U.MarkDeleted(deletedModels);
-                        selectionUpdater.U.SelectElements(deletedModels, false);
+                        graphUpdater.MarkNew(newEdge);
+                        graphUpdater.MarkDeleted(deletedModels);
+                        selectionUpdater.SelectElements(deletedModels, false);
                     }
 
                     var deletedElements = graphModel.DeleteNode(variableModel, deleteConnections: false);
-                    graphUpdater.U.MarkDeleted(deletedElements);
-                    selectionUpdater.U.SelectElements(deletedElements, false);
+                    graphUpdater.MarkDeleted(deletedElements);
+                    selectionUpdater.SelectElements(deletedElements, false);
                 }
             }
         }
@@ -242,7 +242,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             bool undoPushed = false;
 
-            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            using (var graphUpdater = graphToolState.GraphViewState.UpdateScope)
             {
                 var graphModel = graphToolState.GraphViewState.GraphModel;
                 foreach (var model in command.Models.Where(m => m is IVariableNodeModel || m is IConstantNodeModel))
@@ -258,12 +258,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                         }
 
                         var newModel = (ISingleOutputPortNodeModel)graphModel.DuplicateNode(model, i * 50 * Vector2.up);
-                        graphUpdater.U.MarkNew(newModel);
+                        graphUpdater.MarkNew(newModel);
                         var edge = edges[i];
                         var newEdge = graphModel.CreateEdge(edge.ToPort, newModel.OutputPort);
                         var deletedModels = graphModel.DeleteEdge(edge);
-                        graphUpdater.U.MarkNew(newEdge);
-                        graphUpdater.U.MarkDeleted(deletedModels);
+                        graphUpdater.MarkNew(newEdge);
+                        graphUpdater.MarkDeleted(deletedModels);
                     }
                 }
             }
@@ -288,14 +288,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             graphToolState.PushUndo(command);
 
-            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            using (var graphUpdater = graphToolState.GraphViewState.UpdateScope)
             {
                 foreach (var constantNodeModel in command.Models)
                 {
                     constantNodeModel.IsLocked = !constantNodeModel.IsLocked;
                 }
 
-                graphUpdater.U.MarkChanged(command.Models);
+                graphUpdater.MarkChanged(command.Models);
             }
         }
     }
@@ -322,17 +322,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             graphToolState.PushUndo(command);
 
-            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            using (var graphUpdater = graphToolState.GraphViewState.UpdateScope)
             {
                 foreach (var model in command.Models)
                 {
                     model.DeclarationModel = command.Variable;
 
                     var references = graphToolState.GraphViewState.GraphModel.FindReferencesInGraph<IVariableNodeModel>(command.Variable);
-                    graphUpdater.U.MarkChanged(references);
+                    graphUpdater.MarkChanged(references);
                 }
 
-                graphUpdater.U.MarkChanged(command.Models);
+                graphUpdater.MarkChanged(command.Models);
             }
         }
     }

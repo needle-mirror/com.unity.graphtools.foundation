@@ -17,6 +17,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         /// </summary>
         public class StateUpdater : BaseUpdater<GraphViewStateComponent>
         {
+            IGraphElementModel[] m_Single = new IGraphElementModel[1];
+
             /// <summary>
             /// Loads a graph asset in the graph view.
             /// </summary>
@@ -88,12 +90,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
 
             /// <summary>
-            /// Marks graph element models as newly created.
+            /// Marks a graph element model as newly created.
             /// </summary>
-            /// <param name="models">The newly created models.</param>
-            public void MarkNew(params IGraphElementModel[] models)
+            /// <param name="model">The newly created model.</param>
+            public void MarkNew(IGraphElementModel model)
             {
-                MarkNew(models as IEnumerable<IGraphElementModel>);
+                m_Single[0] = model;
+                MarkNew(m_Single);
             }
 
             /// <summary>
@@ -129,12 +132,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
 
             /// <summary>
-            /// Marks graph element models as changed.
+            /// Marks a graph element model as changed.
             /// </summary>
-            /// <param name="models">The changed models.</param>
-            public void MarkChanged(params IGraphElementModel[] models)
+            /// <param name="model">The changed model.</param>
+            public void MarkChanged(IGraphElementModel model)
             {
-                MarkChanged(models as IEnumerable<IGraphElementModel>);
+                m_Single[0] = model;
+                MarkChanged(m_Single);
             }
 
             /// <summary>
@@ -171,12 +175,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
 
             /// <summary>
-            /// Marks graph element models as deleted.
+            /// Marks a graph element model as deleted.
             /// </summary>
-            /// <param name="models">The deleted models.</param>
-            public void MarkDeleted(params IGraphElementModel[] models)
+            /// <param name="model">The deleted model.</param>
+            public void MarkDeleted(IGraphElementModel model)
             {
-                MarkDeleted(models as IEnumerable<IGraphElementModel>);
+                m_Single[0] = model;
+                MarkDeleted(m_Single);
             }
 
             /// <summary>

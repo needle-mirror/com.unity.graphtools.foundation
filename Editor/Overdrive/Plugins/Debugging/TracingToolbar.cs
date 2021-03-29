@@ -125,10 +125,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Plugins.Debugging
                 if (i == null || !(i is TargetSearcherItem targetSearcherItem))
                     return true;
 
-                using (var updater = state.TracingControlState.Updater)
+                using (var updater = state.TracingControlState.UpdateScope)
                 {
-                    updater.U.CurrentTracingTarget = targetSearcherItem.Target;
-                    UpdateTracingMenu(updater.U);
+                    updater.CurrentTracingTarget = targetSearcherItem.Target;
+                    UpdateTracingMenu(updater);
                 }
 
                 return true;
@@ -148,11 +148,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Plugins.Debugging
 
                 frame = Math.Max(0, Math.Min(frame, Time.frameCount));
 
-                using (var updater = tracingDataModel.Updater)
+                using (var updater = tracingDataModel.UpdateScope)
                 {
-                    updater.U.CurrentTracingFrame = frame;
-                    updater.U.CurrentTracingStep = -1;
-                    UpdateTracingMenu(updater.U);
+                    updater.CurrentTracingFrame = frame;
+                    updater.CurrentTracingStep = -1;
+                    UpdateTracingMenu(updater);
                 }
             }
         }
@@ -232,11 +232,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Plugins.Debugging
         void OnFirstFrameTracingButton()
         {
             var tracingDataModel = m_CommandDispatcher.GraphToolState.TracingControlState;
-            using (var updater = tracingDataModel.Updater)
+            using (var updater = tracingDataModel.UpdateScope)
             {
-                updater.U.CurrentTracingFrame = 0;
-                updater.U.CurrentTracingStep = -1;
-                UpdateTracingMenu(updater.U);
+                updater.CurrentTracingFrame = 0;
+                updater.CurrentTracingStep = -1;
+                UpdateTracingMenu(updater);
             }
         }
 
@@ -247,11 +247,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Plugins.Debugging
 
             if (tracingDataModel.CurrentTracingFrame > 0)
             {
-                using (var updater = tracingDataModel.Updater)
+                using (var updater = tracingDataModel.UpdateScope)
                 {
-                    updater.U.CurrentTracingFrame--;
-                    updater.U.CurrentTracingStep = -1;
-                    UpdateTracingMenu(updater.U);
+                    updater.CurrentTracingFrame--;
+                    updater.CurrentTracingStep = -1;
+                    UpdateTracingMenu(updater);
                 }
             }
         }
@@ -261,29 +261,29 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Plugins.Debugging
         {
             var tracingControlState = m_CommandDispatcher.GraphToolState.TracingControlState;
             var tracingDataState = m_CommandDispatcher.GraphToolState.TracingDataState;
-            using (var updater = tracingControlState.Updater)
+            using (var updater = tracingControlState.UpdateScope)
             {
                 if (tracingControlState.CurrentTracingStep > 0)
                 {
-                    updater.U.CurrentTracingStep--;
+                    updater.CurrentTracingStep--;
                 }
                 else
                 {
                     if (tracingControlState.CurrentTracingStep == -1)
                     {
-                        updater.U.CurrentTracingStep = tracingDataState.MaxTracingStep;
+                        updater.CurrentTracingStep = tracingDataState.MaxTracingStep;
                     }
                     else
                     {
                         if (tracingControlState.CurrentTracingFrame > 0)
                         {
-                            updater.U.CurrentTracingFrame--;
-                            updater.U.CurrentTracingStep = tracingDataState.MaxTracingStep;
+                            updater.CurrentTracingFrame--;
+                            updater.CurrentTracingStep = tracingDataState.MaxTracingStep;
                         }
                     }
                 }
 
-                UpdateTracingMenu(updater.U);
+                UpdateTracingMenu(updater);
             }
         }
 
@@ -293,29 +293,29 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Plugins.Debugging
             var tracingControlState = m_CommandDispatcher.GraphToolState.TracingControlState;
             var tracingDataState = m_CommandDispatcher.GraphToolState.TracingDataState;
 
-            using (var updater = tracingControlState.Updater)
+            using (var updater = tracingControlState.UpdateScope)
             {
                 if (tracingControlState.CurrentTracingStep < tracingDataState.MaxTracingStep && tracingControlState.CurrentTracingStep >= 0)
                 {
-                    updater.U.CurrentTracingStep++;
+                    updater.CurrentTracingStep++;
                 }
                 else
                 {
                     if (tracingControlState.CurrentTracingStep == -1 && (tracingControlState.CurrentTracingFrame < Time.frameCount))
                     {
-                        updater.U.CurrentTracingStep = 0;
+                        updater.CurrentTracingStep = 0;
                     }
                     else
                     {
                         if (tracingControlState.CurrentTracingFrame < Time.frameCount)
                         {
-                            updater.U.CurrentTracingFrame++;
-                            updater.U.CurrentTracingStep = 0;
+                            updater.CurrentTracingFrame++;
+                            updater.CurrentTracingStep = 0;
                         }
                     }
                 }
 
-                UpdateTracingMenu(updater.U);
+                UpdateTracingMenu(updater);
             }
         }
 
@@ -325,11 +325,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Plugins.Debugging
             var tracingDataModel = m_CommandDispatcher.GraphToolState.TracingControlState;
             if (tracingDataModel.CurrentTracingFrame < Time.frameCount)
             {
-                using (var updater = tracingDataModel.Updater)
+                using (var updater = tracingDataModel.UpdateScope)
                 {
-                    updater.U.CurrentTracingFrame++;
-                    updater.U.CurrentTracingStep = -1;
-                    UpdateTracingMenu(updater.U);
+                    updater.CurrentTracingFrame++;
+                    updater.CurrentTracingStep = -1;
+                    UpdateTracingMenu(updater);
                 }
             }
         }
@@ -339,11 +339,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Plugins.Debugging
         {
             var tracingDataModel = m_CommandDispatcher.GraphToolState.TracingControlState;
 
-            using (var updater = tracingDataModel.Updater)
+            using (var updater = tracingDataModel.UpdateScope)
             {
-                updater.U.CurrentTracingFrame = Time.frameCount;
-                updater.U.CurrentTracingStep = -1;
-                UpdateTracingMenu(updater.U);
+                updater.CurrentTracingFrame = Time.frameCount;
+                updater.CurrentTracingStep = -1;
+                UpdateTracingMenu(updater);
             }
         }
     }

@@ -45,7 +45,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             graphToolState.PushUndo(command);
 
-            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            using (var graphUpdater = graphToolState.GraphViewState.UpdateScope)
             {
                 var graphModel = graphToolState.GraphViewState.GraphModel;
 
@@ -63,22 +63,22 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 if (command.EdgeModelsToDelete != null)
                 {
                     graphModel.DeleteEdges(edgesToDelete);
-                    graphUpdater.U.MarkDeleted(edgesToDelete);
+                    graphUpdater.MarkDeleted(edgesToDelete);
                 }
 
                 if (command.CreateItemizedNode)
                 {
                     var newNode = graphModel.CreateItemizedNode(graphToolState, EdgeCommandConfig.nodeOffset, ref fromPortModel);
-                    graphUpdater.U.MarkNew(newNode);
+                    graphUpdater.MarkNew(newNode);
                 }
 
                 var edgeModel = graphModel.CreateEdge(toPortModel, fromPortModel);
-                graphUpdater.U.MarkNew(edgeModel);
+                graphUpdater.MarkNew(edgeModel);
 
                 if (command.PortAlignment.HasFlag(Direction.Input))
-                    graphUpdater.U.MarkModelToAutoAlign(toPortModel.NodeModel);
+                    graphUpdater.MarkModelToAutoAlign(toPortModel.NodeModel);
                 if (command.PortAlignment.HasFlag(Direction.Output))
-                    graphUpdater.U.MarkModelToAutoAlign(fromPortModel.NodeModel);
+                    graphUpdater.MarkModelToAutoAlign(fromPortModel.NodeModel);
             }
         }
     }
@@ -103,10 +103,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             graphToolState.PushUndo(command);
 
-            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            using (var graphUpdater = graphToolState.GraphViewState.UpdateScope)
             {
                 graphToolState.GraphViewState.GraphModel.DeleteEdges(command.Models);
-                graphUpdater.U.MarkDeleted(command.Models);
+                graphUpdater.MarkDeleted(command.Models);
             }
         }
     }
@@ -133,10 +133,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             graphToolState.PushUndo(command);
 
-            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            using (var graphUpdater = graphToolState.GraphViewState.UpdateScope)
             {
                 command.EdgeModel.InsertEdgeControlPoint(command.AtIndex, command.Position, 100);
-                graphUpdater.U.MarkChanged(command.EdgeModel);
+                graphUpdater.MarkChanged(command.EdgeModel);
             }
         }
     }
@@ -165,10 +165,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             graphToolState.PushUndo(command);
 
-            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            using (var graphUpdater = graphToolState.GraphViewState.UpdateScope)
             {
                 command.EdgeModel.ModifyEdgeControlPoint(command.EdgeIndex, command.NewPosition, command.NewTightness);
-                graphUpdater.U.MarkChanged(command.EdgeModel);
+                graphUpdater.MarkChanged(command.EdgeModel);
             }
         }
     }
@@ -193,10 +193,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             graphToolState.PushUndo(command);
 
-            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            using (var graphUpdater = graphToolState.GraphViewState.UpdateScope)
             {
                 command.EdgeModel.RemoveEdgeControlPoint(command.EdgeIndex);
-                graphUpdater.U.MarkChanged(command.EdgeModel);
+                graphUpdater.MarkChanged(command.EdgeModel);
             }
         }
     }
@@ -221,10 +221,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             graphToolState.PushUndo(command);
 
-            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            using (var graphUpdater = graphToolState.GraphViewState.UpdateScope)
             {
                 command.EdgeModel.EditMode = command.Value;
-                graphUpdater.U.MarkChanged(command.EdgeModel);
+                graphUpdater.MarkChanged(command.EdgeModel);
             }
         }
     }
@@ -299,12 +299,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     {
                         graphToolState.PushUndo(command);
 
-                        using (var graphUpdater = graphToolState.GraphViewState.Updater)
+                        using (var graphUpdater = graphToolState.GraphViewState.UpdateScope)
                         {
                             reorderAction(command.EdgeModel);
 
-                            graphUpdater.U.MarkChanged(siblingEdges);
-                            graphUpdater.U.MarkChanged(fromPort.NodeModel);
+                            graphUpdater.MarkChanged(siblingEdges);
+                            graphUpdater.MarkChanged(fromPort.NodeModel);
                         }
                     }
                 }
@@ -335,7 +335,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             graphToolState.PushUndo(command);
 
-            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            using (var graphUpdater = graphToolState.GraphViewState.UpdateScope)
             {
                 var graphModel = graphToolState.GraphViewState.GraphModel;
                 var edgeInput = command.EdgeModel.ToPort;
@@ -344,9 +344,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 var edge1 = graphModel.CreateEdge(edgeInput, command.NodeModel.OutputsByDisplayOrder.First(p => p?.PortType == edgeInput?.PortType));
                 var edge2 = graphModel.CreateEdge(command.NodeModel.InputsByDisplayOrder.First(p => p?.PortType == edgeOutput?.PortType), edgeOutput);
 
-                graphUpdater.U.MarkDeleted(deletedModels);
-                graphUpdater.U.MarkNew(edge1);
-                graphUpdater.U.MarkNew(edge2);
+                graphUpdater.MarkDeleted(deletedModels);
+                graphUpdater.MarkNew(edge1);
+                graphUpdater.MarkNew(edge2);
             }
         }
     }
@@ -387,7 +387,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             graphToolState.PushUndo(command);
 
-            using (var updater = graphToolState.GraphViewState.Updater)
+            using (var updater = graphToolState.GraphViewState.UpdateScope)
             {
                 var existingPortalEntries = new Dictionary<IPortModel, IEdgePortalEntryModel>();
                 var existingPortalExits = new Dictionary<IPortModel, List<IEdgePortalExitModel>>();
@@ -411,7 +411,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
                 var edgesToDelete = edgeData.Select(d => d.edge).ToList();
                 graphModel.DeleteEdges(edgesToDelete);
-                updater.U.MarkDeleted(edgesToDelete);
+                updater.MarkDeleted(edgesToDelete);
 
                 void ConvertEdgeToPortals((IEdgeModel edgeModel, Vector2 startPos, Vector2 endPos) data)
                 {
@@ -422,7 +422,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     {
                         portalEntry = graphModel.CreateEntryPortalFromEdge(data.edgeModel);
                         existingPortalEntries[outputPortModel] = portalEntry;
-                        updater.U.MarkNew(portalEntry);
+                        updater.MarkNew(portalEntry);
 
                         if (!(outputPortModel.NodeModel is IInputOutputPortsNodeModel nodeModel))
                             return;
@@ -445,10 +445,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                         }
 
                         portalEntry.DeclarationModel = graphModel.CreateGraphPortalDeclaration(portalName);
-                        updater.U.MarkNew(portalEntry.DeclarationModel);
+                        updater.MarkNew(portalEntry.DeclarationModel);
 
                         var newEntryEdge = graphModel.CreateEdge(portalEntry.InputPort, outputPortModel);
-                        updater.U.MarkNew(newEntryEdge);
+                        updater.MarkNew(newEntryEdge);
                     }
 
                     // We can have multiple portals on input ports however
@@ -462,7 +462,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     var inputPortModel = data.edgeModel.ToPort;
                     portalExit = graphModel.CreateExitPortalFromEdge(data.edgeModel);
                     portalExits.Add(portalExit);
-                    updater.U.MarkNew(portalExit);
+                    updater.MarkNew(portalExit);
 
                     portalExit.Position = data.endPos + k_ExitPortalBaseOffset;
                     {
@@ -477,7 +477,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     portalExit.DeclarationModel = portalEntry?.DeclarationModel;
 
                     var newExitEdge = graphModel.CreateEdge(inputPortModel, portalExit.OutputPort);
-                    updater.U.MarkNew(newExitEdge);
+                    updater.MarkNew(newExitEdge);
                 }
             }
         }
@@ -494,7 +494,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             graphToolState.PushUndo(command);
 
-            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            using (var graphUpdater = graphToolState.GraphViewState.UpdateScope)
             {
                 var changedPorts = new List<IPortModel>();
                 foreach (var node in graphToolState.GraphViewState.GraphModel.NodeModels.OfType<IPortNodeModel>())
@@ -509,7 +509,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     }
                 }
 
-                graphUpdater.U.MarkChanged(changedPorts);
+                graphUpdater.MarkChanged(changedPorts);
             }
         }
     }
@@ -528,7 +528,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             graphToolState.PushUndo(command);
 
-            using (var graphUpdater = graphToolState.GraphViewState.Updater)
+            using (var graphUpdater = graphToolState.GraphViewState.UpdateScope)
             {
                 var changedPorts = new List<IPortModel>();
 
@@ -544,7 +544,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     }
                 }
 
-                graphUpdater.U.MarkChanged(changedPorts);
+                graphUpdater.MarkChanged(changedPorts);
             }
         }
     }

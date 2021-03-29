@@ -9,7 +9,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels
 
         public override IGraphModel GraphModel => m_GraphModel;
 
-        public override bool HasReorderableEdges => m_IsReorderable && this.IsConnected();
+        public override bool HasReorderableEdges => m_IsReorderable && Direction == Direction.Output && this.IsConnected();
 
         public override string ToolTip => m_Tooltip;
 

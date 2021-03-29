@@ -132,14 +132,26 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             Dependencies.OnDetachedFromPanel(evt);
         }
 
+        /// <summary>
+        /// Add graph elements to the <see cref="Dependencies"/> forward dependencies list. A forward dependency is
+        /// a graph element that should be updated whenever we are updated.
+        /// </summary>
         public virtual void AddForwardDependencies()
         {
         }
 
+        /// <summary>
+        /// Add graph elements to the <see cref="Dependencies"/> backward dependencies list. A backward dependency is
+        /// a graph element that causes us to be updated whenever it is updated.
+        /// </summary>
         public virtual void AddBackwardDependencies()
         {
         }
 
+        /// <summary>
+        /// Add graph elements to the <see cref="Dependencies"/> model dependencies list. A model dependency is
+        /// a graph element model that causes us to be updated whenever it is updated.
+        /// </summary>
         public virtual void AddModelDependencies()
         {
         }

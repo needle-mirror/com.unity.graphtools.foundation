@@ -100,9 +100,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                                 newAssetModel.GraphModel.Name = newGraphName;
                                 foreach (var gvWindow in gvWindows.Where(w => w.CommandDispatcher.GraphToolState?.WindowState.GraphModel == newAssetModel.GraphModel))
                                 {
-                                    using (var updater = gvWindow.CommandDispatcher.GraphToolState.GraphViewState.Updater)
+                                    using (var updater = gvWindow.CommandDispatcher.GraphToolState.GraphViewState.UpdateScope)
                                     {
-                                        updater.U.ForceCompleteUpdate();
+                                        updater.ForceCompleteUpdate();
                                     }
                                 }
                             }

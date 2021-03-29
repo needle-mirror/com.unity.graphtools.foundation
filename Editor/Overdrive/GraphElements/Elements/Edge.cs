@@ -130,44 +130,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             if (EdgeModel is IEditableEdge editableEdge)
                 EnableInClassList(editModeModifierUssClassName, editableEdge.EditMode);
-
-            if (EdgeModel.FromPort is IReorderableEdgesPortModel reorderableEdgesPort)
-            {
-                if (ShouldDisplayEdgeOrder(reorderableEdgesPort))
-                {
-                    EdgeModel.EdgeLabel = (reorderableEdgesPort.GetEdgeOrder(EdgeModel) + 1).ToString();
-                }
-                else
-                {
-                    EdgeModel.EdgeLabel = "";
-                }
-            }
         }
 
-        bool ShouldDisplayEdgeOrder(IReorderableEdgesPortModel reorderableEdgesPort)
-        {
-            if (!reorderableEdgesPort.HasReorderableEdges)
-                return false;
-
-            var connectedEdges = reorderableEdgesPort.GetConnectedEdges().ToList();
-
-            if (connectedEdges.Count <= 1)
-                return false;
-
-            var nodeModel = reorderableEdgesPort.NodeModel;
-            if (CommandDispatcher.GraphToolState.SelectionState.IsSelected(nodeModel))
-            {
-                return true;
-            }
-
-            return connectedEdges.Any(
-                edgeModel => CommandDispatcher.GraphToolState.SelectionState.IsSelected(edgeModel));
-        }
-
+        /// <inheritdoc/>
         public override void AddBackwardDependencies()
         {
             base.AddBackwardDependencies();
 
+            // When the ports move, the edge should be redrawn.
             AddDependencies(EdgeModel.FromPort);
             AddDependencies(EdgeModel.ToPort);
 
@@ -190,6 +160,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     Dependencies.AddBackwardDependency(ui, DependencyType.Geometry);
                 }
             }
+        }
+
+        /// <inheritdoc/>
+        public override void AddModelDependencies()
+        {
+            var ui = EdgeModel.FromPort?.GetUI<Port>(GraphView);
+            ui?.AddDependencyToEdgeModel(EdgeModel);
+
+            ui = EdgeModel.ToPort?.GetUI<Port>(GraphView);
+            ui?.AddDependencyToEdgeModel(EdgeModel);
         }
 
         public override bool Overlaps(Rect rectangle)

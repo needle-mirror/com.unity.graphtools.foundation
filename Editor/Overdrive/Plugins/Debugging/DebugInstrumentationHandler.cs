@@ -90,10 +90,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Plugins.Debugging
                     var searcherItems = stepList.Select(MakeStepItem).ToList();
                     Searcher.SearcherWindow.Show(EditorWindow.focusedWindow, searcherItems, "Steps", item =>
                     {
-                        using (var updater = tracingDataModel.Updater)
+                        using (var updater = tracingDataModel.UpdateScope)
                         {
                             if (item != null)
-                                updater.U.CurrentTracingStep = ((StepSearcherItem)item).Index;
+                                updater.CurrentTracingStep = ((StepSearcherItem)item).Index;
                         }
 
                         return true;
@@ -136,14 +136,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Plugins.Debugging
 
             var graphToolState = m_CommandDispatcher.GraphToolState;
 
-            using (var updater = graphToolState.TracingControlState.Updater)
+            using (var updater = graphToolState.TracingControlState.UpdateScope)
             {
                 if (EditorApplication.isPlaying && !EditorApplication.isPaused)
                 {
-                    updater.U.CurrentTracingFrame = Time.frameCount;
+                    updater.CurrentTracingFrame = Time.frameCount;
                 }
 
-                m_TimelineToolbar.UpdateTracingMenu(updater.U);
+                m_TimelineToolbar.UpdateTracingMenu(updater);
             }
 
             m_TimelineToolbar?.SyncVisible();
@@ -187,10 +187,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Plugins.Debugging
                 state.TracingControlState.CurrentTracingTarget,
                 out var stepList))
             {
-                using (var updater = state.TracingDataState.Updater)
+                using (var updater = state.TracingDataState.UpdateScope)
                 {
-                    updater.U.MaxTracingStep = stepList?.Count ?? 0;
-                    updater.U.DebuggingData = stepList;
+                    updater.MaxTracingStep = stepList?.Count ?? 0;
+                    updater.DebuggingData = stepList;
                 }
 
                 // PF FIXME HighlightTrace should be an observer on tracing states.

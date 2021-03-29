@@ -39,16 +39,39 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             /// </summary>
             protected TStateComponent m_State;
 
-            /// <summary>
-            /// The state component that can be updated through this updater.
-            /// </summary>
-            IStateComponent IStateComponentUpdater.StateComponent
+            public void Initialize(IStateComponent state)
             {
-                set => m_State = value as TStateComponent;
+                Assert.IsNull(m_State, "Missing Dispose call.");
+
+                m_State = state as TStateComponent;
+                BeginStateChange();
+            }
+
+            ~BaseUpdater()
+            {
+                Dispose(false);
             }
 
             /// <inheritdoc/>
-            public void BeginStateChange()
+            public void Dispose()
+            {
+                Assert.IsNotNull(m_State, "Missing Initialize call.");
+                Dispose(true);
+                m_State = null;
+            }
+
+            /// <summary>
+            /// Dispose implementation.
+            /// </summary>
+            /// <param name="disposing">When true, this method is called from IDisposable.Dispose.
+            /// Otherwise it is called from the finalizer.</param>
+            protected virtual void Dispose(bool disposing)
+            {
+                if (disposing)
+                    EndStateChange();
+            }
+
+            void BeginStateChange()
             {
                 Assert.IsTrue(
                     StateObserverHelper.CurrentObserver == null ||
@@ -58,8 +81,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 m_State.PushChangeset(m_State.CurrentVersion);
             }
 
-            /// <inheritdoc/>
-            public void EndStateChange()
+            void EndStateChange()
             {
                 // unchecked: wrap around on overflow without exception.
                 unchecked
@@ -79,9 +101,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         uint m_EarliestChangeSetVersion;
         UpdateType m_UpdateType = UpdateType.None;
-        public uint CurrentVersion { get; private set; } = 1;
-
         TUpdater m_Updater;
+
+        public uint CurrentVersion { get; private set; } = 1;
 
         [SerializeField]
         string m_StateSlotName;
@@ -93,20 +115,23 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             set => m_StateSlotName = value;
         }
 
+        [Obsolete("Use UpdateScope instead. Added in 0.9. (UnityUpgradable) -> UpdateScope")]
+        public TUpdater Updater => UpdateScope;
+
         /// <summary>
         /// The updater for the state component.
         /// </summary>
         /// <remarks>Since state component expose a read only interfaces, all modifications
         /// to a state component need to be done through this Updater.</remarks>
-        public DisposableStateComponentUpdater<TUpdater> Updater
+        public TUpdater UpdateScope
         {
             get
             {
                 if (m_Updater == null)
-                {
-                    m_Updater = new TUpdater { StateComponent = this };
-                }
-                return new DisposableStateComponentUpdater<TUpdater>(m_Updater);
+                    m_Updater = new TUpdater();
+
+                m_Updater.Initialize(this);
+                return m_Updater;
             }
         }
 

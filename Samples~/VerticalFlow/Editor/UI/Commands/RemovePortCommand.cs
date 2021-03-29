@@ -23,12 +23,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Vertical
 
             state.PushUndo(command);
 
-            using (var updater = state.GraphViewState.Updater)
+            using (var updater = state.GraphViewState.UpdateScope)
             {
                 foreach (var nodeModel in command.Models)
                     nodeModel.RemovePort(command.m_PortOrientation, command.m_PortDirection);
 
-                updater.U.MarkChanged(command.Models);
+                updater.MarkChanged(command.Models);
             }
         }
     }

@@ -5,6 +5,18 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.9.1-preview] - 2021-03-29
+
+### Removed
+
+- `DisposableStateComponentUpdater` (no longer needed)
+- `IStateComponentUpdater.BeginStateChange` and `IStateComponentUpdater.EndStateChange`.
+  Since `IStateComponentUpdater` now implements `IDisposable`, use the Disposable pattern for updaters. A new `Initialize` method now replaces the `BeginStateChange`.
+
+### Changed
+
+- Renamed `StateComponent.Updater` to `StateComponent.UpdateScope`.
+
 ## [0.9.0-preview.2] - 2021-03-23
 
 ### Added
@@ -66,6 +78,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `UndoRedoTraversal`
 - `IEdgeModel.ResetPorts()`: Found in  Basic model `EdgeModel`.
 - Removed the distinction between pre- and post-command observers. CommandObservers are now all executed before the command handler.
+- `PrefixRemoveFromClassList`; use `PrefixEnableInClassList` instead.
 
 ### Changed
 

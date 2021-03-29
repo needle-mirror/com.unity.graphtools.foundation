@@ -218,6 +218,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
+        /// <inheritdoc/>
         public override void AddForwardDependencies()
         {
             var graphElements = GraphView.GraphElements.ToList()
@@ -232,7 +233,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 var ui = edgeModel.GetUI(GraphView);
                 if (ui != null)
                 {
-                    // Edge models endpoints need to be updated.
+                    // Edge models endpoints need to be updated when the placemat is collapsed/uncollapsed.
                     Dependencies.AddForwardDependency(ui, DependencyType.Geometry | DependencyType.Removal);
                 }
             }

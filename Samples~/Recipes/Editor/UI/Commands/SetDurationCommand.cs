@@ -16,12 +16,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Recipes
         {
             state.PushUndo(command);
 
-            using (var graphUpdater = state.GraphViewState.Updater)
+            using (var graphUpdater = state.GraphViewState.UpdateScope)
             {
                 foreach (var nodeModel in command.Models)
                 {
                     nodeModel.Duration = command.Value;
-                    graphUpdater.U.MarkChanged(nodeModel);
+                    graphUpdater.MarkChanged(nodeModel);
                 }
             }
         }

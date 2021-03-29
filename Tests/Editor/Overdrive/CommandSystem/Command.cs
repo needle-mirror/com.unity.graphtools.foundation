@@ -23,8 +23,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.CommandSystem
         public static void DefaultHandler(TestGraphToolState graphToolState, ChangeFooCommand command)
         {
             Assert.That(command, NUnit.Framework.Is.Not.Null);
-            using (var updater = graphToolState.FooBarStateComponent.Updater)
-                updater.U.Foo = command.Value;
+            using (var updater = graphToolState.FooBarStateComponent.UpdateScope)
+                updater.Foo = command.Value;
         }
     }
 
@@ -40,8 +40,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.CommandSystem
         public static void DefaultHandler(TestGraphToolState graphToolState, ChangeBarCommand command)
         {
             Assert.That(command, NUnit.Framework.Is.Not.Null);
-            using (var updater = graphToolState.FooBarStateComponent.Updater)
-                updater.U.Bar = command.Value;
+            using (var updater = graphToolState.FooBarStateComponent.UpdateScope)
+                updater.Bar = command.Value;
         }
     }
 

@@ -5,27 +5,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     /// <summary>
     /// Interface for state component updaters.
     /// </summary>
-    public interface IStateComponentUpdater
+    public interface IStateComponentUpdater : IDisposable
     {
         /// <summary>
-        /// The state component to update.
+        /// Initialize the updater with the state to update.
         /// </summary>
-        IStateComponent StateComponent { set; }
-
-        /// <summary>
-        /// Begins a modification of the state component.
-        /// </summary>
-        /// <remarks>
-        /// Call this method before any other method of the updater.
-        /// </remarks>
-        void BeginStateChange();
-
-        /// <summary>
-        /// Ends a modification of the state component.
-        /// </summary>
-        /// <remarks>
-        /// Call this method when you are done modifying the state component.
-        /// </remarks>
-        void EndStateChange();
+        /// <param name="state">The state to update.</param>
+        void Initialize(IStateComponent state);
     }
 }

@@ -25,9 +25,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (graphModel?.Stencil == null)
                 return;
 
-            using (var updater = state.TracingControlState.Updater)
+            using (var updater = state.TracingControlState.UpdateScope)
             {
-                updater.U.TracingEnabled = command.Value;
+                updater.TracingEnabled = command.Value;
             }
 
             // PF FIXME could be implemented as an observer

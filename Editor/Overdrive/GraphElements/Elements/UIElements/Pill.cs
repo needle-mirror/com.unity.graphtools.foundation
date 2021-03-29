@@ -45,10 +45,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
                 m_Highlighted = value;
 
-                if (m_Highlighted)
-                    AddToClassList(highlightedModifierClassName);
-                else
-                    RemoveFromClassList(highlightedModifierClassName);
+                EnableInClassList(highlightedModifierClassName, m_Highlighted);
             }
         }
 
@@ -72,14 +69,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         void UpdateIconVisibility()
         {
+            EnableInClassList(hasIconModifierClassName, m_Icon.image != null);
+
             if (m_Icon.image == null)
             {
-                RemoveFromClassList(hasIconModifierClassName);
                 m_Icon.style.visibility = Visibility.Hidden;
             }
             else
             {
-                AddToClassList(hasIconModifierClassName);
                 m_Icon.style.visibility = StyleKeyword.Null;
             }
         }

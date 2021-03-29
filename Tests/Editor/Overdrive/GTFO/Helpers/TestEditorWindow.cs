@@ -18,10 +18,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO
         {
             GraphModel = new GraphModel();
             var state = new TestGraphToolState(GUID, GraphModel);
-            using (var graphUpdater = state.GraphViewState.Updater)
+            using (var graphUpdater = state.GraphViewState.UpdateScope)
             {
-                graphUpdater.U.Position = Vector3.zero;
-                graphUpdater.U.Scale = Vector3.one;
+                graphUpdater.Position = Vector3.zero;
+                graphUpdater.Scale = Vector3.one;
             }
             return state;
         }

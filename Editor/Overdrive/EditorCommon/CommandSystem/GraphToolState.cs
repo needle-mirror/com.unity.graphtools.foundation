@@ -315,14 +315,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             var assetPath = GetAssetPath(assetModel);
             PersistedState.SetAssetKey(assetPath);
 
-            using (var windowStateUpdater = WindowState.Updater)
+            using (var windowStateUpdater = WindowState.UpdateScope)
             {
-                windowStateUpdater.U.LoadGraphAsset(assetModel, boundObject);
+                windowStateUpdater.LoadGraphAsset(assetModel, boundObject);
             }
 
-            using (var graphViewStateUpdater = GraphViewState.Updater)
+            using (var graphViewStateUpdater = GraphViewState.UpdateScope)
             {
-                graphViewStateUpdater.U.LoadGraphAsset(assetModel);
+                graphViewStateUpdater.LoadGraphAsset(assetModel);
             }
         }
 
@@ -346,45 +346,45 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         [Obsolete("2021-02-19 Use IGraphViewStateComponentUpdater.MarkNew instead.")]
         public void MarkNew(IEnumerable<IGraphElementModel> models)
         {
-            using (var stateUpdater = GraphViewState.Updater)
+            using (var stateUpdater = GraphViewState.UpdateScope)
             {
-                stateUpdater.U.MarkNew(models);
+                stateUpdater.MarkNew(models);
             }
         }
 
         [Obsolete("2021-02-19 Use IGraphViewStateComponentUpdater.MarkChanged instead.")]
         public void MarkChanged(IEnumerable<IGraphElementModel> models)
         {
-            using (var stateUpdater = GraphViewState.Updater)
+            using (var stateUpdater = GraphViewState.UpdateScope)
             {
-                stateUpdater.U.MarkChanged(models);
+                stateUpdater.MarkChanged(models);
             }
         }
 
         [Obsolete("2021-02-19 Use IGraphViewStateComponentUpdater.MarkDeleted instead.")]
         public void MarkDeleted(IEnumerable<IGraphElementModel> models)
         {
-            using (var stateUpdater = GraphViewState.Updater)
+            using (var stateUpdater = GraphViewState.UpdateScope)
             {
-                stateUpdater.U.MarkDeleted(models);
+                stateUpdater.MarkDeleted(models);
             }
         }
 
         [Obsolete("2021-02-19 Use IGraphViewStateComponentUpdater.MarkModelToAutoAlign instead.")]
         public void MarkModelToAutoAlign(IGraphElementModel model)
         {
-            using (var stateUpdater = GraphViewState.Updater)
+            using (var stateUpdater = GraphViewState.UpdateScope)
             {
-                stateUpdater.U.MarkModelToAutoAlign(model);
+                stateUpdater.MarkModelToAutoAlign(model);
             }
         }
 
         [Obsolete("2021-02-19 Use GraphViewState.ForceCompleteUpdate instead.")]
         public void RequestUIRebuild()
         {
-            using (var stateUpdater = GraphViewState.Updater)
+            using (var stateUpdater = GraphViewState.UpdateScope)
             {
-                stateUpdater.U.ForceCompleteUpdate();
+                stateUpdater.ForceCompleteUpdate();
             }
         }
     }
