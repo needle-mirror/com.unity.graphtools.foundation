@@ -43,11 +43,5 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Vertical
         }
 
         protected override Type GraphModelType => typeof(VerticalGraphModel);
-        public override IBlackboardGraphModel BlackboardGraphModel { get; }
-
-        public VerticalGraphAssetModel()
-        {
-            BlackboardGraphModel = new VerticalBlackboardGraphModel();
-        }
     }
 }

@@ -18,6 +18,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Vertical
             return null;
         }
 
+        /// <inheritdoc />
+        public override IBlackboardGraphModel CreateBlackboardGraphModel(IGraphAssetModel graphAssetModel)
+        {
+            return new VerticalBlackboardGraphModel(graphAssetModel);
+        }
+
         public static readonly string k_GraphName = "VerticalFlow";
     }
 }

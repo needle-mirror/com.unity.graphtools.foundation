@@ -12,6 +12,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
     {
         public bool Valid => GraphModel != null;
 
+        /// <summary>
+        /// Initializes a new instance of the BlackboardGraphModel class.
+        /// </summary>
+        /// <param name="graphAssetModel">The graph asset model used as the data source.</param>
+        public BlackboardGraphModel(IGraphAssetModel graphAssetModel)
+        {
+            AssetModel = graphAssetModel;
+        }
+
         public virtual string GetBlackboardTitle()
         {
             return AssetModel?.FriendlyScriptName ?? "";

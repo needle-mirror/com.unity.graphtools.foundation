@@ -32,6 +32,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
 
                 m_State.m_CurrentGraph = new OpenedGraph(assetModel, boundObject, fileId);
+                m_State.BlackboardGraphModel = assetModel?.GraphModel.Stencil.CreateBlackboardGraphModel(assetModel);
 
                 m_State.SetUpdateType(UpdateType.Complete);
             }
@@ -86,10 +87,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public virtual IGraphModel GraphModel => CurrentGraph.GraphAssetModel?.GraphModel;
 
         /// <summary>
-        /// The <see cref="IBlackboardGraphModel"/> contained in <see cref="AssetModel"/>.
-        /// <remarks>This method is virtual for tests.</remarks>
+        /// The <see cref="IBlackboardGraphModel"/> for the <see cref="AssetModel"/>.
         /// </summary>
-        public virtual IBlackboardGraphModel BlackboardGraphModel => CurrentGraph.GraphAssetModel?.BlackboardGraphModel;
+        public IBlackboardGraphModel BlackboardGraphModel { get; private set; }
 
         /// <summary>
         /// The currently opened graph.

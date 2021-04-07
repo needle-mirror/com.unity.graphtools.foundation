@@ -73,6 +73,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                 return null;
             }
 
+            /// <inheritdoc />
+            public override IBlackboardGraphModel CreateBlackboardGraphModel(IGraphAssetModel graphAssetModel)
+            {
+                return new BlackboardGraphModel(graphAssetModel);
+            }
+
             public override ISearcherDatabaseProvider GetSearcherDatabaseProvider()
             {
                 return new ClassSearcherDatabaseProvider(this);

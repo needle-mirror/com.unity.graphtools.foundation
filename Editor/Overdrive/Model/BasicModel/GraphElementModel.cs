@@ -55,14 +55,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         }
 
         /// <inheritdoc />
-        public virtual IGraphAssetModel AssetModel
+        public IGraphAssetModel AssetModel
         {
             get => m_AssetModel;
-            set
-            {
-                Assert.IsNotNull(value);
-                m_AssetModel = (GraphAssetModel)value;
-            }
+            set => m_AssetModel = (GraphAssetModel)value;
         }
 
         /// <inheritdoc />

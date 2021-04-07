@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEngine;
 
@@ -15,14 +14,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.InternalModels
     {
         /// <inheritdoc />
         public override IGraphModel GraphModel { get; }
-
-        /// <inheritdoc />
-        public override IGraphAssetModel AssetModel
-        {
-            get => m_AssetModel;
-            // override setter to not throw when null
-            set => m_AssetModel = (GraphAssetModel)value;
-        }
 
         public IPortModel FromPort { get; set; }
 

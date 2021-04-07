@@ -4,13 +4,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels
     {
         IGraphModel m_GraphModel;
 
-        public override IGraphAssetModel AssetModel
-        {
-            get => base.AssetModel;
-            // override setter to not throw when null
-            set => m_AssetModel = (GraphAssetModel)value;
-        }
-
         public override IGraphModel GraphModel => m_GraphModel;
 
         public void Rename(string newName)

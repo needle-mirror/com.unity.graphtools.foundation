@@ -35,6 +35,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.SmartSearch
 
                 return null;
             }
+
+            /// <inheritdoc />
+            public override IBlackboardGraphModel CreateBlackboardGraphModel(IGraphAssetModel graphAssetModel)
+            {
+                throw new NotImplementedException();
+            }
         }
 
         Stencil m_Stencil;

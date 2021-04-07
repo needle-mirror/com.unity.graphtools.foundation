@@ -12,8 +12,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Recipes
         public static TypeHandle Ingredient { get; } = TypeSerializer.GenerateCustomTypeHandle("Ingredient");
         public static TypeHandle Cookware { get; } = TypeSerializer.GenerateCustomTypeHandle("Cookware");
 
-        public RecipeStencil() { }
-
         public override IGraphProcessingErrorModel CreateProcessingErrorModel(GraphProcessingError error)
         {
             if (error.SourceNode != null && !error.SourceNode.Destroyed)
@@ -22,6 +20,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Recipes
             }
 
             return null;
+        }
+
+        /// <inheritdoc />
+        public override IBlackboardGraphModel CreateBlackboardGraphModel(IGraphAssetModel graphAssetModel)
+        {
+            return new RecipeBlackboardGraphModel(graphAssetModel);
         }
     }
 }

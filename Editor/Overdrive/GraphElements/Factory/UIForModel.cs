@@ -27,7 +27,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             return s_UIForModel.FirstOrDefault(graphView, context, model);
         }
 
-        internal static IEnumerable<IModelUI> GetAllUIs(this IGraphElementModel model, GraphView graphView)
+        public static IEnumerable<IModelUI> GetAllUIs(this IGraphElementModel model, GraphView graphView)
         {
             return s_UIForModel.GetAllUIForModel(model).Where(ui => ui.GraphView == graphView);
         }

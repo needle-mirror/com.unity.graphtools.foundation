@@ -9,6 +9,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Recipes
     {
         static readonly string[] k_Sections = { "Ingredients", "Cookware" };
 
+        /// <inheritdoc />
+        public RecipeBlackboardGraphModel(IGraphAssetModel graphAssetModel)
+            : base(graphAssetModel) { }
+
         public override string GetBlackboardTitle()
         {
             return AssetModel?.FriendlyScriptName == null ? "Recipe" : AssetModel?.FriendlyScriptName + " Recipe";

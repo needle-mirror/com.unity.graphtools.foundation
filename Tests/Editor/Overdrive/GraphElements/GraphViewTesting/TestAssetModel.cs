@@ -5,26 +5,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
     class TestGraphModel : GraphModel
     {
-        public TestGraphModel()
-        {
-        }
     }
+
     class TestAssetModel : GraphAssetModel
     {
-        public override IBlackboardGraphModel BlackboardGraphModel
-        {
-            get;
-        }
-
-        TestAssetModel()
-        {
-            BlackboardGraphModel = new BlackboardGraphModel();
-        }
-
-        protected override Type GraphModelType
-        {
-            get { return typeof(TestGraphModel); }
-        }
-
+        protected override Type GraphModelType => typeof(TestGraphModel);
     }
 }

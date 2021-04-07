@@ -15,7 +15,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         }
 
         public IGraphModel GraphModel => m_GraphModel;
-        public abstract IBlackboardGraphModel BlackboardGraphModel { get; }
 
         public string Name
         {

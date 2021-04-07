@@ -247,6 +247,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
     public class BlackboardSectionListPart : UnityEditor.GraphToolsFoundation.Overdrive.BaseModelUIPart
     {
+        protected System.Collections.Generic.List<UnityEditor.GraphToolsFoundation.Overdrive.GraphElement> m_Rows;
+        protected System.Collections.Generic.Dictionary<string, UnityEditor.GraphToolsFoundation.Overdrive.BlackboardSection> m_Sections;
         public static readonly string ussClassName;
         public UnityEditor.GraphToolsFoundation.Overdrive.Blackboard Blackboard { get; }
         public virtual UnityEngine.UIElements.VisualElement Root { get; }
@@ -459,6 +461,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public virtual bool value { get; set; }
         public CollapseButton() {}
         public virtual void SetValueWithoutNotify(bool newValue);
+        public class UxmlFactory : UnityEngine.UIElements.UxmlFactory<UnityEditor.GraphToolsFoundation.Overdrive.CollapseButton, UnityEditor.GraphToolsFoundation.Overdrive.CollapseButton.UxmlTraits>
+        {
+            public UxmlFactory() {}
+        }
+        public class UxmlTraits : UnityEngine.UIElements.VisualElement.UxmlTraits
+        {
+            public UxmlTraits() {}
+            public virtual void Init(UnityEngine.UIElements.VisualElement ve, UnityEngine.UIElements.IUxmlAttributes bag, UnityEngine.UIElements.CreationContext cc);
+        }
     }
 
     public class CollapseButtonPart : UnityEditor.GraphToolsFoundation.Overdrive.BaseModelUIPart
@@ -1105,7 +1116,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
     public abstract class GraphAssetModel : UnityEngine.ScriptableObject, UnityEditor.GraphToolsFoundation.Overdrive.IGraphAssetModel, UnityEngine.ISerializationCallbackReceiver
     {
-        public abstract UnityEditor.GraphToolsFoundation.Overdrive.IBlackboardGraphModel BlackboardGraphModel { get; }
         public virtual bool Dirty { get; set; }
         public virtual string FriendlyScriptName { get; }
         public virtual UnityEditor.GraphToolsFoundation.Overdrive.IGraphModel GraphModel { get; }
@@ -1811,7 +1821,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
     public interface IGraphAssetModel
     {
-        public abstract UnityEditor.GraphToolsFoundation.Overdrive.IBlackboardGraphModel BlackboardGraphModel { get; }
         public abstract bool Dirty { get; set; }
         public abstract string FriendlyScriptName { get; }
         public abstract UnityEditor.GraphToolsFoundation.Overdrive.IGraphModel GraphModel { get; }
@@ -3346,6 +3355,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public abstract string ToolName { get; }
         protected Stencil() {}
         public virtual bool CanPasteNode(UnityEditor.GraphToolsFoundation.Overdrive.INodeModel originalModel, UnityEditor.GraphToolsFoundation.Overdrive.IGraphModel graph);
+        public abstract UnityEditor.GraphToolsFoundation.Overdrive.IBlackboardGraphModel CreateBlackboardGraphModel(UnityEditor.GraphToolsFoundation.Overdrive.IGraphAssetModel graphAssetModel);
         public virtual UnityEditor.GraphToolsFoundation.Overdrive.IConstant CreateConstantValue(UnityEditor.GraphToolsFoundation.Overdrive.TypeHandle constantTypeHandle);
         public virtual bool CreateDependencyFromEdge(UnityEditor.GraphToolsFoundation.Overdrive.IEdgeModel model, out UnityEditor.GraphToolsFoundation.Overdrive.LinkedNodesDependency linkedNodesDependency, out UnityEditor.GraphToolsFoundation.Overdrive.INodeModel parent);
         protected virtual UnityEditor.GraphToolsFoundation.Overdrive.GraphContext CreateGraphContext();
@@ -3722,6 +3732,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     [System.Runtime.CompilerServices.Extension] public static class UIForModel
     {
         public static void AddOrReplaceGraphElement(UnityEditor.GraphToolsFoundation.Overdrive.IModelUI modelUI);
+        [System.Runtime.CompilerServices.Extension] public static System.Collections.Generic.IEnumerable<UnityEditor.GraphToolsFoundation.Overdrive.IModelUI> GetAllUIs(UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel model, UnityEditor.GraphToolsFoundation.Overdrive.GraphView graphView);
         [JetBrains.Annotations.CanBeNull] [System.Runtime.CompilerServices.Extension] public static T GetUI<T>(UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel model, UnityEditor.GraphToolsFoundation.Overdrive.GraphView graphView, string context = default(string)) where T : class, UnityEditor.GraphToolsFoundation.Overdrive.IModelUI;
         public static void RemoveGraphElement(UnityEditor.GraphToolsFoundation.Overdrive.IModelUI modelUI);
     }
@@ -3871,7 +3882,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     public class WindowStateComponent : UnityEditor.GraphToolsFoundation.Overdrive.ViewStateComponent<UnityEditor.GraphToolsFoundation.Overdrive.WindowStateComponent.StateUpdater>
     {
         public UnityEditor.GraphToolsFoundation.Overdrive.IGraphAssetModel AssetModel { get; }
-        public virtual UnityEditor.GraphToolsFoundation.Overdrive.IBlackboardGraphModel BlackboardGraphModel { get; }
+        public UnityEditor.GraphToolsFoundation.Overdrive.IBlackboardGraphModel BlackboardGraphModel { get; }
         public UnityEditor.GraphToolsFoundation.Overdrive.OpenedGraph CurrentGraph { get; }
         public virtual UnityEditor.GraphToolsFoundation.Overdrive.IGraphModel GraphModel { get; }
         public UnityEditor.GraphToolsFoundation.Overdrive.OpenedGraph LastOpenedGraph { get; }
@@ -3917,7 +3928,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
     {
         public virtual System.Collections.Generic.IEnumerable<string> SectionNames { get; }
         public virtual bool Valid { get; }
-        public BlackboardGraphModel() {}
+        public BlackboardGraphModel(UnityEditor.GraphToolsFoundation.Overdrive.IGraphAssetModel graphAssetModel) {}
         public virtual string GetBlackboardSubTitle();
         public virtual string GetBlackboardTitle();
         public virtual System.Collections.Generic.IEnumerable<UnityEditor.GraphToolsFoundation.Overdrive.IVariableDeclarationModel> GetSectionRows(string sectionName);
@@ -4458,7 +4469,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.InternalModels
 {
     public class GhostEdgeModel : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.GraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IEdgeModel, UnityEditor.GraphToolsFoundation.Overdrive.IGhostEdge, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel
     {
-        public virtual UnityEditor.GraphToolsFoundation.Overdrive.IGraphAssetModel AssetModel { get; set; }
         public virtual string EdgeLabel { get; set; }
         public virtual UnityEngine.Vector2 EndPoint { get; set; }
         public virtual UnityEditor.GraphToolsFoundation.Overdrive.SerializableGUID FromNodeGuid { get; }

@@ -7,13 +7,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels
         [SerializeField, HideInInspector]
         GraphModel m_GraphModel;
 
-        public override IGraphAssetModel AssetModel
-        {
-            get => m_AssetModel;
-            // override setter to not throw when null
-            set => m_AssetModel = (GraphAssetModel)value;
-        }
-
         public override IGraphModel GraphModel => m_GraphModel;
 
         IPortModel m_FromPort;

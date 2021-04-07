@@ -100,6 +100,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook
             return null;
         }
 
+        /// <inheritdoc />
+        public override IBlackboardGraphModel CreateBlackboardGraphModel(IGraphAssetModel graphAssetModel)
+        {
+            return new MathBookBlackboardGraphModel(graphAssetModel);
+        }
+
         public override ISearcherDatabaseProvider GetSearcherDatabaseProvider()
         {
             return this;
@@ -136,15 +142,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook
     [Serializable]
     public class MathBookAsset : GraphAssetModel
     {
-
-        public MathBookAsset()
-        {
-            m_BlackboardModel = new MathBookBlackboardGraphModel() { AssetModel = this };
-        }
-
-        BlackboardGraphModel m_BlackboardModel;
-        public override IBlackboardGraphModel BlackboardGraphModel => m_BlackboardModel;
-
         protected override Type GraphModelType => typeof(MathBook);
 
         [MenuItem("Assets/Create/Math Book")]

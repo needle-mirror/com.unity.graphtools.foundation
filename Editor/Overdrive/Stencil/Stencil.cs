@@ -232,5 +232,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         /// <param name="error">The error to convert.</param>
         /// <returns>The converted error.</returns>
         public abstract IGraphProcessingErrorModel CreateProcessingErrorModel(GraphProcessingError error);
+
+        /// <summary>
+        /// Creates a <see cref="IBlackboardGraphModel"/> for the <paramref name="graphAssetModel"/>.
+        /// </summary>
+        /// <param name="graphAssetModel">The graph asset to wrap in a <see cref="IBlackboardGraphModel"/>.</param>
+        /// <returns>A new <see cref="IBlackboardGraphModel"/></returns>
+        public abstract IBlackboardGraphModel CreateBlackboardGraphModel(IGraphAssetModel graphAssetModel);
     }
 }

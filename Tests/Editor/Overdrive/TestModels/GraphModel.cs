@@ -36,6 +36,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels
 
             return null;
         }
+
+        /// <inheritdoc />
+        public override IBlackboardGraphModel CreateBlackboardGraphModel(IGraphAssetModel graphAssetModel)
+        {
+            return new BlackboardGraphModel(graphAssetModel);
+        }
     }
 
     public class GraphModel : BasicModel.GraphModel

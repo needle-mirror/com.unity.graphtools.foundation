@@ -9,7 +9,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         string Name { get; set; }
         string FriendlyScriptName { get; }
         IGraphModel GraphModel { get; }
-        IBlackboardGraphModel BlackboardGraphModel { get; }
+
         /// <summary>
         /// The dirty state of the asset (true if it needs to be saved)
         /// </summary>

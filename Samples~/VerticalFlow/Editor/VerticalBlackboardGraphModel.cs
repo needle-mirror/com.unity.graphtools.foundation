@@ -6,6 +6,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Vertical
 {
     class VerticalBlackboardGraphModel : BlackboardGraphModel
     {
+        public VerticalBlackboardGraphModel(IGraphAssetModel graphAssetModel)
+            : base(graphAssetModel)
+        {
+        }
+
         public override string GetBlackboardTitle()
         {
             return "Vertical Flow";

@@ -43,11 +43,5 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Recipes
         }
 
         protected override Type GraphModelType => typeof(RecipeGraphModel);
-        public override IBlackboardGraphModel BlackboardGraphModel { get; }
-
-        public RecipeGraphAssetModel()
-        {
-            BlackboardGraphModel = new RecipeBlackboardGraphModel { AssetModel = this };
-        }
     }
 }
