@@ -48,13 +48,5 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         /// </summary>
         /// <param name="sourceNode">Model of the node duplicated.</param>
         void OnDuplicateNode(INodeModel sourceNode);
-
-        /// <summary>
-        /// Called after the <see cref="IGraphModel"/> deserializes its <see cref="IGraphAssetModel"/>.
-        /// </summary>
-        /// <remarks>
-        /// Helps for any deserialization relying on <see cref="UnityEngine.SerializeReference"/>.
-        /// </remarks>
-        void OnAfterDeserializeAssetModel();
     }
 }

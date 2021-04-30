@@ -62,13 +62,6 @@ namespace UnityEditor.VisualScripting.Editor
             {
                 m_Store.GetState().EditorDataModel.RequestCompilation(RequestCompilationOptions.SaveGraph);
             }, () => (vsGraphModel == null || !vsGraphModel.Stencil.CreateTranslator().SupportsCompilation()));
-            MenuItem("Auto-itemize/Variables", pref.CurrentItemizeOptions.HasFlag(ItemizeOptions.Variables), () =>
-                pref.ToggleItemizeOption(ItemizeOptions.Variables));
-            MenuItem("Auto-itemize/System Constants", pref.CurrentItemizeOptions.HasFlag(ItemizeOptions.SystemConstants), () =>
-                pref.ToggleItemizeOption(ItemizeOptions.SystemConstants));
-            MenuItem("Auto-itemize/Constants", pref.CurrentItemizeOptions.HasFlag(ItemizeOptions.Constants), () =>
-                pref.ToggleItemizeOption(ItemizeOptions.Constants));
-            MenuToggle("Show unused nodes", BoolPref.ShowUnusedNodes, () => m_Store.Dispatch(new RefreshUIAction(UpdateFlags.All)));
             if (Unsupported.IsDeveloperMode())
             {
                 MenuItem("Log compile time stats", LogCompileTimeStats, () => LogCompileTimeStats = !LogCompileTimeStats);

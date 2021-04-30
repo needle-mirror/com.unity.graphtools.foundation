@@ -32,5 +32,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         {
             return new TestGraphView(this, CommandDispatcher);
         }
+
+        protected override bool CanHandleAssetType(GraphAssetModel asset)
+        {
+            return true;
+        }
     }
 }

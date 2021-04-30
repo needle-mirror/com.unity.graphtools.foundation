@@ -1,6 +1,7 @@
 using System;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels
 {
@@ -16,7 +17,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels
 
         public override IGraphModel GraphModel => m_GraphModel;
 
-        public string GetVariableName() => StringExtensions.CodifyString(Title);
+        public string GetVariableName() => Title.CodifyString();
         public void CreateInitializationValue()
         {
         }

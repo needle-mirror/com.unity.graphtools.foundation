@@ -1,6 +1,5 @@
 using System;
 using System.Linq;
-using UnityEditor.GraphToolsFoundation.Overdrive;
 using UnityEngine;
 
 
@@ -9,6 +8,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook
     [Serializable]
     public abstract class MathFunction : MathNode
     {
+        [SerializeField]
         protected string[] m_ParameterNames = new string[0];
 
         public string[] parameterNames { get { return m_ParameterNames; } }

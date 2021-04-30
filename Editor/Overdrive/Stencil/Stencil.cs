@@ -10,33 +10,28 @@ using UnityEngine.GraphToolsFoundation.Overdrive;
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     [PublicAPI]
-    // Warning: Stencil is only serializable for backward compatibility purposes. It will stop being serializable in the future
-    [Serializable]
-    public abstract class Stencil
+    public abstract class Stencil : IStencil
     {
-        GraphContext m_GraphContext;
+        ITypeMetadataResolver m_TypeMetadataResolver;
 
         List<ITypeMetadata> m_AssembliesTypes;
 
         protected IToolbarProvider m_ToolbarProvider;
         protected ISearcherDatabaseProvider m_SearcherDatabaseProvider;
 
-        [SerializeReference]
-        public IGraphModel GraphModel;
+        protected DebugInstrumentationHandler m_DebugInstrumentationHandler;
 
-        /// <summary>
-        /// The tool name, unique and human readable.
-        /// </summary>
+        /// <inheritdoc />
+        public IGraphModel GraphModel { get; set; }
+
+        /// <inheritdoc />
         public abstract string ToolName { get; }
 
         public virtual IEnumerable<Type> EventTypes => Enumerable.Empty<Type>();
 
-        public GraphContext GraphContext => m_GraphContext ?? (m_GraphContext = CreateGraphContext());
-
-        protected virtual GraphContext CreateGraphContext()
-        {
-            return new GraphContext();
-        }
+        /// <inheritdoc />
+        public ITypeMetadataResolver TypeMetadataResolver =>
+            m_TypeMetadataResolver ?? (m_TypeMetadataResolver = new TypeMetadataResolver());
 
         public virtual IGraphProcessor CreateGraphProcessor()
         {
@@ -71,7 +66,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         }
 
         [CanBeNull]
-        public virtual ISearcherAdapter GetSearcherAdapter(IGraphModel graphModel, string title, IEnumerable<IPortModel> contextPortModel = null)
+        public virtual IGTFSearcherAdapter GetSearcherAdapter(IGraphModel graphModel, string title, IEnumerable<IPortModel> contextPortModel = null)
         {
             return new GraphNodeSearcherAdapter(graphModel, title);
         }
@@ -88,22 +83,31 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public virtual IEnumerable<IPluginHandler> GetGraphProcessingPluginHandlers(GraphProcessingOptions getGraphProcessingOptions)
         {
             if (getGraphProcessingOptions.HasFlag(GraphProcessingOptions.Tracing))
-                yield return new DebugInstrumentationHandler();
+            {
+                if (m_DebugInstrumentationHandler == null)
+                    m_DebugInstrumentationHandler = new DebugInstrumentationHandler();
+
+                yield return m_DebugInstrumentationHandler;
+            }
         }
 
-        public virtual bool RequiresInitialization(IVariableDeclarationModel decl) => GraphContext.RequiresInitialization(decl);
-        public bool RequiresInspectorInitialization(IVariableDeclarationModel decl) => GraphContext.RequiresInspectorInitialization(decl);
+        public virtual bool RequiresInitialization(IVariableDeclarationModel decl) => decl.RequiresInitialization();
+
+        /// <inheritdoc />
+        public bool RequiresInspectorInitialization(IVariableDeclarationModel decl) => decl.RequiresInspectorInitialization();
 
         // PF: To preference
         public virtual bool MoveNodeDependenciesByDefault => false;
 
         public virtual IDebugger Debugger => null;
 
+        /// <inheritdoc />
         public virtual Type GetConstantNodeValueType(TypeHandle typeHandle)
         {
             return null;
         }
 
+        /// <inheritdoc />
         public virtual IConstant CreateConstantValue(TypeHandle constantTypeHandle)
         {
             var nodeType = GetConstantNodeValueType(constantTypeHandle);
@@ -118,12 +122,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             switch (portModel.Direction)
             {
                 case Direction.Output:
-                    SearcherService.ShowOutputToGraphNodes(commandDispatcher.GraphToolState, portModel, worldPosition, item =>
+                    SearcherService.ShowOutputToGraphNodes(commandDispatcher.State, portModel, worldPosition, item =>
                         commandDispatcher.Dispatch(new CreateNodeFromPortCommand(new[] { portModel }, localPosition, item, edgesToDelete)));
                     break;
 
                 case Direction.Input:
-                    SearcherService.ShowInputToGraphNodes(commandDispatcher.GraphToolState, Enumerable.Repeat(portModel, 1), worldPosition, item =>
+                    SearcherService.ShowInputToGraphNodes(commandDispatcher.State, Enumerable.Repeat(portModel, 1), worldPosition, item =>
                         commandDispatcher.Dispatch(new CreateNodeFromPortCommand(new[] { portModel }, localPosition, item, edgesToDelete)));
                     break;
             }
@@ -135,12 +139,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             switch (portModels.First().Direction)
             {
                 case Direction.Output:
-                    SearcherService.ShowOutputToGraphNodes(commandDispatcher.GraphToolState, portModels, worldPosition, item =>
+                    SearcherService.ShowOutputToGraphNodes(commandDispatcher.State, portModels, worldPosition, item =>
                         commandDispatcher.Dispatch(new CreateNodeFromPortCommand(portModels, localPosition, item, edgesToDelete)));
                     break;
 
                 case Direction.Input:
-                    SearcherService.ShowInputToGraphNodes(commandDispatcher.GraphToolState, portModels, worldPosition, item =>
+                    SearcherService.ShowInputToGraphNodes(commandDispatcher.State, portModels, worldPosition, item =>
                         commandDispatcher.Dispatch(new CreateNodeFromPortCommand(portModels, localPosition, item, edgesToDelete)));
                     break;
             }
@@ -150,29 +154,29 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
         }
 
-        public virtual IEnumerable<INodeModel> GetEntryPoints(IGraphModel graphModel)
+        /// <inheritdoc />
+        public virtual IEnumerable<INodeModel> GetEntryPoints()
         {
             return Enumerable.Empty<INodeModel>();
         }
 
-        public virtual void OnInspectorGUI()
-        { }
-
-        public virtual bool CreateDependencyFromEdge(IEdgeModel model, out LinkedNodesDependency linkedNodesDependency, out INodeModel parent)
+        /// <inheritdoc />
+        public virtual bool CreateDependencyFromEdge(IEdgeModel edgeModel, out LinkedNodesDependency linkedNodesDependency, out INodeModel parentNodeModel)
         {
             linkedNodesDependency = new LinkedNodesDependency
             {
-                DependentPort = model.FromPort,
-                ParentPort = model.ToPort,
+                DependentPort = edgeModel.FromPort,
+                ParentPort = edgeModel.ToPort,
             };
-            parent = model.ToPort.NodeModel;
+            parentNodeModel = edgeModel.ToPort.NodeModel;
 
             return true;
         }
 
-        public virtual IEnumerable<IEdgePortalModel> GetPortalDependencies(IEdgePortalModel model)
+        /// <inheritdoc />
+        public virtual IEnumerable<IEdgePortalModel> GetPortalDependencies(IEdgePortalModel portalModel)
         {
-            if (model is IEdgePortalEntryModel edgePortalModel)
+            if (portalModel is IEdgePortalEntryModel edgePortalModel)
             {
                 return edgePortalModel.GraphModel.FindReferencesInGraph<IEdgePortalExitModel>(edgePortalModel.DeclarationModel);
             }
@@ -180,15 +184,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             return Enumerable.Empty<IEdgePortalModel>();
         }
 
-        public virtual IEnumerable<IEdgePortalModel> GetLinkedPortals(IEdgePortalModel model)
+        /// <inheritdoc />
+        public virtual IEnumerable<IEdgePortalModel> GetLinkedPortals(IEdgePortalModel portalModel)
         {
-            if (model is IEdgePortalModel edgePortalModel)
+            if (portalModel is IEdgePortalModel edgePortalModel)
             {
                 return edgePortalModel.GraphModel.FindReferencesInGraph<IEdgePortalModel>(edgePortalModel.DeclarationModel);
             }
 
             return Enumerable.Empty<IEdgePortalModel>();
         }
+
+        public virtual void OnInspectorGUI()
+        { }
 
         // PF FIXME: instead of having this virtual on the Stencil, tools (VS) should replace the command
         // handler for CreateVariableNodesCommand
@@ -197,47 +205,83 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             commandDispatcher.Dispatch(new CreateVariableNodesCommand(variablesToCreate));
         }
 
-        /// <summary>
-        /// Gets the port capacity of a port. This is called portModel?.GetDefaultCapacity() by NodeModel.GetPortCapacity(portModel)
-        /// </summary>
-        /// <param name="portModel"></param>
-        /// <param name="capacity"></param>
-        /// <returns></returns>
+        /// <inheritdoc />
         public virtual bool GetPortCapacity(IPortModel portModel, out PortCapacity capacity)
         {
             capacity = default;
             return false;
         }
 
-        /// <summary>
-        /// Used to skip some nodes when pasting/duplicating nodes
-        /// </summary>
-        /// <param name="originalModel"></param>
-        /// <param name="graph"></param>
-        /// <returns>If the node can be pasted/duplicated.</returns>
+        /// <inheritdoc />
         public virtual bool CanPasteNode(INodeModel originalModel, IGraphModel graph) => true;
-
-        public virtual bool MigrateNode(INodeModel nodeModel, out INodeModel migrated)
-        {
-            migrated = null;
-            return false;
-        }
 
         public virtual string GetNodeDocumentation(SearcherItem node, IGraphElementModel model) =>
             null;
+
+        struct SearcherSize
+        {
+            public Vector2 size;
+            public float rightLeftRatio;
+        }
+
+        static readonly SearcherSize k_DefaultSearcherSize = new SearcherSize { size = new Vector2(500, 400), rightLeftRatio = 1.0f };
+
+        Dictionary<string, SearcherSize> m_SearcherSizes = new Dictionary<string, SearcherSize> { { "", k_DefaultSearcherSize } };
+
+        // TODO JOCE This is a local setting. Should not be kept in the stencil
+        /// <inheritdoc />
+        public Rect GetSearcherRect(Vector2 position, out float rightLeftRatio, string usage)
+        {
+            SearcherSize size = k_DefaultSearcherSize;
+            if (string.IsNullOrEmpty(usage) || !m_SearcherSizes.TryGetValue(usage, out size))
+                m_SearcherSizes.TryGetValue("", out size);
+
+            rightLeftRatio = size.rightLeftRatio;
+            return new Rect(position, size.size);
+        }
+
+        // TODO JOCE This is a local setting. Should not be kept in the stencil
+        /// <inheritdoc />
+        public void SetSearcherSize(string usage, Vector2 size, float rightLeftRatio = 1.0f)
+        {
+            m_SearcherSizes[usage ?? ""] = new SearcherSize { size = size, rightLeftRatio = rightLeftRatio };
+        }
 
         /// <summary>
         /// Converts a <see cref="GraphProcessingError"/> to a <see cref="IGraphProcessingErrorModel"/>.
         /// </summary>
         /// <param name="error">The error to convert.</param>
         /// <returns>The converted error.</returns>
-        public abstract IGraphProcessingErrorModel CreateProcessingErrorModel(GraphProcessingError error);
+        public virtual IGraphProcessingErrorModel CreateProcessingErrorModel(GraphProcessingError error)
+        {
+            if (error.SourceNode != null && !error.SourceNode.Destroyed)
+                return new GraphProcessingErrorModel(error);
+
+            return null;
+        }
+
+        /// <inheritdoc />
+        public abstract IBlackboardGraphModel CreateBlackboardGraphModel(IGraphAssetModel graphAssetModel);
 
         /// <summary>
-        /// Creates a <see cref="IBlackboardGraphModel"/> for the <paramref name="graphAssetModel"/>.
+        /// Populates the given <paramref name="menu"/> with the section to create variable declaration models for a blackboard.
         /// </summary>
-        /// <param name="graphAssetModel">The graph asset to wrap in a <see cref="IBlackboardGraphModel"/>.</param>
-        /// <returns>A new <see cref="IBlackboardGraphModel"/></returns>
-        public abstract IBlackboardGraphModel CreateBlackboardGraphModel(IGraphAssetModel graphAssetModel);
+        /// <param name="sectionName">The name of the section in which the menu is added.</param>
+        /// <param name="menu">The menu to fill.</param>
+        /// <param name="commandDispatcher">The command dispatcher tasked with dispatching the creation command.</param>
+        public virtual void PopulateBlackboardCreateMenu(string sectionName, GenericMenu menu, CommandDispatcher commandDispatcher)
+        {
+            menu.AddItem(new GUIContent("Create Variable"), false, () =>
+            {
+                const string newItemName = "variable";
+                var finalName = newItemName;
+                var i = 0;
+                // ReSharper disable once AccessToModifiedClosure
+                while (commandDispatcher.State.WindowState.GraphModel.VariableDeclarations.Any(v => v.Title == finalName))
+                    finalName = newItemName + i++;
+
+                commandDispatcher.Dispatch(new CreateGraphVariableDeclarationCommand(finalName, true, TypeHandle.Float));
+            });
+        }
     }
 }

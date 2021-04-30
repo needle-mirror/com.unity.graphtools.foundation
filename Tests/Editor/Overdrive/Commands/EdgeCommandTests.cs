@@ -4,6 +4,7 @@ using System.Linq;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEngine;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 
 // ReSharper disable AccessToStaticMemberViaDerivedType
 

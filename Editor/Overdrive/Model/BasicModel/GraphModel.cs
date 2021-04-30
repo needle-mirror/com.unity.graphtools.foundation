@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.GraphToolsFoundation.Overdrive;
+using UnityEngine.Scripting.APIUpdating;
 using UnityEngine.Serialization;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
@@ -11,6 +13,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
     /// A model that represents a graph.
     /// </summary>
     [Serializable]
+    [MovedFrom(false, sourceAssembly: "Unity.GraphTools.Foundation.Overdrive.Editor")]
     public abstract class GraphModel : IGraphModel, ISerializationCallbackReceiver
     {
         [SerializeReference]
@@ -20,7 +23,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         List<INodeModel> m_GraphNodeModels;
 
         [SerializeField, Obsolete]
-        // ReSharper disable once Unity.RedundantFormerlySerializedAsAttribute
         List<EdgeModel> m_EdgeModels;
 
         [SerializeReference]
@@ -50,18 +52,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         [SerializeReference]
         List<IDeclarationModel> m_GraphPortalModels;
 
+        [SerializeField, FormerlySerializedAs("name")]
+        string m_Name;
+
         [SerializeField]
         string m_StencilTypeName; // serialized as string, resolved as type by ISerializationCallbackReceiver
 
-        public virtual Type DefaultStencilType => null;
-
-        // kept for backward compatibility, Stencil won't be serializable in the future
-        [SerializeReference, FormerlySerializedAs("m_Stencil")]
-        Stencil m_SerializedStencil;
-
-        protected Stencil OldSerializedStencil => m_SerializedStencil;
-
         Type m_StencilType;
+
+        // As this field is not serialized, use GetElementsByGuid() to access it.
+        Dictionary<SerializableGUID, IGraphElementModel> m_ElementsByGuid;
+
+        public virtual Type DefaultStencilType => null;
 
         public Type StencilType
         {
@@ -70,19 +72,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             {
                 if (value == null)
                     value = DefaultStencilType;
-                Assert.IsTrue(typeof(Stencil).IsAssignableFrom(value));
+                Assert.IsTrue(typeof(IStencil).IsAssignableFrom(value));
                 m_StencilType = value;
                 Stencil = InstantiateStencil(StencilType);
             }
         }
 
-        public Stencil Stencil { get; private set; }
-
-        [SerializeField, FormerlySerializedAs("name")]
-        string m_Name;
-
-        // As this field is not serialized, use GetElementsByGuid() to access it.
-        Dictionary<SerializableGUID, IGraphElementModel> m_ElementsByGuid;
+        public IStencil Stencil { get; private set; }
 
         public IGraphAssetModel AssetModel
         {
@@ -104,11 +100,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
         public IReadOnlyList<IDeclarationModel> PortalDeclarations => m_GraphPortalModels;
 
-        public string Name
-        {
-            get => m_Name;
-            set => m_Name = value;
-        }
+        /// <inheritdoc />
+        public string Name => m_AssetModel ? m_AssetModel.Name : "";
 
         protected GraphModel()
         {
@@ -596,23 +589,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             return null;
         }
 
-        public virtual IInputOutputPortsNodeModel CreateItemizedNode(GraphToolState graphToolState, int nodeOffset, ref IPortModel outputPortModel)
+        /// <inheritdoc />
+        public IInputOutputPortsNodeModel CreateItemizedNode(int nodeOffset, ref IPortModel outputPortModel)
         {
             if (outputPortModel.IsConnected())
+
                 if (outputPortModel.NodeModel is IConstantNodeModel || outputPortModel.NodeModel is IVariableNodeModel)
                 {
-                    return CreateItemizedNode(nodeOffset, ref outputPortModel);
+                    Vector2 offset = Vector2.up * nodeOffset;
+                    var nodeToConnect = DuplicateNode(outputPortModel.NodeModel, offset) as IInputOutputPortsNodeModel;
+                    outputPortModel = nodeToConnect?.OutputsById[outputPortModel.UniqueName];
+                    return nodeToConnect;
                 }
-
             return null;
-        }
-
-        protected IInputOutputPortsNodeModel CreateItemizedNode(int nodeOffset, ref IPortModel outputPortModel)
-        {
-            Vector2 offset = Vector2.up * nodeOffset;
-            var nodeToConnect = DuplicateNode(outputPortModel.NodeModel, offset) as IInputOutputPortsNodeModel;
-            outputPortModel = nodeToConnect?.OutputsById[outputPortModel.UniqueName];
-            return nodeToConnect;
         }
 
         public IReadOnlyCollection<IGraphElementModel> DeleteNodes(IReadOnlyCollection<INodeModel> nodeModels, bool deleteConnections)
@@ -815,10 +804,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             return deletedModels;
         }
 
-        Stencil InstantiateStencil(Type stencilType)
+        IStencil InstantiateStencil(Type stencilType)
         {
-            Debug.Assert(typeof(Stencil).IsAssignableFrom(stencilType));
-            var stencil = (Stencil)Activator.CreateInstance(stencilType);
+            Debug.Assert(typeof(IStencil).IsAssignableFrom(stencilType));
+            var stencil = (IStencil)Activator.CreateInstance(stencilType);
             Assert.IsNotNull(stencil);
             stencil.GraphModel = this;
             return stencil;
@@ -1130,49 +1119,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             }
         }
 
-        public virtual void OnAfterDeserializeAssetModel()
-        {
-            if (OldSerializedStencil != null)
-            {
-                StencilType = OldSerializedStencil.GetType();
-            }
-            UpgradePortalModels();
-
-            // TODO: Vlad Kill when .9 is done
-            foreach (var nodeModel in NodeModels)
-            {
-                nodeModel.OnAfterDeserializeAssetModel();
-            }
-        }
-
-        // TODO: JOCE Remove before the GTF goes public. Should no longer en needed at that point.
-        // kill when .8 is done
-        void UpgradePortalModels()
-        {
-            var oldPortalDeclarations = PortalDeclarations.OfType<VariableDeclarationModel>().ToList();
-            foreach (var oldPortalDeclaration in oldPortalDeclarations)
-            {
-                var newPortalDeclaration = new DeclarationModel
-                {
-                    Title = oldPortalDeclaration.Title,
-                    Guid = oldPortalDeclaration.Guid
-                };
-
-                var portalModels = NodeModels
-                    .OfType<EdgePortalModel>()
-                    .Where(v => v.DeclarationModel != null &&
-                        v.DeclarationModel.GetType() == typeof(VariableDeclarationModel) &&
-                        oldPortalDeclaration.Guid == v.DeclarationModel.Guid);
-                foreach (var portalModel in portalModels)
-                {
-                    portalModel.DeclarationModel = newPortalDeclaration;
-                }
-
-                RemovePortal(oldPortalDeclaration);
-                AddPortal(newPortalDeclaration);
-            }
-        }
-
         public virtual bool CheckIntegrity(Verbosity errors)
         {
             return GraphModelExtensions.CheckIntegrity(this, errors);
@@ -1180,9 +1126,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
         public virtual void OnBeforeSerialize()
         {
-            // Stencil shouldn't be serialized in graphmodels, this is only kept for backward compatibility with older graphs
-            m_SerializedStencil = null;
-
             if (StencilType != null)
                 m_StencilTypeName = StencilType.AssemblyQualifiedName;
         }
@@ -1190,9 +1133,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         public virtual void OnAfterDeserialize()
         {
             if (!string.IsNullOrEmpty(m_StencilTypeName))
-            {
                 StencilType = Type.GetType(m_StencilTypeName) ?? DefaultStencilType;
-            }
         }
 
         public virtual void CloneGraph(IGraphModel sourceGraphModel)

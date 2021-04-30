@@ -16,8 +16,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         {
             m_GraphModel = new GraphModel();
             m_CommandDispatcher = new CommandDispatcher(new TestGraphToolState(default, m_GraphModel));
-            CommandDispatcherHelper.RegisterDefaultCommandHandlers(m_CommandDispatcher);
-            m_GraphView = new GraphView(null, m_CommandDispatcher);
+            m_GraphView = new GraphView(null, m_CommandDispatcher, "");
         }
 
         [TearDown]

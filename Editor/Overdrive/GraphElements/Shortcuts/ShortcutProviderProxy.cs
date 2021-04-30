@@ -16,7 +16,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (s_ShortcutProviderProxy == null)
             {
                 s_ShortcutProviderProxy = new ShortcutProviderProxy();
-                ToolShortcutDiscoveryProvider.Instance.Proxy = s_ShortcutProviderProxy;
+                ToolShortcutDiscoveryProvider.GetInstance().Proxy = s_ShortcutProviderProxy;
             }
 
             return s_ShortcutProviderProxy;
@@ -29,10 +29,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             m_Tools = new List<(string toolName, Type editorWindowType, Func<string, bool> shortcutFilter)>();
         }
 
-        public void AddTool(string toolName, Type editorWindowType, Func<string, bool> shortcutFilter)
+        public void AddTool(string toolName, Type editorWindowType, Func<string, bool> shortcutFilter, bool rebuildNow = false)
         {
-            m_Tools.Add((toolName, editorWindowType, shortcutFilter));
-            ToolShortcutDiscoveryProvider.RebuildShortcuts();
+            if (!m_Tools.Contains((toolName, editorWindowType, shortcutFilter)))
+            {
+                m_Tools.Add((toolName, editorWindowType, shortcutFilter));
+
+                if (rebuildNow)
+                {
+                    ToolShortcutDiscoveryProvider.RebuildShortcuts();
+                }
+            }
         }
 
         public IEnumerable<ShortcutDefinition> GetDefinedShortcuts()
@@ -65,6 +72,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
                     foreach (var (toolName, context, shortcutFilter) in m_Tools)
                     {
+                        if (attribute.ToolName != null && toolName != attribute.ToolName)
+                            continue;
+
                         if (!shortcutFilter?.Invoke(attribute.Identifier) ?? false)
                             continue;
 

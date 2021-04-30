@@ -1,9 +1,11 @@
+using UnityEngine.GraphToolsFoundation.CommandStateObserver;
+
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Plugins.Debugging
 {
     /// <summary>
     /// An observer that updates debug data.
     /// </summary>
-    public class DebugDataObserver : StateObserver
+    public class DebugDataObserver : StateObserver<GraphToolState>
     {
         DebugInstrumentationHandler m_DebugInstrumentationHandler;
 
@@ -25,7 +27,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Plugins.Debugging
         }
 
         /// <inheritdoc/>
-        public override void Observe(GraphToolState state)
+        protected override void Observe(GraphToolState state)
         {
             using (var gvObservation = this.ObserveState(state.GraphViewState))
             using (var tsObservation = this.ObserveState(state.TracingControlState))

@@ -1,5 +1,6 @@
 using System;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
@@ -26,16 +27,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         public void SetOnGetSearcherDatabaseProviderCallback(Action callback)
         {
             m_OnGetSearcherDatabaseProviderCallback = callback;
-        }
-
-        public override IGraphProcessingErrorModel CreateProcessingErrorModel(GraphProcessingError error)
-        {
-            if (error.SourceNode != null && !error.SourceNode.Destroyed)
-            {
-                return new GraphProcessingErrorModel(error);
-            }
-
-            return null;
         }
 
         /// <inheritdoc />

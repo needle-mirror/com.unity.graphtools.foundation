@@ -3,7 +3,7 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
 {
-    public static class GraphViewTestHelpers
+    static class GraphViewTestHelpers
     {
         public class TimerEventSchedulerWrapper : IDisposable
         {

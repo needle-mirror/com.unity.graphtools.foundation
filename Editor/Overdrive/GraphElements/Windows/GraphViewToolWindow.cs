@@ -2,9 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using UnityEngine.GraphToolsFoundation.CommandStateObserver;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEngine;
 using UnityEditor.UIElements;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
@@ -22,7 +24,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         const string k_DefaultSelectorName = "Select a panel";
 
         [SerializeField]
-        GUID m_GUID;
+        SerializableGUID m_GUID;
 
         UIElements.Toolbar m_Toolbar;
         protected VisualElement m_ToolbarContainer;
@@ -39,7 +41,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         bool m_FirstUpdate;
 
-        public GUID GUID => m_GUID;
+        public SerializableGUID GUID => m_GUID;
 
         protected abstract string ToolName { get; }
 
@@ -63,7 +65,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             // When a window is opened and there is a domain reload, the GUID stays the same.
             if (m_GUID == default)
             {
-                m_GUID = GUID.Generate();
+                m_GUID = SerializableGUID.Generate();
             }
 
             var root = rootVisualElement;
@@ -108,7 +110,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         protected virtual void OnDestroy()
         {
             // When window is closed, remove all associated state to avoid cluttering the Library folder.
-            PersistedEditorState.RemoveViewState(GUID);
+            PersistedState.RemoveViewState(GUID);
         }
 
         protected virtual void Update()
@@ -123,7 +125,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     if (graphViewEditor != null && m_SelectedGraphViewIdx >= 0 && m_SelectedGraphView == null)
                     {
                         m_SelectedGraphView = graphViewEditor.GraphViews.ElementAt(m_SelectedGraphViewIdx);
-                        m_SelectorMenu.text = m_SelectedGraphView.name;
                         OnGraphViewChanged();
                     }
                 }
@@ -169,7 +170,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             foreach (var graphView in m_GraphViewChoices)
             {
-                menu.AppendAction(graphView.graphView.name, OnSelectGraphView,
+                menu.AppendAction(GetDisplayName(graphView.graphView), OnSelectGraphView,
                     a =>
                     {
                         var gvc = (GraphViewChoice)a.userData;
@@ -216,12 +217,26 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         void UpdateGraphViewName()
         {
-            string updatedName = k_DefaultSelectorName;
-            if (m_SelectedGraphView != null)
-                updatedName = m_SelectedGraphView.name;
+            string updatedName = GetDisplayName(m_SelectedGraphView);
 
             if (m_SelectorMenu.text != updatedName)
                 m_SelectorMenu.text = updatedName;
+        }
+
+        string GetDisplayName(GraphView gv)
+        {
+            string updatedName = k_DefaultSelectorName;
+            if (gv != null)
+            {
+                updatedName = gv.name;
+                string graphName = gv.GraphModel?.Name;
+                if (!string.IsNullOrEmpty(graphName))
+                {
+                    updatedName += " - " + graphName;
+                }
+            }
+
+            return updatedName;
         }
     }
 }

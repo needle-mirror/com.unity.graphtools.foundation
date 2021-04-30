@@ -84,7 +84,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             m_CurrentValue = m_Label.text;
 
             m_Label.style.display = DisplayStyle.None;
-            m_TextField.style.display = StyleKeyword.Null;
+            m_TextField.style.display = DisplayStyle.Flex;
 
             m_TextField.SafeQ(TextField.textInputUssName).Focus();
             m_TextField.SelectAll();
@@ -122,7 +122,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         void OnFieldBlur(BlurEvent e)
         {
             if (e.target == e.currentTarget)
-                m_Label.style.display = StyleKeyword.Null;
+                m_Label.style.display = DisplayStyle.Flex;
             m_TextField.style.display = DisplayStyle.None;
         }
 

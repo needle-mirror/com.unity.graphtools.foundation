@@ -27,7 +27,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         protected IconTitleProgressPart(string name, IGraphElementModel model, IModelUI ownerElement, string parentClassName)
             : base(name, model, ownerElement, parentClassName, multiline: false)
         {
-            if (model is ICollapsible)
+            if (model.IsCollapsible())
             {
                 var collapseButtonPart = NodeCollapseButtonPart.Create(collapseButtonPartName, model, ownerElement, ussClassName);
                 PartList.AppendPart(collapseButtonPart);

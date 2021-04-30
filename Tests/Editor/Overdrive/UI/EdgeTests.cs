@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 using UnityEngine.TestTools;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
@@ -71,6 +72,23 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
 
             Assert.IsFalse(string.IsNullOrEmpty(edge1.EdgeLabel));
             Assert.IsFalse(string.IsNullOrEmpty(edge2.EdgeLabel));
+        }
+
+        [UnityTest]
+        public IEnumerator DeleteSelectedNodesAndEdgeDoesNotThrow()
+        {
+            var operatorModel = GraphModel.CreateNode<Type0FakeNodeModel>("Node0", new Vector2(-100, -100));
+            var intModel = GraphModel.CreateConstantNode(typeof(int).GenerateTypeHandle(), "int", new Vector2(-150, -100));
+            var edge = GraphModel.CreateEdge(operatorModel.Input0, intModel.OutputPort);
+            yield return null;
+
+            var elements = new IGraphElementModel[] { operatorModel, intModel, edge };
+            CommandDispatcher.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Replace, elements));
+            yield return null;
+
+            var nodes = new[] { operatorModel, intModel as IGraphElementModel };
+            GraphModel.DeleteElements(nodes);
+            yield return null;
         }
     }
 }

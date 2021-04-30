@@ -7,7 +7,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
     {
         public SelectionDragger TestSelectionDragger => SelectionDragger;
 
-        public TestGraphView(GraphViewEditorWindow window, CommandDispatcher commandDispatcher) : base(window, commandDispatcher)
+        public TestGraphView(GraphViewEditorWindow window, CommandDispatcher commandDispatcher)
+            : base(window, commandDispatcher, "")
         {
         }
 

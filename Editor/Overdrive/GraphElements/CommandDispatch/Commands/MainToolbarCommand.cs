@@ -1,11 +1,12 @@
 using System.Collections.Generic;
+using UnityEngine.GraphToolsFoundation.CommandStateObserver;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEngine;
 using UnityEngine.GraphToolsFoundation.Overdrive;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public class ToggleTracingCommand : Command
+    public class ToggleTracingCommand : UndoableCommand
     {
         bool Value;
 
@@ -25,13 +26,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (graphModel?.Stencil == null)
                 return;
 
-            using (var updater = state.TracingControlState.UpdateScope)
+            using (var updater = state.TracingStatusState.UpdateScope)
             {
                 updater.TracingEnabled = command.Value;
             }
 
             // PF FIXME could be implemented as an observer
-            graphModel.Stencil.Debugger.OnToggleTracing(graphModel, command.Value);
+            ((Stencil)graphModel.Stencil)?.Debugger.OnToggleTracing(graphModel, command.Value);
         }
     }
 }

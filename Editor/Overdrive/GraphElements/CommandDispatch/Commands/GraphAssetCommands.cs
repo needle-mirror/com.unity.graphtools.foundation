@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Text;
+using UnityEngine.GraphToolsFoundation.CommandStateObserver;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
@@ -13,7 +14,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         }
     }
 
-    public class LoadGraphAssetCommand : Command
+    public class LoadGraphAssetCommand : UndoableCommand
     {
         public enum Type
         {
@@ -68,7 +69,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                         (command.Asset != null && graphToolState.WindowState.AssetModel != command.Asset))
                     {
                         GraphProcessingHelper.ProcessGraph(graphToolState.WindowState.GraphModel, command.PluginRepository,
-                            RequestGraphProcessingOptions.Default, graphToolState.TracingControlState);
+                            RequestGraphProcessingOptions.Default, graphToolState.TracingStatusState.TracingEnabled);
                     }
 
                     using (var graphProcessingStateUpdater = graphToolState.GraphProcessingState.UpdateScope)
@@ -128,7 +129,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 graphToolState.LoadGraphAsset(asset, command.BoundObject);
 
                 var graphModel = graphToolState.WindowState.GraphModel;
-                graphModel?.Stencil?.PreProcessGraph(graphToolState.WindowState.GraphModel);
+                ((Stencil)graphModel?.Stencil)?.PreProcessGraph(graphModel);
 
                 CheckGraphIntegrity(graphToolState);
             }

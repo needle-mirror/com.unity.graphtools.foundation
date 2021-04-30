@@ -1,16 +1,16 @@
-using System;
 using System.Collections.Generic;
-using UnityEditor;
-using UnityEditor.GraphToolsFoundation.Overdrive;
-using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
-using UnityEngine;
-using UnityEngine.UIElements;
 using State = UnityEditor.GraphToolsFoundation.Overdrive.GraphToolState;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook.UI
 {
     internal class SimpleGraphViewWindow : GraphViewEditorWindow
     {
+        [InitializeOnLoadMethod]
+        static void RegisterTool()
+        {
+            ShortcutHelper.RegisterDefaultShortcuts<SimpleGraphViewWindow>(MathBookStencil.GraphName);
+        }
+
         [MenuItem("GTF Samples/MathBook Editor")]
         public static void ShowWindow()
         {
@@ -19,14 +19,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook.UI
 
         protected override void OnEnable()
         {
-            base.OnEnable();
-
             EditorToolName = "Math Book";
+            base.OnEnable();
         }
 
         protected override GraphView CreateGraphView()
         {
-            return new SimpleGraphView(this, true, CommandDispatcher);
+            return new SimpleGraphView(this, CommandDispatcher, EditorToolName);
         }
 
         protected override BlankPage CreateBlankPage()

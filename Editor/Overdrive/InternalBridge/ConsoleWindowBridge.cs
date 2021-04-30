@@ -8,7 +8,7 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
 {
-    public static class ConsoleWindowBridge
+    static class ConsoleWindowBridge
     {
         static Action<int> s_RemoveLogEntriesByIdentifierDelegate;
         static readonly int k_GTFLogIdentifier = "GraphToolsFoundation".GetHashCode();

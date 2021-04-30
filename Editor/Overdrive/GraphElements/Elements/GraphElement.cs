@@ -69,9 +69,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         protected override void UpdateElementFromModel()
         {
-            ClickSelector = Model.IsSelectable() ? new ClickSelector() : null;
+            ClickSelector = Model?.IsSelectable() ?? false ? new ClickSelector() : null;
 
-            EnableInClassList(selectableModifierUssClassName, Model.IsSelectable() && ClickSelector != null);
+            EnableInClassList(selectableModifierUssClassName, ClickSelector != null);
 
             this.SetCheckedPseudoState(IsSelected());
         }
@@ -108,7 +108,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         /// <returns>True if the model is selected, false otherwise.</returns>
         public bool IsSelected()
         {
-            return CommandDispatcher?.GraphToolState?.SelectionState?.IsSelected(Model) ?? false;
+            return CommandDispatcher?.State?.SelectionState?.IsSelected(Model) ?? false;
         }
 
         /// <summary>
@@ -127,7 +127,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
 
         /// <summary>
-        /// Returns wether the passed keyboard event is a rename event on this platform
+        /// Returns whether the passed keyboard event is a rename event on this platform
         /// </summary>
         /// <param name="e">The event.</param>
         /// <return>Whether the event is a key rename event</return>

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
@@ -33,16 +34,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     /// </summary>
     public interface IGraphModel : IDisposable
     {
-        Stencil Stencil { get; }
+        IStencil Stencil { get; }
         Type DefaultStencilType { get; }
         Type StencilType { get; set; }
         IGraphAssetModel AssetModel { get; set; }
 
         void OnEnable();
         void OnDisable();
-        void OnAfterDeserializeAssetModel();
 
-        string Name { get; set; }
+        /// <summary>
+        /// The name of the current graph.
+        /// </summary>
+        string Name { get; }
 
         IReadOnlyList<INodeModel> NodeModels { get; }
         IReadOnlyList<IEdgeModel> EdgeModels { get; }
@@ -152,8 +155,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             SerializableGUID guid = default, Action<INodeModel> initializationCallback = null, SpawnFlags spawnFlags = SpawnFlags.Default);
         INodeModel DuplicateNode(INodeModel sourceNode, Vector2 delta);
         IReadOnlyCollection<IGraphElementModel> DeleteNodes(IReadOnlyCollection<INodeModel> nodeModels, bool deleteConnections);
-        // TODO JOCE: Would be worth attempting to extract this from VS.
-        IInputOutputPortsNodeModel CreateItemizedNode(GraphToolState graphToolState, int nodeOffset, ref IPortModel outputPortModel);
+
+        /// <summary>
+        /// Duplicates variable or constant modes connected to multiple ports so there is a single node per edge.
+        /// </summary>
+        /// <param name="nodeOffset">The offset to apply to the position of the duplicated node.</param>
+        /// <param name="outputPortModel">The output port of the node to duplicate.</param>
+        /// <returns>The newly itemized node.</returns>
+        IInputOutputPortsNodeModel CreateItemizedNode(int nodeOffset, ref IPortModel outputPortModel);
 
         IEdgeModel CreateEdge(IPortModel toPort, IPortModel fromPort);
         IEdgeModel DuplicateEdge(IEdgeModel sourceEdge, INodeModel targetInputNode, INodeModel targetOutputNode);

@@ -5,6 +5,7 @@ using System.Linq;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEngine;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
 
@@ -119,7 +120,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI.Commands
 
             Assert.AreEqual(Vector3.zero, position);
             Assert.AreEqual(Vector3.one, scale);
-            Assert.IsFalse(CommandDispatcher.GraphToolState.SelectionState.IsSelected(node));
+            Assert.IsFalse(CommandDispatcher.State.SelectionState.IsSelected(node));
 
             var newPos = new Vector3(32, 45, 0);
             var newScale = new Vector3(0.42f, 0.42f, 0.42f);
@@ -131,7 +132,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI.Commands
 
             Assert.AreEqual(newPos, position);
             Assert.AreEqual(newScale, scale);
-            Assert.IsTrue(CommandDispatcher.GraphToolState.SelectionState.IsSelected(node));
+            Assert.IsTrue(CommandDispatcher.State.SelectionState.IsSelected(node));
         }
 
         [UnityTest]
@@ -172,19 +173,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI.Commands
             CommandDispatcher.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Replace, nodeB));
             yield return null;
 
-            Assert.AreEqual(Vector3.zero, GraphView.ContentViewContainer.transform.position);
-            Assert.AreEqual(Vector3.one, GraphView.ContentViewContainer.transform.scale);
-            Assert.IsFalse(CommandDispatcher.GraphToolState.SelectionState.IsSelected(nodeA));
-            Assert.IsTrue(CommandDispatcher.GraphToolState.SelectionState.IsSelected(nodeB));
-            Assert.IsFalse(CommandDispatcher.GraphToolState.SelectionState.IsSelected(nodeC));
+            var initialPos = GraphView.ContentViewContainer.transform.position;
+            Assert.IsFalse(CommandDispatcher.State.SelectionState.IsSelected(nodeA));
+            Assert.IsTrue(CommandDispatcher.State.SelectionState.IsSelected(nodeB));
+            Assert.IsFalse(CommandDispatcher.State.SelectionState.IsSelected(nodeC));
 
             GraphView.DispatchFramePrevCommand(e => true);
             yield return null;
 
-            Assert.AreNotEqual(Vector3.zero, GraphView.ContentViewContainer.transform.position);
-            Assert.IsTrue(CommandDispatcher.GraphToolState.SelectionState.IsSelected(nodeA));
-            Assert.IsFalse(CommandDispatcher.GraphToolState.SelectionState.IsSelected(nodeB));
-            Assert.IsFalse(CommandDispatcher.GraphToolState.SelectionState.IsSelected(nodeC));
+            Assert.AreNotEqual(initialPos, GraphView.ContentViewContainer.transform.position);
+            Assert.IsTrue(CommandDispatcher.State.SelectionState.IsSelected(nodeA));
+            Assert.IsFalse(CommandDispatcher.State.SelectionState.IsSelected(nodeB));
+            Assert.IsFalse(CommandDispatcher.State.SelectionState.IsSelected(nodeC));
 
             // Check that cycling work.
             CommandDispatcher.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Replace, nodeA));
@@ -193,9 +193,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI.Commands
             GraphView.DispatchFramePrevCommand(e => true);
             yield return null;
 
-            Assert.IsFalse(CommandDispatcher.GraphToolState.SelectionState.IsSelected(nodeA));
-            Assert.IsFalse(CommandDispatcher.GraphToolState.SelectionState.IsSelected(nodeB));
-            Assert.IsTrue(CommandDispatcher.GraphToolState.SelectionState.IsSelected(nodeC));
+            Assert.IsFalse(CommandDispatcher.State.SelectionState.IsSelected(nodeA));
+            Assert.IsFalse(CommandDispatcher.State.SelectionState.IsSelected(nodeB));
+            Assert.IsTrue(CommandDispatcher.State.SelectionState.IsSelected(nodeC));
         }
 
         [UnityTest]
@@ -208,19 +208,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI.Commands
             CommandDispatcher.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Replace, nodeB));
             yield return null;
 
-            Assert.AreEqual(Vector3.zero, GraphView.ContentViewContainer.transform.position);
-            Assert.AreEqual(Vector3.one, GraphView.ContentViewContainer.transform.scale);
-            Assert.IsFalse(CommandDispatcher.GraphToolState.SelectionState.IsSelected(nodeA));
-            Assert.IsTrue(CommandDispatcher.GraphToolState.SelectionState.IsSelected(nodeB));
-            Assert.IsFalse(CommandDispatcher.GraphToolState.SelectionState.IsSelected(nodeC));
+            var initialPos = GraphView.ContentViewContainer.transform.position;
+            Assert.IsFalse(CommandDispatcher.State.SelectionState.IsSelected(nodeA));
+            Assert.IsTrue(CommandDispatcher.State.SelectionState.IsSelected(nodeB));
+            Assert.IsFalse(CommandDispatcher.State.SelectionState.IsSelected(nodeC));
 
             GraphView.DispatchFrameNextCommand(e => true);
             yield return null;
 
-            Assert.AreNotEqual(Vector3.zero, GraphView.ContentViewContainer.transform.position);
-            Assert.IsFalse(CommandDispatcher.GraphToolState.SelectionState.IsSelected(nodeA));
-            Assert.IsFalse(CommandDispatcher.GraphToolState.SelectionState.IsSelected(nodeB));
-            Assert.IsTrue(CommandDispatcher.GraphToolState.SelectionState.IsSelected(nodeC));
+            Assert.AreNotEqual(initialPos, GraphView.ContentViewContainer.transform.position);
+            Assert.IsFalse(CommandDispatcher.State.SelectionState.IsSelected(nodeA));
+            Assert.IsFalse(CommandDispatcher.State.SelectionState.IsSelected(nodeB));
+            Assert.IsTrue(CommandDispatcher.State.SelectionState.IsSelected(nodeC));
 
             // Check that cycling work.
             CommandDispatcher.Dispatch(new SelectElementsCommand(SelectElementsCommand.SelectionMode.Replace, nodeC));
@@ -229,9 +228,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI.Commands
             GraphView.DispatchFrameNextCommand(e => true);
             yield return null;
 
-            Assert.IsTrue(CommandDispatcher.GraphToolState.SelectionState.IsSelected(nodeA));
-            Assert.IsFalse(CommandDispatcher.GraphToolState.SelectionState.IsSelected(nodeB));
-            Assert.IsFalse(CommandDispatcher.GraphToolState.SelectionState.IsSelected(nodeC));
+            Assert.IsTrue(CommandDispatcher.State.SelectionState.IsSelected(nodeA));
+            Assert.IsFalse(CommandDispatcher.State.SelectionState.IsSelected(nodeB));
+            Assert.IsFalse(CommandDispatcher.State.SelectionState.IsSelected(nodeC));
         }
     }
 }

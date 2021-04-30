@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine.GraphToolsFoundation.CommandStateObserver;
 using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
@@ -11,7 +13,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public const int nodeOffset = 60;
     }
 
-    public class CreateEdgeCommand : Command
+    public class CreateEdgeCommand : UndoableCommand
     {
         const string k_UndoString = "Create Edge";
 
@@ -68,7 +70,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
                 if (command.CreateItemizedNode)
                 {
-                    var newNode = graphModel.CreateItemizedNode(graphToolState, EdgeCommandConfig.nodeOffset, ref fromPortModel);
+                    var newNode = graphModel.CreateItemizedNode(EdgeCommandConfig.nodeOffset, ref fromPortModel);
                     graphUpdater.MarkNew(newNode);
                 }
 
@@ -111,7 +113,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         }
     }
 
-    public class AddControlPointOnEdgeCommand : Command
+    public class AddControlPointOnEdgeCommand : UndoableCommand
     {
         public readonly IEditableEdge EdgeModel;
         public readonly int AtIndex;
@@ -141,7 +143,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         }
     }
 
-    public class MoveEdgeControlPointCommand : Command
+    public class MoveEdgeControlPointCommand : UndoableCommand
     {
         public readonly IEditableEdge EdgeModel;
         public readonly int EdgeIndex;
@@ -173,7 +175,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         }
     }
 
-    public class RemoveEdgeControlPointCommand : Command
+    public class RemoveEdgeControlPointCommand : UndoableCommand
     {
         public readonly IEditableEdge EdgeModel;
         public readonly int EdgeIndex;
@@ -201,7 +203,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         }
     }
 
-    public class SetEdgeEditModeCommand : Command
+    public class SetEdgeEditModeCommand : UndoableCommand
     {
         public readonly IEditableEdge EdgeModel;
         public readonly bool Value;
@@ -229,7 +231,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         }
     }
 
-    public class ReorderEdgeCommand : Command
+    public class ReorderEdgeCommand : UndoableCommand
     {
         public enum ReorderType
         {
@@ -312,7 +314,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         }
     }
 
-    public class SplitEdgeAndInsertExistingNodeCommand : Command
+    public class SplitEdgeAndInsertExistingNodeCommand : UndoableCommand
     {
         public readonly IEdgeModel EdgeModel;
         public readonly IInputOutputPortsNodeModel NodeModel;
@@ -351,7 +353,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         }
     }
 
-    public class ConvertEdgesToPortalsCommand : Command
+    public class ConvertEdgesToPortalsCommand : UndoableCommand
     {
         const string k_UndoStringSingular = "Convert Edge to Portal";
         const string k_UndoStringPlural = "Convert Edges to Portals";
@@ -483,7 +485,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         }
     }
 
-    public class TogglePortsCommand : Command
+    public class TogglePortsCommand : UndoableCommand
     {
         public TogglePortsCommand()
         {
@@ -514,7 +516,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         }
     }
 
-    public class ToggleEdgePortsCommand : Command
+    public class ToggleEdgePortsCommand : UndoableCommand
     {
         public readonly IEdgeModel[] EdgeModels;
 

@@ -1,10 +1,7 @@
-using System;
-using UnityEngine;
-
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     [CustomEditor(typeof(GraphAssetModel), true)]
-    class GraphModelInspector : Editor
+    class GraphModelInspector : UnityEditor.Editor
     {
         public override void OnInspectorGUI()
         {
@@ -14,7 +11,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 EditorGUILayout.LabelField("Stencil Properties");
 
                 EditorGUI.indentLevel++;
-                graph.Stencil?.OnInspectorGUI();
+                ((Stencil)graph.Stencil)?.OnInspectorGUI();
                 EditorGUI.indentLevel--;
             }
 

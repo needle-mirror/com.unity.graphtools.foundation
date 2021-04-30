@@ -5,6 +5,70 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.10.0-preview] - 2021-04-30
+
+### Added
+
+- The models and their interfaces now interact with the stencil through the new `IStencil` interface.
+- Added the `ContextNode` class.
+
+### Removed
+
+- `IBlackboardGraphModel.PopulateCreateMenu`; Please use `Stencil.PopulateBlackboardCreateMenu` now.
+- The version of `GraphModel.CreateItemizedNode` that took a `GraphToolState` as a parameter; Use the other version instead.
+- `SerializableGUID.FromParts`. Use the appropriate `SerializableGUID` constructor instead.
+- The Resources folder.
+
+### Changed
+
+- `NodeModel.m_Collapsed` is now serialized.
+- `Stencil` are not serialized anymore.
+- `GraphViewEditorWindow.CanHandleAssetType` is now abstract.
+- Moved the following to the new `Unity.GraphTools.Foundation.Overdrive.Model` assembly:
+  - All the model interfaces and extensions
+  - GTF implementations of the model interfaces
+  - `Capabilities`
+  - `Direction`
+  - `Orientation`
+  - `PortType`
+  - Helpers to convert `SerializableGUID` to `GUID` and vice versa
+  - `IDependency`, `LinkedNodesDependency` and `PortalNodesDependency`
+- Moved the following to the new `Unity.GraphTools.Foundation.Overdrive` runtime assembly:
+  - `Enumeration`
+  - `SerializableGUID`
+  - `MemberInfoUtility`
+  - `TaskUtility`
+  - `TypeHandle` and all the supporting classes and extensions
+  - Extensions for `Assembly`, `HashSet`, `IEnumerable` and `string`
+  - Serialization dictionary helpers
+- `StringExtensions.CodifyString` is now a real extension method.
+- Reworked `EditorStateCache.GetState` to always add newly created state components to cache.
+- `Command` was renamed `UndoableCommand`.
+- `CommandDispatcher.GraphToolState` is obsolete. Use `CommandDispatcher.State`.
+- `GraphToolState.PreDispatchCommand` and `GraphToolState.PostDispatchCommand` are now methods of the `CommandDispatcher`.
+- `StateObserver` is now a generic. Use the observed state type as the type parameter.
+- `PersistedEditorState` was renamed `PersistedState`.
+- `BlackboardField.NameLabel` setter is now protected.
+- `DeclarationModel.Title` is not anymore modified after renaming to make it C# compatible.
+- `GraphView` name is now mandatory in constructor.
+- `IGraphModel.Name` no longer has a setter. The default `GraphModel` implementation returns the name of the associated asset.
+- The default value of `GraphView.SupportsWindowedBlackboard` changed from `false` to `true`.
+- By default, the "Build All" and "Live Tracing" buttons will not show up for graph tools.
+  You will need to provide your own ToolbarProvider to enable them.
+- When opening an graph window on its blank page, only the "New Graph", "Save All" (both disabled) and "Option" (enabled) buttons will now show in the toolbar.
+
+### Fixed
+
+- Math book samples using functions now reload properly.
+- Math book graphs have access to shortcut keys.
+- EditableLabels no longer need 3 clicks to focus on recent editors.
+- Shortcuts registered with `ToolShortcutEventAttribute` can now be registered for a specific tool.
+- When a graph asset is deleted or renamed, the window is updated to reflect the change.
+- Fixed rendering issue that occurs when the UI Toolkit package is installed.
+- Fixed Unity shortcuts being broken by using a GTF based tool.
+- Fixed the dispatcher not notifying observers of state modified by another observer.
+
+
 ## [0.9.2-preview] - 2021-04-07
 
 ### Added
@@ -17,6 +81,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Made the extension method `IGraphElementModel.GetAllUIs` public.
 - Made the members of `BlackboardSectionListPart` accessible from derived classes.
 
+
 ## [0.9.1-preview] - 2021-03-29
 
 ### Removed
@@ -28,6 +93,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 - Renamed `StateComponent.Updater` to `StateComponent.UpdateScope`.
+
 
 ## [0.9.0-preview.2] - 2021-03-23
 
@@ -55,6 +121,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `IStateObserver` for classes that observes `IStateComponent`s and want to be notified of their changes.
 - `Observation`, to encapsulate an observation of an `IStateComponent` by an `IStateObserver`
 - `VisualElement.SafeQ`, equivalent to `VisualElement.Q` but does a null check first.
+- Searcher Size is kept between uses.
 
 ### Removed
 
@@ -139,6 +206,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `CollapsibleInOutNode.Progress` is now able to find the progress bar.
 - CopyPasteData only use interfaces
 
+
 ## [0.8.2-preview] - 2021-02-18
 
 ### Fixed
@@ -152,6 +220,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 
 - Constant migration in nodes
+
 
 ## [0.8.0-preview] - 2021-02-08
 

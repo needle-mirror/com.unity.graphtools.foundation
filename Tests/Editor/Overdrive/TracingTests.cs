@@ -4,6 +4,7 @@ using System.Linq;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.GraphToolsFoundation.Overdrive.Plugins.Debugging;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
 {
@@ -80,7 +81,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
             }
         }
 
-        SerializableGUID NodeGuid(uint index) => SerializableGUID.FromParts(index, 0);
+        SerializableGUID NodeGuid(uint index) => new SerializableGUID(index, 0);
 
         internal class TestGraphTrace : IGraphTrace
         {
@@ -136,16 +137,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
             public override Type GetConstantNodeValueType(TypeHandle typeHandle)
             {
                 return TypeToConstantMapper.GetConstantNodeType(typeHandle);
-            }
-
-            public override IGraphProcessingErrorModel CreateProcessingErrorModel(GraphProcessingError error)
-            {
-                if (error.SourceNode != null && !error.SourceNode.Destroyed)
-                {
-                    return new GraphProcessingErrorModel(error);
-                }
-
-                return null;
             }
 
             /// <inheritdoc />

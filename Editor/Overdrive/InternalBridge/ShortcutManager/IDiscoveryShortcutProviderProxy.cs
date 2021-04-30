@@ -8,7 +8,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
     /// <summary>
     /// Public facing shortcut definition.
     /// </summary>
-    public struct ShortcutDefinition
+    struct ShortcutDefinition
     {
         public string ToolName;
         public string ShortcutId;
@@ -22,7 +22,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
     /// <summary>
     /// A proxy for shortcut discovery.
     /// </summary>
-    public interface IDiscoveryShortcutProviderProxy
+    interface IDiscoveryShortcutProviderProxy
     {
         /// <summary>
         /// Gets the list of shortcuts.

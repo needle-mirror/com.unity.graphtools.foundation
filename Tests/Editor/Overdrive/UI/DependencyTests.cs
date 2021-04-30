@@ -6,6 +6,7 @@ using JetBrains.Annotations;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEngine;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 using UnityEngine.TestTools;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
@@ -63,16 +64,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                 return TypeToConstantMapper.GetConstantNodeType(typeHandle);
             }
 
-            public override IGraphProcessingErrorModel CreateProcessingErrorModel(GraphProcessingError error)
-            {
-                if (error.SourceNode != null && !error.SourceNode.Destroyed)
-                {
-                    return new GraphProcessingErrorModel(error);
-                }
-
-                return null;
-            }
-
             /// <inheritdoc />
             public override IBlackboardGraphModel CreateBlackboardGraphModel(IGraphAssetModel graphAssetModel)
             {
@@ -84,55 +75,55 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                 return new ClassSearcherDatabaseProvider(this);
             }
 
-            public override IEnumerable<INodeModel> GetEntryPoints(IGraphModel graphModel)
+            public override IEnumerable<INodeModel> GetEntryPoints()
             {
-                return graphModel.NodeModels.OfType<EntryPointNodeModel>();
+                return GraphModel.NodeModels.OfType<EntryPointNodeModel>();
             }
 
             // Lifted almost verbatim from DotsStencil
-            public override bool CreateDependencyFromEdge(IEdgeModel model, out LinkedNodesDependency linkedNodesDependency, out INodeModel parent)
+            public override bool CreateDependencyFromEdge(IEdgeModel edgeModel, out LinkedNodesDependency linkedNodesDependency, out INodeModel parentNodeModel)
             {
-                var outputNode = model.FromPort.NodeModel;
-                var inputNode = model.ToPort.NodeModel;
+                var outputNode = edgeModel.FromPort.NodeModel;
+                var inputNode = edgeModel.ToPort.NodeModel;
                 bool outputIsData = IsDataNode(outputNode);
                 bool inputIsData = IsDataNode(inputNode);
                 if (outputIsData)
                 {
-                    parent = inputNode;
+                    parentNodeModel = inputNode;
                     linkedNodesDependency = new LinkedNodesDependency
                     {
-                        count = 1,
-                        DependentPort = model.FromPort,
-                        ParentPort = model.ToPort,
+                        Count = 1,
+                        DependentPort = edgeModel.FromPort,
+                        ParentPort = edgeModel.ToPort,
                     };
                     return true;
                 }
                 if (!inputIsData)
                 {
-                    parent = outputNode;
+                    parentNodeModel = outputNode;
                     linkedNodesDependency = new LinkedNodesDependency
                     {
-                        count = 1,
-                        DependentPort = model.ToPort,
-                        ParentPort = model.FromPort,
+                        Count = 1,
+                        DependentPort = edgeModel.ToPort,
+                        ParentPort = edgeModel.FromPort,
                     };
                     return true;
                 }
 
                 linkedNodesDependency = default;
-                parent = default;
+                parentNodeModel = default;
                 return false;
             }
 
             // Lifted verbatim from DotsStencil
-            public override IEnumerable<IEdgePortalModel> GetPortalDependencies(IEdgePortalModel model)
+            public override IEnumerable<IEdgePortalModel> GetPortalDependencies(IEdgePortalModel portalModel)
             {
-                switch (model)
+                switch (portalModel)
                 {
                     case ExecutionEdgePortalEntryModel edgePortalModel:
-                        return model.GraphModel.FindReferencesInGraph<IEdgePortalExitModel>(edgePortalModel.DeclarationModel);
+                        return portalModel.GraphModel.FindReferencesInGraph<IEdgePortalExitModel>(edgePortalModel.DeclarationModel);
                     case DataEdgePortalExitModel edgePortalModel:
-                        return model.GraphModel.FindReferencesInGraph<IEdgePortalEntryModel>(edgePortalModel.DeclarationModel);
+                        return portalModel.GraphModel.FindReferencesInGraph<IEdgePortalEntryModel>(edgePortalModel.DeclarationModel);
                     default:
                         return Enumerable.Empty<IEdgePortalModel>();
                 }

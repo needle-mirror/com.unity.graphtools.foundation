@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
@@ -30,29 +31,35 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             OnGraphViewChanging();
         }
 
+        /// <inheritdoc />
+        protected override void Update()
+        {
+            base.Update();
+            SetBlackboard(m_SelectedGraphView?.GetBlackboard());
+        }
+
         protected override void OnGraphViewChanging()
         {
-            if (m_Blackboard != null)
-            {
-                rootVisualElement.Remove(m_Blackboard);
-                m_Blackboard = null;
-            }
+            SetBlackboard(null);
         }
 
         protected override void OnGraphViewChanged()
         {
-            if (m_SelectedGraphView != null)
+            SetBlackboard(m_SelectedGraphView?.GetBlackboard());
+        }
+
+        void SetBlackboard(Blackboard blackboard)
+        {
+            if (blackboard != m_Blackboard)
             {
-                m_Blackboard = m_SelectedGraphView.GetBlackboard();
+                m_Blackboard?.RemoveFromHierarchy();
+                m_Blackboard = blackboard;
+
                 if (m_Blackboard != null)
                 {
                     m_Blackboard.Windowed = true;
                     rootVisualElement.Add(m_Blackboard);
                 }
-            }
-            else
-            {
-                m_Blackboard = null;
             }
         }
 

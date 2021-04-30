@@ -218,7 +218,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
 
             SearcherService.ShowVariableTypes(
-                graphModel.Stencil,
+                (Stencil)Model.GraphModel.Stencil,
                 e.MenuPosition,
                 (t, i) =>
                 {

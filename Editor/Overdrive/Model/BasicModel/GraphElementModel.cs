@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.GraphToolsFoundation.Overdrive;
+using UnityEngine.Scripting.APIUpdating;
 using UnityEngine.Serialization;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
@@ -12,6 +14,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
     /// handles IGraphElementModel properties like guid and capabilities
     /// </summary>
     [Serializable]
+    [MovedFrom(false, sourceAssembly: "Unity.GraphTools.Foundation.Overdrive.Editor")]
     public abstract class GraphElementModel : IGraphElementModel, ISerializationCallbackReceiver
     {
         [SerializeField, HideInInspector]
@@ -27,7 +30,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         bool m_HasUserColor;
 
         [SerializeField, HideInInspector]
-        private SerializationVersion m_Version;
+        SerializationVersion m_Version;
+
+        protected List<Capabilities> m_Capabilities;
+
+        [SerializeField, HideInInspector]
+        List<string> m_SerializedCapabilities;
 
         /// <summary>
         /// Serialized version, used for backward compatibility
@@ -36,11 +44,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 
         /// <inheritdoc />
         public virtual IGraphModel GraphModel => AssetModel?.GraphModel;
-
-        protected List<Capabilities> m_Capabilities;
-
-        [SerializeField, HideInInspector]
-        List<string> m_SerializedCapabilities;
 
         /// <inheritdoc />
         public SerializableGUID Guid
@@ -59,12 +62,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         {
             get => m_AssetModel;
             set => m_AssetModel = (GraphAssetModel)value;
-        }
-
-        /// <inheritdoc />
-        public virtual void AssignNewGuid()
-        {
-            m_Guid = SerializableGUID.Generate();
         }
 
         /// <inheritdoc />
@@ -97,6 +94,30 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         /// <inheritdoc />
         public bool HasUserColor => m_HasUserColor;
 
+        /// <summary>
+        /// Version number for serialization.
+        /// </summary>
+        /// <remarks>
+        /// Useful for models backward compatibility
+        /// </remarks>
+        public enum SerializationVersion
+        {
+            // Use package release number as the name of the version.
+
+            GTF_V_0_8_2 = 0,
+
+            /// <summary>
+            /// Keep Latest as the highest value in this enum
+            /// </summary>
+            Latest
+        }
+
+        /// <inheritdoc />
+        public virtual void AssignNewGuid()
+        {
+            m_Guid = SerializableGUID.Generate();
+        }
+
         /// <inheritdoc />
         public void ResetColor()
         {
@@ -127,22 +148,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             {
                 Overdrive.Capabilities.NoCapabilities
             };
-        }
-
-        /// <summary>
-        /// Value increasing every release of GTF.
-        /// </summary>
-        /// <remarks>
-        /// Useful for models backward compatibility
-        /// </remarks>
-        public enum SerializationVersion
-        {
-            GTF_V_0_8_2 = 0,
-
-            /// <summary>
-            /// Keep Latest as the highest value in this enum
-            /// </summary>
-            Latest
         }
     }
 }

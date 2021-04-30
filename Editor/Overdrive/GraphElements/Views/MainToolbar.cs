@@ -1,4 +1,5 @@
 using System;
+using UnityEngine.GraphToolsFoundation.CommandStateObserver;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
@@ -9,7 +10,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public class MainToolbar : Toolbar
     {
-        class UpdateObserver : StateObserver
+        class UpdateObserver : StateObserver<GraphToolState>
         {
             MainToolbar m_Toolbar;
 
@@ -19,16 +20,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 m_Toolbar = toolbar;
             }
 
-            public override void Observe(GraphToolState state)
+            protected override void Observe(GraphToolState state)
             {
-                if (m_Toolbar?.panel != null && m_Toolbar?.m_CommandDispatcher?.GraphToolState != null)
+                if (m_Toolbar?.panel != null)
                 {
-                    using (var observation = this.ObserveState(m_Toolbar.m_CommandDispatcher.GraphToolState.WindowState))
+                    using (var observation = this.ObserveState(state.WindowState))
                     {
                         if (observation.UpdateType != UpdateType.None)
                         {
                             m_Toolbar.UpdateCommonMenu();
-                            m_Toolbar.UpdateBreadcrumbMenu();
+                            m_Toolbar.UpdateBreadcrumbMenu(state);
                         }
                     }
                 }
@@ -55,7 +56,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public static readonly string ShowBlackboardButton = "showBlackboardButton";
         public static readonly string EnableTracingButton = "enableTracingButton";
         public static readonly string OptionsButton = "optionsButton";
-
 
         public MainToolbar(CommandDispatcher commandDispatcher, GraphView graphView) : base(commandDispatcher, graphView)
         {
@@ -120,20 +120,25 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             m_CommandDispatcher?.UnregisterObserver(m_UpdateObserver);
         }
 
-        void UpdateBreadcrumbMenu()
+        void UpdateBreadcrumbMenu(GraphToolState state)
         {
-            bool isEnabled = m_CommandDispatcher.GraphToolState.WindowState.GraphModel != null;
-            m_Breadcrumb.SetEnabled(isEnabled);
+            bool isEnabled = state.WindowState.GraphModel != null;
+            if (!isEnabled)
+            {
+                m_Breadcrumb.style.display = DisplayStyle.None;
+                return;
+            }
+            m_Breadcrumb.style.display = StyleKeyword.Null;
 
             var i = 0;
-            var graphModels = m_CommandDispatcher.GraphToolState.WindowState.SubGraphStack;
+            var graphModels = state.WindowState.SubGraphStack;
             for (; i < graphModels.Count; i++)
             {
-                var label = GetBreadcrumbLabel(i);
+                var label = GetBreadcrumbLabel(state, i);
                 m_Breadcrumb.CreateOrUpdateItem(i, label, BreadcrumbClickedEvent);
             }
 
-            var newCurrentGraph = GetBreadcrumbLabel(-1);
+            var newCurrentGraph = GetBreadcrumbLabel(state, -1);
             if (newCurrentGraph != null)
             {
                 m_Breadcrumb.CreateOrUpdateItem(i, newCurrentGraph, BreadcrumbClickedEvent);
@@ -143,17 +148,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             m_Breadcrumb.TrimItems(i);
         }
 
-        protected virtual string GetBreadcrumbLabel(int index)
+        protected virtual string GetBreadcrumbLabel(GraphToolState state, int index)
         {
-            var graphModels = m_CommandDispatcher.GraphToolState.WindowState.SubGraphStack;
+            var graphModels = state.WindowState.SubGraphStack;
             string graphName = null;
             if (index == -1)
             {
-                graphName = m_CommandDispatcher.GraphToolState.WindowState.CurrentGraph.GraphName;
+                graphName = state.WindowState.CurrentGraph.GetGraphAssetModel()?.FriendlyScriptName;
             }
             else if (index >= 0 && index < graphModels.Count)
             {
-                graphName = graphModels[index].GraphName;
+                graphName = graphModels[index].GetGraphAssetModel()?.FriendlyScriptName;
             }
 
             return string.IsNullOrEmpty(graphName) ? "<Unknown>" : graphName;
@@ -161,7 +166,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         protected void BreadcrumbClickedEvent(int i)
         {
-            var state = m_CommandDispatcher.GraphToolState;
+            var state = m_CommandDispatcher.State;
             OpenedGraph graphToLoad = default;
             var graphModels = state.WindowState.SubGraphStack;
             if (i < graphModels.Count)
@@ -177,8 +182,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         /// <param name="breadcrumbIndex">The index of the breadcrumb element clicked.</param>
         protected virtual void OnBreadcrumbClick(OpenedGraph graphToLoad, int breadcrumbIndex)
         {
-            if (graphToLoad.GraphName != null)
-                m_CommandDispatcher.Dispatch(new LoadGraphAssetCommand(graphToLoad.GraphAssetModelPath, m_GraphView.Window.PluginRepository,
+            if (graphToLoad.GetGraphAssetModel()?.FriendlyScriptName != null)
+                m_CommandDispatcher.Dispatch(new LoadGraphAssetCommand(graphToLoad.GetGraphAssetModelPath(), m_GraphView.Window.PluginRepository,
                     graphToLoad.BoundObject, LoadGraphAssetCommand.Type.KeepHistory, graphToLoad.FileId, breadcrumbIndex));
         }
 
@@ -196,13 +201,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         /// </summary>
         protected virtual void UpdateCommonMenu()
         {
-            bool enabled = m_CommandDispatcher.GraphToolState.WindowState.GraphModel != null;
+            bool enabled = m_CommandDispatcher.State.WindowState.GraphModel != null;
 
             m_NewGraphButton.SetEnabled(enabled);
             m_SaveAllButton.SetEnabled(enabled);
-            m_BuildAllButton.SetEnabled(enabled);
 
-            var stencil = m_CommandDispatcher.GraphToolState?.WindowState.GraphModel?.Stencil;
+            var stencil = (Stencil)m_CommandDispatcher.State?.WindowState.GraphModel?.Stencil;
             var toolbarProvider = stencil?.GetToolbarProvider();
 
             if (!(toolbarProvider?.ShowButton(NewGraphButton) ?? true))
@@ -223,7 +227,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 m_SaveAllButton.style.display = StyleKeyword.Null;
             }
 
-            if (!(toolbarProvider?.ShowButton(BuildAllButton) ?? true))
+            if (!(toolbarProvider?.ShowButton(BuildAllButton) ?? false))
             {
                 m_BuildAllButton.style.display = DisplayStyle.None;
             }
@@ -232,7 +236,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 m_BuildAllButton.style.display = StyleKeyword.Null;
             }
 
-            if (!(toolbarProvider?.ShowButton(ShowMiniMapButton) ?? true))
+            if (!(toolbarProvider?.ShowButton(ShowMiniMapButton) ?? false))
             {
                 m_ShowMiniMapButton.style.display = DisplayStyle.None;
             }
@@ -241,13 +245,22 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 m_ShowMiniMapButton.style.display = StyleKeyword.Null;
             }
 
-            if (!(toolbarProvider?.ShowButton(ShowBlackboardButton) ?? true))
+            if (!(toolbarProvider?.ShowButton(ShowBlackboardButton) ?? false))
             {
                 m_ShowBlackboardButton.style.display = DisplayStyle.None;
             }
             else
             {
                 m_ShowBlackboardButton.style.display = StyleKeyword.Null;
+            }
+
+            if (!(toolbarProvider?.ShowButton(EnableTracingButton) ?? false))
+            {
+                m_EnableTracingButton.style.display = DisplayStyle.None;
+            }
+            else
+            {
+                m_EnableTracingButton.style.display = StyleKeyword.Null;
             }
         }
 
@@ -281,7 +294,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         protected virtual void BuildOptionMenu(GenericMenu menu)
         {
-            var prefs = m_CommandDispatcher.GraphToolState.Preferences;
+            var prefs = m_CommandDispatcher.State.Preferences;
 
             if (prefs != null)
             {
@@ -298,18 +311,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
                     menu.AddItem(new GUIContent("Reload Graph"), false, () =>
                     {
-                        if (m_CommandDispatcher.GraphToolState?.WindowState.GraphModel != null)
+                        if (m_CommandDispatcher.State?.WindowState.GraphModel != null)
                         {
-                            var path = m_CommandDispatcher.GraphToolState.WindowState.AssetModel.GetPath();
+                            var path = m_CommandDispatcher.State.WindowState.AssetModel.GetPath();
                             Selection.activeObject = null;
-                            Resources.UnloadAsset((Object)m_CommandDispatcher.GraphToolState.WindowState.AssetModel);
+                            Resources.UnloadAsset((Object)m_CommandDispatcher.State.WindowState.AssetModel);
                             m_CommandDispatcher.Dispatch(new LoadGraphAssetCommand(path, m_GraphView.Window.PluginRepository));
                         }
                     });
 
                     menu.AddItem(new GUIContent("Rebuild GraphView"), false, () =>
                     {
-                        using (var updater = m_CommandDispatcher.GraphToolState.GraphViewState.UpdateScope)
+                        using (var updater = m_CommandDispatcher.State.GraphViewState.UpdateScope)
                         {
                             updater.ForceCompleteUpdate();
                         }

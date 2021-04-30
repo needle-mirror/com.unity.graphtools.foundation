@@ -29,7 +29,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Graph
             AssumeIntegrity();
 
             AssetDatabase.SaveAssets();
-            Resources.UnloadAsset(m_CommandDispatcher.GraphToolState.WindowState.AssetModel as Object);
+            Resources.UnloadAsset(m_CommandDispatcher.State.WindowState.AssetModel as Object);
             m_CommandDispatcher.Dispatch(new LoadGraphAssetCommand(k_GraphPath, null));
             Assert.AreEqual(k_GraphPath, AssetDatabase.GetAssetPath((Object)GraphModel.AssetModel));
             AssertIntegrity();

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
+using UnityEngine.GraphToolsFoundation.CommandStateObserver;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Commands
 {
@@ -15,7 +16,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Commands
 
         static IEnumerable<Type> AllCommands()
         {
-            return TypeCache.GetTypesDerivedFrom<Command>()
+            return TypeCache.GetTypesDerivedFrom<UndoableCommand>()
                 .Where(a => !a.IsAbstract && !IgnoredCommandTypes.Contains(a.Name) && !a.Namespace.Contains(".Tests"))
                 .OrderBy(t => t.Namespace).ThenBy(t => t.Name);
         }
@@ -27,7 +28,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Commands
             {
                 var command = constructor.Invoke(constructor.GetParameters().Select(
                     parameterInfo => parameterInfo.ParameterType.IsValueType ?
-                    Activator.CreateInstance(parameterInfo.ParameterType) : null).ToArray()) as Command;
+                    Activator.CreateInstance(parameterInfo.ParameterType) : null).ToArray()) as UndoableCommand;
 
                 Assert.IsNotNull(command);
                 Assert.IsNotNull(command.UndoString);

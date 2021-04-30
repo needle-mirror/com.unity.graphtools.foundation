@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine.GraphToolsFoundation.CommandStateObserver;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
@@ -108,7 +109,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     /// <summary>
     /// Command to align nodes hierarchies in a graph view.
     /// </summary>
-    public class AlignNodesCommand : Command
+    public class AlignNodesCommand : UndoableCommand
     {
         /// <summary>
         /// The GraphView in charge of aligning the nodes.
@@ -282,7 +283,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     /// <summary>
     /// A command to clear the selection.
     /// </summary>
-    public class ClearSelectionCommand : Command
+    public class ClearSelectionCommand : UndoableCommand
     {
         const string k_UndoStringSingular = "Clear Selection";
 
@@ -317,7 +318,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     /// <summary>
     /// A command to change the position and size of an element.
     /// </summary>
-    public class ChangeElementLayoutCommand : Command
+    public class ChangeElementLayoutCommand : UndoableCommand
     {
         const string k_UndoStringSingular = "Resize Element";
 

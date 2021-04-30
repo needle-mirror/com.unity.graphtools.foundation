@@ -1,5 +1,6 @@
 {
     "name": "Unity.GraphTools.Foundation",
+    "rootNamespace": "",
     "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],

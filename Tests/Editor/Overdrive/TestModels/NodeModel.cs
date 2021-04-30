@@ -1,6 +1,13 @@
+using UnityEngine.GraphToolsFoundation.Overdrive;
+
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels
 {
-    class NodeModel : BasicModel.NodeModel, IRenamable
+    internal interface ITestNodeModel
+    {
+        void SetGraphModel(IGraphModel graphModel);
+    }
+
+    class NodeModel : BasicModel.NodeModel, IRenamable, ITestNodeModel
     {
         IGraphModel m_GraphModel;
 
@@ -22,7 +29,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels
         }
 
         // Can't be on the property as we inherit a getter only GraphModel property.
-        internal void SetGraphModel(IGraphModel graphModel)
+        public void SetGraphModel(IGraphModel graphModel)
         {
             m_GraphModel = graphModel;
         }

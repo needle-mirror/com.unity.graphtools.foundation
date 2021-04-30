@@ -1,3 +1,4 @@
+using UnityEngine.GraphToolsFoundation.CommandStateObserver;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -78,7 +79,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public void UpdateFromModel()
         {
-            if (CommandDispatcher?.GraphToolState?.Preferences.GetBool(BoolPref.LogUIUpdate) ?? false)
+            if (CommandDispatcher?.State?.Preferences.GetBool(BoolPref.LogUIUpdate) ?? false)
             {
                 Debug.Log($"Rebuilding {this}");
                 if (GraphView == null)

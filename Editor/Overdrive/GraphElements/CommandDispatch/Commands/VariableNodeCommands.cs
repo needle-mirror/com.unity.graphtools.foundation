@@ -1,10 +1,12 @@
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine.GraphToolsFoundation.CommandStateObserver;
 using UnityEngine;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public class CreateVariableNodesCommand : Command
+    public class CreateVariableNodesCommand : UndoableCommand
     {
         public List<(IVariableDeclarationModel, SerializableGUID, Vector2)> VariablesToCreate;
         public IPortModel ConnectAfterCreation;
@@ -85,7 +87,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     /// <summary>
     /// A command to convert variables to constants and vice versa.
     /// </summary>
-    public class ConvertConstantNodesAndVariableNodesCommand : Command
+    public class ConvertConstantNodesAndVariableNodesCommand : UndoableCommand
     {
         public IReadOnlyList<IConstantNodeModel> ConstantModels;
         public IReadOnlyList<IVariableNodeModel> VariableModels;
@@ -168,7 +170,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 {
                     var declarationModel = graphModel.CreateGraphVariableDeclaration(
                         constantModel.Type.GenerateTypeHandle(),
-                        StringExtensions.CodifyString(constantModel.Type.FriendlyName()), ModifierFlags.None, true,
+                        constantModel.Type.FriendlyName().CodifyString(), ModifierFlags.None, true,
                         constantModel.Value.CloneConstant());
                     graphUpdater.MarkNew(declarationModel);
 

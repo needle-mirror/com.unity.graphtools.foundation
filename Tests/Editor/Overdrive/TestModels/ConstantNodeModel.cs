@@ -1,5 +1,6 @@
 using System;
 using UnityEngine.Assertions;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels
 {

@@ -6,6 +6,7 @@ using JetBrains.Annotations;
 using NUnit.Framework.Constraints;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.Searcher;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
 {

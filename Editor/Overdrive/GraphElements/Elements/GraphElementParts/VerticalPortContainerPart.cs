@@ -65,7 +65,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             m_PortDirection = portDirection;
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         protected override void BuildPartUI(VisualElement container)
         {
             if (m_Model is IInputOutputPortsNodeModel portNode)
@@ -87,14 +87,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         protected override void PostBuildPartUI()
         {
             base.PostBuildPartUI();
             m_Root.AddStylesheet("PortContainerPart.uss");
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         protected override void UpdatePartFromModel()
         {
             if (!(m_Model is IInputOutputPortsNodeModel portNode))

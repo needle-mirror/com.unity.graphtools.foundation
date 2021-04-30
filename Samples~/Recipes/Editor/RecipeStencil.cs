@@ -1,4 +1,6 @@
-using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
+using System.Linq;
+using UnityEngine;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Recipes
 {
@@ -12,20 +14,46 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Recipes
         public static TypeHandle Ingredient { get; } = TypeSerializer.GenerateCustomTypeHandle("Ingredient");
         public static TypeHandle Cookware { get; } = TypeSerializer.GenerateCustomTypeHandle("Cookware");
 
-        public override IGraphProcessingErrorModel CreateProcessingErrorModel(GraphProcessingError error)
+        public RecipeStencil()
         {
-            if (error.SourceNode != null && !error.SourceNode.Destroyed)
-            {
-                return new GraphProcessingErrorModel(error);
-            }
-
-            return null;
+            SetSearcherSize(SearcherService.Usage.k_CreateNode, new Vector2(375, 300), 2.0f);
         }
 
         /// <inheritdoc />
         public override IBlackboardGraphModel CreateBlackboardGraphModel(IGraphAssetModel graphAssetModel)
         {
             return new RecipeBlackboardGraphModel(graphAssetModel);
+        }
+
+        /// <inheritdoc />
+        public override void PopulateBlackboardCreateMenu(string sectionName, GenericMenu menu, CommandDispatcher commandDispatcher)
+        {
+            if (sectionName == RecipeBlackboardGraphModel.k_Sections[0])
+            {
+                menu.AddItem(new GUIContent("Add"), false, () =>
+                {
+                    CreateVariableDeclaration(Ingredient.Identification, Ingredient);
+                });
+            }
+            else if (sectionName == RecipeBlackboardGraphModel.k_Sections[1])
+            {
+                menu.AddItem(new GUIContent("Add"), false, () =>
+                {
+                    CreateVariableDeclaration(Cookware.Identification, Cookware);
+                });
+            }
+
+            void CreateVariableDeclaration(string name, TypeHandle type)
+            {
+                var finalName = name;
+                var i = 0;
+
+                // ReSharper disable once AccessToModifiedClosure
+                while (commandDispatcher.State.WindowState.GraphModel.VariableDeclarations.Any(v => v.Title == finalName))
+                    finalName = name + i++;
+
+                commandDispatcher.Dispatch(new CreateGraphVariableDeclarationCommand(finalName, true, type));
+            }
         }
     }
 }

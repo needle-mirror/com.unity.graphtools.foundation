@@ -25,5 +25,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO
             }
             return state;
         }
+
+        protected override bool CanHandleAssetType(GraphAssetModel asset)
+        {
+            return true;
+        }
     }
 }

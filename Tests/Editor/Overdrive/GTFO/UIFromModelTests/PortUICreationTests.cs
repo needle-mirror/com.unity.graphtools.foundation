@@ -63,10 +63,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
         {
             m_GraphModel = new GraphModel();
             m_CommandDispatcher = new CommandDispatcher(new TestGraphToolState(m_Window.GUID, m_GraphModel));
-            CommandDispatcherHelper.RegisterDefaultCommandHandlers(m_CommandDispatcher);
-            m_GraphView = new GraphView(m_Window, m_CommandDispatcher);
+            m_GraphView = new GraphView(m_Window, m_CommandDispatcher, "theView");
 
-            m_GraphView.name = "theView";
             m_GraphView.viewDataKey = "theView";
             m_GraphView.StretchToParentSize();
 

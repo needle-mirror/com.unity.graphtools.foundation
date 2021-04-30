@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEditor.Searcher;
 using UnityEngine;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {

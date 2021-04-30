@@ -4,6 +4,7 @@ using Unity.Profiling;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Plugins.Debugging
 {
@@ -27,7 +28,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Plugins.Debugging
             m_State = new TimelineState(m_TimeArea);
             m_Overlay.state = m_State;
 
-            var debugger = m_WindowGraphToolState?.WindowState.GraphModel?.Stencil?.Debugger;
+            var debugger = ((Stencil)m_WindowGraphToolState?.WindowState.GraphModel?.Stencil)?.Debugger;
             IGraphTrace trace = debugger?.GetGraphTrace(m_WindowGraphToolState?.WindowState.GraphModel,
                 m_WindowGraphToolState.TracingControlState.CurrentTracingTarget);
             if (trace?.AllFrames != null && trace.AllFrames.Count > 0)
@@ -60,7 +61,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Plugins.Debugging
 
             GUI.BeginGroup(timeRect);
 
-            var debugger = m_WindowGraphToolState?.WindowState.GraphModel?.Stencil?.Debugger;
+            var debugger = ((Stencil)m_WindowGraphToolState?.WindowState.GraphModel?.Stencil)?.Debugger;
             IGraphTrace trace = debugger?.GetGraphTrace(m_WindowGraphToolState?.WindowState.GraphModel, tracingControlState.CurrentTracingTarget);
             if (trace?.AllFrames != null && trace.AllFrames.Count > 0)
             {
@@ -75,7 +76,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Plugins.Debugging
                     timeRect.yMax - k_FrameRectangleHeight, width, k_FrameRectangleHeight), k_FrameHasDataColor);
 
                 // draw per-node active ranges
-                var framesPerNode = IndexFramesPerNode(ref s_FramesPerNodeCache, m_WindowGraphToolState?.WindowState.GraphModel.Stencil, trace, firstFrame, lastFrame, tracingControlState.CurrentTracingTarget, out bool invalidated);
+                var framesPerNode = IndexFramesPerNode(ref s_FramesPerNodeCache, (Stencil)m_WindowGraphToolState?.WindowState.GraphModel?.Stencil, trace, firstFrame, lastFrame, tracingControlState.CurrentTracingTarget, out bool invalidated);
 
                 // while recording in unpaused playmode, adjust the timeline to show all data
                 // same if the cached data changed (eg. Load a trace dump)

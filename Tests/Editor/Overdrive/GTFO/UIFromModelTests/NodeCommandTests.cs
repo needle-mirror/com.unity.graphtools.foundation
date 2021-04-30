@@ -2,6 +2,7 @@ using System.Collections;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels;
 using UnityEngine;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
 using NodeModel = UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels.NodeModel;

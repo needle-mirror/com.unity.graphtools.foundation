@@ -32,7 +32,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
 
             /// <summary>
-            /// Initialize <see cref="EnumField"/> properties using values from the attribute bag.
+            /// Initialize <see cref="CollapseButton"/> properties using values from the attribute bag.
             /// </summary>
             public override void Init(VisualElement ve, IUxmlAttributes bag, CreationContext cc)
             {

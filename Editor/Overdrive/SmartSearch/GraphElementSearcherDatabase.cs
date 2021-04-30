@@ -6,6 +6,7 @@ using JetBrains.Annotations;
 using Lucene.Net.Index;
 using UnityEditor.Searcher;
 using UnityEngine;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {

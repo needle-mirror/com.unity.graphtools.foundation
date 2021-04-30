@@ -22,7 +22,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
     public interface IIndexableSearcherDatabaseProvider : ISearcherDatabaseProvider
     {
-        bool Index<T>(GraphNodeModelSearcherItem item, IGraphElementModel model, ref T indexer) where T : struct, IDocumentIndexer;
+        bool Index<T>(ISearcherItemDataProvider item, IGraphElementModel model, ref T indexer) where T : struct, IDocumentIndexer;
     }
 
     internal struct DocumentIndexer : IDocumentIndexer

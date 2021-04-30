@@ -10,7 +10,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
     /// </summary>
     [Serializable]
     //[MovedFrom(false, "UnityEditor.VisualScripting.GraphViewModel", "Unity.GraphTools.Foundation.Overdrive.Editor")]
-    [MovedFrom("UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel")]
+    //[MovedFrom("UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel")]
+    [MovedFrom(false, sourceAssembly: "Unity.GraphTools.Foundation.Overdrive.Editor")]
     public class StickyNoteModel : GraphElementModel, IStickyNoteModel
     {
         [SerializeField]

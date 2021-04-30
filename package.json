@@ -1,8 +1,8 @@
 {
   "name": "com.unity.graphtools.foundation",
   "displayName": "Graph Tools Foundation",
-  "version": "0.9.2-preview",
-  "unity": "2020.1",
+  "version": "0.10.0-preview",
+  "unity": "2020.3",
   "description": "A framework for node based tools including a graph data model, a UI foundation and graph-to-asset pipeline. Use this package to speed up the development of graph based tools for the Unity Editor that adhere to Unity UI and UX guidelines.",
   "keywords": [
     "framework",
@@ -15,11 +15,14 @@
     "nuget.moq": "1.0.0",
     "com.unity.properties": "1.6.0-preview",
     "com.unity.properties.ui": "1.6.2-preview.1",
-    "com.unity.collections": "0.15.0-preview.21",
-    "com.unity.serialization": "1.6.1-preview",
     "com.unity.ext.nunit": "1.0.6"
   },
   "samples": [
+    {
+      "displayName": "Contexts GTF example",
+      "description": "A simple example of usage of contexts using Graph Tools Foundation",
+      "path": "Samples~/Contexts"
+    },
     {
       "displayName": "Recipes GTF example",
       "description": "A simple example from a graph editor made with Graph Foundation Tools",
@@ -37,11 +40,11 @@
     }
   ],
   "upmCi": {
-    "footprint": "30e9cc049e3810b865f5abd4173091a301a0e1b7"
+    "footprint": "68882a6f496167714763cba10ee102de88ef7d73"
   },
   "repository": {
     "url": "https://github.com/Unity-Technologies/visualscripting-dev.git",
     "type": "git",
-    "revision": "c51f08e99c65230687f401e03d0f1d2d6a613644"
+    "revision": "c4fb3267bf22af92502af5e86286a97f740f5d28"
   }
 }

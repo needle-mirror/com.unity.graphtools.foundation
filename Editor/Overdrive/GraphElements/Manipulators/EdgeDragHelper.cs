@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine.GraphToolsFoundation.CommandStateObserver;
 using UnityEditor.GraphToolsFoundation.Overdrive.InternalModels;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -157,7 +158,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (portUI != null)
                 portUI.WillConnect = true;
 
-            m_CompatiblePorts = m_CommandDispatcher.GraphToolState.GraphViewState.GraphModel.GetCompatiblePorts(draggedPort);
+            m_CompatiblePorts = m_CommandDispatcher.State.GraphViewState.GraphModel.GetCompatiblePorts(draggedPort);
 
             // Only light compatible anchors when dragging an edge.
             GraphView.Ports.ForEach((p) =>

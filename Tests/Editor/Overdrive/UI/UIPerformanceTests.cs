@@ -1,9 +1,9 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using NUnit.Framework;
+using UnityEngine.GraphToolsFoundation.CommandStateObserver;
 using UnityEngine;
 using UnityEngine.TestTools;
 
@@ -11,7 +11,7 @@ using UnityEngine.TestTools;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
 {
-    class CommandThatMarksNew : Command
+    class CommandThatMarksNew : UndoableCommand
     {
         public static void DefaultCommandHandler(GraphToolState graphToolState, CommandThatMarksNew command)
         {
@@ -23,7 +23,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         }
     }
 
-    class CommandThatMarksChanged : Command
+    class CommandThatMarksChanged : UndoableCommand
     {
         public static void DefaultCommandHandler(GraphToolState graphToolState, CommandThatMarksChanged command)
         {
@@ -36,7 +36,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         }
     }
 
-    class CommandThatMarksDeleted : Command
+    class CommandThatMarksDeleted : UndoableCommand
     {
         public static void DefaultCommandHandler(GraphToolState graphToolState, CommandThatMarksDeleted command)
         {
@@ -50,7 +50,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         }
     }
 
-    class CommandThatRebuildsAll : Command
+    class CommandThatRebuildsAll : UndoableCommand
     {
         public static void DefaultCommandHandler(GraphToolState graphToolState, CommandThatRebuildsAll command)
         {
@@ -61,14 +61,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         }
     }
 
-    class CommandThatDoesNothing : Command
+    class CommandThatDoesNothing : UndoableCommand
     {
         public static void DefaultCommandHandler(GraphToolState graphToolState, CommandThatDoesNothing command)
         {
         }
     }
 
-    class GraphViewStateObserver : StateObserver
+    class GraphViewStateObserver : StateObserver<GraphToolState>
     {
         public UpdateType UpdateType { get; set; }
 
@@ -77,7 +77,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             : base(nameof(GraphToolState.GraphViewState)) { }
 
         /// <inheritdoc />
-        public override void Observe(GraphToolState state)
+        protected override void Observe(GraphToolState state)
         {
             using (var observation = this.ObserveState(state.GraphViewState))
                 UpdateType = observation.UpdateType;
@@ -96,7 +96,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         {
             base.SetUp();
 
-            CommandDispatcher.GraphToolState.GraphViewState.GraphModel.CreatePlacemat(Rect.zero);
+            CommandDispatcher.State.GraphViewState.GraphModel.CreatePlacemat(Rect.zero);
 
             CommandDispatcher.RegisterCommandHandler<CommandThatMarksNew>(CommandThatMarksNew.DefaultCommandHandler);
             CommandDispatcher.RegisterCommandHandler<CommandThatMarksChanged>(CommandThatMarksChanged.DefaultCommandHandler);
@@ -125,7 +125,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         }
 
         [UnityTest, TestCaseSource(nameof(GetSomeCommands))]
-        public IEnumerator TestRebuildType(Command command, UpdateType rebuildType)
+        public IEnumerator TestRebuildType(UndoableCommand command, UpdateType rebuildType)
         {
             // Do the initial update.
             yield return null;
@@ -145,7 +145,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         {
             m_GraphViewStateObserver.UpdateType = UpdateType.None;
             Type0FakeNodeModel model;
-            using (var updater = CommandDispatcher.GraphToolState.GraphViewState.UpdateScope)
+            using (var updater = CommandDispatcher.State.GraphViewState.UpdateScope)
             {
                 model = GraphModel.CreateNode<Type0FakeNodeModel>("Node 0", Vector2.zero);
                 updater.MarkNew(model);

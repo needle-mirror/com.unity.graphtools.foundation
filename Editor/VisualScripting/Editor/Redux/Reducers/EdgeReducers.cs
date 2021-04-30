@@ -287,16 +287,13 @@ namespace UnityEditor.VisualScripting.Editor
 
         static void CreateItemizedNode(State state, VSGraphModel graphModel, ref IPortModel outputPortModel)
         {
-            ItemizeOptions currentItemizeOptions = state.Preferences.CurrentItemizeOptions;
-
             // automatically itemize, i.e. duplicate variables as they get connected
-            if (outputPortModel.Connected && currentItemizeOptions != ItemizeOptions.Nothing)
+            if (outputPortModel.Connected)
             {
                 var nodeToConnect = outputPortModel.NodeModel;
                 var offset = Vector2.up * k_NodeOffset;
 
-                if (currentItemizeOptions.HasFlag(ItemizeOptions.Constants)
-                    && nodeToConnect is ConstantNodeModel constantModel)
+                if (nodeToConnect is ConstantNodeModel constantModel)
                 {
                     string newName = string.IsNullOrEmpty(constantModel.Title)
                         ? "Temporary"
@@ -308,19 +305,16 @@ namespace UnityEditor.VisualScripting.Editor
                     );
                     ((ConstantNodeModel)nodeToConnect).ObjectValue = constantModel.ObjectValue;
                 }
-                else if (currentItemizeOptions.HasFlag(ItemizeOptions.Variables)
-                         && nodeToConnect is VariableNodeModel variableModel)
+                else if (nodeToConnect is VariableNodeModel variableModel)
                 {
                     nodeToConnect = graphModel.CreateVariableNode(variableModel.DeclarationModel,
                         variableModel.Position + offset);
                 }
-                else if (currentItemizeOptions.HasFlag(ItemizeOptions.Variables)
-                         && nodeToConnect is ThisNodeModel thisModel)
+                else if (nodeToConnect is ThisNodeModel thisModel)
                 {
                     nodeToConnect = graphModel.CreateNode<ThisNodeModel>("this", thisModel.Position + offset);
                 }
-                else if (currentItemizeOptions.HasFlag(ItemizeOptions.SystemConstants) &&
-                         nodeToConnect is SystemConstantNodeModel sysConstModel)
+                else if (nodeToConnect is SystemConstantNodeModel sysConstModel)
                 {
                     Action<SystemConstantNodeModel> preDefineSetup = m =>
                     {

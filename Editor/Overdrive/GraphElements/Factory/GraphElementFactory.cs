@@ -1,6 +1,7 @@
 using System;
 using System.Reflection;
 using JetBrains.Annotations;
+using UnityEngine.GraphToolsFoundation.CommandStateObserver;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive

@@ -8,16 +8,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Vertical
 
         public override string ToolName => toolName;
 
-        public override IGraphProcessingErrorModel CreateProcessingErrorModel(GraphProcessingError error)
-        {
-            if (error.SourceNode != null && !error.SourceNode.Destroyed)
-            {
-                return new GraphProcessingErrorModel(error);
-            }
-
-            return null;
-        }
-
         /// <inheritdoc />
         public override IBlackboardGraphModel CreateBlackboardGraphModel(IGraphAssetModel graphAssetModel)
         {

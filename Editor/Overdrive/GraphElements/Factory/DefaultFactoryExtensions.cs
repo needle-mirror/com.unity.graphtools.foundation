@@ -1,3 +1,4 @@
+using UnityEngine.GraphToolsFoundation.CommandStateObserver;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
@@ -5,6 +6,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     [GraphElementsExtensionMethodsCache(GraphElementsExtensionMethodsCacheAttribute.lowestPriority)]
     public static class DefaultFactoryExtensions
     {
+        public static IModelUI CreateContext(this ElementBuilder elementBuilder, CommandDispatcher commandDispatcher, IContextNodeModel nodeModel)
+        {
+            IModelUI ui = new ContextNode();
+
+            ui.SetupBuildAndUpdate(nodeModel, commandDispatcher, elementBuilder.GraphView, elementBuilder.Context);
+            return ui;
+        }
+
         public static IModelUI CreateNode(this ElementBuilder elementBuilder, CommandDispatcher commandDispatcher, INodeModel model)
         {
             IModelUI ui;

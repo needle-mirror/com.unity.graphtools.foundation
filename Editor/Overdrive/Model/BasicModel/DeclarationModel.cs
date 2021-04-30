@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.GraphToolsFoundation.Overdrive;
+using UnityEngine.Scripting.APIUpdating;
 using UnityEngine.Serialization;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
@@ -9,6 +11,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
     /// A model that represents a declaration (e.g. a variable) in a graph.
     /// </summary>
     [Serializable]
+    [MovedFrom(false, sourceAssembly: "Unity.GraphTools.Foundation.Overdrive.Editor")]
     public class DeclarationModel : GraphElementModel, IDeclarationModel, IRenamable
     {
         [FormerlySerializedAs("name")]
@@ -33,7 +36,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             if (!this.IsRenamable())
                 return;
 
-            SetNameFromUserName(newName);
+            Title = newName;
         }
 
         /// <inheritdoc />
@@ -52,15 +55,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
                 Overdrive.Capabilities.Selectable,
                 Overdrive.Capabilities.Renamable
             };
-        }
-
-        void SetNameFromUserName(string userName)
-        {
-            string newName = userName.ToUnityNameFormat();
-            if (string.IsNullOrWhiteSpace(newName))
-                return;
-
-            Title = newName;
         }
     }
 }

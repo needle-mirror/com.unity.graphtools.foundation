@@ -32,16 +32,16 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Commands
                     Assert.NotNull(n0);
                     Assert.NotNull(n1);
                     Assert.That(n0.Input0, Is.ConnectedTo(n1.Output0));
-                    Assert.IsTrue(m_CommandDispatcher.GraphToolState.SelectionState.IsSelected(node0));
-                    Assert.IsFalse(m_CommandDispatcher.GraphToolState.SelectionState.IsSelected(node1));
+                    Assert.IsTrue(m_CommandDispatcher.State.SelectionState.IsSelected(node0));
+                    Assert.IsFalse(m_CommandDispatcher.State.SelectionState.IsSelected(node1));
                     return new DeleteElementsCommand(new[] { node0, node1 });
                 },
                 () =>
                 {
                     Assert.That(GetNodeCount(), Is.EqualTo(0));
                     Assert.That(GetEdgeCount(), Is.EqualTo(0));
-                    Assert.IsFalse(m_CommandDispatcher.GraphToolState.SelectionState.IsSelected(node0));
-                    Assert.IsFalse(m_CommandDispatcher.GraphToolState.SelectionState.IsSelected(node1));
+                    Assert.IsFalse(m_CommandDispatcher.State.SelectionState.IsSelected(node0));
+                    Assert.IsFalse(m_CommandDispatcher.State.SelectionState.IsSelected(node1));
                 });
         }
 

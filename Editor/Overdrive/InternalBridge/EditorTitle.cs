@@ -7,10 +7,10 @@ using UnityEngine;
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
 {
     [InitializeOnLoad]
-    public class EditorTitle
+    class EditorTitle
     {
-        private const string k_DotConfigFileName = ".gtfConfig";
-        private const string k_GitBranchVariable = "%gitbranch%";
+        const string k_DotConfigFileName = ".gtfConfig";
+        const string k_GitBranchVariable = "%gitbranch%";
         static string s_RepoPath;
 
         static EditorTitle()

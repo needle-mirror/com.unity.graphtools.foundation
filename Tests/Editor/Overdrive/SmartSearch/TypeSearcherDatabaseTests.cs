@@ -4,6 +4,7 @@ using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.Searcher;
 using UnityEngine;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.SmartSearch
 {
@@ -24,16 +25,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.SmartSearch
             public override ISearcherDatabaseProvider GetSearcherDatabaseProvider()
             {
                 return new ClassSearcherDatabaseProvider(this);
-            }
-
-            public override IGraphProcessingErrorModel CreateProcessingErrorModel(GraphProcessingError error)
-            {
-                if (error.SourceNode != null && !error.SourceNode.Destroyed)
-                {
-                    return new GraphProcessingErrorModel(error);
-                }
-
-                return null;
             }
 
             /// <inheritdoc />

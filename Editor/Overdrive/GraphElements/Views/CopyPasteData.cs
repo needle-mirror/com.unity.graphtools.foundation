@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive

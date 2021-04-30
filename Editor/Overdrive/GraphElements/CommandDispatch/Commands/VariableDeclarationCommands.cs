@@ -1,13 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine.GraphToolsFoundation.CommandStateObserver;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     /// <summary>
     /// Command to create a variable.
     /// </summary>
-    public class CreateGraphVariableDeclarationCommand : Command
+    public class CreateGraphVariableDeclarationCommand : UndoableCommand
     {
         /// <summary>
         /// The name of the variable to create.
@@ -109,7 +111,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         }
     }
 
-    public class ReorderGraphVariableDeclarationCommand : Command
+    public class ReorderGraphVariableDeclarationCommand : UndoableCommand
     {
         public readonly IEnumerable<IVariableDeclarationModel> VariableDeclarationModelsToMove;
         public readonly IVariableDeclarationModel InsertAfter;
@@ -140,7 +142,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         }
     }
 
-    public class InitializeVariableCommand : Command
+    public class InitializeVariableCommand : UndoableCommand
     {
         public IVariableDeclarationModel VariableDeclarationModel;
 
@@ -167,7 +169,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         }
     }
 
-    public class ChangeVariableTypeCommand : Command
+    public class ChangeVariableTypeCommand : UndoableCommand
     {
         public IVariableDeclarationModel VariableDeclarationModel;
         public TypeHandle Handle;
@@ -211,7 +213,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         }
     }
 
-    public class UpdateExposedCommand : Command
+    public class UpdateExposedCommand : UndoableCommand
     {
         public IVariableDeclarationModel VariableDeclarationModel;
         public bool Exposed;
@@ -241,7 +243,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         }
     }
 
-    public class UpdateTooltipCommand : Command
+    public class UpdateTooltipCommand : UndoableCommand
     {
         public IVariableDeclarationModel VariableDeclarationModel;
         public string Tooltip;
@@ -273,7 +275,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         }
     }
 
-    public class ExpandOrCollapseBlackboardRowCommand : Command
+    public class ExpandOrCollapseBlackboardRowCommand : UndoableCommand
     {
         public readonly IVariableDeclarationModel Row;
         public readonly bool Expand;

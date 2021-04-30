@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Properties;
+using UnityEngine.GraphToolsFoundation.CommandStateObserver;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
@@ -40,7 +41,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         }
     }
 
-    public class RenameElementCommand : Command
+    public class RenameElementCommand : UndoableCommand
     {
         public IRenamable RenamableModel;
         public string ElementName;
@@ -97,7 +98,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         }
     }
 
-    public class UpdateConstantNodeValueCommand : Command
+    public class UpdateConstantNodeValueCommand : UndoableCommand
     {
         public IConstant Constant;
         public IGraphElementModel OwnerModel;
@@ -130,7 +131,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         }
     }
 
-    public class UpdatePortConstantCommand : Command
+    public class UpdatePortConstantCommand : UndoableCommand
     {
         public IPortModel PortModel;
         public object NewValue;
@@ -284,7 +285,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         }
     }
 
-    public class UpdateModelPropertyValueCommand : Command
+    public class UpdateModelPropertyValueCommand : UndoableCommand
     {
         public IGraphElementModel GraphElementModel;
         public object NewValue;

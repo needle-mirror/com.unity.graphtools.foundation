@@ -3,29 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 using UnityEngine.Profiling;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    interface IDependency
-    {
-        INodeModel DependentNode { get; }
-    }
-
-    public class PortalNodesDependency : IDependency
-    {
-        public INodeModel DependentNode { get; set; }
-    }
-
-    public class LinkedNodesDependency : IDependency
-    {
-        public IPortModel DependentPort;
-        public IPortModel ParentPort;
-        public INodeModel DependentNode => DependentPort.NodeModel;
-        public int count;
-    }
-
     class PositionDependenciesManager
     {
         const int k_AlignHorizontalOffset = 30;
@@ -55,7 +38,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 if (link.TryGetValue(child.DependentNode.Guid, out IDependency dependency))
                 {
                     if (dependency is LinkedNodesDependency linked)
-                        linked.count++;
+                        linked.Count++;
                     else
                         Debug.LogWarning($"Dependency between nodes {parent} && {child.DependentNode} registered both as a {dependency.GetType().Name} and a {nameof(LinkedNodesDependency)}");
                 }
@@ -101,8 +84,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             if (dependency is LinkedNodesDependency linked)
             {
-                linked.count--;
-                if (linked.count <= 0)
+                linked.Count--;
+                if (linked.Count <= 0)
                     link.Remove(child);
             }
             else
@@ -262,8 +245,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 }
             });
 
-            var graphModel = m_GraphView.CommandDispatcher.GraphToolState.GraphViewState.GraphModel;
-            foreach (var root in graphModel.Stencil.GetEntryPoints(graphModel))
+            var graphModel = m_GraphView.CommandDispatcher.State.GraphViewState.GraphModel;
+            foreach (var root in graphModel.Stencil.GetEntryPoints())
             {
                 SetNodeState(root, ModelState.Enabled);
             }
@@ -318,7 +301,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (m_GraphModel == null)
                 return;
 
-            using (var graphUpdater = m_GraphView.CommandDispatcher.GraphToolState.GraphViewState.UpdateScope)
+            using (var graphUpdater = m_GraphView.CommandDispatcher.State.GraphViewState.UpdateScope)
             {
                 ProcessMovedNodes(Vector2.zero, (element, model, _, __) =>
                 {
@@ -393,7 +376,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             bool anyEdge = false;
             foreach (var edgeModel in entryPoints.OfType<IEdgeModel>())
             {
-                if (!edgeModel.GraphModel.Stencil.CreateDependencyFromEdge(edgeModel, out LinkedNodesDependency dependency, out INodeModel parent))
+                if (!edgeModel.GraphModel.Stencil.CreateDependencyFromEdge(edgeModel, out var dependency, out var parent))
                     continue;
                 anyEdge = true;
 

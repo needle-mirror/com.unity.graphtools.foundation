@@ -1,4 +1,5 @@
 using System.Linq;
+using UnityEngine.GraphToolsFoundation.CommandStateObserver;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Vertical
 {

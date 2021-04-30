@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using UnityEngine.GraphToolsFoundation.CommandStateObserver;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEngine;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 using UnityEngine.Profiling;
 using UnityEngine.UIElements;
 using Debug = UnityEngine.Debug;
@@ -12,7 +14,7 @@ using Object = UnityEngine.Object;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public class GraphViewEditorWindow : EditorWindow, IHasCustomMenu
+    public abstract class GraphViewEditorWindow : EditorWindow, IHasCustomMenu
     {
         /// <summary>
         /// Finds the first window of type <typeparamref name="WindowT"/>. If no window is found, create a new one.
@@ -39,7 +41,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         static int s_LastFocusedEditor = -1;
 
         [SerializeField]
-        GUID m_GUID;
+        SerializableGUID m_GUID;
 
         [SerializeField]
         LockTracker m_LockTracker = new LockTracker();
@@ -54,8 +56,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         protected Label m_GraphProcessingPendingLabel;
         protected MainToolbar m_MainToolbar;
         protected ErrorToolbar m_ErrorToolbar;
-
-        uint m_LastStateVersion;
 
         INodeModel m_ElementShownInSidePanel;
 
@@ -73,14 +73,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public bool WithSidePanel { get; set; } = true;
 
-        public GUID GUID => m_GUID;
+        public SerializableGUID GUID => m_GUID;
 
         public virtual IEnumerable<GraphView> GraphViews
         {
             get { yield return GraphView; }
         }
 
-        bool Locked => CommandDispatcher?.GraphToolState?.WindowState.AssetModel != null && m_LockTracker.IsLocked;
+        bool Locked => m_LockTracker.IsLocked;
 
         public CommandDispatcher CommandDispatcher { get; private set; }
 
@@ -123,11 +123,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             return new GraphToolState(GUID, prefs);
         }
 
-        protected virtual void RegisterCommandHandlers()
-        {
-            CommandDispatcherHelper.RegisterDefaultCommandHandlers(CommandDispatcher);
-        }
-
         protected virtual BlankPage CreateBlankPage()
         {
             return new BlankPage(CommandDispatcher, Enumerable.Empty<OnboardingProvider>());
@@ -145,12 +140,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         protected virtual GraphView CreateGraphView()
         {
-            return new GraphView(this, CommandDispatcher);
+            return new GraphView(this, CommandDispatcher, EditorToolName);
         }
 
         protected virtual void Reset()
         {
-            CommandDispatcher?.GraphToolState?.LoadGraphAsset(null, null);
+            CommandDispatcher?.State?.LoadGraphAsset(null, null);
         }
 
         protected virtual void OnEnable()
@@ -159,12 +154,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             // When a window is opened and there is a domain reload, the GUID stays the same.
             if (m_GUID == default)
             {
-                m_GUID = GUID.Generate();
+                m_GUID = SerializableGUID.Generate();
             }
 
             var initialState = CreateInitialState();
             CommandDispatcher = new CommandDispatcher(initialState);
-            RegisterCommandHandlers();
 
             PluginRepository = new PluginRepository(this);
 
@@ -199,7 +193,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             // hence, we need to defer the loading command
             rootVisualElement.schedule.Execute(() =>
             {
-                var lastGraphFilePath = CommandDispatcher.GraphToolState.WindowState.LastOpenedGraph.GraphAssetModelPath;
+                var lastGraphFilePath = CommandDispatcher.State.WindowState.LastOpenedGraph.GetGraphAssetModelPath();
                 if (!string.IsNullOrEmpty(lastGraphFilePath))
                 {
                     try
@@ -207,7 +201,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                         CommandDispatcher.Dispatch(new LoadGraphAssetCommand(
                             lastGraphFilePath,
                             PluginRepository,
-                            CommandDispatcher.GraphToolState.WindowState.LastOpenedGraph.BoundObject,
+                            CommandDispatcher.State.WindowState.LastOpenedGraph.BoundObject,
                             LoadGraphAssetCommand.Type.KeepHistory));
                     }
                     catch (Exception e)
@@ -298,7 +292,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         protected virtual void OnDestroy()
         {
             // When window is closed, remove all associated state to avoid cluttering the Library folder.
-            PersistedEditorState.RemoveViewState(GUID);
+            PersistedState.RemoveViewState(GUID);
         }
 
         protected virtual void OnFocus()
@@ -340,9 +334,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             sw.Stop();
 
-            if (CommandDispatcher.GraphToolState.Preferences.GetBool(BoolPref.LogUIBuildTime))
+            if (CommandDispatcher.State.Preferences.GetBool(BoolPref.LogUIBuildTime))
             {
-                Debug.Log($"UI Update ({CommandDispatcher.GraphToolState.LastDispatchedCommandName}) took {sw.ElapsedMilliseconds} ms");
+                Debug.Log($"UI Update ({CommandDispatcher.LastDispatchedCommandName}) took {sw.ElapsedMilliseconds} ms");
             }
 
             UpdateDirtyState(GraphView?.GraphModel?.AssetModel?.Dirty ?? false);
@@ -370,7 +364,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         protected void ResetGraphProcessorTimer(MouseMoveEvent e)
         {
-            if (CommandDispatcher.GraphToolState.Preferences.GetBool(BoolPref.AutoProcess))
+            if (CommandDispatcher.State.Preferences.GetBool(BoolPref.AutoProcess))
             {
                 m_AutomaticGraphProcessor.ResetTimer();
             }
@@ -407,7 +401,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public virtual void AddItemsToMenu(GenericMenu menu)
         {
-            var disabled = CommandDispatcher.GraphToolState.WindowState.GraphModel == null;
+            var disabled = CommandDispatcher.State.WindowState.GraphModel == null;
 
             m_LockTracker.AddItemsToMenu(menu, disabled);
         }
@@ -433,7 +427,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         protected void UpdateGraphContainer()
         {
-            var graphModel = CommandDispatcher?.GraphToolState?.WindowState.GraphModel;
+            var graphModel = CommandDispatcher?.State?.WindowState.GraphModel;
 
             if (graphModel != null)
             {
@@ -461,7 +455,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public virtual void UnloadGraph()
         {
-            CommandDispatcher.GraphToolState.LoadGraphAsset(null, null);
+            CommandDispatcher.State.LoadGraphAsset(null, null);
             PluginRepository?.UnregisterPlugins();
             UpdateGraphContainer();
             GraphView.UnloadGraph();
@@ -469,7 +463,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public void UnloadGraphIfDeleted()
         {
-            var iGraphModel = CommandDispatcher.GraphToolState.WindowState.AssetModel as ScriptableObject;
+            var iGraphModel = CommandDispatcher.State.WindowState.AssetModel as ScriptableObject;
             if (!iGraphModel)
             {
                 UnloadGraph();
@@ -519,10 +513,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             // PF FIXME load correct asset type (not GraphAssetModel)
             if (AssetDatabase.LoadAssetAtPath(graphAssetFilePath, typeof(GraphAssetModel)))
             {
-                var currentOpenedGraph = CommandDispatcher?.GraphToolState?.WindowState.CurrentGraph ?? default;
+                var currentOpenedGraph = CommandDispatcher?.State?.WindowState.CurrentGraph ?? default;
                 // don't load if same graph and same bound object
-                if (CommandDispatcher?.GraphToolState?.WindowState.AssetModel != null &&
-                    graphAssetFilePath == currentOpenedGraph.GraphAssetModelPath &&
+                if (CommandDispatcher?.State?.WindowState.AssetModel != null &&
+                    graphAssetFilePath == currentOpenedGraph.GetGraphAssetModelPath() &&
                     currentOpenedGraph.BoundObject == boundObject)
                     return;
             }
@@ -533,15 +527,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 return;
             }
 
-
             // Load this graph asset.
-
             CommandDispatcher?.Dispatch(new LoadGraphAssetCommand(graphAssetFilePath, PluginRepository, boundObject));
 
-            UpdateDirtyState(GraphView.GraphModel.AssetModel.Dirty);
+            if (GraphView?.GraphModel?.AssetModel != null)
+                UpdateDirtyState(GraphView.GraphModel.AssetModel.Dirty);
 
             if (mode != OpenMode.OpenAndFocus)
                 return;
+
             // Check if an existing VSE already has this asset, if yes give it the focus.
             foreach (var window in windows)
             {
@@ -551,18 +545,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     return;
                 }
             }
-
-
         }
 
-        protected virtual bool CanHandleAssetType(GraphAssetModel asset)
-        {
-            return true;
-        }
+        /// <summary>
+        /// Indicates if the graphview window can handle the given <paramref name="asset"/>.
+        /// </summary>
+        /// <param name="asset">The asset we want to know if hte window handles</param>
+        /// <returns>True if the window can handle the givne <paramref name="asset"/>. False otherwise.</returns>
+        protected abstract bool CanHandleAssetType(GraphAssetModel asset);
 
         string GetCurrentAssetPath()
         {
-            var asset = CommandDispatcher.GraphToolState.WindowState.AssetModel;
+            var asset = CommandDispatcher.State.WindowState.AssetModel;
             return asset == null ? null : AssetDatabase.GetAssetPath(asset as Object);
         }
 

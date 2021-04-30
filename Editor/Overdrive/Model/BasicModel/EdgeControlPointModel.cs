@@ -6,7 +6,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 {
     [Serializable]
     //[MovedFrom(false, "Unity.GraphToolsFoundation.Model", "Unity.GraphTools.Foundation.Overdrive.Editor")]
-    [MovedFrom("UnityEditor.GraphToolsFoundation.Overdrive.Model")]
+    //[MovedFrom("UnityEditor.GraphToolsFoundation.Overdrive.Model")]
+    [MovedFrom(false, sourceAssembly: "Unity.GraphTools.Foundation.Overdrive.Editor")]
     public class EdgeControlPointModel : IEdgeControlPointModel
     {
         [SerializeField]

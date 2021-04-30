@@ -1,9 +1,10 @@
 using System;
 using UnityEngine;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public abstract class GraphAssetModel : ScriptableObject, IGraphAssetModel, ISerializationCallbackReceiver
+    public abstract class GraphAssetModel : ScriptableObject, IGraphAssetModel
     {
         [SerializeReference]
         IGraphModel m_GraphModel;
@@ -22,7 +23,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             set => name = value;
         }
 
-        public string FriendlyScriptName => StringExtensions.CodifyString(Name);
+        public string FriendlyScriptName => Name.CodifyString();
 
         protected abstract Type GraphModelType { get; }
 
@@ -35,7 +36,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             graphModel.StencilType = stencilType ?? graphModel.DefaultStencilType;
 
-            graphModel.Name = graphName;
             graphModel.AssetModel = this;
             m_GraphModel = graphModel;
 
@@ -55,11 +55,5 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             m_GraphModel?.OnDisable();
         }
 
-        public void OnBeforeSerialize() { }
-
-        public void OnAfterDeserialize()
-        {
-            GraphModel?.OnAfterDeserializeAssetModel();
-        }
     }
 }

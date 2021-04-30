@@ -2,12 +2,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using JetBrains.Annotations;
 using UnityEngine.Assertions;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 {
-    [PublicAPI]
     public class OrderedPorts : IReadOnlyDictionary<string, IPortModel>, IReadOnlyList<IPortModel>
     {
         Dictionary<string, IPortModel> m_Dictionary;

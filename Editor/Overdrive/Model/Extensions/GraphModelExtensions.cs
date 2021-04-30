@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 using Object = UnityEngine.Object;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive

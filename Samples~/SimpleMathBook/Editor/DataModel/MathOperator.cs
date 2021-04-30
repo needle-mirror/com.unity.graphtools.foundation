@@ -1,7 +1,5 @@
 using System;
 using System.Linq;
-using UnityEditor.GraphToolsFoundation.Overdrive;
-using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook
 {

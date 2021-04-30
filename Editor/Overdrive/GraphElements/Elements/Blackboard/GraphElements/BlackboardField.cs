@@ -22,7 +22,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         VisualElement m_Icon;
         SelectionDropper m_SelectionDropper;
 
-        public EditableLabel NameLabel { get; private set; }
+        public EditableLabel NameLabel { get; protected set; }
 
         public bool Highlighted
         {

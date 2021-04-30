@@ -6,7 +6,7 @@ using UnityEngine.Scripting.APIUpdating;
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     [Serializable]
-    [MovedFrom(false, "UnityEditor.EditorCommon", "Unity.GraphTools.Foundation.Overdrive.Editor")]
+    [MovedFrom(false, "UnityEditor.EditorCommon")]
     class LockTracker
     {
         static readonly GUIContent k_LockMenuGUIContent = new GUIContent("Lock");
@@ -45,7 +45,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         }
 
         [Serializable]
-        [MovedFrom(false, "UnityEditor.EditorCommon", "Unity.GraphTools.Foundation.Overdrive.Editor")]
         internal class LockStateEvent : UnityEvent<bool>
         {
         }

@@ -1,11 +1,12 @@
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine.GraphToolsFoundation.CommandStateObserver;
 using UnityEngine;
 using UnityEngine.Assertions;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public class CreatePlacematCommand : Command
+    public class CreatePlacematCommand : UndoableCommand
     {
         public Rect Position;
         public string Title;
@@ -76,7 +77,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         }
     }
 
-    public class SetPlacematCollapsedCommand : Command
+    public class SetPlacematCollapsedCommand : UndoableCommand
     {
         public readonly IPlacematModel PlacematModel;
         public readonly bool Collapse;

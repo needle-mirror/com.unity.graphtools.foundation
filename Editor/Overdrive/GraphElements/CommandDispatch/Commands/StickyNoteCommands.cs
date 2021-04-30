@@ -1,9 +1,10 @@
 using System.Linq;
+using UnityEngine.GraphToolsFoundation.CommandStateObserver;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public class CreateStickyNoteCommand : Command
+    public class CreateStickyNoteCommand : UndoableCommand
     {
         public readonly Rect Position;
 
@@ -29,7 +30,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         }
     }
 
-    public class UpdateStickyNoteCommand : Command
+    public class UpdateStickyNoteCommand : UndoableCommand
     {
         public readonly string Title;
         public readonly string Contents;

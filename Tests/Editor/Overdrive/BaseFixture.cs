@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using NUnit.Framework;
+using UnityEngine.GraphToolsFoundation.CommandStateObserver;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEngine;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 using UnityEngine.Profiling;
 
 // ReSharper disable AccessToStaticMemberViaDerivedType
@@ -13,34 +15,26 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
 {
     public enum TestingMode { Command, UndoRedo }
 
-    class TestGraphToolState : GraphToolState
+    public class TestCommandDispatcher : CommandDispatcher
     {
-        public TestGraphToolState(GUID graphViewEditorWindowGUID, Preferences preferences)
-            : base(graphViewEditorWindowGUID, preferences) { }
+        public TestCommandDispatcher(TestGraphToolState state)
+            : base(state)
+        {
+        }
 
-        protected internal override void PostDispatchCommand(Command command)
+        protected override void PostDispatchCommand(ICommand command)
         {
             base.PostDispatchCommand(command);
 
-            if (WindowState.GraphModel != null)
-                Assert.IsTrue(WindowState.GraphModel.CheckIntegrity(Verbosity.Errors));
+            if (State.WindowState.GraphModel != null)
+                Assert.IsTrue(State.WindowState.GraphModel.CheckIntegrity(Verbosity.Errors));
         }
     }
 
-    [SetUpFixture]
-    class SetUpFixture
+    public class TestGraphToolState : GraphToolState
     {
-        [OneTimeSetUp]
-        public void RunBeforeAnyTest()
-        {
-            AssetWatcher.disabled = true;
-        }
-
-        [OneTimeTearDown]
-        public void RunAfterAllTests()
-        {
-            AssetWatcher.disabled = false;
-        }
+        public TestGraphToolState(SerializableGUID graphViewEditorWindowGUID, Preferences preferences)
+            : base(graphViewEditorWindowGUID, preferences) { }
     }
 
     [PublicAPI]
@@ -49,8 +43,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
         protected CommandDispatcher m_CommandDispatcher;
         protected const string k_GraphPath = "Assets/test.asset";
 
-        protected GraphModel GraphModel => (GraphModel)m_CommandDispatcher.GraphToolState.WindowState.GraphModel;
-        protected Stencil Stencil => GraphModel.Stencil;
+        protected GraphModel GraphModel => (GraphModel)m_CommandDispatcher.State.WindowState.GraphModel;
+        protected Stencil Stencil => (Stencil)GraphModel.Stencil;
 
         protected abstract bool CreateGraphOnStartup { get; }
         protected virtual Type CreatedGraphType => typeof(ClassStencil);
@@ -81,7 +75,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
             }
         }
 
-        protected void TestPrereqCommandPostreq<T>(TestingMode mode, Action checkReqs, Func<T> provideCommand, Action checkPostReqs) where T : Command
+        protected void TestPrereqCommandPostreq<T>(TestingMode mode, Action checkReqs, Func<T> provideCommand, Action checkPostReqs) where T : UndoableCommand
         {
             T command;
             switch (mode)
@@ -123,13 +117,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
             AssertPreviousTest(checkPostReqs);
         }
 
-        static void CheckUndo<T>(Action checkReqs, Func<T> provideCommand) where T : Command
+        static void CheckUndo<T>(Action checkReqs, Func<T> provideCommand) where T : UndoableCommand
         {
             AssertPreviousTest(checkReqs);
             AssertPreviousTest(() => provideCommand());
         }
 
-        protected void TestPrereqCommandPostreq<T>(TestingMode mode, Func<T> checkReqsAndProvideCommand, Action checkPostReqs) where T : Command
+        protected void TestPrereqCommandPostreq<T>(TestingMode mode, Func<T> checkReqsAndProvideCommand, Action checkPostReqs) where T : UndoableCommand
         {
             TestPrereqCommandPostreq(mode, () => { }, checkReqsAndProvideCommand, checkPostReqs);
         }
@@ -143,8 +137,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
             prefs.SetBoolNoEditorUpdate(BoolPref.ErrorOnRecursiveDispatch, false);
             prefs.SetBoolNoEditorUpdate(BoolPref.ErrorOnMultipleDispatchesPerFrame, false);
 
-            m_CommandDispatcher = new CommandDispatcher(new TestGraphToolState(default, prefs));
-            CommandDispatcherHelper.RegisterDefaultCommandHandlers(m_CommandDispatcher);
+            m_CommandDispatcher = new TestCommandDispatcher(new TestGraphToolState(default, prefs));
 
             if (CreateGraphOnStartup)
             {
@@ -165,11 +158,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
 
         void UnloadGraph()
         {
-            GraphToolState graphToolState = m_CommandDispatcher.GraphToolState;
-
-            if (graphToolState.WindowState.GraphModel != null)
-                AssetWatcher.Instance.UnwatchGraphAssetAtPath(graphToolState.WindowState.GraphModel.AssetModel?.GetPath());
-
+            GraphToolState graphToolState = m_CommandDispatcher.State;
             graphToolState.LoadGraphAsset(null, null);
         }
 
@@ -292,7 +281,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
 
         protected void EnableUndoRedoModificationsLogging()
         {
-            m_CommandDispatcher.RegisterCommandObserver(a => Debug.Log("Command " + a.GetType().Name));
+            m_CommandDispatcher.RegisterCommandPreDispatchCallback(a => Debug.Log("Command " + a.GetType().Name));
             // TODO : Undo.postprocessModifications += PostprocessModifications;
         }
 

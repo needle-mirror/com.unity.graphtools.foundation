@@ -1,9 +1,10 @@
+using UnityEngine.GraphToolsFoundation.CommandStateObserver;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    class GraphProcessingStatusObserver : StateObserver
+    class GraphProcessingStatusObserver : StateObserver<GraphToolState>
     {
         Label m_StatusLabel;
         ErrorToolbar m_ErrorToolbar;
@@ -15,7 +16,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             m_ErrorToolbar = errorToolbar;
         }
 
-        public override void Observe(GraphToolState state)
+        protected override void Observe(GraphToolState state)
         {
             using (var observation = this.ObserveState(state.GraphProcessingState))
             {

@@ -1,3 +1,5 @@
+using UnityEngine.GraphToolsFoundation.Overdrive;
+
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     public interface IVariableNodeModel : ISingleInputPortNodeModel, ISingleOutputPortNodeModel, IHasDeclarationModel, IHasTitle

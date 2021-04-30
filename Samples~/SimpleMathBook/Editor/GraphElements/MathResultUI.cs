@@ -1,5 +1,3 @@
-using UnityEditor.GraphToolsFoundation.Overdrive;
-
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook.UI
 {
     [GraphElementsExtensionMethodsCache(GraphElementsExtensionMethodsCacheAttribute.toolDefaultPriority)]
@@ -21,7 +19,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook.UI
         protected override void BuildPartList()
         {
             base.BuildPartList();
-
 
             PartList.AppendPart(PrintResultPart.Create(printResultPartName, Model, this, ussClassName));
         }

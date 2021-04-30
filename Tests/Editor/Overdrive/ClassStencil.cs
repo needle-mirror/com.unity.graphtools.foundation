@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEngine;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 using UnityEngine.Scripting.APIUpdating;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
@@ -78,16 +79,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
                 && !Attribute.IsDefined(type, typeof(ObsoleteAttribute))
                 && !k_BlackListedNamespaces.Any(b => type.Namespace != null && type.Namespace.ToLower().StartsWith(b)
                 && !Attribute.IsDefined(type, typeof(ObsoleteAttribute)));
-        }
-
-        public override IGraphProcessingErrorModel CreateProcessingErrorModel(GraphProcessingError error)
-        {
-            if (error.SourceNode != null && !error.SourceNode.Destroyed)
-            {
-                return new GraphProcessingErrorModel(error);
-            }
-
-            return null;
         }
 
         /// <inheritdoc />

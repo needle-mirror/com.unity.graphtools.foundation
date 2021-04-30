@@ -9,7 +9,7 @@ using Cursor = UnityEngine.UIElements.Cursor;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
 {
-    public static class GraphViewStaticBridge
+    static class GraphViewStaticBridge
     {
         public static class EventCommandNames
         {
@@ -306,7 +306,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
             if (self.panel is BaseVisualElementPanel p)
             {
                 if (s_GraphViewShader == null)
-                    s_GraphViewShader = Shader.Find("Hidden/GraphView/GraphViewUIE");
+                    s_GraphViewShader = Shader.Find(Shaders.k_GraphView);
 
                 p.standardShader = s_GraphViewShader;
                 HostView ownerView = p.ownerObject as HostView;

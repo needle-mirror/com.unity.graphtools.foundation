@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine.GraphToolsFoundation.CommandStateObserver;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
@@ -115,7 +116,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         }
     }
 
-    public class BuildAllEditorCommand : Command
+    public class BuildAllEditorCommand : UndoableCommand
     {
         public BuildAllEditorCommand()
         {
@@ -133,7 +134,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public string OperationName;
     }
 
-    public class PasteSerializedDataCommand : Command
+    public class PasteSerializedDataCommand : UndoableCommand
     {
         public readonly TargetInsertionInfo Info;
         public readonly CopyPasteData Data;
@@ -170,7 +171,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     /// <summary>
     /// A command to change the graph view position and zoom and optionally change the selection.
     /// </summary>
-    public class ReframeGraphViewCommand : Command
+    public class ReframeGraphViewCommand : UndoableCommand
     {
         /// <summary>
         /// The new position.

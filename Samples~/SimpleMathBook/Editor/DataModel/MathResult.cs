@@ -1,26 +1,23 @@
 using System;
 using System.Linq;
 using UnityEditor.GraphToolsFoundation.Overdrive;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook
 {
     [Serializable]
-    public class MathResult : MathNode
+    public class MathResult : NodeModel
     {
         public MathResult()
         {
             Title = "MathResult";
         }
 
-        public override void ResetConnections()
-        {
-        }
-
-        public override float Evaluate()
+        public float Evaluate()
         {
             var port = this.GetInputPorts().FirstOrDefault();
 
-            return GetValue(port);
+            return this.GetValue(port);
         }
 
         public IPortModel DataIn0 { get; private set; }

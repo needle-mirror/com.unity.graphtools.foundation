@@ -20,25 +20,20 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Recipes
 
         protected override void OnEnable()
         {
-            base.OnEnable();
-
             EditorToolName = "Recipe Editor";
+            base.OnEnable();
         }
 
-        protected override void RegisterCommandHandlers()
+        /// <inheritdoc />
+        protected override GraphToolState CreateInitialState()
         {
-            base.RegisterCommandHandlers();
-
-            CommandDispatcher.RegisterCommandHandler<AddPortCommand>(AddPortCommand.DefaultHandler);
-            CommandDispatcher.RegisterCommandHandler<RemovePortCommand>(RemovePortCommand.DefaultHandler);
-
-            CommandDispatcher.RegisterCommandHandler<SetTemperatureCommand>(SetTemperatureCommand.DefaultHandler);
-            CommandDispatcher.RegisterCommandHandler<SetDurationCommand>(SetDurationCommand.DefaultHandler);
+            var prefs = Preferences.CreatePreferences(EditorToolName);
+            return new RecipeState(GUID, prefs);
         }
 
         protected override GraphView CreateGraphView()
         {
-            return new RecipeGraphView(this, CommandDispatcher);
+            return new RecipeGraphView(this, CommandDispatcher, EditorToolName);
         }
 
         protected override BlankPage CreateBlankPage()
@@ -47,6 +42,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Recipes
             onboardingProviders.Add(new RecipeOnboardingProvider());
 
             return new BlankPage(CommandDispatcher, onboardingProviders);
+        }
+
+        /// <inheritdoc />
+        protected override bool CanHandleAssetType(GraphAssetModel asset)
+        {
+            return asset is RecipeGraphAssetModel;
         }
     }
 }

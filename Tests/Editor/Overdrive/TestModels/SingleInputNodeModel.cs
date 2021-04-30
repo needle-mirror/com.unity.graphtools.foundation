@@ -1,5 +1,6 @@
 using System.Linq;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels
 {

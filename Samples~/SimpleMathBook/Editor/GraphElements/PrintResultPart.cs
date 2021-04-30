@@ -1,4 +1,3 @@
-using UnityEditor.GraphToolsFoundation.Overdrive;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -35,12 +34,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook.UI
 
         protected override void BuildPartUI(VisualElement container)
         {
-            if (m_Model is MathResult)
-            {
-                Button = new Button() { text = "Print Result" };
-                Button.clicked += OnPrintResult;
-                container.Add(Button);
-            }
+            Button = new Button() { text = "Print Result" };
+            Button.clicked += OnPrintResult;
+            container.Add(Button);
         }
 
         protected override void UpdatePartFromModel()

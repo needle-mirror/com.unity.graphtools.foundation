@@ -74,10 +74,12 @@ namespace UnityEditor.VisualScriptingTests.Actions
                 });
         }
 
+        // For the remainder of the life of the "old GTF" (i.e. not GTFO), we'll just run with itemized always on.
+        // This is modulable in GTFO.
         [PublicAPI]
         public enum ItemizeTestType
         {
-            Enabled, Disabled
+            Enabled/*, Disabled*/
         }
 
         static IEnumerable<object[]> GetItemizeTestCases()
@@ -87,7 +89,7 @@ namespace UnityEditor.VisualScriptingTests.Actions
                 // test both itemize option and non ItemizeTestType option
                 foreach (ItemizeTestType itemizeTest in Enum.GetValues(typeof(ItemizeTestType)))
                 {
-                    yield return MakeItemizeTestCase(testingMode, ItemizeOptions.Variables, itemizeTest,
+                    yield return MakeItemizeTestCase(testingMode, itemizeTest,
                         graphModel =>
                         {
                             string name = graphModel.GetUniqueName("myInt");
@@ -96,7 +98,7 @@ namespace UnityEditor.VisualScriptingTests.Actions
                         }
                     );
 
-                    yield return MakeItemizeTestCase(testingMode, ItemizeOptions.SystemConstants, itemizeTest,
+                    yield return MakeItemizeTestCase(testingMode, itemizeTest,
                         graphModel =>
                         {
                             void PreDefineSetup(SystemConstantNodeModel m)
@@ -109,7 +111,7 @@ namespace UnityEditor.VisualScriptingTests.Actions
                             return graphModel.CreateNode<SystemConstantNodeModel>("Constant", Vector2.zero, SpawnFlags.Default, PreDefineSetup);
                         });
 
-                    yield return MakeItemizeTestCase(testingMode, ItemizeOptions.Constants, itemizeTest,
+                    yield return MakeItemizeTestCase(testingMode, itemizeTest,
                         graphModel =>
                         {
                             string name = graphModel.GetUniqueName("myInt");
@@ -119,83 +121,71 @@ namespace UnityEditor.VisualScriptingTests.Actions
             }
         }
 
-        static object[] MakeItemizeTestCase(TestingMode testingMode, ItemizeOptions options, ItemizeTestType itemizeTest, Func<VSGraphModel, IHasMainOutputPort> makeNode)
+        static object[] MakeItemizeTestCase(TestingMode testingMode, ItemizeTestType itemizeTest, Func<VSGraphModel, IHasMainOutputPort> makeNode)
         {
-            return new object[] { testingMode, options, itemizeTest, makeNode };
+            return new object[] { testingMode, itemizeTest, makeNode };
         }
 
         [Test, TestCaseSource(nameof(GetItemizeTestCases))]
-        public void Test_CreateEdgeAction_Itemize(TestingMode testingMode, ItemizeOptions options, ItemizeTestType itemizeTest, Func<VSGraphModel, IHasMainOutputPort> makeNode)
+        public void Test_CreateEdgeAction_Itemize(TestingMode testingMode, ItemizeTestType itemizeTest, Func<VSGraphModel, IHasMainOutputPort> makeNode)
         {
             // save initial itemize options
             VSPreferences pref = ((TestState)m_Store.GetState()).Preferences;
-            ItemizeOptions initialOptions = pref.CurrentItemizeOptions;
 
-            try
-            {
-                // create int node
-                IHasMainOutputPort node0 = makeNode(GraphModel);
+            // create int node
+            IHasMainOutputPort node0 = makeNode(GraphModel);
 
-                // create Addition node
-                BinaryOperatorNodeModel opNode = GraphModel.CreateBinaryOperatorNode(BinaryOperatorKind.Add, Vector2.zero);
+            // create Addition node
+            BinaryOperatorNodeModel opNode = GraphModel.CreateBinaryOperatorNode(BinaryOperatorKind.Add, Vector2.zero);
 
-                // enable Itemize depending on the test case
-                var itemizeOptions = ItemizeOptions.Nothing;
-                pref.CurrentItemizeOptions = (itemizeTest == ItemizeTestType.Enabled) ? options : itemizeOptions;
+            // enable Itemize depending on the test case
+            // connect int to first input
+            m_Store.Dispatch(new CreateEdgeAction(opNode.InputPortA, node0.OutputPort));
+            m_Store.Update();
 
-                // connect int to first input
-                m_Store.Dispatch(new CreateEdgeAction(opNode.InputPortA, node0.OutputPort));
-                m_Store.Update();
+            // test how the node reacts to getting connected a second time
+            TestPrereqActionPostreq(testingMode,
+                () =>
+                {
+                    RefreshReference(ref node0);
+                    RefreshReference(ref opNode);
+                    var binOp = GraphModel.GetAllNodes().OfType<BinaryOperatorNodeModel>().First();
+                    IPortModel input0 = binOp.InputPortA;
+                    IPortModel input1 = binOp.InputPortB;
+                    IPortModel binOutput = binOp.OutputPort;
+                    Assert.That(GetNodeCount(), Is.EqualTo(2));
+                    Assert.That(GetEdgeCount(), Is.EqualTo(1));
+                    Assert.That(input0, Is.ConnectedTo(node0.OutputPort));
+                    Assert.That(input1, Is.Not.ConnectedTo(node0.OutputPort));
+                    Assert.That(binOutput.Connected, Is.False);
+                    return new CreateEdgeAction(input1, node0.OutputPort);
+                },
+                () =>
+                {
+                    RefreshReference(ref node0);
+                    RefreshReference(ref opNode);
+                    var binOp = GraphModel.GetAllNodes().OfType<BinaryOperatorNodeModel>().First();
+                    IPortModel input0 = binOp.InputPortA;
+                    IPortModel input1 = binOp.InputPortB;
+                    IPortModel binOutput = binOp.OutputPort;
+                    Assert.That(GetEdgeCount(), Is.EqualTo(2));
+                    Assert.That(input0, Is.ConnectedTo(node0.OutputPort));
+                    Assert.That(binOutput.Connected, Is.False);
 
-                // test how the node reacts to getting connected a second time
-                TestPrereqActionPostreq(testingMode,
-                    () =>
+                    if (itemizeTest == ItemizeTestType.Enabled)
                     {
-                        RefreshReference(ref node0);
-                        RefreshReference(ref opNode);
-                        var binOp = GraphModel.GetAllNodes().OfType<BinaryOperatorNodeModel>().First();
-                        IPortModel input0 = binOp.InputPortA;
-                        IPortModel input1 = binOp.InputPortB;
-                        IPortModel binOutput = binOp.OutputPort;
+                        Assert.That(GetNodeCount(), Is.EqualTo(3));
+                        IHasMainOutputPort newNode = GetNode(2) as IHasMainOutputPort;
+                        Assert.NotNull(newNode);
+                        Assert.That(newNode, Is.TypeOf(node0.GetType()));
+                        IPortModel output1 = newNode.OutputPort;
+                        Assert.That(input1, Is.ConnectedTo(output1));
+                    }
+                    else
+                    {
                         Assert.That(GetNodeCount(), Is.EqualTo(2));
-                        Assert.That(GetEdgeCount(), Is.EqualTo(1));
-                        Assert.That(input0, Is.ConnectedTo(node0.OutputPort));
-                        Assert.That(input1, Is.Not.ConnectedTo(node0.OutputPort));
-                        Assert.That(binOutput.Connected, Is.False);
-                        return new CreateEdgeAction(input1, node0.OutputPort);
-                    },
-                    () =>
-                    {
-                        RefreshReference(ref node0);
-                        RefreshReference(ref opNode);
-                        var binOp = GraphModel.GetAllNodes().OfType<BinaryOperatorNodeModel>().First();
-                        IPortModel input0 = binOp.InputPortA;
-                        IPortModel input1 = binOp.InputPortB;
-                        IPortModel binOutput = binOp.OutputPort;
-                        Assert.That(GetEdgeCount(), Is.EqualTo(2));
-                        Assert.That(input0, Is.ConnectedTo(node0.OutputPort));
-                        Assert.That(binOutput.Connected, Is.False);
-
-                        if (itemizeTest == ItemizeTestType.Enabled)
-                        {
-                            Assert.That(GetNodeCount(), Is.EqualTo(3));
-                            IHasMainOutputPort newNode = GetNode(2) as IHasMainOutputPort;
-                            Assert.NotNull(newNode);
-                            Assert.That(newNode, Is.TypeOf(node0.GetType()));
-                            IPortModel output1 = newNode.OutputPort;
-                            Assert.That(input1, Is.ConnectedTo(output1));
-                        }
-                        else
-                        {
-                            Assert.That(GetNodeCount(), Is.EqualTo(2));
-                        }
-                    });
-            }
-            finally
-            {
-                // restore itemize options
-                pref.CurrentItemizeOptions = initialOptions;
-            }
+                    }
+                });
         }
 
         // TODO: Test itemization when connecting to stacked nodes (both grouped and ungrouped)

@@ -4,7 +4,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     {
         public bool ShowButton(string buttonName)
         {
-            return true;
+            return buttonName != MainToolbar.EnableTracingButton && buttonName != MainToolbar.BuildAllButton;
         }
     }
 }

@@ -1,0 +1,65 @@
+.ge-context-node  {
+    width: 320px;
+    overflow: visible;
+}
+
+.ge-context-node .ge-icon-title-progress {
+    background-color: rgba(0, 0, 0, 0);
+    justify-content: space-around;
+}
+
+.ge-context-node #selection-border {
+    position: absolute;
+    top : -4px;
+    bottom:-4px;
+    right: -4px;
+    left: -4px;
+    border-radius: 12px;
+    margin: 0px;
+}
+
+.ge-context-node #context-border {
+    position: absolute;
+    top : 14px;
+    bottom: 14px;
+    right: 0px;
+    left: 0px;
+    border-top-color: #4cbc4c;
+    border-top-width: 1px;
+    border-bottom-color: darkorange;
+    border-bottom-width: 1px;
+    border-radius: 8px;
+    background-color: rgba(46,46,46,0.8);
+}
+
+.ge-context-node.no-vertical-input #context-border {
+    top: 1px;
+    border-left-width: 1px;
+    border-right-width: 1px;
+}
+
+.ge-context-node.no-vertical-output #context-border {
+    bottom: 0px;
+}
+
+.ge-context-node #content-container {
+    padding: 4px;
+    padding-bottom: 8px;
+    background-color: rgba(0,0,0,0);
+    border-color: rgba(0,0,0,0);
+    border-top-width: 0px;
+    border-bottom-width: 0px;
+    overflow: visible;
+}
+
+.ge-context-node .ge-vertical-port-container-part {
+    background-color: rgba(0,0,0,0);
+}
+
+.ge-context-node #port-container {
+    background-color: rgba(0,0,0,0);
+}
+
+.ge-context-node .ge-port-container {
+    border-color: rgba(0,0,0,0);
+}

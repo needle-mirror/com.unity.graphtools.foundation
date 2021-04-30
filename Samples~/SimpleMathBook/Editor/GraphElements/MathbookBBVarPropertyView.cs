@@ -1,5 +1,3 @@
-using UnityEditor.GraphToolsFoundation.Overdrive;
-
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook.UI
 {
 

@@ -11,7 +11,7 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
-    [ToolShortcutEvent(id, keyCode, modifiers)]
+    [ToolShortcutEvent(ShortcutTestGraphViewWindow.toolName, id, keyCode, modifiers)]
     class TestShortcutEvent : ShortcutEventBase<TestShortcutEvent>
     {
         public const string id = "Test Event Shortcut";
@@ -19,9 +19,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         public const ShortcutModifiers modifiers = ShortcutModifiers.Alt | ShortcutModifiers.Action | ShortcutModifiers.Shift;
     }
 
-    [ToolShortcutEvent(id, keyCode, modifiers)]
+    [ToolShortcutEvent(ShortcutTestGraphViewWindow.toolName, id, keyCode, modifiers)]
     class TestShortcutEventFilteredOut : ShortcutEventBase<TestShortcutEventFilteredOut>
     {
+        public const string id = "Filtered Out Event Shortcut";
+        public const KeyCode keyCode = KeyCode.F7;
+        public const ShortcutModifiers modifiers = ShortcutModifiers.Alt | ShortcutModifiers.Action | ShortcutModifiers.Shift;
+    }
+
+    [ToolShortcutEvent(otherToolName, id, keyCode, modifiers)]
+    class TestShortcutEventUnused : ShortcutEventBase<TestShortcutEventUnused>
+    {
+        public const string otherToolName = "_ _ _ Random Tool Name _ _ _";
         public const string id = "Filtered Out Event Shortcut";
         public const KeyCode keyCode = KeyCode.F7;
         public const ShortcutModifiers modifiers = ShortcutModifiers.Alt | ShortcutModifiers.Action | ShortcutModifiers.Shift;
@@ -62,6 +71,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         protected override GraphView CreateGraphView()
         {
             return new TestGraphView(this, CommandDispatcher);
+        }
+
+        protected override bool CanHandleAssetType(GraphAssetModel asset)
+        {
+            return true;
         }
     }
 
@@ -127,6 +141,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
         public void FilteredOutShortcutIsNotRegistered()
         {
             Assert.IsFalse(ShortcutManager.instance.GetAvailableShortcutIds().Contains(ShortcutTestGraphViewWindow.toolName + "/" + TestShortcutEventFilteredOut.id));
+        }
+
+        [Test]
+        public void OtherToolShortcutIsNotRegistered()
+        {
+            Assert.IsFalse(ShortcutManager.instance.GetAvailableShortcutIds().Contains(TestShortcutEventUnused.otherToolName + "/" + TestShortcutEventUnused.id));
         }
 
         public static EventModifiers ConvertModifiers(ShortcutModifiers modifiers)

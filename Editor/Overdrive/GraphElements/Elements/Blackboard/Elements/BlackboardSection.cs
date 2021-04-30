@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -61,7 +60,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             RegisterCallback<DragPerformEvent>(OnDragPerformEvent);
             RegisterCallback<DragLeaveEvent>(OnDragLeaveEvent);
 
-            var header = new VisualElement() { name = "section-header" };
+            var header = new VisualElement { name = "section-header" };
             header.AddToClassList(headerUssClassName);
 
             var titleLabel = new Label(name) { name = "section-title-label" };
@@ -70,9 +69,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             m_AddButton = new Button(() =>
             {
-                GenericMenu menu = new GenericMenu();
-                (m_Blackboard.Model as IBlackboardGraphModel)?.PopulateCreateMenu(name, menu, m_Blackboard.CommandDispatcher);
-                Vector2 menuPosition = new Vector2(m_AddButton.layout.xMin, m_AddButton.layout.yMax);
+                var menu = new GenericMenu();
+                ((Stencil)m_Blackboard.Model.GraphModel.Stencil)?.PopulateBlackboardCreateMenu(name, menu, m_Blackboard.CommandDispatcher);
+                var menuPosition = new Vector2(m_AddButton.layout.xMin, m_AddButton.layout.yMax);
                 menuPosition = m_AddButton.parent.LocalToWorld(menuPosition);
                 menu.DropDown(new Rect(menuPosition, Vector2.zero));
             })
@@ -82,7 +81,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             hierarchy.Add(header);
 
-            m_RowsContainer = new VisualElement() { name = "rows-container" };
+            m_RowsContainer = new VisualElement { name = "rows-container" };
             m_RowsContainer.AddToClassList(rowsUssClassName);
             hierarchy.Add(m_RowsContainer);
 

@@ -37,7 +37,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Plugins.Debugging
             EditorApplication.update += OnUpdate;
             EditorApplication.pauseStateChanged += OnEditorPauseStateChanged;
             EditorApplication.playModeStateChanged += OnEditorPlayModeStateChanged;
-            m_CommandDispatcher.GraphToolState.WindowState.GraphModel?.Stencil?.Debugger?.Start(m_CommandDispatcher.GraphToolState.WindowState.GraphModel, m_CommandDispatcher.GraphToolState.TracingControlState.TracingEnabled);
+            ((Stencil)m_CommandDispatcher.State.WindowState.GraphModel?.Stencil)?.Debugger?.Start(m_CommandDispatcher.State.WindowState.GraphModel, m_CommandDispatcher.State.TracingStatusState.TracingEnabled);
 
             var root = window.rootVisualElement;
             if (m_TimelineToolbar == null)
@@ -57,12 +57,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Plugins.Debugging
         {
             m_CommandDispatcher.UnregisterObserver(m_DebugDataObserver);
 
-            ClearHighlights(m_CommandDispatcher.GraphToolState);
+            ClearHighlights(m_CommandDispatcher.State);
             // ReSharper disable once DelegateSubtraction
             EditorApplication.update -= OnUpdate;
             EditorApplication.pauseStateChanged -= OnEditorPauseStateChanged;
             EditorApplication.playModeStateChanged -= OnEditorPlayModeStateChanged;
-            m_CommandDispatcher.GraphToolState.WindowState.GraphModel?.Stencil?.Debugger?.Stop();
+            ((Stencil)m_CommandDispatcher.State.WindowState.GraphModel?.Stencil)?.Debugger?.Stop();
             m_TimelineToolbar?.RemoveFromHierarchy();
         }
 
@@ -74,9 +74,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Plugins.Debugging
         // PF FIXME to command
         void DumpFrameTrace()
         {
-            var state = m_CommandDispatcher.GraphToolState;
+            var state = m_CommandDispatcher.State;
             var currentGraphModel = state?.WindowState.GraphModel;
-            var debugger = currentGraphModel?.Stencil?.Debugger;
+            var debugger = ((Stencil)currentGraphModel?.Stencil)?.Debugger;
             if (state == null || debugger == null)
                 return;
 
@@ -134,7 +134,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Plugins.Debugging
             if (m_TimelineToolbar == null)
                 return;
 
-            var graphToolState = m_CommandDispatcher.GraphToolState;
+            var graphToolState = m_CommandDispatcher.State;
 
             using (var updater = graphToolState.TracingControlState.UpdateScope)
             {
@@ -161,7 +161,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Plugins.Debugging
 
             if (m_PlayState == PlayModeStateChange.ExitingPlayMode)
             {
-                ClearHighlights(m_CommandDispatcher.GraphToolState);
+                ClearHighlights(m_CommandDispatcher.State);
                 m_Stopwatch?.Stop();
                 m_Stopwatch = null;
             }
@@ -179,7 +179,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Plugins.Debugging
             }
 
             var currentGraphModel = state?.GraphViewState.GraphModel;
-            var debugger = currentGraphModel?.Stencil?.Debugger;
+            var debugger = ((Stencil)currentGraphModel?.Stencil)?.Debugger;
             if (state == null || debugger == null)
                 return;
 

@@ -1,7 +1,6 @@
-using System;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.Tests.Types.NewNamespace;
-using UnityEngine;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 using UnityEngine.Scripting.APIUpdating;
 
 // ReSharper disable AccessToStaticMemberViaDerivedType
@@ -13,43 +12,23 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Types
         [MovedFrom(false, sourceNamespace: "UnityEditor.GraphToolsFoundation.Overdrive.Tests.Types.OldNamespace", sourceClassName: "OldTypeName", sourceAssembly: "Unity.OldAssemblyName.Foundation.Overdrive.Editor.Tests")]
         class NewTypeName { }
 
+        [MovedFrom(false, sourceNamespace: "UnityEditor.GraphToolsFoundation.Overdrive.Tests.Types.OldNamespace", sourceAssembly: "Unity.OldAssemblyName.Foundation.Overdrive.Editor.Tests")]
         class EnclosingType
         {
-            [MovedFrom(false, sourceClassName: "EnclosingType/InnerOld", sourceNamespace: "UnityEditor.GraphToolsFoundation.Overdrive.Tests.Types.OldNamespace", sourceAssembly: "Unity.OldAssemblyName.Foundation.Overdrive.Editor.Tests")]
+            // TODO: VladN 2021-03-25: Test suite incorrectly flags MovedFrom as illegal despite the 'false' flag. @adriano is working on this but it needs to land in trunk and then other versions.
+            // When this is fixed, add the attribute again and enable the corresponding tests further down
+            //[MovedFrom(false, sourceClassName: "EnclosingType/InnerOld", sourceNamespace: "UnityEditor.GraphToolsFoundation.Overdrive.Tests.Types.OldNamespace", sourceAssembly: "Unity.OldAssemblyName.Foundation.Overdrive.Editor.Tests")]
             public class InnerNew { }
 
-            [MovedFrom(false, sourceNamespace: "UnityEditor.GraphToolsFoundation.Overdrive.Tests.Types.OldNamespace", sourceAssembly: "Unity.OldAssemblyName.Foundation.Overdrive.Editor.Tests")]
+            // TODO: VladN 2021-03-25: Test suite incorrectly flags MovedFrom as illegal despite the 'false' flag. @adriano is working on this but it needs to land in trunk and then other versions.
+            // When this is fixed, add the attribute again and enable the corresponding tests further down
+            //[MovedFrom(false, sourceNamespace: "UnityEditor.GraphToolsFoundation.Overdrive.Tests.Types.OldNamespace", sourceAssembly: "Unity.OldAssemblyName.Foundation.Overdrive.Editor.Tests")]
             public class InnerTypeUnchanged { }
         }
     }
 
     class TypeHandleTests
     {
-        [Test]
-        public void Test_TypeHandleSerializationOfCustomType_Unknown()
-        {
-            //Arrange-Act
-            var th = typeof(Unknown).GenerateTypeHandle();
-
-            //Assert
-            Assert.That(th, Is.EqualTo(TypeHandle.Unknown));
-        }
-
-        class A { }
-
-        [Test]
-        public void Test_TypeHandleDeserializationOfRegularType()
-        {
-            //Arrange
-            TypeHandle th = typeof(A).GenerateTypeHandle();
-
-            //Act
-            Type deserializedTypeHandle = th.Resolve();
-
-            //Assert
-            Assert.That(deserializedTypeHandle, Is.EqualTo(typeof(A)));
-        }
-
         [Test]
         public void Test_TypeHandle_Resolve_WorksWithRenamedTypes_WithMovedFromAttribute()
         {
@@ -65,7 +44,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Types
             Assert.AreEqual(typeof(NewTypeName), resolvedType);
         }
 
-        [Test]
+        [Test, Ignore("VladN 2021-03-25: Test suite incorrectly flags MovedFrom as illegal despite the 'false' flag. @adriano is working on this but it needs to land in trunk and then other versions.")]
         public void Test_TypeHandle_WithNestedType_Resolve_WorksWithRenamedTypes_WithMovedFromAttribute()
         {
             var typeStr = typeof(EnclosingType.InnerNew).AssemblyQualifiedName;
@@ -80,7 +59,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Types
             Assert.AreEqual(typeof(EnclosingType.InnerNew), resolvedType);
         }
 
-        [Test]
+        [Test, Ignore("VladN 2021-03-25: Test suite incorrectly flags MovedFrom as illegal despite the 'false' flag. @adriano is working on this but it needs to land in trunk and then other versions.")]
         public void Test_TypeHandle_WithNestedType_Resolve_ChangedAssembly_WithMovedFromAttribute()
         {
             var typeStr = typeof(EnclosingType.InnerTypeUnchanged).AssemblyQualifiedName;

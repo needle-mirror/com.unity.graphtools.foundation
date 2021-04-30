@@ -1,17 +1,18 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine.GraphToolsFoundation.CommandStateObserver;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    class EdgeOrderObserver : StateObserver
+    class EdgeOrderObserver : StateObserver<GraphToolState>
     {
         public EdgeOrderObserver()
             : base(new[] { nameof(GraphToolState.SelectionState) },
                 new[] { nameof(GraphToolState.GraphViewState) })
         { }
 
-        public override void Observe(GraphToolState state)
+        protected override void Observe(GraphToolState state)
         {
             using (var selObs = this.ObserveState(state.SelectionState))
             {

@@ -4,6 +4,7 @@ using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels;
 using UnityEngine;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
@@ -34,7 +35,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
         IGraphModel m_GraphModel;
 
-        private protected override Overdrive.WindowStateComponent CreateWindowStateComponent(GUID guid)
+        private protected override Overdrive.WindowStateComponent CreateWindowStateComponent(Hash128 guid)
         {
             var state = PersistedState.GetOrCreateViewStateComponent<WindowStateComponent>(guid, nameof(WindowState));
             state.m_GraphModel = m_GraphModel;
@@ -48,7 +49,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             return state;
         }
 
-        public GraphToolState(GUID graphViewEditorWindowGUID, IGraphModel graphModel)
+        public GraphToolState(SerializableGUID graphViewEditorWindowGUID, IGraphModel graphModel)
             : base(graphViewEditorWindowGUID, CreatePreferences())
         {
             m_GraphModel = graphModel;
@@ -146,7 +147,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
         protected void MarkGraphViewStateDirty()
         {
-            using (var updater = CommandDispatcher.GraphToolState.GraphViewState.UpdateScope)
+            using (var updater = CommandDispatcher.State.GraphViewState.UpdateScope)
             {
                 updater.ForceCompleteUpdate();
             }
@@ -157,9 +158,32 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             return CreateNode<IONodeModel>(title, position, inCount, outCount, exeInCount, exeOutCount, orientation);
         }
 
+        protected ContextNodeModel CreateContext(string title = "", Vector2 position = default)
+        {
+            return GraphModel.CreateNode<ContextNodeModel>(title, position, initializationCallback: model => { });
+        }
+
         protected TNodeModel CreateNode<TNodeModel>(string title, Vector2 position, int inCount = 0, int outCount = 0, int exeInCount = 0, int exeOutCount = 0, Orientation orientation = Orientation.Horizontal) where TNodeModel : IONodeModel, new()
         {
             var node = GraphModel.CreateNode<TNodeModel>(title, position, initializationCallback: model =>
+            {
+                model.InputCount = inCount;
+                model.OuputCount = outCount;
+                model.ExeInputCount = exeInCount;
+                model.ExeOuputCount = exeOutCount;
+            });
+
+            foreach (var portModel in node.Ports.Cast<PortModel>())
+            {
+                portModel.Orientation = orientation;
+            }
+
+            return node;
+        }
+
+        protected TContextModel CreateContext<TContextModel>(string title, Vector2 position, int inCount = 0, int outCount = 0, int exeInCount = 0, int exeOutCount = 0, Orientation orientation = Orientation.Horizontal) where TContextModel : ContextNodeModel, new()
+        {
+            var node = GraphModel.CreateNode<TContextModel>(title, position, initializationCallback: model =>
             {
                 model.InputCount = inCount;
                 model.OuputCount = outCount;

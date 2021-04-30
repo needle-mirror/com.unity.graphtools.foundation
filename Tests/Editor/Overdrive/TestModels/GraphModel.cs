@@ -1,6 +1,7 @@
 using System;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEngine;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels
 {
@@ -25,16 +26,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels
         public override ISearcherDatabaseProvider GetSearcherDatabaseProvider()
         {
             return m_SearcherProvider;
-        }
-
-        public override IGraphProcessingErrorModel CreateProcessingErrorModel(GraphProcessingError error)
-        {
-            if (error.SourceNode != null && !error.SourceNode.Destroyed)
-            {
-                return new GraphProcessingErrorModel(error);
-            }
-
-            return null;
         }
 
         /// <inheritdoc />
@@ -71,18 +62,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.TestModels
             if (nodeTypeToCreate == null)
                 throw new ArgumentNullException(nameof(nodeTypeToCreate));
 
-            NodeModel nodeModel;
+            BasicModel.NodeModel nodeModel;
             if (typeof(IConstant).IsAssignableFrom(nodeTypeToCreate))
                 nodeModel = new ConstantNodeModel { Value = (IConstant)Activator.CreateInstance(nodeTypeToCreate) };
-            else if (typeof(NodeModel).IsAssignableFrom(nodeTypeToCreate))
-                nodeModel = (NodeModel)Activator.CreateInstance(nodeTypeToCreate);
+            else if (typeof(BasicModel.NodeModel).IsAssignableFrom(nodeTypeToCreate))
+                nodeModel = (BasicModel.NodeModel)Activator.CreateInstance(nodeTypeToCreate);
             else
                 throw new ArgumentOutOfRangeException(nameof(nodeTypeToCreate));
 
             nodeModel.Position = position;
             nodeModel.Guid = guid.Valid ? guid : SerializableGUID.Generate();
             nodeModel.Title = nodeName;
-            nodeModel.SetGraphModel(this);
+            (nodeModel as ITestNodeModel).SetGraphModel(this);
             initializationCallback?.Invoke(nodeModel);
             nodeModel.OnCreateNode();
 

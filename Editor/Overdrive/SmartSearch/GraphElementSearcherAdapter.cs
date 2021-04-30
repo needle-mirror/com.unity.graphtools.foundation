@@ -7,7 +7,7 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    public abstract class GraphElementSearcherAdapter : SearcherAdapter
+    public abstract class GraphElementSearcherAdapter : SearcherAdapter, IGTFSearcherAdapter
     {
         protected VisualElement m_DetailsPanel;
         protected Label m_DetailsTitle;
@@ -78,6 +78,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         protected virtual void OnGraphElementsCreated(SearcherItem searcherItem,
             IEnumerable<IGraphElementModel> elements)
         { }
+
+
+
+        float m_InitialSplitterDetailRatio = 1.0f;
+        public override float InitialSplitterDetailRatio
+        {
+            get => m_InitialSplitterDetailRatio;
+        }
+
+        public void SetInitialSplitterDetailRatio(float ratio)
+        {
+            m_InitialSplitterDetailRatio = ratio;
+        }
     }
 
     public class GraphNodeSearcherAdapter : GraphElementSearcherAdapter

@@ -10,7 +10,7 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.VisualScripting.Editor
 {
-    public static class ConsoleWindowBridge
+    static class ConsoleWindowBridge
     {
         static Action<int> s_RemoveLogEntriesByIdentifierDelegate;
         static readonly int k_VsLogIdentifier = "VisualScripting".GetHashCode();

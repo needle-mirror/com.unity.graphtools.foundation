@@ -1,13 +1,15 @@
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine.GraphToolsFoundation.CommandStateObserver;
 using UnityEngine;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     /// <summary>
     /// Command to create a node from a <see cref="GraphNodeModelSearcherItem"/>.
     /// </summary>
-    public class CreateNodeFromSearcherCommand : Command
+    public class CreateNodeFromSearcherCommand : UndoableCommand
     {
         /// <summary>
         /// The position where to create the node.
@@ -67,7 +69,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         }
     }
 
-    public class CreateNodeFromPortCommand : Command
+    public class CreateNodeFromPortCommand : UndoableCommand
     {
         public IEnumerable<IPortModel> PortModels;
         public Vector2 Position;
@@ -120,7 +122,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     {
                         if (command.ItemizeSourceNode)
                         {
-                            var newNode = graphModel.CreateItemizedNode(graphToolState, EdgeCommandConfig.nodeOffset, ref thisPortModel);
+                            var newNode = graphModel.CreateItemizedNode(EdgeCommandConfig.nodeOffset, ref thisPortModel);
                             graphUpdater.MarkNew(newNode);
                         }
 
@@ -151,7 +153,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     /// <summary>
     /// Command to create a node from a <see cref="GraphNodeModelSearcherItem"/> and insert in on an edge.
     /// </summary>
-    public class CreateNodeOnEdgeCommand : Command
+    public class CreateNodeOnEdgeCommand : UndoableCommand
     {
         /// <summary>
         /// The edge model on which to insert the newly created node.

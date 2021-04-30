@@ -10,7 +10,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
         readonly Stencil m_Stencil;
         List<SearcherDatabaseBase> m_GraphElementsSearcherDatabases;
         SearcherDatabase m_StaticTypesSearcherDatabase;
-        int m_AssetVersion = AssetWatcher.Version;
         int m_AssetModificationVersion = AssetModificationWatcher.Version;
 
         public ClassSearcherDatabaseProvider(Stencil stencil)
@@ -20,9 +19,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
 
         public virtual List<SearcherDatabaseBase> GetGraphElementsSearcherDatabases(IGraphModel graphModel)
         {
-            if (AssetWatcher.Version != m_AssetVersion || AssetModificationWatcher.Version != m_AssetModificationVersion)
+            if (AssetModificationWatcher.Version != m_AssetModificationVersion)
             {
-                m_AssetVersion = AssetWatcher.Version;
                 m_AssetModificationVersion = AssetModificationWatcher.Version;
                 ClearGraphElementsSearcherDatabases();
             }

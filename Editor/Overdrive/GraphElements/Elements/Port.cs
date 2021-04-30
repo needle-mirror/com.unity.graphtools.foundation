@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine.GraphToolsFoundation.CommandStateObserver;
 using UnityEditor.GraphToolsFoundation.Overdrive.InternalModels;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -238,7 +239,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         void OnDropOutsideCallback(CommandDispatcher commandDispatcher, IEnumerable<Edge> edges, IEnumerable<IPortModel> ports, Vector2 pos)
         {
-            if (commandDispatcher.GraphToolState?.WindowState.GraphModel?.Stencil == null)
+            if (commandDispatcher.State?.WindowState.GraphModel?.Stencil == null)
                 return;
 
             Vector2 localPos = GraphView.ContentViewContainer.WorldToLocal(pos);
@@ -260,7 +261,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 existingPortModels.Add(edge.port);
             }
 
-            commandDispatcher.GraphToolState.WindowState.GraphModel.Stencil.CreateNodesFromPort(commandDispatcher,
+            ((Stencil)commandDispatcher.State.WindowState.GraphModel.Stencil)?.CreateNodesFromPort(commandDispatcher,
                 existingPortModels, localPos, pos, edgesToDelete);
         }
 

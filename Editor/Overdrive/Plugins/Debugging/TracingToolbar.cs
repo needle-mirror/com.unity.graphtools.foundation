@@ -98,13 +98,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Plugins.Debugging
                 m_TracingTimeline.OnGUI(timeRect);
             });
 
-            m_TracingTimeline = new TracingTimeline(m_GraphView, m_CommandDispatcher.GraphToolState);
+            m_TracingTimeline = new TracingTimeline(m_GraphView, m_CommandDispatcher.State);
             Add(imguiContainer);
         }
 
         public void SyncVisible()
         {
-            var tracingDataModel = m_CommandDispatcher.GraphToolState.TracingControlState;
+            var tracingDataModel = m_CommandDispatcher.State.TracingStatusState;
             if (style.display.value == DisplayStyle.Flex != tracingDataModel.TracingEnabled)
                 style.display = tracingDataModel.TracingEnabled ? DisplayStyle.Flex : DisplayStyle.None;
         }
@@ -112,8 +112,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Plugins.Debugging
         // PF FIXME use command
         void OnPickTargetButton(EventBase eventBase)
         {
-            var state = m_CommandDispatcher.GraphToolState;
-            IDebugger debugger = state.WindowState.GraphModel.Stencil.Debugger;
+            var state = m_CommandDispatcher.State;
+            IDebugger debugger = ((Stencil)state.WindowState.GraphModel.Stencil).Debugger;
             var targetIndices = debugger.GetDebuggingTargets(state.WindowState.GraphModel);
             var items = targetIndices == null ? null : targetIndices.Select(x =>
                 (SearcherItem)new TargetSearcherItem(x, debugger.GetTargetLabel(state.WindowState.GraphModel, x))).ToList();
@@ -142,7 +142,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Plugins.Debugging
         {
             if (evt.keyCode == KeyCode.Return || evt.keyCode == KeyCode.KeypadEnter)
             {
-                var tracingDataModel = m_CommandDispatcher.GraphToolState.TracingControlState;
+                var tracingDataModel = m_CommandDispatcher.State.TracingControlState;
 
                 int frame = m_CurrentFrameTextField.value;
 
@@ -160,13 +160,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Plugins.Debugging
         // PF FIXME should probably be an observer
         public void UpdateTracingMenu(TracingControlStateComponent.StateUpdater updater, bool force = true)
         {
-            var state = m_CommandDispatcher.GraphToolState;
+            var state = m_CommandDispatcher.State;
+            var tracingStatusState = state.TracingStatusState;
             var tracingControlState = state.TracingControlState;
             var tracingDataState = state.TracingDataState;
 
-            if (EditorApplication.isPlaying && tracingControlState.TracingEnabled)
+            if (EditorApplication.isPlaying && tracingStatusState.TracingEnabled)
             {
-                m_PickTargetLabel.text = state.WindowState.GraphModel?.Stencil?.Debugger?.GetTargetLabel(state.WindowState.GraphModel, tracingControlState.CurrentTracingTarget);
+                m_PickTargetLabel.text = ((Stencil)state.WindowState.GraphModel?.Stencil)?.Debugger?.GetTargetLabel(state.WindowState.GraphModel, tracingControlState.CurrentTracingTarget);
                 m_PickTargetIcon.style.visibility = Visibility.Hidden;
                 m_PickTargetButton.SetEnabled(true);
                 if (EditorApplication.isPaused || !EditorApplication.isPlaying)
@@ -231,7 +232,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Plugins.Debugging
         // PF FIXME use command
         void OnFirstFrameTracingButton()
         {
-            var tracingDataModel = m_CommandDispatcher.GraphToolState.TracingControlState;
+            var tracingDataModel = m_CommandDispatcher.State.TracingControlState;
             using (var updater = tracingDataModel.UpdateScope)
             {
                 updater.CurrentTracingFrame = 0;
@@ -243,7 +244,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Plugins.Debugging
         // PF FIXME use command
         void OnPreviousFrameTracingButton()
         {
-            var tracingDataModel = m_CommandDispatcher.GraphToolState.TracingControlState;
+            var tracingDataModel = m_CommandDispatcher.State.TracingControlState;
 
             if (tracingDataModel.CurrentTracingFrame > 0)
             {
@@ -259,8 +260,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Plugins.Debugging
         // PF FIXME use command
         void OnPreviousStepTracingButton()
         {
-            var tracingControlState = m_CommandDispatcher.GraphToolState.TracingControlState;
-            var tracingDataState = m_CommandDispatcher.GraphToolState.TracingDataState;
+            var tracingControlState = m_CommandDispatcher.State.TracingControlState;
+            var tracingDataState = m_CommandDispatcher.State.TracingDataState;
             using (var updater = tracingControlState.UpdateScope)
             {
                 if (tracingControlState.CurrentTracingStep > 0)
@@ -290,8 +291,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Plugins.Debugging
         // PF FIXME use command
         void OnNextStepTracingButton()
         {
-            var tracingControlState = m_CommandDispatcher.GraphToolState.TracingControlState;
-            var tracingDataState = m_CommandDispatcher.GraphToolState.TracingDataState;
+            var tracingControlState = m_CommandDispatcher.State.TracingControlState;
+            var tracingDataState = m_CommandDispatcher.State.TracingDataState;
 
             using (var updater = tracingControlState.UpdateScope)
             {
@@ -322,7 +323,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Plugins.Debugging
         // PF FIXME use command
         void OnNextFrameTracingButton()
         {
-            var tracingDataModel = m_CommandDispatcher.GraphToolState.TracingControlState;
+            var tracingDataModel = m_CommandDispatcher.State.TracingControlState;
             if (tracingDataModel.CurrentTracingFrame < Time.frameCount)
             {
                 using (var updater = tracingDataModel.UpdateScope)
@@ -337,7 +338,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Plugins.Debugging
         // PF FIXME use command
         void OnLastFrameTracingButton()
         {
-            var tracingDataModel = m_CommandDispatcher.GraphToolState.TracingControlState;
+            var tracingDataModel = m_CommandDispatcher.State.TracingControlState;
 
             using (var updater = tracingDataModel.UpdateScope)
             {

@@ -30,7 +30,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO
 
         protected void MarkGraphViewStateDirty()
         {
-            using (var updater = CommandDispatcher.GraphToolState.GraphViewState.UpdateScope)
+            using (var updater = CommandDispatcher.State.GraphViewState.UpdateScope)
             {
                 updater.ForceCompleteUpdate();
             }

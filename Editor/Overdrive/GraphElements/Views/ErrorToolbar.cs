@@ -1,5 +1,5 @@
-using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEditor.UIElements;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
@@ -37,7 +37,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         void OnPreviousErrorButton()
         {
-            var errors = m_CommandDispatcher.GraphToolState.GraphProcessingState.RawResults?.Errors;
+            var errors = m_CommandDispatcher.State.GraphProcessingState.RawResults?.Errors;
             var errorCount = errors?.Count ?? 0;
             if (errors != null && errorCount > 0)
             {
@@ -51,7 +51,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         void OnNextErrorButton()
         {
-            var errors = m_CommandDispatcher.GraphToolState.GraphProcessingState.RawResults?.Errors;
+            var errors = m_CommandDispatcher.State.GraphProcessingState.RawResults?.Errors;
             var errorCount = errors?.Count ?? 0;
             if (errors != null && errorCount > 0)
             {
@@ -77,8 +77,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public void UpdateUI()
         {
-            IGraphModel graphModel = m_CommandDispatcher.GraphToolState.WindowState.GraphModel;
-            int errorCount = m_CommandDispatcher.GraphToolState.GraphProcessingState.RawResults?.Errors?.Count ?? 0;
+            IGraphModel graphModel = m_CommandDispatcher.State.WindowState.GraphModel;
+            int errorCount = m_CommandDispatcher.State.GraphProcessingState.RawResults?.Errors?.Count ?? 0;
             bool enabled = (graphModel != null) && (errorCount > 0);
 
             m_ErrorIconLabel.SetEnabled(enabled);

@@ -5,6 +5,7 @@ using System.Linq;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEngine;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
 
@@ -20,7 +21,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         [Test]
         public void DeleteNodeDoesRemoveTheDependency()
         {
-            var mgr = new PositionDependenciesManager(GraphView, CommandDispatcher.GraphToolState.Preferences);
+            var mgr = new PositionDependenciesManager(GraphView, CommandDispatcher.State.Preferences);
             var operatorModel = GraphModel.CreateNode<Type0FakeNodeModel>("Node0", new Vector2(-100, -100));
             var intModel = GraphModel.CreateConstantNode(typeof(int).GenerateTypeHandle(), "int", new Vector2(-150, -100));
             var edge = GraphModel.CreateEdge(operatorModel.Input0, intModel.OutputPort);
@@ -129,7 +130,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
                     switch (frame)
                     {
                         case 0:
-                            CommandDispatcher.GraphToolState.PushUndo(null);
+                            CommandDispatcher.State.PushUndo(null);
 
                             var selectables = movedNodes.Cast<IGraphElementModel>().ToList();
                             GraphView.PositionDependenciesManager.StartNotifyMove(selectables, startMousePos);

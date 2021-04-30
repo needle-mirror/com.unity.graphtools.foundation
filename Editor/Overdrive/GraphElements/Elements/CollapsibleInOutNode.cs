@@ -1,4 +1,5 @@
 using System;
+using UnityEngine.GraphToolsFoundation.CommandStateObserver;
 using UnityEngine;
 using UnityEngine.UIElements;
 // ReSharper disable InconsistentNaming
@@ -37,7 +38,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         protected override void BuildPartList()
         {
             PartList.AppendPart(VerticalPortContainerPart.Create(topPortContainerPartName, Direction.Input, Model, this, ussClassName));

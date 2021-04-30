@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
@@ -12,7 +10,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 return;
 
             var visitedNodes = new HashSet<INodeModel>();
-            foreach (var entryPoint in graphModel.Stencil.GetEntryPoints(graphModel))
+            foreach (var entryPoint in graphModel.Stencil.GetEntryPoints())
             {
                 VisitNode(entryPoint, visitedNodes);
             }

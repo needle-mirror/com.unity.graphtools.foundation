@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine.GraphToolsFoundation.CommandStateObserver;
 using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEngine;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
 using Random = System.Random;
@@ -24,7 +26,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     {
         public class Layer : VisualElement { }
 
-        class UpdateObserver : StateObserver
+        class UpdateObserver : StateObserver<GraphToolState>
         {
             GraphView m_GraphView;
 
@@ -34,10 +36,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 m_GraphView = graphView;
             }
 
-            public override void Observe(GraphToolState state)
+            protected override void Observe(GraphToolState state)
             {
-                if (m_GraphView?.panel != null && m_GraphView?.CommandDispatcher?.GraphToolState != null)
-                    m_GraphView.Update(this);
+                if (m_GraphView?.panel != null)
+                    m_GraphView.Update(this, state);
             }
         }
 
@@ -147,7 +149,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         /// <summary>
         /// The graph model displayed by the graph view.
         /// </summary>
-        public IGraphModel GraphModel => CommandDispatcher?.GraphToolState?.GraphViewState.GraphModel;
+        public IGraphModel GraphModel => CommandDispatcher?.State?.GraphViewState.GraphModel;
 
         /// <summary>
         /// Get the list of selected graph element models.
@@ -155,7 +157,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         /// <returns>The list of selected graph element models.</returns>
         public IReadOnlyList<IGraphElementModel> GetSelection()
         {
-            return CommandDispatcher?.GraphToolState?.SelectionState?.GetSelection(GraphModel) ?? new List<IGraphElementModel>();
+            return CommandDispatcher?.State?.SelectionState?.GetSelection(GraphModel) ?? new List<IGraphElementModel>();
         }
 
         public GraphViewEditorWindow Window { get; }
@@ -172,7 +174,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         internal UQueryState<Placemat> Placemats { get; }
 
-        public virtual bool SupportsWindowedBlackboard => false;
+        public virtual bool SupportsWindowedBlackboard => true;
 
         public override VisualElement contentContainer => m_GraphViewContainer; // Contains full content, potentially partially visible
 
@@ -238,10 +240,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public Blackboard GetBlackboard()
         {
-            if (m_Blackboard == null && CommandDispatcher?.GraphToolState?.WindowState.BlackboardGraphModel != null)
+            var blackboardModel = CommandDispatcher?.State?.WindowState.BlackboardGraphModel;
+            if (blackboardModel == null)
             {
-                m_Blackboard = GraphElementFactory.CreateUI<Blackboard>(this, CommandDispatcher,
-                    CommandDispatcher.GraphToolState.WindowState.BlackboardGraphModel);
+                m_Blackboard?.RemoveFromGraphView();
+                m_Blackboard = null;
+            }
+            else if (m_Blackboard == null || !ReferenceEquals(m_Blackboard.Model, blackboardModel))
+            {
+                m_Blackboard = GraphElementFactory.CreateUI<Blackboard>(this, CommandDispatcher, blackboardModel);
                 m_Blackboard?.AddToGraphView(this);
             }
 
@@ -250,17 +257,24 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         internal PositionDependenciesManager PositionDependenciesManager { get; }
 
-        public GraphView(GraphViewEditorWindow window, CommandDispatcher commandDispatcher, string uniqueGraphViewName = null)
+        /// <summary>
+        /// Initializes a new instance of the GraphView class.
+        /// </summary>
+        /// <param name="window">The window to which the GraphView belongs.</param>
+        /// <param name="commandDispatcher">The <see cref="CommandDispatcher"/> for this GraphView.</param>
+        /// <param name="graphViewName">The name of the GraphView.</param>
+        public GraphView(GraphViewEditorWindow window, CommandDispatcher commandDispatcher, string graphViewName)
         {
-            if (uniqueGraphViewName == null)
-                uniqueGraphViewName = "GraphView_" + new Random().Next();
 
             focusable = true;
 
-            name = uniqueGraphViewName;
-
             Window = window;
             CommandDispatcher = commandDispatcher;
+
+            if (graphViewName == null)
+                graphViewName = "GraphView_" + new Random().Next();
+
+            name = graphViewName;
 
             AddToClassList(ussClassName);
 
@@ -291,7 +305,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             Placemats = this.Query<PlacematContainer>().Children<Placemat>().Build();
             Ports = ContentViewContainer.Query().Children<Layer>().Descendents<Port>().Build();
 
-            PositionDependenciesManager = new PositionDependenciesManager(this, CommandDispatcher?.GraphToolState?.Preferences);
+            PositionDependenciesManager = new PositionDependenciesManager(this, CommandDispatcher?.State?.Preferences);
             m_AutoAlignmentHelper = new AutoAlignmentHelper(this);
             m_AutoSpacingHelper = new AutoSpacingHelper(this);
 
@@ -781,7 +795,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 evt.menu.AppendSeparator();
                 evt.menu.AppendAction("Internal/Refresh All UI", _ =>
                 {
-                    using (var updater = CommandDispatcher.GraphToolState.GraphViewState.UpdateScope)
+                    using (var updater = CommandDispatcher.State.GraphViewState.UpdateScope)
                     {
                         updater.ForceCompleteUpdate();
                     }
@@ -792,7 +806,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     evt.menu.AppendAction("Internal/Refresh Selected Element(s)",
                         _ =>
                         {
-                            using (var graphUpdater = CommandDispatcher.GraphToolState.GraphViewState.UpdateScope)
+                            using (var graphUpdater = CommandDispatcher.State.GraphViewState.UpdateScope)
                             {
                                 graphUpdater.MarkChanged(selection);
                             }
@@ -808,14 +822,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             switch (element)
             {
                 case Edge edge:
-                    SearcherService.ShowEdgeNodes(CommandDispatcher.GraphToolState, edge.EdgeModel, mousePosition, item =>
+                    SearcherService.ShowEdgeNodes(CommandDispatcher.State, edge.EdgeModel, mousePosition, item =>
                     {
                         CommandDispatcher.Dispatch(new CreateNodeOnEdgeCommand(edge.EdgeModel, graphPosition, item));
                     });
                     break;
 
                 default:
-                    SearcherService.ShowGraphNodes(CommandDispatcher.GraphToolState, mousePosition, item =>
+                    SearcherService.ShowGraphNodes(CommandDispatcher.State, mousePosition, item =>
                     {
                         CommandDispatcher.Dispatch(new CreateNodeFromSearcherCommand(graphPosition, item));
                     });
@@ -1391,7 +1405,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             // Display graph in inspector when clicking on background
             // TODO: displayed on double click ATM as this method overrides the Token.Select() which does not stop propagation
-            Selection.activeObject = CommandDispatcher?.GraphToolState?.GraphViewState.AssetModel as Object;
+            Selection.activeObject = CommandDispatcher?.State?.GraphViewState.AssetModel as Object;
         }
 
         protected void OnMouseMove(MouseMoveEvent evt)
@@ -1413,7 +1427,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 Vector2 elemPos = elemModel.Position;
                 Vector2 startPos = ContentViewContainer.ChangeCoordinatesTo(elem.hierarchy.parent, elemPos);
 
-                bool requireShiftToMoveDependencies = !(elemModel.GraphModel?.Stencil?.MoveNodeDependenciesByDefault).GetValueOrDefault();
+                bool requireShiftToMoveDependencies = !(((Stencil)elemModel.GraphModel?.Stencil)?.MoveNodeDependenciesByDefault).GetValueOrDefault();
                 bool hasShift = evt.modifiers.HasFlag(EventModifiers.Shift);
                 bool moveNodeDependencies = requireShiftToMoveDependencies == hasShift;
 
@@ -1490,10 +1504,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             CommandDispatcher.Dispatch(new PasteSerializedDataCommand(info, CopyPasteData.s_LastCopiedData));
         }
 
-        protected virtual void Update(IStateObserver observer)
+        protected virtual void Update(IStateObserver observer, GraphToolState state)
         {
-            using (var gvObservation = observer.ObserveState(CommandDispatcher.GraphToolState.GraphViewState))
-            using (var selObservation = observer.ObserveState(CommandDispatcher.GraphToolState.SelectionState))
+            using (var gvObservation = observer.ObserveState(state.GraphViewState))
+            using (var selObservation = observer.ObserveState(state.SelectionState))
             {
                 var rebuildType = gvObservation.UpdateType.Combine(selObservation.UpdateType);
 
@@ -1502,7 +1516,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     // Sad. We lose the focused element.
                     Focus();
 
-                    RebuildAll();
+                    RebuildAll(state);
                     this.HighlightGraphElements();
                 }
                 else if (rebuildType == UpdateType.Partial)
@@ -1516,13 +1530,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     var focusedModelUI = focusedElement as IModelUI;
 
                     UpdateViewTransform(
-                        CommandDispatcher.GraphToolState.GraphViewState.Position,
-                        CommandDispatcher.GraphToolState.GraphViewState.Scale);
+                        state.GraphViewState.Position,
+                        state.GraphViewState.Scale);
 
-                    var gvChangeSet = CommandDispatcher.GraphToolState.GraphViewState.GetAggregatedChangeset(gvObservation.LastObservedVersion);
-                    var selChangeSet = CommandDispatcher.GraphToolState.SelectionState.GetAggregatedChangeset(selObservation.LastObservedVersion);
+                    var gvChangeSet = state.GraphViewState.GetAggregatedChangeset(gvObservation.LastObservedVersion);
+                    var selChangeSet = state.SelectionState.GetAggregatedChangeset(selObservation.LastObservedVersion);
 
-                    if (CommandDispatcher.GraphToolState.Preferences.GetBool(BoolPref.LogUIUpdate))
+                    if (state.Preferences.GetBool(BoolPref.LogUIUpdate))
                     {
                         Debug.Log($"Partial GraphView Update {gvChangeSet?.NewModels.Count ?? 0} new {gvChangeSet?.ChangedModels.Count ?? 0} changed {gvChangeSet?.DeletedModels.Count ?? 0} deleted");
                     }
@@ -1633,7 +1647,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     }
 
                     // PF FIXME: node state (enable/disabled, used/unused) should be part of the State.
-                    if (CommandDispatcher.GraphToolState.Preferences.GetBool(BoolPref.ShowUnusedNodes))
+                    if (state.Preferences.GetBool(BoolPref.ShowUnusedNodes))
                         PositionDependenciesManager.UpdateNodeState();
 
                     // PF FIXME use observer or otherwise refactor this
@@ -1646,7 +1660,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                         var elementsToAlign = gvChangeSet.ModelsToAutoAlign.ToList();
                         schedule.Execute(() =>
                         {
-                            using (var graphUpdater = CommandDispatcher.GraphToolState.GraphViewState.UpdateScope)
+                            using (var graphUpdater = state.GraphViewState.UpdateScope)
                             {
                                 PositionDependenciesManager.AlignNodes(true, elementsToAlign, graphUpdater);
                             }
@@ -1667,13 +1681,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
 
             // Update processing error badges.
-            var processingState = CommandDispatcher.GraphToolState.GraphProcessingState;
+            var processingState = state.GraphProcessingState;
             using (var procErrObservation = observer.ObserveState(processingState))
             {
                 if (procErrObservation.UpdateType != UpdateType.None)
                 {
                     ConsoleWindowBridge.RemoveLogEntries();
-                    var graphAsset = CommandDispatcher.GraphToolState.GraphViewState.AssetModel;
+                    var graphAsset = state.GraphViewState.AssetModel;
 
                     foreach (var rawError in processingState.RawResults?.Errors ?? Enumerable.Empty<GraphProcessingError>())
                     {
@@ -1717,21 +1731,20 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
         }
 
-        void RebuildAll()
+        void RebuildAll(GraphToolState state)
         {
-            if (CommandDispatcher.GraphToolState.Preferences.GetBool(BoolPref.LogUIUpdate))
+            if (state.Preferences.GetBool(BoolPref.LogUIUpdate))
             {
                 Debug.Log($"Complete GraphView Update");
             }
 
-            if (CommandDispatcher.GraphToolState.Preferences.GetBool(BoolPref.WarnOnUIFullRebuild))
+            if (state.Preferences.GetBool(BoolPref.WarnOnUIFullRebuild))
             {
-                Debug.LogWarning($"Rebuilding all GraphView UI ({CommandDispatcher.GraphToolState.LastDispatchedCommandName})");
+                Debug.LogWarning($"Rebuilding all GraphView UI ({CommandDispatcher.LastDispatchedCommandName})");
             }
 
             ClearGraph();
 
-            var state = CommandDispatcher.GraphToolState;
             var graphModel = state.GraphViewState.GraphModel;
             if (graphModel == null)
                 return;
@@ -1803,28 +1816,25 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 return true;
             }
 
-            if (edge is IEdgeModel e)
+            var (inputResult, outputResult) = edge.TryMigratePorts(out var inputNode, out var outputNode);
+
+            if (inputResult == PortMigrationResult.PlaceholderPortAdded && inputNode != null)
             {
-                var (inputResult, outputResult) = e.TryMigratePorts(out var inputNode, out var outputNode);
+                var inputNodeUi = inputNode.GetUI(this);
+                inputNodeUi?.UpdateFromModel();
+            }
 
-                if (inputResult == PortMigrationResult.PlaceholderPortAdded && inputNode != null)
-                {
-                    var inputNodeUi = inputNode.GetUI(this);
-                    inputNodeUi?.UpdateFromModel();
-                }
+            if (outputResult == PortMigrationResult.PlaceholderPortAdded && outputNode != null)
+            {
+                var outputNodeUi = outputNode.GetUI(this);
+                outputNodeUi?.UpdateFromModel();
+            }
 
-                if (outputResult == PortMigrationResult.PlaceholderPortAdded && outputNode != null)
-                {
-                    var outputNodeUi = outputNode.GetUI(this);
-                    outputNodeUi?.UpdateFromModel();
-                }
-
-                if (inputResult != PortMigrationResult.PlaceholderPortFailure &&
-                    outputResult != PortMigrationResult.PlaceholderPortFailure)
-                {
-                    AddEdgeUI(edge);
-                    return true;
-                }
+            if (inputResult != PortMigrationResult.PlaceholderPortFailure &&
+                outputResult != PortMigrationResult.PlaceholderPortFailure)
+            {
+                AddEdgeUI(edge);
+                return true;
             }
 
             return false;

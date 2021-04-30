@@ -7,7 +7,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     /// <summary>
     /// An event sent by the Frame All shortcut.
     /// </summary>
-    [ToolShortcutEvent(id, keyCode, modifiers)]
+    [ToolShortcutEvent(null, id, keyCode, modifiers)]
     public class ShortcutFrameAllEvent : ShortcutEventBase<ShortcutFrameAllEvent>
     {
         internal const string id = "Frame All";
@@ -18,7 +18,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     /// <summary>
     /// An event sent by the Frame Origin shortcut.
     /// </summary>
-    [ToolShortcutEvent(id, keyCode, modifiers)]
+    [ToolShortcutEvent(null, id, keyCode, modifiers)]
     public class ShortcutFrameOriginEvent : ShortcutEventBase<ShortcutFrameOriginEvent>
     {
         internal const string id = "Frame Origin";
@@ -29,7 +29,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     /// <summary>
     /// An event sent by the Frame Previous shortcut.
     /// </summary>
-    [ToolShortcutEvent(id, keyCode, modifiers)]
+    [ToolShortcutEvent(null, id, keyCode, modifiers)]
     public class ShortcutFramePreviousEvent : ShortcutEventBase<ShortcutFramePreviousEvent>
     {
         internal const string id = "Frame Previous";
@@ -40,7 +40,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     /// <summary>
     /// An event sent by the Frame Next shortcut.
     /// </summary>
-    [ToolShortcutEvent(id, keyCode, modifiers)]
+    [ToolShortcutEvent(null, id, keyCode, modifiers)]
     public class ShortcutFrameNextEvent : ShortcutEventBase<ShortcutFrameNextEvent>
     {
         internal const string id = "Frame Next";
@@ -51,7 +51,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     /// <summary>
     /// An event sent by the Delete shortcut.
     /// </summary>
-    [ToolShortcutEvent(id, keyCode, modifiers)]
+    [ToolShortcutEvent(null, id, keyCode, modifiers)]
     public class ShortcutDeleteEvent : ShortcutEventBase<ShortcutDeleteEvent>
     {
         internal const string id = "Delete";
@@ -62,7 +62,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     /// <summary>
     /// An event sent by the Display Smart Search shortcut.
     /// </summary>
-    [ToolShortcutEvent(id, keyCode, modifiers)]
+    [ToolShortcutEvent(null, id, keyCode, modifiers)]
     public class ShortcutDisplaySmartSearchEvent : ShortcutEventBase<ShortcutDisplaySmartSearchEvent>
     {
         internal const string id = "Display Smart Search";
@@ -73,7 +73,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     /// <summary>
     /// An event sent by the Convert Variable And Constant shortcut.
     /// </summary>
-    [ToolShortcutEvent(id, keyCode, modifiers)]
+    [ToolShortcutEvent(null, id, keyCode, modifiers)]
     public class ShortcutConvertConstantAndVariableEvent : ShortcutEventBase<ShortcutConvertConstantAndVariableEvent>
     {
         internal const string id = "Convert Variable And Constant";
@@ -84,7 +84,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     /// <summary>
     /// An event sent by the Align Nodes shortcut.
     /// </summary>
-    [ToolShortcutEvent(id, keyCode, modifiers)]
+    [ToolShortcutEvent(null, id, keyCode, modifiers)]
     public class ShortcutAlignNodesEvent : ShortcutEventBase<ShortcutAlignNodesEvent>
     {
         internal const string id = "Align Nodes";
@@ -95,7 +95,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     /// <summary>
     /// An event sent by the Align Hierarchies shortcut.
     /// </summary>
-    [ToolShortcutEvent(id, keyCode, modifiers)]
+    [ToolShortcutEvent(null, id, keyCode, modifiers)]
     public class ShortcutAlignNodeHierarchiesEvent : ShortcutEventBase<ShortcutAlignNodeHierarchiesEvent>
     {
         internal const string id = "Align Hierarchies";
@@ -106,7 +106,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     /// <summary>
     /// An event sent by the Create Sticky Note.
     /// </summary>
-    [ToolShortcutEvent(id, keyCode, modifiers)]
+    [ToolShortcutEvent(null, id, keyCode, modifiers)]
     public class ShortcutCreateStickyNoteEvent : ShortcutEventBase<ShortcutCreateStickyNoteEvent>
     {
         internal const string id = "Create Sticky Note";

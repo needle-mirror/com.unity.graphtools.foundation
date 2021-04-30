@@ -51,10 +51,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             if (selectedObject is IGraphAssetModel graphAssetModel)
             {
                 // don't change the current object if it's the same graph
-                if (graphAssetModel == window.CommandDispatcher.GraphToolState?.WindowState.GraphModel?.AssetModel)
+                if (graphAssetModel == window.CommandDispatcher.State?.WindowState.GraphModel?.AssetModel)
                 {
-                    var currentOpenedGraph = window.CommandDispatcher.GraphToolState.WindowState.CurrentGraph;
-                    assetPath = currentOpenedGraph.GraphAssetModelPath;
+                    var currentOpenedGraph = window.CommandDispatcher.State.WindowState.CurrentGraph;
+                    assetPath = currentOpenedGraph.GetGraphAssetModelPath();
                     boundObject = currentOpenedGraph.BoundObject;
                     return true;
                 }

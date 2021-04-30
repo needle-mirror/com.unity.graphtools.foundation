@@ -73,11 +73,9 @@ insert_final_newline = false
 [*.asmdef]
 scrape_api = false
 
+[**/Overdrive/**.asmdef]
+scrape_api = true
+
 [**/Tests/**.asmdef]
 scrape_api = false
 
-[**/Overdrive/Unity.GraphTools.Foundation.Overdrive.Editor.asmdef]
-scrape_api = true
-
-[**/Overdrive/InternalBridge/InternalBridge.asmdef]
-scrape_api = true

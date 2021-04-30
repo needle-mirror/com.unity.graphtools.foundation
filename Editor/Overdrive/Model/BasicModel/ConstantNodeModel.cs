@@ -1,11 +1,13 @@
 using System;
 using UnityEngine;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 using UnityEngine.Scripting.APIUpdating;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 {
     [Serializable]
-    [MovedFrom("UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting")]
+    //[MovedFrom("UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting")]
+    [MovedFrom(false, sourceAssembly: "Unity.GraphTools.Foundation.Overdrive.Editor")]
     public sealed class ConstantNodeModel : NodeModel, IConstantNodeModel
     {
         [SerializeField]

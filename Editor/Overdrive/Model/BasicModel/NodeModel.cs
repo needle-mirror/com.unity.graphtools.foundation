@@ -2,30 +2,18 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.GraphToolsFoundation.CommandStateObserver;
+using UnityEngine.GraphToolsFoundation.Overdrive;
+using UnityEngine.Scripting.APIUpdating;
 using Object = UnityEngine.Object;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 {
-    public static class BasicModelReducers
-    {
-        public static void Register(CommandDispatcher dispatcher)
-        {
-            dispatcher.RegisterCommandHandler<UpdateModelPropertyValueCommand>(UpdateModelPropertyValueReducer);
-        }
-
-        static void UpdateModelPropertyValueReducer(GraphToolState state, UpdateModelPropertyValueCommand command)
-        {
-            UpdateModelPropertyValueCommand.DefaultCommandHandler(state, command);
-
-            if (command.GraphElementModel is NodeModel nodeModel)
-                nodeModel.DefineNode();
-        }
-    }
-
     /// <summary>
     /// A model that represents a node in a graph.
     /// </summary>
     [Serializable]
+    [MovedFrom(false, sourceAssembly: "Unity.GraphTools.Foundation.Overdrive.Editor")]
     public abstract class NodeModel : GraphElementModel, IInputOutputPortsNodeModel, IHasTitle, IHasProgress, ICollapsible
     {
         [SerializeField, HideInInspector]
@@ -34,24 +22,24 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         [SerializeField, HideInInspector]
         string m_Title;
 
-        // for backward compatibility, old way to serialize m_InputConstantsById Keys
-        [SerializeField, HideInInspector, Obsolete]
-        List<string> m_InputConstantKeys;
-
-        // for backward compatibility, old way to serialize m_InputConstantsById Values
-        [SerializeReference, HideInInspector, Obsolete]
-        List<IConstant> m_InputConstants;
-
         [SerializeField, HideInInspector]
         SerializedReferenceDictionary<string, IConstant> m_InputConstantsById;
 
         [SerializeField]
         ModelState m_State;
 
+        OrderedPorts m_InputsById;
+        OrderedPorts m_OutputsById;
+        protected OrderedPorts m_PreviousInputs;
+        protected OrderedPorts m_PreviousOutputs;
+
+        [SerializeField]
+        bool m_Collapsed;
+
         /// <summary>
         /// Stencil for this nodemodel, helper getter for Graphmodel Stencil
         /// </summary>
-        protected Stencil Stencil => GraphModel.Stencil;
+        protected IStencil Stencil => GraphModel.Stencil;
 
         public virtual string IconTypeString => "node";
 
@@ -84,13 +72,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         }
 
         public virtual bool AllowSelfConnect => false;
-
-        OrderedPorts m_InputsById;
-        OrderedPorts m_OutputsById;
-        protected OrderedPorts m_PreviousInputs;
-        protected OrderedPorts m_PreviousOutputs;
-
-        bool m_Collapsed;
 
         public IReadOnlyDictionary<string, IPortModel> InputsById => m_InputsById;
 
@@ -372,7 +353,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         {
             if (typeHandle != TypeHandle.Unknown && portModels.Any())
             {
-                Stencil stencil = portModels.First().GraphModel.Stencil;
+                IStencil stencil = portModels.First().GraphModel.Stencil;
                 IPortModel unknownPortModel = null;
 
                 // Return the first matching Input portModel
@@ -421,33 +402,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
             }
             m_OutputsById = new OrderedPorts();
             m_InputsById = new OrderedPorts();
-        }
-
-        public virtual void OnAfterDeserializeAssetModel()
-        {
-#pragma warning disable 612
-            // Migrate m_InputConstantKeys and m_InputConstantKeys to m_InputConstantsById
-            const string migratedValue = "_ _ _ m_InputConstantKeys was migrated to m_InputConstants _ _ _";
-
-            // If obsolete fields contains data (except special migrated value)
-            if (m_InputConstantKeys != null && m_InputConstants != null &&
-                m_InputConstantKeys.Count > 0 && m_InputConstants.Count > 0 &&
-                m_InputConstantKeys[0] != migratedValue)
-            {
-                // And if new field is empty, migrate old data in new field.
-                // If new field is not empty, we consider that data in new field is supersedes data in obsolete fields.
-                if (m_InputConstantsById == null || m_InputConstantsById.Count == 0)
-                {
-                    m_InputConstantsById =
-                        SerializedReferenceDictionary<string, IConstant>.FromLists(m_InputConstantKeys, m_InputConstants);
-                }
-
-                // Clear obsolete fields.
-                m_InputConstantKeys.Clear();
-                m_InputConstantKeys.Add(migratedValue);
-                m_InputConstants = null;
-            }
-#pragma warning restore 612
         }
 
         /// <inheritdoc />

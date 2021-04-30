@@ -1,8 +1,9 @@
 using System.Linq;
+using UnityEngine.GraphToolsFoundation.CommandStateObserver;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
-    class SidePanelObserver : StateObserver
+    class SidePanelObserver : StateObserver<GraphToolState>
     {
         GraphViewEditorWindow m_Window;
 
@@ -12,7 +13,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             m_Window = window;
         }
 
-        public override void Observe(GraphToolState state)
+        protected override void Observe(GraphToolState state)
         {
             using (var observation = this.ObserveState(state.SelectionState))
             {

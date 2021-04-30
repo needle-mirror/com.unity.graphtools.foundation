@@ -1,5 +1,4 @@
 using NUnit.Framework;
-using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Plugins.Debugging

@@ -25,6 +25,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             prefs.SetBoolNoEditorUpdate(BoolPref.ErrorOnMultipleDispatchesPerFrame, false);
             return state;
         }
+
+        protected override bool CanHandleAssetType(GraphAssetModel asset)
+        {
+            return true;
+        }
     }
 
     [PublicAPI]
@@ -38,7 +43,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
         protected GraphView GraphView { get; private set; }
         protected TestEventHelpers Helpers { get; set; }
         protected CommandDispatcher CommandDispatcher => Window.CommandDispatcher;
-        protected GraphModel GraphModel => (GraphModel)CommandDispatcher.GraphToolState.WindowState.GraphModel;
+        protected GraphModel GraphModel => (GraphModel)CommandDispatcher.State.WindowState.GraphModel;
 
         protected abstract bool CreateGraphOnStartup { get; }
         protected virtual Type CreatedGraphType => typeof(ClassStencil);
@@ -65,7 +70,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
             MouseCaptureController.ReleaseMouse();
             if (Window != null)
             {
-                GraphModel.QuickCleanup();
+                GraphModel?.QuickCleanup();
                 Window.Close();
             }
         }
@@ -82,7 +87,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
 
         protected void MarkGraphViewStateDirty()
         {
-            using (var updater = CommandDispatcher.GraphToolState.GraphViewState.UpdateScope)
+            using (var updater = CommandDispatcher.State.GraphViewState.UpdateScope)
             {
                 updater.ForceCompleteUpdate();
             }

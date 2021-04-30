@@ -1286,7 +1286,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 
             Assert.AreEqual(newRect, pm.layout);
 
-            using (var graphUpdater = CommandDispatcher.GraphToolState.GraphViewState.UpdateScope)
+            using (var graphUpdater = CommandDispatcher.State.GraphViewState.UpdateScope)
             {
                 pmModel.PositionAndSize = newRect;
                 pmModel.Collapsed = true;
@@ -1317,7 +1317,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
             var node = nodeModel.GetUI<Node>(graphView);
             Assert.IsFalse(node.style.visibility == Visibility.Hidden);
 
-            using (var graphUpdater = CommandDispatcher.GraphToolState.GraphViewState.UpdateScope)
+            using (var graphUpdater = CommandDispatcher.State.GraphViewState.UpdateScope)
             {
                 pmModel.Collapsed = true;
                 pmModel.HiddenElements = new[] { nodeModel };

@@ -14,7 +14,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     {
         const float DragDropSpacer = 25f;
 
-        public Stencil Stencil => Dispatcher.GraphToolState.WindowState.GraphModel.Stencil;
+        public Stencil Stencil => (Stencil)Dispatcher.State.WindowState.GraphModel.Stencil;
         protected IDragSource DragSource { get; }
         protected CommandDispatcher Dispatcher { get; }
 
@@ -50,7 +50,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                 .OfType<IVariableDeclarationModel>()
                 .Select((e1, i) => (
                     e1,
-                    (SerializableGUID)GUID.Generate(),
+                    GUID.Generate().ToSerializableGUID(),
                     contentViewContainer.WorldToLocal(e.mousePosition) + i * DragDropSpacer * Vector2.down))
                 .ToList();
 

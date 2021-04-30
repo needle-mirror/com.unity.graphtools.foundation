@@ -73,7 +73,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
             if (Model is IVariableDeclarationModel vdm)
             {
-                bool isExpanded = CommandDispatcher.GraphToolState.BlackboardViewState.GetVariableDeclarationModelExpanded(vdm);
+                bool isExpanded = CommandDispatcher.State.BlackboardViewState.GetVariableDeclarationModelExpanded(vdm);
 
                 EnableInClassList(expandedModifierUssClassName, !isExpanded);
                 m_CollapseButton.SetValueWithoutNotify(!isExpanded);
@@ -93,7 +93,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             }
 
             SearcherService.ShowVariableTypes(
-                Model.GraphModel.Stencil,
+                (Stencil)Model.GraphModel.Stencil,
                 e.MenuPosition,
                 (t, i) =>
                 {

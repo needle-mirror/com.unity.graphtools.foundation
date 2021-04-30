@@ -1,4 +1,6 @@
 using System;
+using UnityEngine;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO
 {
@@ -28,7 +30,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO
             return prefs;
         }
 
-        private protected override Overdrive.WindowStateComponent CreateWindowStateComponent(GUID guid)
+        private protected override Overdrive.WindowStateComponent CreateWindowStateComponent(Hash128 guid)
         {
             var state = PersistedState.GetOrCreateViewStateComponent<WindowStateComponent>(guid, nameof(WindowState));
             state.m_GraphModel = m_GraphModel;
@@ -42,7 +44,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO
             return state;
         }
 
-        public TestGraphToolState(GUID graphViewEditorWindowGUID, IGraphModel graphModel)
+        public TestGraphToolState(SerializableGUID graphViewEditorWindowGUID, IGraphModel graphModel)
             : base(graphViewEditorWindowGUID, CreatePreferences())
         {
             m_GraphModel = graphModel;

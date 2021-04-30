@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 using UnityEngine.Scripting.APIUpdating;
 using Object = UnityEngine.Object;
 
@@ -19,7 +20,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
     /// </summary>
     [Serializable]
     //[MovedFrom(false, "UnityEditor.VisualScripting.Model", "Unity.GraphTools.Foundation.Overdrive.Editor")]
-    [MovedFrom("UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting")]
+    //[MovedFrom("UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting")]
+    [MovedFrom(false, sourceAssembly: "Unity.GraphTools.Foundation.Overdrive.Editor")]
     public class VariableDeclarationModel : DeclarationModel, IVariableDeclarationModel
     {
         [SerializeField]
@@ -47,7 +49,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         /// Get the name of the variable with non-alphanumeric characters replaced by an underscore.
         /// </summary>
         /// <returns>The name of the variable with non-alphanumeric characters replaced by an underscore.</returns>
-        public virtual string GetVariableName() => StringExtensions.CodifyString(Title);
+        public virtual string GetVariableName() => Title.CodifyString();
 
         public string VariableString => IsExposed ? "Exposed variable" : "Variable";
 

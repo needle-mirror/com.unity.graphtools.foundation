@@ -19,22 +19,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Vertical
 
         protected override void OnEnable()
         {
-            base.OnEnable();
-
             EditorToolName = "Vertical Flow";
-        }
-
-        protected override void RegisterCommandHandlers()
-        {
-            base.RegisterCommandHandlers();
-
-            CommandDispatcher.RegisterCommandHandler<AddPortCommand>(AddPortCommand.DefaultHandler);
-            CommandDispatcher.RegisterCommandHandler<RemovePortCommand>(RemovePortCommand.DefaultHandler);
+            base.OnEnable();
         }
 
         protected override GraphView CreateGraphView()
         {
-            return new VerticalGraphView(this, CommandDispatcher);
+            return new VerticalGraphView(this, CommandDispatcher, EditorToolName);
         }
 
         protected override BlankPage CreateBlankPage()
@@ -42,6 +33,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Vertical
             var onboardingProviders = new List<OnboardingProvider> { new VerticalOnboardingProvider() };
 
             return new BlankPage(CommandDispatcher, onboardingProviders);
+        }
+
+        /// <inheritdoc />
+        protected override bool CanHandleAssetType(GraphAssetModel asset)
+        {
+            return asset is VerticalGraphAssetModel;
+        }
+
+        /// <inheritdoc />
+        protected override GraphToolState CreateInitialState()
+        {
+            var prefs = Preferences.CreatePreferences(EditorToolName);
+            return new VerticalGraphState(GUID, prefs);
         }
     }
 }

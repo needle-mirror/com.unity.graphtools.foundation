@@ -1,5 +1,6 @@
 using System;
 using NUnit.Framework;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 
 // ReSharper disable AccessToStaticMemberViaDerivedType
 
@@ -21,7 +22,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Misc
         [TestCase("asd--qwe_", "asd__qwe_")]
         public void CodifyNameTest(string actual, string expected)
         {
-            Assert.That(StringExtensions.CodifyString(actual), Is.EqualTo(expected));
+            Assert.That(actual.CodifyString(), Is.EqualTo(expected));
         }
     }
 }

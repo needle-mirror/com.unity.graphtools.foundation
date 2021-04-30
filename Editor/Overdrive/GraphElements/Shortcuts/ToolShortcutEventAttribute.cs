@@ -10,6 +10,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
     public sealed class ToolShortcutEventAttribute : Attribute
     {
+        internal string ToolName { get; }
         internal string Identifier { get; }
         internal string DisplayName { get; }
         internal ShortcutBinding DefaultBinding { get; }
@@ -20,18 +21,21 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         /// <summary>
         /// Initializes a new instance of the attribute.
         /// </summary>
+        /// <param name="toolName">The tool that defines this shortcut.</param>
         /// <param name="id">The shortcut unique ID.</param>
         /// <param name="defaultBinding">Default keyboard mapping.</param>
         /// <param name="isClutch">True if the shortcut is a clutch.</param>
         /// <param name="onlyOnPlatforms">An array of platforms on which the shortcut is defined. If null, this parameter has no effect.</param>
         /// <param name="excludedPlatforms">An array of platforms on which the shortcut is not defined. If null, this parameter has no effect.</param>
         public ToolShortcutEventAttribute(
+            string toolName,
             string id,
             ShortcutBinding defaultBinding,
             bool isClutch = false,
             RuntimePlatform[] onlyOnPlatforms = null,
             RuntimePlatform[] excludedPlatforms = null)
         {
+            ToolName = toolName;
             Identifier = id;
             DefaultBinding = defaultBinding;
             DisplayName = Identifier;
@@ -43,16 +47,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         /// <summary>
         /// Initializes a new instance of the attribute.
         /// </summary>
+        /// <param name="toolName">The tool that defines this shortcut.</param>
         /// <param name="id">The shortcut unique ID.</param>
         /// <param name="isClutch">True if the shortcut is a clutch.</param>
-        public ToolShortcutEventAttribute(string id, bool isClutch = false)
-            : this(id, ShortcutBinding.empty, isClutch)
+        public ToolShortcutEventAttribute(string toolName, string id, bool isClutch = false)
+            : this(toolName, id, ShortcutBinding.empty, isClutch)
         {
         }
 
         /// <summary>
         /// Initializes a new instance of the attribute.
         /// </summary>
+        /// <param name="toolName">The tool that defines this shortcut.</param>
         /// <param name="id">The shortcut unique ID.</param>
         /// <param name="defaultKeyCode"></param>
         /// <param name="defaultShortcutModifiers"></param>
@@ -60,13 +66,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         /// <param name="onlyOnPlatforms">An array of platforms on which the shortcut is defined. If null, this parameter has no effect.</param>
         /// <param name="excludedPlatforms">An array of platforms on which the shortcut is not defined. If null, this parameter has no effect.</param>
         public ToolShortcutEventAttribute(
+            string toolName,
             string id,
             KeyCode defaultKeyCode,
             ShortcutModifiers defaultShortcutModifiers = ShortcutModifiers.None,
             bool isClutch = false,
             RuntimePlatform[] onlyOnPlatforms = null,
             RuntimePlatform[] excludedPlatforms = null)
-            : this(id, new ShortcutBinding(new KeyCombination(defaultKeyCode, defaultShortcutModifiers)), isClutch, onlyOnPlatforms, excludedPlatforms)
+            : this(toolName, id, new ShortcutBinding(new KeyCombination(defaultKeyCode, defaultShortcutModifiers)), isClutch, onlyOnPlatforms, excludedPlatforms)
         {
         }
     }

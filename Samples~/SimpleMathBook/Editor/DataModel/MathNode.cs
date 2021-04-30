@@ -1,20 +1,12 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook
 {
-    [Serializable]
-    public abstract class MathNode : NodeModel
+    public static class MathNodeModelExtension
     {
-        public MathBook mathBook { get; set; }
-
-        protected MathNode()
-        {
-        }
-        protected float GetValue(IPortModel port)
+        public static float GetValue(this INodeModel nodeModel, IPortModel port)
         {
             if (port == null)
                 return 0;
@@ -28,6 +20,22 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook
                 return (float)constNode.ObjectValue;
             else
                 return (float)port.EmbeddedValue.ObjectValue;
+        }
+    }
+
+
+    [Serializable]
+    public abstract class MathNode : NodeModel
+    {
+        public MathBook mathBook { get; set; }
+
+        protected MathNode()
+        {
+        }
+
+        public float GetValue(IPortModel port)
+        {
+            return MathNodeModelExtension.GetValue(this, port);
         }
 
         public abstract float Evaluate();

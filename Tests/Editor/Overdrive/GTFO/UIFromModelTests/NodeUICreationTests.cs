@@ -104,5 +104,21 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GTFO.UIFromModelTests
                 Assert.IsNull(node.SafeQ<Port>(), "No Port were expected but at least one was found");
             }
         }
+
+        [Test]
+        public void ContextHasExpectedParts()
+        {
+            var nodeModel = new ContextNodeModel();
+            nodeModel.DefineNode();
+
+            var context = new ContextNode();
+            context.SetupBuildAndUpdate(nodeModel, null, null);
+
+            Assert.IsNotNull(context.SafeQ<VisualElement>(CollapsibleInOutNode.topPortContainerPartName), "Top vertical port Container part was expected but not found");
+            Assert.IsNotNull(context.SafeQ<VisualElement>(CollapsibleInOutNode.titleIconContainerPartName), "Title part was expected but not found");
+            Assert.IsNotNull(context.SafeQ<VisualElement>(Node.portContainerPartName), "Horizontal Port Container part was expected but not found");
+            Assert.IsNotNull(context.SafeQ<VisualElement>(ContextNode.blocksPartName), "Blocks part was expected but not found");
+            Assert.IsNotNull(context.SafeQ<VisualElement>(CollapsibleInOutNode.bottomPortContainerPartName), "Bottom vertical Port Container part was expected but not found");
+        }
     }
 }

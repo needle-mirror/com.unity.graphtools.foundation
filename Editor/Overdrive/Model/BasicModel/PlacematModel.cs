@@ -11,13 +11,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
     /// </summary>
     [Serializable]
     //[MovedFrom(false, "UnityEditor.VisualScripting.GraphViewModel", "Unity.GraphTools.Foundation.Overdrive.Editor")]
-    [MovedFrom("UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel")]
+    //[MovedFrom("UnityEditor.GraphToolsFoundation.Overdrive.VisualScripting.GraphViewModel")]
+    [MovedFrom(false, sourceAssembly: "Unity.GraphTools.Foundation.Overdrive.Editor")]
     public class PlacematModel : GraphElementModel, IPlacematModel
     {
         const string k_DefaultPlacematName = "Placemat";
-
-        /// <inheritdoc />
-        public override Color DefaultColor => new Color(0.15f, 0.19f, 0.19f);
 
         [SerializeField]
         string m_Title;
@@ -35,6 +33,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         List<string> m_HiddenElements;
 
         List<IGraphElementModel> m_CachedHiddenElementModels;
+
+        /// <inheritdoc />
+        public override Color DefaultColor => new Color(0.15f, 0.19f, 0.19f);
 
         public string Title
         {

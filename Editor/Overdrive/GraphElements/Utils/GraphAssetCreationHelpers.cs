@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using UnityEngine.GraphToolsFoundation.CommandStateObserver;
 using UnityEditor.ProjectWindowCallback;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -21,12 +22,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         internal void CreateAndLoadAsset(string pathName)
         {
-            using (new AssetWatcher.Scope())
-            {
-                AssetDatabase.CreateAsset(m_AssetModel as Object, AssetDatabase.GenerateUniqueAssetPath(pathName));
-                m_AssetModel.CreateGraph(Path.GetFileNameWithoutExtension(pathName), m_Template.StencilType);
-                AssetActionHelper.InitTemplate(m_Template, m_AssetModel.GraphModel);
-            }
+            AssetDatabase.CreateAsset(m_AssetModel as Object, AssetDatabase.GenerateUniqueAssetPath(pathName));
+            m_AssetModel.CreateGraph(Path.GetFileNameWithoutExtension(pathName), m_Template.StencilType);
+            AssetActionHelper.InitTemplate(m_Template, m_AssetModel.GraphModel);
 
             m_CommandDispatcher?.Dispatch(new LoadGraphAssetCommand(m_AssetModel));
         }
@@ -56,12 +54,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         {
             IGraphAssetModel graphAssetModel;
 
-            using (new AssetWatcher.Scope())
-            {
-                graphAssetModel = IGraphAssetModelHelper.Create(name, assetPath, typeof(TGraphAssetModelType), writeOnDisk);
-                graphAssetModel.CreateGraph(name, stencilType, writeOnDisk);
-                AssetActionHelper.InitTemplate(graphTemplate, graphAssetModel.GraphModel);
-            }
+            graphAssetModel = IGraphAssetModelHelper.Create(name, assetPath, typeof(TGraphAssetModelType), writeOnDisk);
+            graphAssetModel.CreateGraph(name, stencilType, writeOnDisk);
+            AssetActionHelper.InitTemplate(graphTemplate, graphAssetModel.GraphModel);
 
             AssetDatabase.SaveAssets();
 
