@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook.UI
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook
 {
     class SimpleGraphView : GraphView
     {

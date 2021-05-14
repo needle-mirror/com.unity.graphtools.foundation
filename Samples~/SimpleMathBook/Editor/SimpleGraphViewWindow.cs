@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using State = UnityEditor.GraphToolsFoundation.Overdrive.GraphToolState;
 
-namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook.UI
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook
 {
     internal class SimpleGraphViewWindow : GraphViewEditorWindow
     {
@@ -39,6 +39,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook.UI
         protected override bool CanHandleAssetType(GraphAssetModel asset)
         {
             return asset is MathBookAsset;
+        }
+
+        protected override MainToolbar CreateMainToolbar()
+        {
+            return new MathBookMainToolbar(CommandDispatcher, GraphView);
         }
     }
 }

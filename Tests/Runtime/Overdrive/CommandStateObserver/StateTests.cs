@@ -43,14 +43,16 @@ namespace UnityEngine.GraphToolsFoundation.Overdrive.Tests.CommandSystem
         }
 
         [Test]
-        public void PurgeAllChangesetsClearsHasChanges()
+        [TestCase(UpdateType.Partial)]
+        [TestCase(UpdateType.Complete)]
+        public void PurgeAllChangesetsClearsHasChangesAndUpdateType(UpdateType updateType)
         {
             var state = new TestGraphToolState(42);
 
             // Make some changes.
             using (state.FooBarStateComponent.UpdateScope)
             {
-                state.FooBarStateComponent.SetUpdateType(UpdateType.Complete);
+                state.FooBarStateComponent.SetUpdateType(updateType);
             }
             Assert.IsTrue((state.FooBarStateComponent as IStateComponent).HasChanges());
 

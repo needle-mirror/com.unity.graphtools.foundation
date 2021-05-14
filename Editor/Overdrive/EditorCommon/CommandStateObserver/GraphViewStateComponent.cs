@@ -318,14 +318,29 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         protected override void PushChangeset(uint version)
         {
             base.PushChangeset(version);
-            m_ChangesetManager.PushChangeset(version);
+
+            // If update type is Complete, there is no need to push the changeset, as they cannot be used for an update.
+            if (UpdateType != UpdateType.Complete)
+                m_ChangesetManager.PushChangeset(version);
         }
 
         /// <inheritdoc/>
         public override void PurgeOldChangesets(uint untilVersion)
         {
-            base.PurgeOldChangesets(untilVersion);
-            m_ChangesetManager.PurgeOldChangesets(untilVersion, CurrentVersion);
+            EarliestChangeSetVersion = m_ChangesetManager.PurgeOldChangesets(untilVersion, CurrentVersion);
+            ResetUpdateType();
+        }
+
+        /// <inheritdoc />
+        public override void SetUpdateType(UpdateType type, bool force = false)
+        {
+            base.SetUpdateType(type, force);
+
+            // If update type is Complete, there is no need to keep the changesets, as they cannot be used for an update.
+            if (UpdateType == UpdateType.Complete)
+            {
+                m_ChangesetManager.PurgeOldChangesets(CurrentVersion, CurrentVersion);
+            }
         }
 
         /// <inheritdoc  cref="ChangesetManager{TChangeset}"/>

@@ -15,5 +15,8 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
         /// The version number of the state component.
         /// </summary>
         public uint Version;
+
+        /// <inheritdoc />
+        public override string ToString() => $"{HashCode}.{Version}";
     }
 }

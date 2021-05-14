@@ -480,40 +480,45 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
                         }
                     }
 
-                    try
+                    if (m_ObserverCallSet.Any())
                     {
-                        foreach (var observer in m_ObserverCallSet)
+                        try
                         {
-                            StateObserverHelper.CurrentObserver = observer;
-                            observer.Observe(State);
-                        }
-                    }
-                    finally
-                    {
-                        StateObserverHelper.CurrentObserver = null;
-                    }
-
-                    // For each state component, find the earliest observed version in all observers and purge the
-                    // changesets that are earlier than this earliest version.
-                    foreach (var editorStateComponent in State.AllStateComponents)
-                    {
-                        var stateComponentName = editorStateComponent.StateSlotName;
-                        var stateComponentHashCode = editorStateComponent.GetHashCode();
-
-                        var earliestObserverVersion = uint.MaxValue;
-
-                        if (m_StateObservers.TryGetValue(stateComponentName, out var observersForComponent))
-                        {
-                            // Not using List.Min to avoid closure allocation.
-                            foreach (var observer in observersForComponent)
+                            foreach (var observer in m_ObserverCallSet)
                             {
-                                var v = observer.GetLastObservedComponentVersion(stateComponentName);
-                                var versionNumber = v.HashCode == stateComponentHashCode ? v.Version : uint.MinValue;
-                                earliestObserverVersion = Math.Min(earliestObserverVersion, versionNumber);
+                                StateObserverHelper.CurrentObserver = observer;
+                                observer.Observe(State);
                             }
                         }
+                        finally
+                        {
+                            StateObserverHelper.CurrentObserver = null;
+                        }
 
-                        editorStateComponent.PurgeOldChangesets(earliestObserverVersion);
+                        // If m_ObserverCallSet is empty, observed versions did not change, so changesets do not need to be purged.
+
+                        // For each state component, find the earliest observed version in all observers and purge the
+                        // changesets that are earlier than this earliest version.
+                        foreach (var editorStateComponent in State.AllStateComponents)
+                        {
+                            var stateComponentName = editorStateComponent.StateSlotName;
+                            var stateComponentHashCode = editorStateComponent.GetHashCode();
+
+                            var earliestObservedVersion = uint.MaxValue;
+
+                            if (m_StateObservers.TryGetValue(stateComponentName, out var observersForComponent))
+                            {
+                                // Not using List.Min to avoid closure allocation.
+                                foreach (var observer in observersForComponent)
+                                {
+                                    var v = observer.GetLastObservedComponentVersion(stateComponentName);
+                                    var versionNumber = v.HashCode == stateComponentHashCode ? v.Version : uint.MinValue;
+                                    earliestObservedVersion = Math.Min(earliestObservedVersion, versionNumber);
+                                }
+                            }
+
+                            editorStateComponent.PurgeOldChangesets(earliestObservedVersion);
+                        }
                     }
                 }
                 finally

@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using NUnit.Framework;
+using UnityEngine.GraphToolsFoundation.CommandStateObserver;
 using UnityEngine.GraphToolsFoundation.Overdrive;
 using Object = UnityEngine.Object;
 
@@ -21,7 +22,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.CommandSystem
         {
             var viewGuid1 = SerializableGUID.Generate();
             var state = new GraphToolState(viewGuid1, null);
-            state.LoadGraphAsset(m_Asset1, null);
             var initialDirtyCount = EditorUtility.GetDirtyCount(m_Asset1 as Object);
 
             using (var graphUpdater = state.GraphViewState.UpdateScope)
@@ -39,7 +39,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.CommandSystem
         {
             var viewGuid1 = SerializableGUID.Generate();
             var state = new GraphToolState(viewGuid1, null);
-            state.LoadGraphAsset(m_Asset1, null);
             var dummyModel = new TestNodeModel();
             using (var graphUpdater = state.GraphViewState.UpdateScope)
             {
@@ -64,7 +63,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.CommandSystem
         {
             var viewGuid1 = SerializableGUID.Generate();
             var state = new GraphToolState(viewGuid1, null);
-            state.LoadGraphAsset(m_Asset1, null);
             var dummyModel = new TestNodeModel();
             using (var graphUpdater = state.GraphViewState.UpdateScope)
             {
@@ -88,7 +86,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.CommandSystem
         {
             var viewGuid1 = SerializableGUID.Generate();
             var state = new GraphToolState(viewGuid1, null);
-            state.LoadGraphAsset(m_Asset1, null);
             var dummyModel = new TestNodeModel();
             using (var graphUpdater = state.GraphViewState.UpdateScope)
             {
@@ -112,7 +109,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.CommandSystem
         {
             var viewGuid1 = SerializableGUID.Generate();
             var state = new GraphToolState(viewGuid1, null);
-            state.LoadGraphAsset(m_Asset1, null);
             var dummyModel = new TestNodeModel();
             using (var graphUpdater = state.GraphViewState.UpdateScope)
             {
@@ -136,7 +132,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.CommandSystem
         {
             var viewGuid1 = SerializableGUID.Generate();
             var state = new GraphToolState(viewGuid1, null);
-            state.LoadGraphAsset(m_Asset1, null);
             var dummyModel = new TestNodeModel();
             using (var graphUpdater = state.GraphViewState.UpdateScope)
             {
@@ -161,7 +156,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.CommandSystem
         {
             var viewGuid1 = SerializableGUID.Generate();
             var state = new GraphToolState(viewGuid1, null);
-            state.LoadGraphAsset(m_Asset1, null);
             var dummyModel = new TestNodeModel();
             using (var graphUpdater = state.GraphViewState.UpdateScope)
             {

@@ -305,6 +305,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     public class BoolPref : UnityEngine.GraphToolsFoundation.Overdrive.Enumeration
     {
         public static readonly UnityEditor.GraphToolsFoundation.Overdrive.BoolPref AutoAlignDraggedEdges;
+        public static readonly UnityEditor.GraphToolsFoundation.Overdrive.BoolPref AutoItemizeConstants;
+        public static readonly UnityEditor.GraphToolsFoundation.Overdrive.BoolPref AutoItemizeVariables;
         public static readonly UnityEditor.GraphToolsFoundation.Overdrive.BoolPref AutoProcess;
         public static readonly UnityEditor.GraphToolsFoundation.Overdrive.BoolPref DependenciesLogging;
         public static readonly UnityEditor.GraphToolsFoundation.Overdrive.BoolPref ErrorOnMultipleDispatchesPerFrame;
@@ -566,13 +568,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
     public class CreateEdgeCommand : UnityEngine.GraphToolsFoundation.CommandStateObserver.UndoableCommand
     {
-        public bool CreateItemizedNode;
         public System.Collections.Generic.IReadOnlyList<UnityEditor.GraphToolsFoundation.Overdrive.IEdgeModel> EdgeModelsToDelete;
         public UnityEditor.GraphToolsFoundation.Overdrive.IPortModel FromPortModel;
         public UnityEditor.GraphToolsFoundation.Overdrive.Direction PortAlignment;
         public UnityEditor.GraphToolsFoundation.Overdrive.IPortModel ToPortModel;
         public CreateEdgeCommand() {}
-        public CreateEdgeCommand(UnityEditor.GraphToolsFoundation.Overdrive.IPortModel toPortModel, UnityEditor.GraphToolsFoundation.Overdrive.IPortModel fromPortModel, System.Collections.Generic.IReadOnlyList<UnityEditor.GraphToolsFoundation.Overdrive.IEdgeModel> edgeModelsToDelete = default(System.Collections.Generic.IReadOnlyList<UnityEditor.GraphToolsFoundation.Overdrive.IEdgeModel>), UnityEditor.GraphToolsFoundation.Overdrive.Direction portAlignment = 0, bool createItemizedNode = True) {}
+        public CreateEdgeCommand(UnityEditor.GraphToolsFoundation.Overdrive.IPortModel toPortModel, UnityEditor.GraphToolsFoundation.Overdrive.IPortModel fromPortModel, System.Collections.Generic.IReadOnlyList<UnityEditor.GraphToolsFoundation.Overdrive.IEdgeModel> edgeModelsToDelete = default(System.Collections.Generic.IReadOnlyList<UnityEditor.GraphToolsFoundation.Overdrive.IEdgeModel>), UnityEditor.GraphToolsFoundation.Overdrive.Direction portAlignment = 0) {}
         public static void DefaultCommandHandler(UnityEditor.GraphToolsFoundation.Overdrive.GraphToolState graphToolState, UnityEditor.GraphToolsFoundation.Overdrive.CreateEdgeCommand command);
     }
 
@@ -593,12 +594,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     public class CreateNodeFromPortCommand : UnityEngine.GraphToolsFoundation.CommandStateObserver.UndoableCommand
     {
         public System.Collections.Generic.IReadOnlyList<UnityEditor.GraphToolsFoundation.Overdrive.IEdgeModel> EdgesToDelete;
-        public bool ItemizeSourceNode;
         public System.Collections.Generic.IEnumerable<UnityEditor.GraphToolsFoundation.Overdrive.IPortModel> PortModels;
         public UnityEngine.Vector2 Position;
         public UnityEditor.GraphToolsFoundation.Overdrive.GraphNodeModelSearcherItem SelectedItem;
         public CreateNodeFromPortCommand() {}
-        public CreateNodeFromPortCommand(System.Collections.Generic.IReadOnlyList<UnityEditor.GraphToolsFoundation.Overdrive.IPortModel> portModel, UnityEngine.Vector2 position, UnityEditor.GraphToolsFoundation.Overdrive.GraphNodeModelSearcherItem selectedItem, System.Collections.Generic.IReadOnlyList<UnityEditor.GraphToolsFoundation.Overdrive.IEdgeModel> edgesToDelete = default(System.Collections.Generic.IReadOnlyList<UnityEditor.GraphToolsFoundation.Overdrive.IEdgeModel>), bool itemizeSourceNode = True) {}
+        public CreateNodeFromPortCommand(System.Collections.Generic.IReadOnlyList<UnityEditor.GraphToolsFoundation.Overdrive.IPortModel> portModel, UnityEngine.Vector2 position, UnityEditor.GraphToolsFoundation.Overdrive.GraphNodeModelSearcherItem selectedItem, System.Collections.Generic.IReadOnlyList<UnityEditor.GraphToolsFoundation.Overdrive.IEdgeModel> edgesToDelete = default(System.Collections.Generic.IReadOnlyList<UnityEditor.GraphToolsFoundation.Overdrive.IEdgeModel>)) {}
         public static void DefaultCommandHandler(UnityEditor.GraphToolsFoundation.Overdrive.GraphToolState graphToolState, UnityEditor.GraphToolsFoundation.Overdrive.CreateNodeFromPortCommand command);
     }
 
@@ -1414,6 +1414,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public UnityEditor.GraphToolsFoundation.Overdrive.GraphViewStateComponent.Changeset GetAggregatedChangeset(System.UInt32 sinceVersion);
         public virtual void PurgeOldChangesets(System.UInt32 untilVersion);
         protected virtual void PushChangeset(System.UInt32 version);
+        public virtual void SetUpdateType(UnityEngine.GraphToolsFoundation.CommandStateObserver.UpdateType type, bool force = False);
         public virtual void ValidateAfterDeserialize();
         public class Changeset : UnityEngine.GraphToolsFoundation.CommandStateObserver.IChangeset
         {
@@ -2367,6 +2368,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public bool IsSelected(UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel model);
         public virtual void PurgeOldChangesets(System.UInt32 untilVersion);
         protected virtual void PushChangeset(System.UInt32 version);
+        public virtual void SetUpdateType(UnityEngine.GraphToolsFoundation.CommandStateObserver.UpdateType type, bool force = False);
         public class Changeset : UnityEngine.GraphToolsFoundation.CommandStateObserver.IChangeset
         {
             public System.Collections.Generic.HashSet<UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel> ChangedModels { get; }

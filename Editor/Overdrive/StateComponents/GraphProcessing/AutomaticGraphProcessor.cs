@@ -20,6 +20,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         readonly Stopwatch m_IdleTimer;
         bool m_LastObservedAutoProcessPref;
         PluginRepository m_PluginRepository;
+        GraphToolState m_State;
 
         /// <summary>
         /// Initializes a new instance of the AutomaticGraphProcessor class.
@@ -44,6 +45,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         /// <inheritdoc/>
         protected override void Observe(GraphToolState state)
         {
+            m_State = state;
+
             if (state.Preferences.GetBool(BoolPref.AutoProcess))
             {
                 if (!m_IdleTimer.IsRunning)
@@ -51,7 +54,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     ResetTimer();
                 }
 
-                ObserveIfIdle(state, !m_LastObservedAutoProcessPref);
+                if (!m_LastObservedAutoProcessPref)
+                    EditorApplication.update += OnUpdate;
+
                 m_LastObservedAutoProcessPref = true;
             }
             else
@@ -61,20 +66,24 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     StopTimer();
                 }
 
+                if (m_LastObservedAutoProcessPref)
+                    EditorApplication.update -= OnUpdate;
+
+                // Force update if auto-process was just switched off.
                 ObserveNow(state, m_LastObservedAutoProcessPref);
                 m_LastObservedAutoProcessPref = false;
             }
         }
 
-        void ObserveIfIdle(GraphToolState state, bool forceUpdate)
+        void ObserveIfIdle(GraphToolState state)
         {
             var elapsedTime = m_IdleTimer.ElapsedMilliseconds;
-            if (forceUpdate || elapsedTime >= (EditorApplication.isPlaying
+            if (elapsedTime >= (EditorApplication.isPlaying
                 ? k_IdleTimeBeforeGraphProcessingMsPlayMode
                 : k_IdleTimeBeforeGraphProcessingMs))
             {
                 ResetTimer();
-                ObserveNow(state, forceUpdate);
+                ObserveNow(state, false);
             }
             else
             {
@@ -138,6 +147,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     }
                 }
             }
+        }
+
+        void OnUpdate()
+        {
+            ObserveIfIdle(m_State);
         }
 
         /// <summary>

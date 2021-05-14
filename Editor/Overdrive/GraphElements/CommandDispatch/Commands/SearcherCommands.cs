@@ -75,7 +75,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public Vector2 Position;
         public GraphNodeModelSearcherItem SelectedItem;
         public IReadOnlyList<IEdgeModel> EdgesToDelete;
-        public bool ItemizeSourceNode;
 
         public CreateNodeFromPortCommand()
         {
@@ -83,13 +82,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         }
 
         public CreateNodeFromPortCommand(IReadOnlyList<IPortModel> portModel, Vector2 position, GraphNodeModelSearcherItem selectedItem,
-                                         IReadOnlyList<IEdgeModel> edgesToDelete = null, bool itemizeSourceNode = true) : this()
+                                         IReadOnlyList<IEdgeModel> edgesToDelete = null) : this()
         {
             PortModels = portModel;
             Position = position;
             SelectedItem = selectedItem;
             EdgesToDelete = edgesToDelete;
-            ItemizeSourceNode = itemizeSourceNode;
         }
 
         public static void DefaultCommandHandler(GraphToolState graphToolState, CreateNodeFromPortCommand command)
@@ -120,7 +118,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     IEdgeModel newEdge;
                     if (thisPortModel.Direction == Direction.Output)
                     {
-                        if (command.ItemizeSourceNode)
+                        if ((thisPortModel.NodeModel is IConstantNodeModel && graphToolState.Preferences.GetBool(BoolPref.AutoItemizeConstants)) ||
+                            (thisPortModel.NodeModel is IVariableNodeModel && graphToolState.Preferences.GetBool(BoolPref.AutoItemizeVariables)))
                         {
                             var newNode = graphModel.CreateItemizedNode(EdgeCommandConfig.nodeOffset, ref thisPortModel);
                             graphUpdater.MarkNew(newNode);

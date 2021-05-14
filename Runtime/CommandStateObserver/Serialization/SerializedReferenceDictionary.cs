@@ -42,7 +42,7 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
         SerializedReferenceDictionary(IReadOnlyList<TKey> keys, IReadOnlyList<TValue> values)
             : this(keys.Count)
         {
-            m_Dictionary.DeserializeDictionaryFromLists(keys, values);
+            SerializationHelpers.DeserializeDictionaryFromLists(ref m_Dictionary, keys, values);
         }
 
         Dictionary<TKey, TValue> GetSafeDictionary()
@@ -54,8 +54,7 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
                     m_KeyList = new List<TKey>();
                     m_ValueList = new List<TValue>();
                 }
-                m_Dictionary = new Dictionary<TKey, TValue>(m_KeyList.Count);
-                m_Dictionary.DeserializeDictionaryFromLists(m_KeyList, m_ValueList);
+                SerializationHelpers.DeserializeDictionaryFromLists(ref m_Dictionary, m_KeyList, m_ValueList);
             }
 
             return m_Dictionary;
@@ -63,7 +62,7 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
 
         public void OnBeforeSerialize()
         {
-            m_Dictionary?.SerializeDictionaryToLists(out m_KeyList, out m_ValueList);
+            SerializationHelpers.SerializeDictionaryToLists(m_Dictionary, out m_KeyList, out m_ValueList);
         }
 
         public void OnAfterDeserialize()

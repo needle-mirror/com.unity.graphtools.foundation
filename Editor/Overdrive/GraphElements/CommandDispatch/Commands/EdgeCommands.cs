@@ -21,7 +21,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public IPortModel FromPortModel;
         public IReadOnlyList<IEdgeModel> EdgeModelsToDelete;
         public Direction PortAlignment;
-        public bool CreateItemizedNode;
 
         public CreateEdgeCommand()
         {
@@ -30,8 +29,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
         public CreateEdgeCommand(IPortModel toPortModel, IPortModel fromPortModel,
                                  IReadOnlyList<IEdgeModel> edgeModelsToDelete = null,
-                                 Direction portAlignment = Direction.None,
-                                 bool createItemizedNode = true)
+                                 Direction portAlignment = Direction.None)
             : this()
         {
             Assert.IsTrue(toPortModel == null || toPortModel.Direction == Direction.Input);
@@ -40,7 +38,6 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
             FromPortModel = fromPortModel;
             EdgeModelsToDelete = edgeModelsToDelete;
             PortAlignment = portAlignment;
-            CreateItemizedNode = createItemizedNode;
         }
 
         public static void DefaultCommandHandler(GraphToolState graphToolState, CreateEdgeCommand command)
@@ -68,10 +65,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
                     graphUpdater.MarkDeleted(edgesToDelete);
                 }
 
-                if (command.CreateItemizedNode)
+                // Auto-itemization preferences will determine if a new node is created or not
+                if ((fromPortModel.NodeModel is IConstantNodeModel && graphToolState.Preferences.GetBool(BoolPref.AutoItemizeConstants)) ||
+                    (fromPortModel.NodeModel is IVariableNodeModel && graphToolState.Preferences.GetBool(BoolPref.AutoItemizeVariables)))
                 {
-                    var newNode = graphModel.CreateItemizedNode(EdgeCommandConfig.nodeOffset, ref fromPortModel);
-                    graphUpdater.MarkNew(newNode);
+                    var itemizedNode = graphModel.CreateItemizedNode(EdgeCommandConfig.nodeOffset, ref fromPortModel);
+                    if (itemizedNode != null)
+                    {
+                        graphUpdater.MarkNew(itemizedNode);
+                    }
                 }
 
                 var edgeModel = graphModel.CreateEdge(toPortModel, fromPortModel);

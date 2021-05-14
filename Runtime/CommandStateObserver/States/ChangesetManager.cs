@@ -37,7 +37,8 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
         /// </summary>
         /// <param name="untilVersion">Purge changeset up to and including this version.</param>
         /// <param name="currentVersion">The version associated with the current changeset. This should be the current version of the state component.</param>
-        public void PurgeOldChangesets(uint untilVersion, uint currentVersion)
+        /// <returns>The version number of the earliest changeset.</returns>
+        public uint PurgeOldChangesets(uint untilVersion, uint currentVersion)
         {
             int countToRemove = 0;
             while (countToRemove < m_Changesets.Count && m_Changesets[countToRemove].Version <= untilVersion)
@@ -51,7 +52,10 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
             if (untilVersion >= currentVersion)
             {
                 CurrentChangeset.Clear();
+                return currentVersion;
             }
+
+            return m_Changesets.Count > 0 ? m_Changesets[0].Version : currentVersion;
         }
 
         /// <summary>

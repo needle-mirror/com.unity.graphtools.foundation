@@ -115,6 +115,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Commands
             // connect int to first input
             m_CommandDispatcher.Dispatch(new CreateEdgeCommand(opNode.Input0, node0.OutputsByDisplayOrder.First()));
 
+            var prevItemizeConstants = m_CommandDispatcher.State.Preferences.GetBool(BoolPref.AutoItemizeConstants);
+            var prevItemizeVariables = m_CommandDispatcher.State.Preferences.GetBool(BoolPref.AutoItemizeVariables);
+            if (itemizeTest == ItemizeTestType.Enabled)
+            {
+                m_CommandDispatcher.State.Preferences.SetBool(BoolPref.AutoItemizeConstants, true);
+                m_CommandDispatcher.State.Preferences.SetBool(BoolPref.AutoItemizeVariables, true);
+            }
+
             // test how the node reacts to getting connected a second time
             TestPrereqCommandPostreq(testingMode,
                 () =>
@@ -130,8 +138,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Commands
                     Assert.That(input0, Is.ConnectedTo(node0.OutputsByDisplayOrder.First()));
                     Assert.That(input1, Is.Not.ConnectedTo(node0.OutputsByDisplayOrder.First()));
                     Assert.That(binOutput.IsConnected, Is.False);
-                    return new CreateEdgeCommand(input1, node0.OutputsByDisplayOrder.First(),
-                        createItemizedNode: itemizeTest == ItemizeTestType.Enabled);
+                    return new CreateEdgeCommand(input1, node0.OutputsByDisplayOrder.First());
                 },
                 () =>
                 {
@@ -159,6 +166,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Commands
                         Assert.That(GetNodeCount(), Is.EqualTo(2));
                     }
                 });
+
+            if (itemizeTest == ItemizeTestType.Enabled)
+            {
+                m_CommandDispatcher.State.Preferences.SetBool(BoolPref.AutoItemizeConstants, prevItemizeConstants);
+                m_CommandDispatcher.State.Preferences.SetBool(BoolPref.AutoItemizeVariables, prevItemizeVariables);
+            }
         }
 
         [Test]

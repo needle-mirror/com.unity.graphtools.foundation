@@ -98,8 +98,18 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
             }
         }
 
-        uint m_EarliestChangeSetVersion;
         UpdateType m_UpdateType = UpdateType.None;
+
+        /// <summary>
+        /// The earliest changeset version held by this state component.
+        /// </summary>
+        protected uint EarliestChangeSetVersion { get; set; }
+
+        /// <summary>
+        /// The update type for observers that are out of date but not too much as to be unable to use changesets.
+        /// </summary>
+        protected UpdateType UpdateType => m_UpdateType;
+
         TUpdater m_Updater;
 
         public uint CurrentVersion { get; private set; } = 1;
@@ -168,15 +178,22 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
         /// <param name="untilVersion">Version up to which we should purge changesets. Pass uint.MaxValue to purge all changesets.</param>
         public virtual void PurgeOldChangesets(uint untilVersion)
         {
-            m_EarliestChangeSetVersion = Math.Min(untilVersion, CurrentVersion);
-            if (m_EarliestChangeSetVersion == CurrentVersion)
-                m_UpdateType = UpdateType.None;
+            // StateComponent default implementation does not record changesets,
+            // so m_EarliestChangeSetVersion is set to the CurrentVersion.
+            EarliestChangeSetVersion = CurrentVersion;
+            ResetUpdateType();
         }
 
         /// <inheritdoc/>
         public bool HasChanges()
         {
-            return m_EarliestChangeSetVersion != CurrentVersion;
+            return EarliestChangeSetVersion != CurrentVersion;
+        }
+
+        protected void ResetUpdateType()
+        {
+            if (EarliestChangeSetVersion == CurrentVersion)
+                m_UpdateType = UpdateType.None;
         }
 
         /// <summary>
@@ -186,7 +203,7 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
         /// </summary>
         /// <param name="type">The update type.</param>
         /// <param name="force">Set the update type even if the new value is lower than the current one.</param>
-        protected internal void SetUpdateType(UpdateType type, bool force = false)
+        public virtual void SetUpdateType(UpdateType type, bool force = false)
         {
             if (type > m_UpdateType || force)
                 m_UpdateType = type;
@@ -201,13 +218,13 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
             }
 
             // If view is new or too old, tell it to rebuild itself completely.
-            if (observerVersion.Version == 0 || observerVersion.Version < m_EarliestChangeSetVersion)
+            if (observerVersion.Version == 0 || observerVersion.Version < EarliestChangeSetVersion)
             {
                 return UpdateType.Complete;
             }
 
             // This is safe even if Version wraps around after an overflow.
-            return observerVersion.Version == CurrentVersion ? UpdateType.None : m_UpdateType;
+            return observerVersion.Version == CurrentVersion ? UpdateType.None : UpdateType;
         }
 
         /// <inheritdoc cref="IStateComponent.BeforeSerialize"/>

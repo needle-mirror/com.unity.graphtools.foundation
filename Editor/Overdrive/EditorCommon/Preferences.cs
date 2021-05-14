@@ -21,6 +21,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public static readonly BoolPref ShowUnusedNodes = new BoolPref(10, nameof(ShowUnusedNodes));
         public static readonly BoolPref SearcherInRegularWindow = new BoolPref(11, nameof(SearcherInRegularWindow));
         public static readonly BoolPref LogUIUpdate = new BoolPref(12, nameof(LogUIUpdate));
+        public static readonly BoolPref AutoItemizeVariables = new BoolPref(13, nameof(AutoItemizeVariables));
+        public static readonly BoolPref AutoItemizeConstants = new BoolPref(14, nameof(AutoItemizeConstants));
 
         [PublicAPI]
         protected static readonly int k_ToolBasePrefId = 10000;

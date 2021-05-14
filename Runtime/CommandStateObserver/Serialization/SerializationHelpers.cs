@@ -6,7 +6,7 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
 {
     public static class SerializationHelpers
     {
-        public static void SerializeDictionaryToLists<K, V>(this IReadOnlyDictionary<K, V> dic, out List<K> keys, out List<V> values)
+        public static void SerializeDictionaryToLists<K, V>(IReadOnlyDictionary<K, V> dic, out List<K> keys, out List<V> values)
         {
             if (dic == null)
             {
@@ -19,9 +19,12 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
             values = dic.Values.ToList();
         }
 
-        public static void DeserializeDictionaryFromLists<K, V>(this Dictionary<K, V> dic, IReadOnlyList<K> keys, IReadOnlyList<V> values)
+        public static void DeserializeDictionaryFromLists<K, V>(ref Dictionary<K, V> dic, IReadOnlyList<K> keys, IReadOnlyList<V> values)
         {
             int numKeys = keys?.Count ?? 0;
+
+            if (dic == null)
+                dic = new Dictionary<K, V>(keys.Count);
 
             dic.Clear();
 

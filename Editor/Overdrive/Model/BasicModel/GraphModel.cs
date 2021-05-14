@@ -593,14 +593,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         public IInputOutputPortsNodeModel CreateItemizedNode(int nodeOffset, ref IPortModel outputPortModel)
         {
             if (outputPortModel.IsConnected())
-
-                if (outputPortModel.NodeModel is IConstantNodeModel || outputPortModel.NodeModel is IVariableNodeModel)
-                {
-                    Vector2 offset = Vector2.up * nodeOffset;
-                    var nodeToConnect = DuplicateNode(outputPortModel.NodeModel, offset) as IInputOutputPortsNodeModel;
-                    outputPortModel = nodeToConnect?.OutputsById[outputPortModel.UniqueName];
-                    return nodeToConnect;
-                }
+            {
+                Vector2 offset = Vector2.up * nodeOffset;
+                var nodeToConnect = DuplicateNode(outputPortModel.NodeModel, offset) as IInputOutputPortsNodeModel;
+                outputPortModel = nodeToConnect?.OutputsById[outputPortModel.UniqueName];
+                return nodeToConnect;
+            }
             return null;
         }
 
