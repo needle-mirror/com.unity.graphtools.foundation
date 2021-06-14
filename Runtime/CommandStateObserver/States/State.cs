@@ -5,7 +5,7 @@ using System.Linq;
 namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
 {
     /// <summary>
-    /// The state of the tool.
+    /// The state holds all data that can be displayed in the UI and modified by the user.
     /// </summary>
     public abstract class State : IState, IDisposable
     {
@@ -19,7 +19,7 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
         protected PersistedState PersistedState { get; }
 
         /// <summary>
-        /// Initializes a new instance of the ToolState class.
+        /// Initializes a new instance of the <see cref="State" /> class.
         /// </summary>
         protected State()
         {
@@ -63,10 +63,7 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
             m_Disposed = true;
         }
 
-        /// <summary>
-        /// Registers the default command handlers fot the state.
-        /// </summary>
-        /// <param name="dispatcher">The dispatcher where to register the command handler.</param>
+        /// <inheritdoc />
         public virtual void RegisterCommandHandlers(Dispatcher dispatcher)
         {
             dispatcher.RegisterCommandHandler<UndoRedoCommand>(UndoRedoCommand.DefaultCommandHandler);
@@ -76,7 +73,10 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
         /// Clears all caches in the state. Called whenever the underlying state data
         /// have been changed, for example after an undo.
         /// </summary>
-        protected virtual void ResetStateCaches() { }
+        protected virtual void ResetStateCaches()
+        {
+            PersistedState.Flush();
+        }
 
         /// <summary>
         /// Finishes the previous undo group, if there was one, and begin a new undo group.
@@ -89,7 +89,7 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
         /// </remarks>
         /// <param name="command">The command that causes the new undo group to be started.
         /// Pass null if the undo group should not be named.</param>
-        public void PushUndoGroup(UndoableCommand command = null)
+        internal void PushUndoGroup(UndoableCommand command = null)
         {
             Undo.IncrementCurrentGroup();
             if (command != null && !string.IsNullOrEmpty(command.UndoString))
@@ -129,9 +129,7 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
         {
         }
 
-        /// <summary>
-        /// All the state components.
-        /// </summary>
+        /// <inheritdoc />
         public virtual IEnumerable<IStateComponent> AllStateComponents => Enumerable.Empty<IStateComponent>();
     }
 }

@@ -1,0 +1,6 @@
+/* TODO VladN: fix for light skin, remove when GTF supports light skin */
+#windowDetailsVisualContainer {
+    background-color: #C8C8C8;
+    border-color: black;
+    border-width: 1px;
+}

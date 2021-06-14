@@ -6,13 +6,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook
     [Serializable]
     public class MinFunction : MathFunction
     {
+        public override string Title
+        {
+            get => "Min";
+            set { }
+        }
+
         public MinFunction()
         {
-            Title = "Min";
-
             if (m_ParameterNames.Length == 0)
             {
-                m_ParameterNames = new string[] { "a", "b" };
+                m_ParameterNames = new[] { "a", "b" };
             }
         }
 

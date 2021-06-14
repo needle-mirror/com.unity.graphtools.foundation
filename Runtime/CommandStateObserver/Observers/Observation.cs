@@ -28,7 +28,7 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
         public uint LastObservedVersion { get; }
 
         /// <summary>
-        /// Initializes a new instance of the Observation class.
+        /// Initializes a new instance of the <see cref="Observation" /> class.
         /// </summary>
         /// <param name="observer">The observer.</param>
         /// <param name="observedComponent">The observed state</param>
@@ -43,7 +43,8 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
             m_Observer = observer;
             m_UpdateObserverVersion = updateObserverVersion;
 
-            var lastObservedVersion = m_Observer.GetLastObservedComponentVersion(observedComponent.StateSlotName);
+            var internalObserver = m_Observer as IInternalStateObserver;
+            var lastObservedVersion = internalObserver?.GetLastObservedComponentVersion(observedComponent.StateSlotName) ?? default;
             UpdateType = m_ObservedComponent.GetUpdateType(lastObservedVersion);
             LastObservedVersion = lastObservedVersion.Version;
         }
@@ -71,7 +72,7 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
                         HashCode = m_ObservedComponent.GetHashCode(),
                         Version = m_ObservedComponent.CurrentVersion
                     };
-                    m_Observer.UpdateObservedVersion(m_ObservedComponent.StateSlotName, newVersion);
+                    (m_Observer as IInternalStateObserver)?.UpdateObservedVersion(m_ObservedComponent.StateSlotName, newVersion);
                 }
             }
         }

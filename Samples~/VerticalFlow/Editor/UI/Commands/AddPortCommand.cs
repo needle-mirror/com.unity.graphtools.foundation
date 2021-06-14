@@ -7,10 +7,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Vertical
     {
         const string k_UndoStringSingular = "Add Port";
 
-        readonly Direction m_PortDirection;
-        readonly Orientation m_PortOrientation;
+        readonly PortDirection m_PortDirection;
+        readonly PortOrientation m_PortOrientation;
 
-        public AddPortCommand(Direction direction, Orientation orientation, params VerticalNodeModel[] nodes)
+        public AddPortCommand(PortDirection direction, PortOrientation orientation, params VerticalNodeModel[] nodes)
             : base(k_UndoStringSingular, k_UndoStringSingular, nodes)
         {
             m_PortDirection = direction;
@@ -19,7 +19,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Vertical
 
         public static void DefaultHandler(GraphToolState state, AddPortCommand command)
         {
-            if (!command.Models.Any() || command.m_PortDirection == Direction.None)
+            if (!command.Models.Any() || command.m_PortDirection == PortDirection.None)
                 return;
 
             state.PushUndo(command);

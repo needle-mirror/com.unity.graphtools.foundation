@@ -3,7 +3,7 @@ using State = UnityEditor.GraphToolsFoundation.Overdrive.GraphToolState;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook
 {
-    internal class SimpleGraphViewWindow : GraphViewEditorWindow
+    class SimpleGraphViewWindow : GraphViewEditorWindow
     {
         [InitializeOnLoadMethod]
         static void RegisterTool()
@@ -11,7 +11,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook
             ShortcutHelper.RegisterDefaultShortcuts<SimpleGraphViewWindow>(MathBookStencil.GraphName);
         }
 
-        [MenuItem("GTF Samples/MathBook Editor")]
+        [MenuItem("GTF/Samples/MathBook Editor")]
         public static void ShowWindow()
         {
             GetWindow<SimpleGraphViewWindow>();
@@ -23,9 +23,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook
             base.OnEnable();
         }
 
+        protected override GraphToolState CreateInitialState()
+        {
+            var prefs = Preferences.CreatePreferences(EditorToolName);
+            return new MathBookState(GUID, prefs);
+        }
+
         protected override GraphView CreateGraphView()
         {
-            return new SimpleGraphView(this, CommandDispatcher, EditorToolName);
+            return new GraphView(this, CommandDispatcher, EditorToolName);
         }
 
         protected override BlankPage CreateBlankPage()
@@ -36,7 +42,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook
             return new BlankPage(CommandDispatcher, onboardingProviders);
         }
 
-        protected override bool CanHandleAssetType(GraphAssetModel asset)
+        protected override bool CanHandleAssetType(IGraphAssetModel asset)
         {
             return asset is MathBookAsset;
         }

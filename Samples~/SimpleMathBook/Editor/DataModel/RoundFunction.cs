@@ -6,13 +6,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook
     [Serializable]
     public class RoundFunction : MathFunction
     {
+        public override string Title
+        {
+            get => "Round";
+            set { }
+        }
+
         public RoundFunction()
         {
-            Title = "Round";
-
             if (m_ParameterNames.Length == 0)
             {
-                m_ParameterNames = new string[] { "f" };
+                m_ParameterNames = new[] { "f" };
             }
         }
 

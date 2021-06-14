@@ -34,9 +34,12 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
         bool HasChanges();
 
         /// <summary>
-        /// Removes changesets that register changes that have occured up to and including <paramref name="untilVersion"/>
+        /// Purges the changesets that track changes up to and including <paramref name="untilVersion"/>.
         /// </summary>
-        /// <param name="untilVersion">The version up until which the changesets should be purged.</param>
+        /// <remarks>
+        /// The state component can choose to purge more recent changesets.
+        /// </remarks>
+        /// <param name="untilVersion">Version up to which we should purge changesets. Pass uint.MaxValue to purge all changesets.</param>
         void PurgeOldChangesets(uint untilVersion);
 
         /// <summary>

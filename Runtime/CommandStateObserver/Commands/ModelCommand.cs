@@ -15,7 +15,7 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
         public IReadOnlyList<TModel> Models;
 
         /// <summary>
-        /// Initializes a new instance of the ModelCommand class.
+        /// Initializes a new instance of the <see cref="ModelCommand{TModel}" /> class.
         /// </summary>
         /// <param name="undoString">The string to display in the undo menu item.</param>
         protected ModelCommand(string undoString)
@@ -24,7 +24,7 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
         }
 
         /// <summary>
-        /// Initializes a new instance of the ModelCommand class.
+        /// Initializes a new instance of the <see cref="ModelCommand{TModel}" /> class.
         /// </summary>
         /// <param name="undoStringSingular">The string to display in the undo menu item when there is only one model affected.</param>
         /// <param name="undoStringPlural">The string to display in the undo menu item when there are many models affected.</param>
@@ -48,14 +48,15 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
         /// </summary>
         public TValue Value;
 
-        /// <inheritdoc />
+        /// <inheritdoc cref="ModelCommand{TModel}(string)"/>
         protected ModelCommand(string undoString) : base(undoString)
         {
         }
 
-        /// <inheritdoc />
+        /// <inheritdoc cref="ModelCommand{TModel}(string, string, IReadOnlyList{TModel})"/>
         protected ModelCommand(string undoStringSingular, string undoStringPlural,
-            IReadOnlyList<TModel> models, TValue value)
+            TValue value,
+            IReadOnlyList<TModel> models)
             : base(undoStringSingular, undoStringPlural, models)
         {
             Value = value;

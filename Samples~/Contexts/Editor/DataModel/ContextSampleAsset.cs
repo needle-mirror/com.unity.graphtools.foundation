@@ -32,14 +32,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Contexts
         public static bool OpenGraphAsset(int instanceId, int line)
         {
             var obj = EditorUtility.InstanceIDToObject(instanceId);
-            if (obj is ContextSampleAsset)
+            if (obj is ContextSampleAsset graphAssetModel)
             {
-                string path = AssetDatabase.GetAssetPath(instanceId);
-                var asset = AssetDatabase.LoadAssetAtPath<ContextSampleAsset>(path);
-                if (asset == null)
-                    return false;
-
                 var window = GraphViewEditorWindow.FindOrCreateGraphWindow<ContextGraphViewWindow>();
+                window.SetCurrentSelection(graphAssetModel, GraphViewEditorWindow.OpenMode.OpenAndFocus);
                 return window != null;
             }
 

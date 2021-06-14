@@ -1,8 +1,8 @@
 using System;
-using UnityEditor.VisualScripting.GraphViewModel;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEngine;
 
-namespace UnityEditor.VisualScriptingTests
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
 {
     [Serializable]
     class Type1FakeNodeModel : NodeModel
@@ -12,8 +12,8 @@ namespace UnityEditor.VisualScriptingTests
 
         protected override void OnDefineNode()
         {
-            Input = AddDataInputPort<GameObject>("input0");
-            Output = AddDataOutputPort<GameObject>("output0");
+            Input = this.AddDataInputPort<GameObject>("input0");
+            Output = this.AddDataOutputPort<GameObject>("output0");
         }
     }
 }

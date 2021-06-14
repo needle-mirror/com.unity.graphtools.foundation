@@ -113,14 +113,14 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
         /// <summary>
         /// Returns true is a command is being dispatched.
         /// </summary>
-        public bool IsDispatching => m_CurrentCommand != null;
+        bool IsDispatching => m_CurrentCommand != null;
         /// <summary>
         /// Returns true if the observers are being notified.
         /// </summary>
-        public bool IsObserving { get; private set; }
+        bool IsObserving { get; set; }
 
         /// <summary>
-        /// Initializes a new instance of the CommandDispatcher class.
+        /// Initializes a new instance of the <see cref="Dispatcher" /> class.
         /// </summary>
         /// <param name="state">The state.</param>
         public Dispatcher(IState state)
@@ -321,7 +321,7 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
             {
                 foreach (var stateObserver in observerEntry.Value)
                 {
-                    stateObserver.UpdateObservedVersion(observerEntry.Key, default);
+                    (stateObserver as IInternalStateObserver)?.UpdateObservedVersion(observerEntry.Key, default);
                 }
             }
         }
@@ -374,7 +374,7 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
         /// <summary>
         /// Called when a command is dispatched, before the command handler is executed.
         /// </summary>
-        /// <param name="command"></param>
+        /// <param name="command">The command being dispatched.</param>
         protected virtual void PreDispatchCommand(ICommand command)
         {
         }
@@ -382,7 +382,7 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
         /// <summary>
         /// Called when a command is dispatched, after the command handler has been executed.
         /// </summary>
-        /// <param name="command"></param>
+        /// <param name="command">The command being dispatched.</param>
         protected virtual void PostDispatchCommand(ICommand command)
         {
         }
@@ -511,7 +511,7 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
                                 // Not using List.Min to avoid closure allocation.
                                 foreach (var observer in observersForComponent)
                                 {
-                                    var v = observer.GetLastObservedComponentVersion(stateComponentName);
+                                    var v = (observer as IInternalStateObserver)?.GetLastObservedComponentVersion(stateComponentName) ?? default;
                                     var versionNumber = v.HashCode == stateComponentHashCode ? v.Version : uint.MinValue;
                                     earliestObservedVersion = Math.Min(earliestObservedVersion, versionNumber);
                                 }

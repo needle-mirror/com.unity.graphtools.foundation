@@ -12,7 +12,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Recipes
             ShortcutHelper.RegisterDefaultShortcuts<RecipeGraphWindow>(RecipeStencil.toolName);
         }
 
-        [MenuItem("GTF Samples/Recipe Editor", false)]
+        [MenuItem("GTF/Samples/Recipe Editor", false)]
         public static void ShowRecipeGraphWindow()
         {
             FindOrCreateGraphWindow<RecipeGraphWindow>();
@@ -45,7 +45,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Recipes
         }
 
         /// <inheritdoc />
-        protected override bool CanHandleAssetType(GraphAssetModel asset)
+        protected override bool CanHandleAssetType(IGraphAssetModel asset)
         {
             return asset is RecipeGraphAssetModel;
         }

@@ -28,14 +28,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Vertical
         public static bool OpenGraphAsset(int instanceId, int line)
         {
             var obj = EditorUtility.InstanceIDToObject(instanceId);
-            if (obj is VerticalGraphAssetModel)
+            if (obj is VerticalGraphAssetModel graphAssetModel)
             {
-                string path = AssetDatabase.GetAssetPath(instanceId);
-                var asset = AssetDatabase.LoadAssetAtPath<VerticalGraphAssetModel>(path);
-                if (asset == null)
-                    return false;
-
                 var window = GraphViewEditorWindow.FindOrCreateGraphWindow<VerticalGraphWindow>();
+                window.SetCurrentSelection(graphAssetModel, GraphViewEditorWindow.OpenMode.OpenAndFocus);
                 return window != null;
             }
 

@@ -60,7 +60,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Recipes
                 return;
 
             if (int.TryParse(evt.newValue, out var v))
-                m_OwnerElement.CommandDispatcher.Dispatch(new SetTemperatureCommand(new[] { bakeNodeModel }, v));
+                m_OwnerElement.CommandDispatcher.Dispatch(new SetTemperatureCommand(v, bakeNodeModel));
         }
 
         void OnChangeTime(ChangeEvent<string> evt)
@@ -69,7 +69,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Recipes
                 return;
 
             if (int.TryParse(evt.newValue, out var v))
-                m_OwnerElement.CommandDispatcher.Dispatch(new SetDurationCommand(new[] { bakeNodeModel }, v));
+                m_OwnerElement.CommandDispatcher.Dispatch(new SetDurationCommand(v, nodes: bakeNodeModel));
         }
 
         protected override void PostBuildPartUI()

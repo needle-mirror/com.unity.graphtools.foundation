@@ -1,7 +1,6 @@
-using System;
 using UnityEngine;
 
-namespace UnityEditor.VisualScripting.Editor
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
 {
     class TimelineState
     {

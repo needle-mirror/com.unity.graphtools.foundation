@@ -40,24 +40,24 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Vertical
                 this.AddDataOutputPort("Out " + (i + 1), TypeHandle.Vector2, options: PortModelOptions.NoEmbeddedConstant);
 
             for (var i = 0; i < m_VerticalInputCount; i++)
-                this.AddExecutionInputPort("VIn " + (i + 1), orientation: Orientation.Vertical);
+                this.AddExecutionInputPort("VIn " + (i + 1), orientation: PortOrientation.Vertical);
 
             for (var i = 0; i < m_VerticalOutputCount; i++)
-                this.AddExecutionOutputPort("VOut " + (i + 1), orientation: Orientation.Vertical);
+                this.AddExecutionOutputPort("VOut " + (i + 1), orientation: PortOrientation.Vertical);
         }
 
-        public void AddPort(Orientation orientation, Direction direction)
+        public void AddPort(PortOrientation orientation, PortDirection direction)
         {
-            if (orientation == Orientation.Horizontal)
+            if (orientation == PortOrientation.Horizontal)
             {
-                if (direction == Direction.Input)
+                if (direction == PortDirection.Input)
                     m_InputCount++;
                 else
                     m_OutputCount++;
             }
             else
             {
-                if (direction == Direction.Input)
+                if (direction == PortDirection.Input)
                     m_VerticalInputCount++;
                 else
                     m_VerticalOutputCount++;
@@ -66,18 +66,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Vertical
             DefineNode();
         }
 
-        public void RemovePort(Orientation orientation, Direction direction)
+        public void RemovePort(PortOrientation orientation, PortDirection direction)
         {
-            if (orientation == Orientation.Horizontal)
+            if (orientation == PortOrientation.Horizontal)
             {
-                if (direction == Direction.Input)
+                if (direction == PortDirection.Input)
                     m_InputCount--;
                 else
                     m_OutputCount--;
             }
             else
             {
-                if (direction == Direction.Input)
+                if (direction == PortDirection.Input)
                     m_VerticalInputCount--;
                 else
                     m_VerticalOutputCount--;

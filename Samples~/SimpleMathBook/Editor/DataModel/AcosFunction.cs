@@ -6,13 +6,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook
     [Serializable]
     public class AcosFunction : MathFunction
     {
+        public override string Title
+        {
+            get => "Acos";
+            set { }
+        }
+
         public AcosFunction()
         {
-            Title = "Acos";
-
             if (m_ParameterNames.Length == 0)
             {
-                m_ParameterNames = new string[] { "f" };
+                m_ParameterNames = new[] { "f" };
             }
         }
 

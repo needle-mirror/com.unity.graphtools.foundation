@@ -14,7 +14,7 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
     /// This ensures that change tracking is done properly.
     /// </p>
     /// <p>
-    /// State components are serialized and unserialized on undo/redo. Make sure that their fields behave properly
+    /// State components are serialized and deserialized on undo/redo. Make sure that their fields behave properly
     /// under these conditions. Either put the Serialized attribute on them or check that they are initialized
     /// before accessing them.
     /// </p>
@@ -38,6 +38,7 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
             /// </summary>
             protected TStateComponent m_State;
 
+            /// <inheritdoc />
             public void Initialize(IStateComponent state)
             {
                 Assert.IsNull(m_State, "Missing Dispose call.");
@@ -112,6 +113,7 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
 
         TUpdater m_Updater;
 
+        /// <inheritdoc />
         public uint CurrentVersion { get; private set; } = 1;
 
         [SerializeField]
@@ -123,9 +125,6 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
             get => m_StateSlotName;
             set => m_StateSlotName = value;
         }
-
-        [Obsolete("Use UpdateScope instead. Added in 0.9+. (UnityUpgradable) -> UpdateScope")]
-        public TUpdater Updater => UpdateScope;
 
         /// <summary>
         /// The updater for the state component.
@@ -169,13 +168,7 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
         /// <param name="version">The version number associated with the changeset.</param>
         protected virtual void PushChangeset(uint version) { }
 
-        /// <summary>
-        /// Purge the changesets that track changes up to and including untilVersion.
-        /// </summary>
-        /// <remarks>
-        /// The state component can choose to purge more recent changesets.
-        /// </remarks>
-        /// <param name="untilVersion">Version up to which we should purge changesets. Pass uint.MaxValue to purge all changesets.</param>
+        /// <inheritdoc />
         public virtual void PurgeOldChangesets(uint untilVersion)
         {
             // StateComponent default implementation does not record changesets,

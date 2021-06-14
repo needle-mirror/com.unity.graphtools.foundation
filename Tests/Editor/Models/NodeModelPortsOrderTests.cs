@@ -3,15 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using NUnit.Framework;
-using UnityEditor.VisualScripting.Editor;
-using UnityEditor.VisualScripting.GraphViewModel;
-using UnityEditor.VisualScripting.Model;
-using UnityEditor.VisualScripting.Model.Stencils;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEngine;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 
 // ReSharper disable AccessToStaticMemberViaDerivedType
 
-namespace UnityEditor.VisualScriptingTests.Models
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
 {
     [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
     class NodeModelPortsOrderTests : BaseFixture
@@ -21,9 +19,8 @@ namespace UnityEditor.VisualScriptingTests.Models
         [Test]
         public void DefinePortsInNewOrderReusesExistingPorts()
         {
-            var node = GraphModel.CreateNode<PortOrderTestNodeModel>("test", Vector2.zero);
-            node.MakePortsFromNames(new List<string> { "A", "B", "C" });
-            node.DefineNode();
+            var node = GraphModel.CreateNode<PortOrderTestNodeModel>("test", Vector2.zero,
+                initializationCallback: model => model.MakePortsFromNames(new List<string> { "A", "B", "C" }));
             Assert.That(node.InputsById.Count, Is.EqualTo(3));
 
             var A = node.InputsById["A"];
@@ -48,9 +45,8 @@ namespace UnityEditor.VisualScriptingTests.Models
         [Test]
         public void RemovingAndAddingPortsPreservesExistingPorts()
         {
-            var node = GraphModel.CreateNode<PortOrderTestNodeModel>("test", Vector2.zero);
-            node.MakePortsFromNames(new List<string> { "A", "B", "C" });
-            node.DefineNode();
+            var node = GraphModel.CreateNode<PortOrderTestNodeModel>("test", Vector2.zero,
+                initializationCallback: model => model.MakePortsFromNames(new List<string> { "A", "B", "C" }));
             Assert.That(node.InputsById.Count, Is.EqualTo(3));
 
             var A = node.InputsById["A"];
@@ -69,11 +65,10 @@ namespace UnityEditor.VisualScriptingTests.Models
         [Test]
         public void ShufflingPortsPreserveConnections()
         {
-            var node = GraphModel.CreateNode<PortOrderTestNodeModel>("test", Vector2.zero);
-            node.MakePortsFromNames(new List<string> { "A", "B", "C" });
-            node.DefineNode();
+            var node = GraphModel.CreateNode<PortOrderTestNodeModel>("test", Vector2.zero,
+                initializationCallback: model => model.MakePortsFromNames(new List<string> { "A", "B", "C" }));
 
-            var decl = GraphModel.CreateGraphVariableDeclaration("myInt", TypeHandle.Int, true);
+            var decl = GraphModel.CreateGraphVariableDeclaration(TypeHandle.Int, "myInt", ModifierFlags.None, true);
             var nodeA = GraphModel.CreateVariableNode(decl, Vector2.up);
             var nodeB = GraphModel.CreateVariableNode(decl, Vector2.zero);
             var nodeC = GraphModel.CreateVariableNode(decl, Vector2.down);
@@ -100,59 +95,48 @@ namespace UnityEditor.VisualScriptingTests.Models
         [Test]
         public void ConnectingADifferentNodePreservesConnections([Values] TestingMode mode)
         {
-            var memberX = new TypeMember(Stencil.GenerateTypeHandle(typeof(Vector3)), new List<string> { nameof(Vector3.x) });
-            var memberY = new TypeMember(Stencil.GenerateTypeHandle(typeof(Vector3)), new List<string> { nameof(Vector3.y) });
+            const string nodeName = "Node0";
 
             {
-                var iDecl = GraphModel.CreateGraphVariableDeclaration("myInt", TypeHandle.Int, true);
-                var myInt = GraphModel.CreateVariableNode(iDecl, Vector2.up);
+                var iDecl = GraphModel.CreateGraphVariableDeclaration(TypeHandle.Int, "myInt", ModifierFlags.None, true);
+                GraphModel.CreateVariableNode(iDecl, Vector2.up);
 
-                var vDecl = GraphModel.CreateGraphVariableDeclaration("myVec", typeof(Vector3).GenerateTypeHandle(Stencil), true);
+                var vDecl = GraphModel.CreateGraphVariableDeclaration(typeof(Vector3).GenerateTypeHandle(), "myVec", ModifierFlags.None, true);
                 var myVec = GraphModel.CreateVariableNode(vDecl, Vector2.left);
-                var getProperty = GraphModel.CreateGetPropertyGroupNode(Vector2.zero);
-                GraphModel.CreateEdge(getProperty.InstancePort, myVec.OutputPort);
+                var getProperty = GraphModel.CreateNode<Type0FakeNodeModel>(nodeName, Vector2.zero);
+                GraphModel.CreateEdge(getProperty.Input0, myVec.OutputPort);
 
-                getProperty.AddMember(memberX);
-                getProperty.AddMember(memberY);
+                var log1 = GraphModel.CreateNode<Type0FakeNodeModel>("log1");
+                var log2 = GraphModel.CreateNode<Type0FakeNodeModel>("log2");
 
-                var stack = GraphModel.CreateStack("myStack", Vector2.right);
-                var log1 = stack.CreateStackedNode<LogNodeModel>("log1");
-                var log2 = stack.CreateStackedNode<LogNodeModel>("log2");
-
-                GraphModel.CreateEdge(log1.InputPort, getProperty.OutputsById[memberX.GetId()]);
-                GraphModel.CreateEdge(log2.InputPort, getProperty.OutputsById[memberY.GetId()]);
+                GraphModel.CreateEdge(log1.Input0, getProperty.Output0);
+                GraphModel.CreateEdge(log2.Input0, getProperty.Output1);
             }
 
-            TestPrereqActionPostreq(mode,
+            TestPrereqCommandPostreq(mode,
                 () =>
                 {
-                    var logStack = GetAllStacks().Single();
-                    var log1 = logStack.NodeModels[0] as LogNodeModel;
-                    var log2 = logStack.NodeModels[1] as LogNodeModel;
-                    var myInt = GetAllNodes().OfType<VariableNodeModel>().Single(n => n.DataType == TypeHandle.Int);
-                    var getProperty = GetAllNodes().OfType<GetPropertyGroupNodeModel>().Single();
-                    var portX = getProperty.OutputsById[memberX.GetId()];
-                    var portY = getProperty.OutputsById[memberY.GetId()];
+                    var log1 = GraphModel.NodeModels[3] as Type0FakeNodeModel;
+                    var log2 = GraphModel.NodeModels[4] as Type0FakeNodeModel;
+                    var myInt = GetAllNodes().OfType<VariableNodeModel>().Single(n => n.GetDataType() == TypeHandle.Int);
+                    var getProperty = GetAllNodes().OfType<Type0FakeNodeModel>().First(n => n.Title == nodeName);
 
-                    Assert.That(myInt.OutputPort.Connected, Is.False);
-                    Assert.That(log1.InputPort, Is.ConnectedTo(portX));
-                    Assert.That(log2.InputPort, Is.ConnectedTo(portY));
-                    return new CreateEdgeAction(log1.InputPort, myInt.OutputPort, new List<IEdgeModel> { GraphModel.GetEdgesConnections(log1.InputPort).Single() });
+                    Assert.That(myInt.OutputPort.IsConnected, Is.False);
+                    Assert.That(log1?.Input0, Is.ConnectedTo(getProperty.Output0));
+                    Assert.That(log2?.Input0, Is.ConnectedTo(getProperty.Output1));
+                    return new CreateEdgeCommand(log1?.Input0, myInt.OutputPort, new List<IEdgeModel> { GraphModel.GetEdgesConnections(log1?.Input0).Single() });
                 },
                 () =>
                 {
-                    var logStack = GetAllStacks().Single();
-                    var log1 = logStack.NodeModels[0] as LogNodeModel;
-                    var log2 = logStack.NodeModels[1] as LogNodeModel;
-                    var myInt = GetAllNodes().OfType<VariableNodeModel>().Single(n => n.DataType == TypeHandle.Int);
-                    var getProperty = GetAllNodes().OfType<GetPropertyGroupNodeModel>().Single();
-                    var portX = getProperty.OutputsById[memberX.GetId()];
-                    var portY = getProperty.OutputsById[memberY.GetId()];
+                    var log1 = GraphModel.NodeModels[3] as Type0FakeNodeModel;
+                    var log2 = GraphModel.NodeModels[4] as Type0FakeNodeModel;
+                    var myInt = GetAllNodes().OfType<VariableNodeModel>().Single(n => n.GetDataType() == TypeHandle.Int);
+                    var getProperty = GetAllNodes().OfType<Type0FakeNodeModel>().First(n => n.Title == nodeName);
 
-                    Assert.That(myInt.OutputPort.Connected, Is.True);
-                    Assert.That(portX.Connected, Is.False);
-                    Assert.That(log1.InputPort, Is.ConnectedTo(myInt.OutputPort));
-                    Assert.That(log2.InputPort, Is.ConnectedTo(portY));
+                    Assert.That(myInt.OutputPort.IsConnected, Is.True);
+                    Assert.That(getProperty.Output0.IsConnected, Is.False);
+                    Assert.That(log1?.Input0, Is.ConnectedTo(myInt.OutputPort));
+                    Assert.That(log2?.Input0, Is.ConnectedTo(getProperty.Output1));
                 });
         }
     }

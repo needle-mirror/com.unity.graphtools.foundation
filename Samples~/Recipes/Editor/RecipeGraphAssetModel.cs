@@ -28,14 +28,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Recipes
         public static bool OpenGraphAsset(int instanceId, int line)
         {
             var obj = EditorUtility.InstanceIDToObject(instanceId);
-            if (obj is RecipeGraphAssetModel)
+            if (obj is RecipeGraphAssetModel graphAssetModel)
             {
-                string path = AssetDatabase.GetAssetPath(instanceId);
-                var asset = AssetDatabase.LoadAssetAtPath<RecipeGraphAssetModel>(path);
-                if (asset == null)
-                    return false;
-
                 var window = GraphViewEditorWindow.FindOrCreateGraphWindow<RecipeGraphWindow>();
+                window.SetCurrentSelection(graphAssetModel, GraphViewEditorWindow.OpenMode.OpenAndFocus);
                 return window != null;
             }
 

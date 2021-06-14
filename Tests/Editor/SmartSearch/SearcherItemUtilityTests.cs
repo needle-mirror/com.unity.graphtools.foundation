@@ -2,9 +2,8 @@ using System;
 using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEditor.Searcher;
-using UnityEditor.VisualScripting.Editor.SmartSearch;
 
-namespace UnityEditor.VisualScriptingTests.SmartSearch
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.SmartSearch
 {
     sealed class SearcherItemUtilityTests
     {
@@ -15,7 +14,7 @@ namespace UnityEditor.VisualScriptingTests.SmartSearch
         public void TestGetItemFromPath_OneLevel(string path)
         {
             var items = new List<SearcherItem>();
-            var foo = SearcherItemUtility.GetItemFromPath(items, path);
+            var foo = items.GetItemFromPath(path);
 
             Assert.NotNull(foo);
             Assert.AreEqual(foo.Name, "foo");
@@ -28,7 +27,7 @@ namespace UnityEditor.VisualScriptingTests.SmartSearch
         public void TestGetItemFromPath_DeepLevel_NotCreated(string path)
         {
             var items = new List<SearcherItem>();
-            var child = SearcherItemUtility.GetItemFromPath(items, path);
+            var child = items.GetItemFromPath(path);
 
             Assert.NotNull(child);
 
@@ -62,7 +61,7 @@ namespace UnityEditor.VisualScriptingTests.SmartSearch
                     })
             };
 
-            var bar = SearcherItemUtility.GetItemFromPath(items, path);
+            var bar = items.GetItemFromPath(path);
 
             Assert.AreEqual(1, items.Count);
             Assert.AreEqual("foo", items[0].Name);

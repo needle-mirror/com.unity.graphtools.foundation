@@ -1,6 +1,6 @@
 using UnityEngine.Scripting.APIUpdating;
 
-namespace UnityEditor.VisualScripting.Model.Stencils
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
 {
     static class MovedFromAttributeExtensions
     {

@@ -1,16 +1,12 @@
 using System;
-using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
-using UnityEditor.EditorCommon.Extensions;
-using UnityEditor.VisualScripting.Editor.SmartSearch;
-using UnityEditor.VisualScripting.Model.Compilation;
-using UnityEditor.VisualScripting.Model.Stencils;
+using UnityEditor.GraphToolsFoundation.Overdrive.Bridge;
 using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.VisualScriptingTests.UI
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
 {
     [SetUpFixture]
     // Since GraphView tests rely on some global state related to UIElements mouse capture
@@ -23,16 +19,12 @@ namespace UnityEditor.VisualScriptingTests.UI
         {
             SetDisableInputEventsOnAllWindows(true);
             MouseCaptureController.ReleaseMouse();
-
-            DataWatchServiceDisableThrottling(true);
         }
 
         [OneTimeTearDown]
         public void RunAfterAnyTests()
         {
             SetDisableInputEventsOnAllWindows(false);
-
-            DataWatchServiceDisableThrottling(false);
         }
 
         static void SetDisableInputEventsOnAllWindows(bool value)
@@ -55,33 +47,6 @@ namespace UnityEditor.VisualScriptingTests.UI
             catch
             {
                 Debug.LogWarning("Unable to disableInputEvents");
-            }
-        }
-
-        class TestStencil : Stencil
-        {
-            public override ISearcherDatabaseProvider GetSearcherDatabaseProvider()
-            {
-                return new ClassSearcherDatabaseProvider(this);
-            }
-
-            public override IBuilder Builder => null;
-        }
-
-        static void DataWatchServiceDisableThrottling(bool value)
-        {
-            try
-            {
-                var stencil = new TestStencil();
-                var dataWatchServiceType = stencil.GetAssemblies()
-                    .SelectMany(a => a.GetTypesSafe(), (domainAssembly, assemblyType) => assemblyType)
-                    .First(x => x.Name == "DataWatchService");
-                var sharedInstance = dataWatchServiceType.GetProperty("sharedInstance", BindingFlags.NonPublic | BindingFlags.Static)?.GetValue(null);
-                dataWatchServiceType.GetProperty("disableThrottling", BindingFlags.NonPublic | BindingFlags.Static)?.SetValue(sharedInstance, value);
-            }
-            catch
-            {
-                Debug.LogWarning("DataWatchServiceDisableThrottling failed");
             }
         }
     }

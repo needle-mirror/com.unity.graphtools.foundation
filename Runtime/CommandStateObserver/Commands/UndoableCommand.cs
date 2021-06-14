@@ -12,7 +12,4 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
         /// </summary>
         public string UndoString { get; set; }
     }
-
-    [Obsolete("Use UndoableCommand. Added in 0.9+. (UnityUpgradable) -> UndoableCommand")]
-    public abstract class Command : UndoableCommand { }
 }

@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace UnityEditor.EditorCommon
+namespace UnityEditor.GraphToolsFoundation.Overdrive
 {
     [Serializable]
     class LockTracker
@@ -35,21 +35,6 @@ namespace UnityEditor.EditorCommon
                 menu.AddDisabledItem(k_LockMenuGUIContent);
             else
                 menu.AddItem(k_LockMenuGUIContent, IsLocked, FlipLocked);
-        }
-
-        public void ShowButton(Rect position, bool disabled = false)
-        {
-            using (new EditorGUI.DisabledScope(disabled))
-            {
-                EditorGUI.BeginChangeCheck();
-                bool newLock = GUI.Toggle(position, IsLocked, GUIContent.none, "IN LockButton");
-
-                if (EditorGUI.EndChangeCheck())
-                {
-                    if (newLock != IsLocked)
-                        FlipLocked();
-                }
-            }
         }
 
         void FlipLocked()

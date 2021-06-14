@@ -1,28 +1,37 @@
 using System;
 using System.Collections.Generic;
-using JetBrains.Annotations;
 using NUnit.Framework;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.Searcher;
-using UnityEditor.VisualScripting.Editor.SmartSearch;
-using UnityEditor.VisualScripting.Model;
-using UnityEditor.VisualScripting.Model.Stencils;
-using UnityEditor.VisualScripting.Model.Compilation;
 using UnityEngine;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 
-namespace UnityEditor.VisualScriptingTests.SmartSearch
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.SmartSearch
 {
     sealed class ClassForTest { }
     sealed class TypeSearcherDatabaseTests : BaseFixture
     {
         sealed class TestStencil : Stencil
         {
+            public static string toolName = "GTF SmartSearch Tests";
+
+            public override string ToolName => toolName;
+
+            public override Type GetConstantNodeValueType(TypeHandle typeHandle)
+            {
+                return TypeToConstantMapper.GetConstantNodeType(typeHandle);
+            }
+
             public override ISearcherDatabaseProvider GetSearcherDatabaseProvider()
             {
                 return new ClassSearcherDatabaseProvider(this);
             }
 
-            [CanBeNull]
-            public override IBuilder Builder => null;
+            /// <inheritdoc />
+            public override IBlackboardGraphModel CreateBlackboardGraphModel(IGraphAssetModel graphAssetModel)
+            {
+                throw new NotImplementedException();
+            }
         }
 
         Stencil m_Stencil;
@@ -36,59 +45,36 @@ namespace UnityEditor.VisualScriptingTests.SmartSearch
         }
 
         [Test]
-        public void TestEnums()
-        {
-            var source = new List<ITypeMetadata>
-            {
-                m_Stencil.GenerateTypeHandle(typeof(string)).GetMetadata(m_Stencil),
-                m_Stencil.GenerateTypeHandle(typeof(MemberFlags)).GetMetadata(m_Stencil)
-            };
-
-            var db = new TypeSearcherDatabase(m_Stencil, source).AddEnums().Build();
-            ValidateHierarchy(db.Search("", out _), new[]
-            {
-                new SearcherItem("Enumerations", "", new List<SearcherItem>
-                {
-                    new TypeSearcherItem(
-                        typeof(MemberFlags).GenerateTypeHandle(m_Stencil),
-                        typeof(MemberFlags).FriendlyName()
-                    )
-                })
-            });
-        }
-
-        [Test]
         public void TestClasses()
         {
-            var source = new List<ITypeMetadata>
-            {
-                m_Stencil.GenerateTypeHandle(typeof(string)).GetMetadata(m_Stencil),
-                m_Stencil.GenerateTypeHandle(typeof(ClassForTest)).GetMetadata(m_Stencil),
-                m_Stencil.GenerateTypeHandle(typeof(MemberFlags)).GetMetadata(m_Stencil)
-            };
-
-            var db = new TypeSearcherDatabase(m_Stencil, source).AddClasses().Build();
-            ValidateHierarchy(db.Search("", out _), new[]
+            var db = new[] { typeof(string), typeof(ClassForTest) }.ToSearcherDatabase();
+            ValidateHierarchy(db.Search(""), new[]
             {
                 new SearcherItem("Classes", "", new List<SearcherItem>
                 {
                     new SearcherItem("System", "", new List<SearcherItem>
                     {
                         new TypeSearcherItem(
-                            typeof(string).GenerateTypeHandle(m_Stencil),
+                            typeof(string).GenerateTypeHandle(),
                             typeof(string).FriendlyName()
                         )
                     }),
                     new SearcherItem("UnityEditor", "", new List<SearcherItem>
                     {
-                        new SearcherItem("VisualScriptingTests", "", new List<SearcherItem>
+                        new SearcherItem("GraphToolsFoundation", "", new List<SearcherItem>
                         {
-                            new SearcherItem("SmartSearch", "", new List<SearcherItem>
+                            new SearcherItem("Overdrive", "", new List<SearcherItem>
                             {
-                                new TypeSearcherItem(
-                                    typeof(ClassForTest).GenerateTypeHandle(m_Stencil),
-                                    typeof(ClassForTest).FriendlyName()
-                                )
+                                new SearcherItem("Tests", "", new List<SearcherItem>
+                                {
+                                    new SearcherItem("SmartSearch", "", new List<SearcherItem>
+                                    {
+                                        new TypeSearcherItem(
+                                            typeof(ClassForTest).GenerateTypeHandle(),
+                                            typeof(ClassForTest).FriendlyName()
+                                        )
+                                    })
+                                })
                             })
                         })
                     })

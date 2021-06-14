@@ -39,7 +39,7 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
         /// </summary>
         /// <param name="component">The state component.</param>
         /// <returns>The current version of the state component.</returns>
-        public static StateComponentVersion GetStateComponentVersion(this IStateComponent component)
+        internal static StateComponentVersion GetStateComponentVersion(this IStateComponent component)
         {
             return new StateComponentVersion
             {

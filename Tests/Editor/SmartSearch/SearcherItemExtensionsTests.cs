@@ -2,9 +2,8 @@ using System;
 using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEditor.Searcher;
-using UnityEditor.VisualScripting.Editor.SmartSearch;
 
-namespace UnityEditor.VisualScriptingTests.SmartSearch
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.SmartSearch
 {
     sealed class SearcherItemExtensionsTests
     {

@@ -17,9 +17,9 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
         Hash128 m_AssetViewHashBase;
 
         /// <summary>
-        /// Initializes a new instance of the PersitedEditorState class.
+        /// Initializes a new instance of the <see cref="PersistedState" /> class.
         /// </summary>
-        public PersistedState()
+        internal PersistedState()
         {
             m_ViewHashBase = new Hash128();
         }
@@ -148,7 +148,7 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
         /// <summary>
         /// Removes all state components associated with a view.
         /// </summary>
-        /// <param name="viewGUID"></param>
+        /// <param name="viewGUID">The GUID of the view for which to remove associated components.</param>
         public static void RemoveViewState(Hash128 viewGUID)
         {
             if (k_ViewState.TryGetValue(viewGUID, out var hashList))
@@ -165,7 +165,7 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
         /// <summary>
         /// Writes all state components to disk.
         /// </summary>
-        public static void Flush()
+        internal static void Flush()
         {
             k_StateCache.Flush();
         }

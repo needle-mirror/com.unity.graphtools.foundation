@@ -8,7 +8,7 @@ using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.VisualScriptingTests.UI
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
 {
     [PublicAPI]
     class TestEventHelpers

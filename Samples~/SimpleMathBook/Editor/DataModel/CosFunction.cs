@@ -6,13 +6,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook
     [Serializable]
     public class CosFunction : MathFunction
     {
+        public override string Title
+        {
+            get => "Cos";
+            set { }
+        }
+
         public CosFunction()
         {
-            Title = "Cos";
-
             if (m_ParameterNames.Length == 0)
             {
-                m_ParameterNames = new string[] { "f" };
+                m_ParameterNames = new[] { "f" };
             }
         }
 

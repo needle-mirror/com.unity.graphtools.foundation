@@ -6,13 +6,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook
     [Serializable]
     public class SinFunction : MathFunction
     {
+        public override string Title
+        {
+            get => "Sin";
+            set { }
+        }
+
         public SinFunction()
         {
-            Title = "Sin";
-
             if (m_ParameterNames.Length == 0)
             {
-                m_ParameterNames = new string[] { "f" };
+                m_ParameterNames = new[] { "f" };
             }
         }
 

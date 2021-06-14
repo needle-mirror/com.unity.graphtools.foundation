@@ -71,10 +71,10 @@ trim_trailing_whitespace = true
 insert_final_newline = false
 
 [*.asmdef]
-scrape_api = false
-
-[**/Overdrive/**.asmdef]
 scrape_api = true
+
+[**/Samples/**.asmdef]
+scrape_api = false
 
 [**/Tests/**.asmdef]
 scrape_api = false

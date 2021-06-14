@@ -6,13 +6,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook
     [Serializable]
     public class LogFunction : MathFunction
     {
+        public override string Title
+        {
+            get => "Log";
+            set { }
+        }
+
         public LogFunction()
         {
-            Title = "Log";
-
             if (m_ParameterNames.Length == 0)
             {
-                m_ParameterNames = new string[] { "f", "p" };
+                m_ParameterNames = new[] { "f", "p" };
             }
         }
 

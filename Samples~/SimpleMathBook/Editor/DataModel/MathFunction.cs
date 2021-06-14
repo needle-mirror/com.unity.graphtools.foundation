@@ -11,13 +11,9 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook
         [SerializeField]
         protected string[] m_ParameterNames = new string[0];
 
-        public string[] parameterNames { get { return m_ParameterNames; } }
-
-        public int parameterCount { get { return m_ParameterNames.Length; } }
-
         public float GetParameterValue(int index)
         {
-            IPortModel port = this.GetInputPorts().Skip(index).FirstOrDefault();
+            var port = this.GetInputPorts().Skip(index).FirstOrDefault();
 
             if (port == null)
             {

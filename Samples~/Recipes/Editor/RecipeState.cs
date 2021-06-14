@@ -8,7 +8,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Recipes
     {
         /// <inheritdoc />
         public RecipeState(Hash128 graphViewEditorWindowGUID, Preferences preferences)
-            : base(graphViewEditorWindowGUID, preferences) { }
+            : base(graphViewEditorWindowGUID, preferences)
+        {
+            this.SetInitialSearcherSize(SearcherService.Usage.k_CreateNode, new Vector2(375, 300), 2.0f);
+        }
 
         /// <inheritdoc />
         public override void RegisterCommandHandlers(Dispatcher dispatcher)

@@ -63,7 +63,7 @@ public class RecipeGraphView : GraphView
 
 public partial class RecipeGraphWindow : GraphViewEditorWindow
 {
-    [MenuItem("GTF Samples/Recipe Editor", false)]
+    [MenuItem("GTF/Samples/Recipe Editor", false)]
     public static void ShowRecipeGraphWindow()
     {
         FindOrCreateGraphWindow<RecipeGraphWindow>();

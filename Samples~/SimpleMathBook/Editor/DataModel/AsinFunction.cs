@@ -6,13 +6,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook
     [Serializable]
     public class AsinFunction : MathFunction
     {
+        public override string Title
+        {
+            get => "Asin";
+            set { }
+        }
+
         public AsinFunction()
         {
-            Title = "Asin";
-
             if (m_ParameterNames.Length == 0)
             {
-                m_ParameterNames = new string[] { "f" };
+                m_ParameterNames = new[] { "f" };
             }
         }
 

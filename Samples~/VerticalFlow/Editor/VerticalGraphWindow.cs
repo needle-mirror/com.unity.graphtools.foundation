@@ -11,7 +11,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Vertical
             ShortcutHelper.RegisterDefaultShortcuts<VerticalGraphWindow>(VerticalStencil.toolName);
         }
 
-        [MenuItem("GTF Samples/Vertical Flow", false)]
+        [MenuItem("GTF/Samples/Vertical Flow", false)]
         public static void ShowRecipeGraphWindow()
         {
             FindOrCreateGraphWindow<VerticalGraphWindow>();
@@ -36,7 +36,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Vertical
         }
 
         /// <inheritdoc />
-        protected override bool CanHandleAssetType(GraphAssetModel asset)
+        protected override bool CanHandleAssetType(IGraphAssetModel asset)
         {
             return asset is VerticalGraphAssetModel;
         }

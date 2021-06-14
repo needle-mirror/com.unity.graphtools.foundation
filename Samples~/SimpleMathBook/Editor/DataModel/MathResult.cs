@@ -1,6 +1,5 @@
 using System;
 using System.Linq;
-using UnityEditor.GraphToolsFoundation.Overdrive;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook
@@ -8,16 +7,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook
     [Serializable]
     public class MathResult : NodeModel
     {
-        public MathResult()
+        public override string Title
         {
-            Title = "MathResult";
+            get => "Result";
+            set { }
         }
 
         public float Evaluate()
         {
             var port = this.GetInputPorts().FirstOrDefault();
 
-            return this.GetValue(port);
+            return port.GetValue();
         }
 
         public IPortModel DataIn0 { get; private set; }

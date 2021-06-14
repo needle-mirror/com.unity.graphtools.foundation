@@ -1,12 +1,11 @@
 using System;
 using NUnit.Framework;
-using UnityEditor.VisualScripting.Model;
 using UnityEngine;
-using UnityEngine.VisualScripting;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 
 // ReSharper disable AccessToStaticMemberViaDerivedType
 
-namespace UnityEditor.VisualScriptingTests.Misc
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Misc
 {
     [TestFixture]
     class TypeExtensionsTests
@@ -22,15 +21,6 @@ namespace UnityEditor.VisualScriptingTests.Misc
         public void FriendlyNameTest(Type type, string expected)
         {
             Assert.That(type.FriendlyName(), Is.EqualTo(expected));
-        }
-
-        [TestCase("Asd Qwe_Asd-rr", "Asd_Qwe_Asd_rr")]
-        [TestCase("asd%-$yy", "asd___yy")]
-        [TestCase("uu%yy", "uu_yy")]
-        [TestCase("asd--qwe_", "asd__qwe_")]
-        public void CodifyNameTest(string actual, string expected)
-        {
-            Assert.That(TypeSystem.CodifyString(actual), Is.EqualTo(expected));
         }
 
         [TestCase(typeof(byte), true)]
@@ -49,7 +39,7 @@ namespace UnityEditor.VisualScriptingTests.Misc
         [TestCase(typeof(object), false)]
         public void IsNumericTest(Type type, bool result)
         {
-            Assert.That(type.IsNumeric, Is.EqualTo(result));
+            Assert.That(type.IsNumericInternal, Is.EqualTo(result));
         }
 
         [TestCase(typeof(int), typeof(float), true)]
@@ -58,7 +48,7 @@ namespace UnityEditor.VisualScriptingTests.Misc
         [TestCase(typeof(int), typeof(Vector2), false)]
         public void HasNumericConversionTest(Type a, Type b, bool result)
         {
-            Assert.That(a.HasNumericConversionTo(b), Is.EqualTo(result));
+            Assert.That(a.HasNumericConversionToInternal(b), Is.EqualTo(result));
         }
     }
 }

@@ -5,11 +5,49 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.11.0-preview] - 2021-06-14
+
+### Added
+- New extensible node inspector. See `ModelInspectorView`, `FieldsInspector`, `ModelPropertyField<T>` and `ICustomPropertyField`.
+
+### Removed
+- Removed dependencies on `com.unity.properties` and `com.unity.properties.ui` packages.
+- `TypeSearcherDatabase.FromItems`, use `new SearcherDatabase(items)` instead.
+
+### Changed
+- MathExpressionParser can parse mathematical expressions.
+- Math Book sample's MathOperator nodes now have variable input ports.
+- All asmdef in the package have their `autoReferenced` properties set to `false`.
+- `DeclarationModel.Rename` made virtual.
+- `TypeSerializer` renamed to `TypeHandleHelpers`.
+- Capabilities are no longer serialized in graph element models.
+- The searcher was changed and its code integrated to the GTF codebase.
+- `IStencil.GetSearcherRect` was replaced by `GraphToolStateExtensionsForSearcherSize.GetSearcherSize`.
+- `IStencil.SetSearcherSize` was replaced by `GraphToolStateExtensionsForSearcherSize.SetSearcherSize`.
+- `UpdateModelPropertyValueCommand` was replaced by `SetModelFieldCommand`.
+- `ChangeElementColorCommand` now derives from `ModelCommand<TModel, TValue>`
+- Many uses of `GraphView` were replaced by uses of `IModelView`.
+- `DefaultFactoryExtensions` was renamed `GraphViewFactoryExtensions`.
+- Directory `Editor/GraphElements/Elements` was renamed to `Editor/GraphElements/ModelUI`.
+- `GraphView IModelUI.GraphView` changed to `IModelView View`.
+- `IModelUI.AddToGraphView` renamed to `AddToView`.
+- `IModelUI.RemoveFromGraphView` renamed to `RemoveFromView`.
+- `IPropertyVisitorNodeTarget` renamed to `IHasInspectorSurrogate`
+- `OpenedGraph.FileId` renamed to `OpenedGraph.AssetLocalId`.
+- `SearcherItemUtility.GetItemFromPath` is now an extension method in `SearcherItemCollectionExtensions`
+- `SearcherGraphView` made internal.
+- `TypeSearcherDatabase` renamed to `TypeSearcherExtensions`
+
+### Fixed
+
+- Fixed node inspector and some elements' appearance in light skin.
+
+
 ## [0.10.1-preview] - 2021-05-14
 
 ### Changed
 
-- Auto itemization of constants and variables is no longer on by default. Use the respectively the `BoolPref.AutoItemizeConstants` and `BoolPref.AutoItemizeVariables` preferences to control the behavior. 
+- Auto itemization of constants and variables is no longer on by default. Use the respectively the `BoolPref.AutoItemizeConstants` and `BoolPref.AutoItemizeVariables` preferences to control the behavior.
 
 ### Fixed
 
@@ -29,6 +67,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - The version of `GraphModel.CreateItemizedNode` that took a `GraphToolState` as a parameter; Use the other version instead.
 - `SerializableGUID.FromParts`. Use the appropriate `SerializableGUID` constructor instead.
 - The Resources folder.
+- `ToggleAllPortOrientationCommand`
+- `ToggleEdgePortOrientationCommand`
+- `InlineValueEditor.CreateEditorForNodeModel`, use `InlineValueEditor.CreateEditorForConstant` instead.
+- `Port.OnDropModel`
+- `Port.OnDropVariableDeclarationModel`
+- `IHasMainExecutionInputPort`
+- `IHasMainExecutionOutputPort`
+- `IHasMainInputPort`
+- `IHasMainOutputPort`
+- `IMigratePorts`
 
 ### Changed
 
@@ -67,6 +115,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - By default, the "Build All" and "Live Tracing" buttons will not show up for graph tools.
   You will need to provide your own ToolbarProvider to enable them.
 - When opening an graph window on its blank page, only the "New Graph", "Save All" (both disabled) and "Option" (enabled) buttons will now show in the toolbar.
+- All asmdef in the package have their `autoReferenced` properties set to `false`.
+- `DeclarationModel.Rename` made virtual.
+- `TypeSerializer` renamed to `TypeHandleHelpers`.
+- `SetNodeEnabledStateCommand` renamed to `ChangeNodeStateCommand`.
+- `SetNodeCollapsedCommand` renamed to `CollapseNodeCommand`.
+- `UpdateConstantNodeValueCommand` renamed to `UpdateConstantValueCommand`.
+- `SetPlacematCollapsedCommand` renamed to `CollapsePlacematCommand`.
+- `ToggleLockConstantNodeCommand` renamed to `LockConstantNodeCommand`.
+- `UpdateExposedCommand` renamed to `ExposeVariableCommand`.
+- `ExpandOrCollapseBlackboardRowCommand` renamed to `CollapseVariableInBlackboard`.
+- `ToggleTracingCommand` renamed to `ActivateTracingCommand`.
+- `DropTarget.CanAcceptSelectionDrop` renamed to `CanAcceptDrop`
+- `GraphTraversal` is not public anymore.
+- `ICloneableExtensions` was renamed to `CloneHelpers`.
+- `IEdgeModel.TryMigratePorts` was replaced by `IEdgeModel.AddPlaceHolderPorts`
+- `Direction` renamed to `PortDirection`
+- `Orientation` renamed to `PortOrientation`
 
 ### Fixed
 

@@ -4,13 +4,13 @@ using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using NUnit.Framework.Constraints;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.Searcher;
-using UnityEditor.VisualScripting.GraphViewModel;
-using UnityEditor.VisualScripting.Model;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 
-namespace UnityEditor.VisualScriptingTests
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
 {
-    sealed class TypeHandleCollectionEquivalentConstraint : CollectionItemsEqualConstraint
+    public sealed class TypeHandleCollectionEquivalentConstraint : CollectionItemsEqualConstraint
     {
         readonly List<ITypeMetadata> m_Expected;
 
@@ -57,7 +57,7 @@ namespace UnityEditor.VisualScriptingTests
         }
     }
 
-    sealed class SearcherItemCollectionEquivalentConstraint : CollectionItemsEqualConstraint
+    public sealed class SearcherItemCollectionEquivalentConstraint : CollectionItemsEqualConstraint
     {
         readonly List<SearcherItem> m_Expected;
 
@@ -111,52 +111,14 @@ namespace UnityEditor.VisualScriptingTests
         }
     }
 
-    class ConnectedToStackConstraint : Constraint
+    public class ConnectedToConstraint : Constraint
     {
-        readonly StackBaseModel m_ExpectedStack;
-
-        public ConnectedToStackConstraint(IStackModel expected)
-            : base(expected)
-        {
-            m_ExpectedStack = (StackBaseModel)expected;
-        }
-
-        public override ConstraintResult ApplyTo(object actual)
-        {
-            if (m_ExpectedStack == null)
-            {
-                Description = "Expected is not a valid stack.";
-                return new ConstraintResult(this, actual, false);
-            }
-
-            var isConnected = false;
-            var actualStack = (StackBaseModel)actual;
-
-            if (actualStack == null)
-            {
-                Description = "Actual is not a valid stack.";
-                return new ConstraintResult(this, actual, false);
-            }
-
-            var graphModel = m_ExpectedStack.GraphModel;
-            isConnected |= graphModel.EdgeModels.Any(x => Equals(x.InputPortModel.NodeModel.Guid, actualStack.Guid) && Equals(x.OutputPortModel.NodeModel.Guid, m_ExpectedStack.Guid));
-            isConnected |= graphModel.EdgeModels.Any(x => Equals(x.InputPortModel.NodeModel.Guid, m_ExpectedStack.Guid) && Equals(x.OutputPortModel.NodeModel.Guid, actualStack.Guid));
-
-            if (!isConnected)
-                Description = $"Actual stack [{actualStack.Title}] is not connected to expected stack [{m_ExpectedStack.Title}].";
-
-            return new ConstraintResult(this, actual, isConnected);
-        }
-    }
-
-    class ConnectedToConstraint : Constraint
-    {
-        readonly PortModel m_ExpectedPort;
+        readonly IPortModel m_ExpectedPort;
 
         public ConnectedToConstraint(IPortModel expected)
             : base(expected)
         {
-            m_ExpectedPort = (PortModel)expected;
+            m_ExpectedPort = expected;
         }
 
         public override ConstraintResult ApplyTo(object actual)
@@ -176,7 +138,7 @@ namespace UnityEditor.VisualScriptingTests
             }
 
             var portModels = m_ExpectedPort.GraphModel.GetConnections(actualPort).ToList();
-            var isConnected = portModels.Any(x => PortModel.Equivalent(x, m_ExpectedPort));
+            var isConnected = portModels.Any(x => x.Equivalent(m_ExpectedPort));
 
             if (!isConnected)
                 Description = $"Actual port [{actualPort}] is not connected to expected port [{m_ExpectedPort}].";
@@ -187,108 +149,13 @@ namespace UnityEditor.VisualScriptingTests
         }
     }
 
-    class InsideStackConstraint : Constraint
-    {
-        readonly StackBaseModel m_ExpectedStack;
-
-        public InsideStackConstraint(IStackModel expected)
-            : base(expected)
-        {
-            m_ExpectedStack = (StackBaseModel)expected;
-        }
-
-        public override ConstraintResult ApplyTo(object actual)
-        {
-            if (m_ExpectedStack == null)
-            {
-                Description = "Expected is not a valid stack.";
-                return new ConstraintResult(this, actual, false);
-            }
-
-            var actualNode = (NodeModel)actual;
-
-            if (actualNode == null)
-            {
-                Description = "Actual is not a valid node.";
-                return new ConstraintResult(this, actual, false);
-            }
-
-            if (m_ExpectedStack.NodeModels.Any(n => n.Guid == actualNode.Guid))
-            {
-                return new ConstraintResult(this, actual, true);
-            }
-
-            Description = $"Actual node [{actualNode.Title}] is not inside to expected stack [{m_ExpectedStack.Title}].";
-            return new ConstraintResult(this, actual, false);
-        }
-    }
-
-    class IndexInStackConstraint : Constraint
-    {
-        readonly StackBaseModel m_ExpectedStack;
-        readonly int m_ExpectedIndex;
-
-        public IndexInStackConstraint(int expectedIndex, IStackModel expectedStack)
-            : base(expectedIndex, expectedStack)
-        {
-            m_ExpectedIndex = expectedIndex;
-            m_ExpectedStack = (StackBaseModel)expectedStack;
-        }
-
-        public override ConstraintResult ApplyTo(object actual)
-        {
-            if (m_ExpectedStack == null)
-            {
-                Description = "Expected is not a valid stack.";
-                return new ConstraintResult(this, actual, false);
-            }
-
-            var actualNode = (NodeModel)actual;
-
-            if (actualNode == null)
-            {
-                Description = "Actual is not a valid node.";
-                return new ConstraintResult(this, actual, false);
-            }
-
-            if ((NodeModel)m_ExpectedStack.NodeModels.ElementAt(m_ExpectedIndex) == actualNode)
-            {
-                return new ConstraintResult(this, actual, true);
-            }
-
-            Description = $"Actual node [{actualNode.Title}] is not at index [{m_ExpectedIndex}] in expected stack [{m_ExpectedStack.Title}].";
-            return new ConstraintResult(this, actual, false);
-        }
-    }
-
     [PublicAPI]
-    static class CustomConstraintExtensions
+    public static class CustomConstraintExtensions
     {
         public static SearcherItemCollectionEquivalentConstraint SearcherItemCollectionEquivalent(
             this ConstraintExpression expression, IEnumerable<SearcherItem> expected)
         {
             var constraint = new SearcherItemCollectionEquivalentConstraint(expected);
-            expression.Append(constraint);
-            return constraint;
-        }
-
-        public static ConnectedToStackConstraint ConnectedToStack(this ConstraintExpression expression, IStackModel expected)
-        {
-            var constraint = new ConnectedToStackConstraint(expected);
-            expression.Append(constraint);
-            return constraint;
-        }
-
-        public static InsideStackConstraint InsideStack(this ConstraintExpression expression, IStackModel expected)
-        {
-            var constraint = new InsideStackConstraint(expected);
-            expression.Append(constraint);
-            return constraint;
-        }
-
-        public static IndexInStackConstraint IndexInStack(this ConstraintExpression expression, int expectedIndex, IStackModel expectedStack)
-        {
-            var constraint = new IndexInStackConstraint(expectedIndex, expectedStack);
             expression.Append(constraint);
             return constraint;
         }
@@ -302,7 +169,7 @@ namespace UnityEditor.VisualScriptingTests
     }
 
     [PublicAPI]
-    class Is : NUnit.Framework.Is
+    public class Is : NUnit.Framework.Is
     {
         public static TypeHandleCollectionEquivalentConstraint TypeHandleCollectionEquivalent(
             IEnumerable<ITypeMetadata> expected)
@@ -316,28 +183,9 @@ namespace UnityEditor.VisualScriptingTests
             return new SearcherItemCollectionEquivalentConstraint(expected);
         }
 
-        public static ConnectedToStackConstraint ConnectedToStack(IStackModel expected)
-        {
-            return new ConnectedToStackConstraint(expected);
-        }
-
         public static ConnectedToConstraint ConnectedTo(IPortModel expected)
         {
             return new ConnectedToConstraint(expected);
-        }
-
-        public static InsideStackConstraint InsideStack(IStackModel expected)
-        {
-            return new InsideStackConstraint(expected);
-        }
-    }
-
-    [PublicAPI]
-    class Has : NUnit.Framework.Has
-    {
-        public static IndexInStackConstraint IndexInStack(int expectedIndex, IStackModel expectedStack)
-        {
-            return new IndexInStackConstraint(expectedIndex, expectedStack);
         }
     }
 }

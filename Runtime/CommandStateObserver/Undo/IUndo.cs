@@ -15,7 +15,7 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
         /// <summary>
         /// Sets the current undo group name. See <see cref="UnityEditor.Undo.SetCurrentGroupName"/>.
         /// </summary>
-        /// <param name="name"></param>
+        /// <param name="name">The group name.</param>
         public void SetCurrentGroupName(string name);
 
         /// <summary>

@@ -6,13 +6,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook
     [Serializable]
     public class ClampFunction : MathFunction
     {
+        public override string Title
+        {
+            get => "Clamp";
+            set { }
+        }
+
         public ClampFunction()
         {
-            Title = "Clamp";
-
             if (m_ParameterNames.Length == 0)
             {
-                m_ParameterNames = new string[] { "val", "min", "max" };
+                m_ParameterNames = new[] { "val", "min", "max" };
             }
         }
 

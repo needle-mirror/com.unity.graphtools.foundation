@@ -15,8 +15,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Contexts
         protected override void OnDefineNode()
         {
             base.OnDefineNode();
-            this.AddExecutionInputPort("start", null, Orientation.Vertical);
-            this.AddExecutionOutputPort("end", null, Orientation.Vertical);
+            this.AddExecutionInputPort("start", null, PortOrientation.Vertical);
+            this.AddExecutionOutputPort("end", null, PortOrientation.Vertical);
         }
     }
 }

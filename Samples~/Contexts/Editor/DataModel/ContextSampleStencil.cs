@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine.GraphToolsFoundation.Overdrive;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEditor.Searcher;
@@ -10,39 +9,20 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Contexts
 {
     class ContextSampleStencil : Stencil, ISearcherDatabaseProvider
     {
-        SearcherDatabase m_Database;
+        List<SearcherDatabaseBase> m_Databases = new List<SearcherDatabaseBase>();
 
-        List<SearcherDatabase> m_Databases = new List<SearcherDatabase>();
+        public override string ToolName => GraphName;
 
-        List<SearcherDatabaseBase> m_BaseDatabases = new List<SearcherDatabaseBase>();
-
-        public override string ToolName
-        {
-            get { return GraphName; }
-        }
-        public static string GraphName
-        {
-            get { return "Contexts"; }
-        }
-
-        IGraphElementModel CreateElement(GraphNodeCreationData data, Type nodeType)
-        {
-            IGraphElementModel model = System.Activator.CreateInstance(nodeType) as IGraphElementModel;
-
-            return model;
-        }
+        public static string GraphName => "Contexts";
 
         public ContextSampleStencil()
         {
             List<SearcherItem> itemList = new List<SearcherItem>();
-            itemList.Add(new GraphNodeModelSearcherItem(null, t => NodeDataCreationExtensions.CreateNode(t, typeof(SampleContext)), "Context"));
-            itemList.Add(new GraphNodeModelSearcherItem(null, t => NodeDataCreationExtensions.CreateNode(t, typeof(SampleContextVertical)), "Context with vertical"));
+            itemList.Add(new GraphNodeModelSearcherItem(GraphModel, null, t => NodeDataCreationExtensions.CreateNode(t, typeof(SampleContext)), "Context"));
+            itemList.Add(new GraphNodeModelSearcherItem(GraphModel, null, t => NodeDataCreationExtensions.CreateNode(t, typeof(SampleContextVertical)), "Context with vertical"));
 
-            m_Database = new SearcherDatabase(itemList.ToArray());
-            m_Databases.Add(m_Database);
-            m_BaseDatabases.Add(m_Database);
-
-            SetSearcherSize(SearcherService.Usage.k_CreateNode, new Vector2(500, 400), 2.25f);
+            var database = new SearcherDatabase(itemList);
+            m_Databases.Add(database);
         }
 
         /// <inheritdoc />
@@ -63,28 +43,28 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Contexts
 
         List<SearcherDatabaseBase> ISearcherDatabaseProvider.GetGraphElementsSearcherDatabases(IGraphModel graphModel)
         {
-            return m_BaseDatabases;
+            return m_Databases;
         }
 
-        List<SearcherDatabase> m_EmptyList = new List<SearcherDatabase>();
-        List<SearcherDatabase> ISearcherDatabaseProvider.GetVariableTypesSearcherDatabases()
+        List<SearcherDatabaseBase> m_EmptyList = new List<SearcherDatabaseBase>();
+        List<SearcherDatabaseBase> ISearcherDatabaseProvider.GetVariableTypesSearcherDatabases()
         {
             return m_EmptyList;
         }
 
         List<SearcherDatabaseBase> ISearcherDatabaseProvider.GetGraphVariablesSearcherDatabases(IGraphModel graphModel)
         {
-            return m_BaseDatabases;
+            return m_Databases;
         }
 
         List<SearcherDatabaseBase> ISearcherDatabaseProvider.GetDynamicSearcherDatabases(IPortModel portModel)
         {
-            return m_BaseDatabases;
+            return m_Databases;
         }
 
         public List<SearcherDatabaseBase> GetDynamicSearcherDatabases(IEnumerable<IPortModel> portModel)
         {
-            return m_BaseDatabases;
+            return m_Databases;
         }
     }
 }

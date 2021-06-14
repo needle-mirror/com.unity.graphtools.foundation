@@ -17,8 +17,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook.UI
             return null;
         }
 
+        VisualElement m_Root;
+
         public Button Button { get; private set; }
-        public override VisualElement Root => Button;
+        public override VisualElement Root => m_Root;
 
         protected PrintResultPart(string name, IGraphElementModel model, IModelUI ownerElement, string parentClassName)
             : base(name, model, ownerElement, parentClassName)
@@ -34,9 +36,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook.UI
 
         protected override void BuildPartUI(VisualElement container)
         {
+            m_Root = new VisualElement { name = PartName };
+            m_Root.AddToClassList(ussClassName);
+            m_Root.AddToClassList(m_ParentClassName.WithUssElement(PartName));
+
             Button = new Button() { text = "Print Result" };
             Button.clicked += OnPrintResult;
-            container.Add(Button);
+            m_Root.Add(Button);
+
+            container.Add(m_Root);
         }
 
         protected override void UpdatePartFromModel()

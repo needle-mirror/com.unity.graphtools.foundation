@@ -1,98 +1,136 @@
-using System;
 using System.Linq;
 using NUnit.Framework;
-using UnityEditor.VisualScripting.GraphViewModel;
-using UnityEditor.VisualScripting.Model;
-using UnityEditor.VisualScripting.Model.Stencils;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEngine;
+using UnityEngine.GraphToolsFoundation.Overdrive;
 
 // ReSharper disable AccessToStaticMemberViaDerivedType
 
-namespace UnityEditor.VisualScriptingTests.Models
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.Models
 {
     class VariableDeclarationModelTests
     {
-        [TestCase("foo", "foo", "Foo")]
-        [TestCase("fOo", "fOo", "F Oo")]
-        [TestCase(" _foo_ ", "foo", "Foo")]
-        [TestCase("foo$#@", "foo", "Foo")]
-        [TestCase("!@#$%^&*()-_=+[{]}`~|;:<>,./?foo", "foo", "Foo")]
-        [TestCase("foo bar", "fooBar", "Foo Bar")]
-        [TestCase("foo_bar", "fooBar", "Foo Bar")]
-        [TestCase("class", "myClass", "My Class")]
-        [TestCase("123", "my123", "My 123")]
-        [TestCase("bar", "bar1", "Bar 1", Ignore = "UniqueName generator has been temporarily disabled")]
-        [TestCase("    ", "temp", "Temp")]
-        [TestCase(" __ ", "temp", "Temp")]
-        [TestCase("VeryWeird Name", "veryWeirdName", "Very Weird Name")]
-        public void SetNameFromUserNameTest(string userInput, string expectedName, string expectedTitle)
-        {
-            VSGraphAssetModel graphAssetModel = (VSGraphAssetModel)GraphAssetModel.Create("test", "", typeof(VSGraphAssetModel));
-            VSGraphModel graph = graphAssetModel.CreateVSGraph<ClassStencil>("test");
-
-            var method = graph.CreateFunction("method", Vector2.left * 200);
-            method.CreateFunctionVariableDeclaration("bar", typeof(int).GenerateTypeHandle(graph.Stencil));
-            var variable = method.CreateFunctionVariableDeclaration("temp", typeof(int).GenerateTypeHandle(graph.Stencil));
-
-            variable.SetNameFromUserName(userInput);
-            Assert.That(variable.VariableName, Is.EqualTo(expectedName));
-            Assert.That(variable.Title, Is.EqualTo(expectedTitle));
-        }
-
         [Test]
         public void CloningAVariableClonesFields()
         {
-            VSGraphAssetModel graphAssetModel = (VSGraphAssetModel)GraphAssetModel.Create("test", "", typeof(VSGraphAssetModel));
-            VSGraphModel graph = graphAssetModel.CreateVSGraph<ClassStencil>("test");
-            var decl = graph.CreateGraphVariableDeclaration("asd", TypeHandle.Float, true);
-            decl.Tooltip = "asdasd";
-            var clone = ((VariableDeclarationModel)decl).Clone();
-            Assert.IsFalse(ReferenceEquals(decl, clone));
-            Assert.AreEqual(decl.Tooltip, clone.Tooltip);
-            Assert.AreNotEqual(decl.GetId(), clone.GetId());
+            var graphAssetModel = IGraphAssetModelHelper.Create("test", "", typeof(TestGraphAssetModel));
+            graphAssetModel.CreateGraph("test");
+
+            var variableDeclaration = graphAssetModel.GraphModel.CreateGraphVariableDeclaration(TypeHandle.Float, "asd", ModifierFlags.None, true);
+            variableDeclaration.Tooltip = "asdasd";
+            var clone = (variableDeclaration as VariableDeclarationModel).Clone();
+            Assert.IsFalse(ReferenceEquals(variableDeclaration, clone));
+            Assert.AreEqual(variableDeclaration.Tooltip, clone.Tooltip);
+            Assert.AreEqual(variableDeclaration.DataType, clone.DataType);
+            Assert.AreNotEqual(variableDeclaration.Guid, clone.Guid);
         }
 
         [Test]
-        public void Test_FunctionVariableDeclarationsWithSameName()
+        public void CanDuplicateVariableDeclarations()
         {
-            VSGraphAssetModel graphAssetModel = (VSGraphAssetModel)GraphAssetModel.Create("test", "", typeof(VSGraphAssetModel));
-            VSGraphModel graph = graphAssetModel.CreateVSGraph<ClassStencil>("test");
+            var graphAssetModel = IGraphAssetModelHelper.Create("test", "", typeof(TestGraphAssetModel));
+            graphAssetModel.CreateGraph("test");
+            var graphModel = graphAssetModel.GraphModel;
 
-            var method = graph.CreateFunction("TestFunction", Vector2.zero);
+            var variableDeclaration = graphModel.CreateGraphVariableDeclaration(TypeHandle.Float, "asd", ModifierFlags.None, true);
+            variableDeclaration.Tooltip = "asdasd";
 
-            var declaration0 = method.CreateFunctionVariableDeclaration("var", typeof(int).GenerateTypeHandle(graph.Stencil));
-            var declaration1 = method.CreateFunctionVariableDeclaration("var", typeof(int).GenerateTypeHandle(graph.Stencil));
-            Assert.That(declaration0, Is.Not.EqualTo(declaration1));
-            Assert.That(method.FunctionVariableModels.Count(), Is.EqualTo(2));
+            var duplicatedDeclaration = graphModel.DuplicateGraphVariableDeclaration(variableDeclaration);
+            Assert.IsFalse(ReferenceEquals(variableDeclaration, duplicatedDeclaration));
+            Assert.AreEqual(variableDeclaration.Tooltip, duplicatedDeclaration.Tooltip);
+            Assert.AreEqual(variableDeclaration.DataType, duplicatedDeclaration.DataType);
+            Assert.AreNotEqual(variableDeclaration.Guid, duplicatedDeclaration.Guid);
         }
 
         [Test]
-        public void Test_FunctionParameterDeclarationsWithSameName()
+        public void CanInstantiateCustomVariableDeclarations()
         {
-            VSGraphAssetModel graphAssetModel = (VSGraphAssetModel)GraphAssetModel.Create("test", "", typeof(VSGraphAssetModel));
-            VSGraphModel graph = graphAssetModel.CreateVSGraph<ClassStencil>("test");
+            var graphAssetModel = IGraphAssetModelHelper.Create("test", "", typeof(TestGraphAssetModel));
+            graphAssetModel.CreateGraph("test");
+            var graphModel = graphAssetModel.GraphModel;
 
-            var method = graph.CreateFunction("TestFunction", Vector2.zero);
+            const string tooltip = "asdasd";
+            const int customValue = 42;
+            var variableDeclaration = graphModel.CreateGraphVariableDeclaration<TestVariableDeclarationModel>(
+                TypeHandle.Float, "asd", ModifierFlags.None, true,
+                initializationCallback: (v, c) =>
+                {
+                    v.Tooltip = tooltip;
+                    v.CustomValue = customValue;
+                });
 
-            var declaration0 = method.CreateAndRegisterFunctionParameterDeclaration("param", typeof(int).GenerateTypeHandle(graph.Stencil));
-            var declaration1 = method.CreateAndRegisterFunctionParameterDeclaration("param", typeof(int).GenerateTypeHandle(graph.Stencil));
-            Assert.That(declaration0, Is.Not.EqualTo(declaration1));
-            Assert.That(method.FunctionParameterModels.Count(), Is.EqualTo(2));
+            Assert.AreEqual(tooltip, variableDeclaration.Tooltip, "Tooltip wasn't set properly");
+            Assert.AreEqual(customValue, variableDeclaration.CustomValue, "Custom value wasn't set properly");
         }
 
         [Test]
-        public void Test_FunctionVariableDeclarationsIsSerializedInGraphAsset()
+        public void CanDuplicateCustomVariableDeclarations()
         {
-            VSGraphAssetModel graphAssetModel = (VSGraphAssetModel)GraphAssetModel.Create("test", "Assets/MyGraphTest.asset", typeof(VSGraphAssetModel));
-            VSGraphModel graph = graphAssetModel.CreateVSGraph<ClassStencil>("test");
-            FunctionModel method = graph.CreateFunction("TestFunction", Vector2.zero);
+            var graphAssetModel = IGraphAssetModelHelper.Create("test", "", typeof(TestGraphAssetModel));
+            graphAssetModel.CreateGraph("test");
+            var graphModel = graphAssetModel.GraphModel;
 
-            VariableDeclarationModel declaration = method.CreateFunctionVariableDeclaration("var", typeof(int).GenerateTypeHandle(graph.Stencil));
+            const string tooltip = "asdasd";
+            const int customValue = 42;
+            var variableDeclaration = graphModel.CreateGraphVariableDeclaration<TestVariableDeclarationModel>(
+                TypeHandle.Float, "asd", ModifierFlags.None, true,
+                initializationCallback: (v, c) =>
+                {
+                    v.Tooltip = tooltip;
+                    v.CustomValue = customValue;
+                });
 
-            string nodeModelPath = AssetDatabase.GetAssetPath(declaration.InitializationModel.SerializableAsset);
-            string graphAssetModelPath = AssetDatabase.GetAssetPath(graphAssetModel);
-            Assert.That(nodeModelPath, Is.EqualTo(graphAssetModelPath));
-            AssetDatabase.DeleteAsset(graphAssetModelPath);
+            var duplicatedDeclaration = graphModel.DuplicateGraphVariableDeclaration(variableDeclaration);
+            Assert.IsFalse(ReferenceEquals(variableDeclaration, duplicatedDeclaration), "Duplicated declaration is the same as the original");
+            Assert.AreEqual(variableDeclaration.Tooltip, duplicatedDeclaration.Tooltip, "Tooltip of duplicated declaration differs from original");
+            Assert.AreEqual(variableDeclaration.DataType, duplicatedDeclaration.DataType, "DataType of duplicated declaration differs from original");
+            Assert.AreEqual(variableDeclaration.CustomValue, duplicatedDeclaration.CustomValue, "CustomValue of duplicated declaration differs from original");
+            Assert.AreNotEqual(variableDeclaration.Guid, duplicatedDeclaration.Guid, "Guid of duplicated declaration is not unique");
+        }
+
+        [Test]
+        public void CanCreateVariableDeclarations()
+        {
+            var graphAssetModel = IGraphAssetModelHelper.Create("test", "", typeof(TestGraphAssetModel));
+            graphAssetModel.CreateGraph("test");
+            var graphModel = graphAssetModel.GraphModel;
+
+            Assert.AreEqual(0, graphModel.VariableDeclarations.Count, "Unexpected presence of variable declarations after graph creation.");
+
+            var variableDeclaration = graphModel.CreateGraphVariableDeclaration<TestVariableDeclarationModel>(TypeHandle.Float, "asd", ModifierFlags.None, true);
+            Assert.IsNotNull(variableDeclaration, "Variable declaration was not created.");
+            Assert.AreEqual(1, graphModel.VariableDeclarations.Count, "Variable declaration was not added to the graph.");
+            Assert.IsTrue(graphModel.TryGetModelFromGuid(variableDeclaration.Guid, out _), "Variable declaration was not found by guid.");
+
+            var customVariableDeclaration = graphModel.CreateGraphVariableDeclaration<TestVariableDeclarationModel>(TypeHandle.Float, "asd", ModifierFlags.None, true);
+            Assert.IsNotNull(customVariableDeclaration, "Custom variable declaration was not created.");
+            Assert.AreEqual(2, graphModel.VariableDeclarations.Count, "Custom variable declaration was not added to the graph.");
+            Assert.IsTrue(graphModel.TryGetModelFromGuid(customVariableDeclaration.Guid, out _), "Custom variable declaration was not found by guid.");
+        }
+
+        [Test]
+        public void DeleteVariableDeclarationCanDeleteReferencedVariables()
+        {
+            var graphAssetModel = IGraphAssetModelHelper.Create("test", "", typeof(TestGraphAssetModel));
+            graphAssetModel.CreateGraph("test");
+            var graphModel = graphAssetModel.GraphModel;
+
+            Assert.AreEqual(0, graphModel.NodeModels.OfType<VariableNodeModel>().Count(), "Unexpected presence of variable after graph creation.");
+
+            var variableDeclaration = graphModel.CreateGraphVariableDeclaration<TestVariableDeclarationModel>(TypeHandle.Float, "asd", ModifierFlags.None, true);
+
+            var var1 = graphModel.CreateVariableNode(variableDeclaration, new Vector2(0, 0));
+            var var2 = graphModel.CreateVariableNode(variableDeclaration, new Vector2(314, 42));
+
+            Assert.IsNotNull(var1, "First variable instance was not created.");
+            Assert.IsNotNull(var2, "Second variable instance was not created.");
+            Assert.AreEqual(2, graphModel.NodeModels.OfType<VariableNodeModel>().Count(), "Variables were not added to the graph.");
+            Assert.IsTrue(graphModel.TryGetModelFromGuid(var1.Guid, out _), "First instance was not found");
+            Assert.IsTrue(graphModel.TryGetModelFromGuid(var2.Guid, out _), "Second instance was not found");
+
+            graphModel.DeleteVariableDeclarations(new[] { variableDeclaration });
+            Assert.AreEqual(0, graphModel.VariableDeclarations.Count, "Variable declaration was not properly discarded from the graph");
+            Assert.AreEqual(0, graphModel.NodeModels.OfType<VariableNodeModel>().Count(), "Variables were not properly discarded from the graph.");
         }
     }
 }

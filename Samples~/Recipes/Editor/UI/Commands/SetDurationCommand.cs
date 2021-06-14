@@ -8,8 +8,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Recipes
         const string k_UndoStringSingular = "Set Bake Node Duration";
         const string k_UndoStringPlural = "Set Bake Nodes Duration";
 
-        public SetDurationCommand(BakeNodeModel[] nodes, int value)
-            : base(k_UndoStringSingular, k_UndoStringPlural, nodes, value)
+        public SetDurationCommand(int value, params BakeNodeModel[] nodes)
+            : base(k_UndoStringSingular, k_UndoStringPlural, value, nodes)
         {
         }
 

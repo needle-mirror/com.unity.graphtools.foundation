@@ -8,6 +8,10 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
     /// </summary>
     public interface IState
     {
+        /// <summary>
+        /// Registers the default command handlers fot the state.
+        /// </summary>
+        /// <param name="dispatcher">The dispatcher to register the command handler to.</param>
         void RegisterCommandHandlers(Dispatcher dispatcher);
 
         /// <summary>

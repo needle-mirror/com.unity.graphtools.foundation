@@ -11,7 +11,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Contexts.UI
             ShortcutHelper.RegisterDefaultShortcuts<ContextGraphViewWindow>(ContextSampleStencil.GraphName);
         }
 
-        [MenuItem("GTF Samples/Contexts Editor")]
+        [MenuItem("GTF/Samples/Contexts Editor")]
         public static void ShowWindow()
         {
             GetWindow<ContextGraphViewWindow>();
@@ -22,6 +22,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Contexts.UI
             base.OnEnable();
 
             EditorToolName = "Contexts";
+        }
+
+        /// <inheritdoc />
+        protected override GraphToolState CreateInitialState()
+        {
+            var prefs = Preferences.CreatePreferences(EditorToolName);
+            return new ContextSampleState(GUID, prefs);
         }
 
         protected override GraphView CreateGraphView()
@@ -37,7 +44,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Contexts.UI
             return new BlankPage(CommandDispatcher, onboardingProviders);
         }
 
-        protected override bool CanHandleAssetType(GraphAssetModel asset)
+        protected override bool CanHandleAssetType(IGraphAssetModel asset)
         {
             return asset is ContextSampleAsset;
         }

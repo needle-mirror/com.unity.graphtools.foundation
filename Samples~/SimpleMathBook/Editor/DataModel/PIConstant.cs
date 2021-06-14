@@ -6,9 +6,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook
     [Serializable]
     public class PIConstant : MathNode
     {
-        public PIConstant()
+        public override string Title
         {
-            Title = "PI";
+            get => "π";
+            set { }
         }
 
         public override float Evaluate()

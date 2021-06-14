@@ -6,13 +6,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook
     [Serializable]
     public class PowFunction : MathFunction
     {
+        public override string Title
+        {
+            get => "Pow";
+            set { }
+        }
+
         public PowFunction()
         {
-            Title = "Pow";
-
             if (m_ParameterNames.Length == 0)
             {
-                m_ParameterNames = new string[] { "f", "p" };
+                m_ParameterNames = new[] { "f", "p" };
             }
         }
 

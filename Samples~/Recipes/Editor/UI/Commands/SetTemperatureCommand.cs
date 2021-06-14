@@ -8,8 +8,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Recipes
         const string k_UndoStringSingular = "Set Bake Node Temperature";
         const string k_UndoStringPlural = "Set Bake Nodes Temperature";
 
-        public SetTemperatureCommand(BakeNodeModel[] nodes, int value)
-            : base(k_UndoStringSingular, k_UndoStringPlural, nodes, value)
+        public SetTemperatureCommand(int value, params BakeNodeModel[] nodes)
+            : base(k_UndoStringSingular, k_UndoStringPlural, value, nodes)
         {
         }
 

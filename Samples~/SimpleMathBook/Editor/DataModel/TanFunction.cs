@@ -6,13 +6,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook
     [Serializable]
     public class TanFunction : MathFunction
     {
+        public override string Title
+        {
+            get => "Tan";
+            set { }
+        }
+
         public TanFunction()
         {
-            Title = "Tan";
-
             if (m_ParameterNames.Length == 0)
             {
-                m_ParameterNames = new string[] { "f" };
+                m_ParameterNames = new[] { "f" };
             }
         }
 

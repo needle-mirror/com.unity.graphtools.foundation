@@ -11,13 +11,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Recipes
         public override string ToolName => toolName;
 
         public static readonly string graphName = "Recipe";
-        public static TypeHandle Ingredient { get; } = TypeSerializer.GenerateCustomTypeHandle("Ingredient");
-        public static TypeHandle Cookware { get; } = TypeSerializer.GenerateCustomTypeHandle("Cookware");
-
-        public RecipeStencil()
-        {
-            SetSearcherSize(SearcherService.Usage.k_CreateNode, new Vector2(375, 300), 2.0f);
-        }
+        public static TypeHandle Ingredient { get; } = TypeHandleHelpers.GenerateCustomTypeHandle("Ingredient");
+        public static TypeHandle Cookware { get; } = TypeHandleHelpers.GenerateCustomTypeHandle("Cookware");
 
         /// <inheritdoc />
         public override IBlackboardGraphModel CreateBlackboardGraphModel(IGraphAssetModel graphAssetModel)

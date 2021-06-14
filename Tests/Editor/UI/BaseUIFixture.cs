@@ -4,26 +4,30 @@ using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using NUnit.Framework;
-using UnityEditor.Experimental.GraphView;
-using UnityEditor.VisualScripting.Editor;
-using UnityEditor.VisualScripting.GraphViewModel;
-using UnityEditor.VisualScripting.Model;
-using UnityEditor.VisualScripting.Model.Stencils;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.VisualScriptingTests.UI
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.UI
 {
-    class VseWindowTest : VseWindow
+    class GtfoWindowTest : GraphViewEditorWindow
     {
-        protected override IEditorDataModel CreateDataModel()
+        public GtfoWindowTest()
         {
-            return new TestEditorDataModel();
+            WithSidePanel = false;
         }
 
-        protected override State CreateInitialState()
+        protected override GraphToolState CreateInitialState()
         {
-            return new TestState(DataModel);
+            var state = base.CreateInitialState();
+            var prefs = state.Preferences;
+            prefs.SetBoolNoEditorUpdate(BoolPref.ErrorOnRecursiveDispatch, false);
+            return state;
+        }
+
+        protected override bool CanHandleAssetType(IGraphAssetModel asset)
+        {
+            return true;
         }
     }
 
@@ -31,48 +35,30 @@ namespace UnityEditor.VisualScriptingTests.UI
     [Category("UI")]
     abstract class BaseUIFixture
     {
+        protected const string k_GraphPath = "Assets/test.asset";
         const int k_PanAreaWidth = 100;
         static readonly Rect k_WindowRect = new Rect(Vector2.zero, new Vector2(k_PanAreaWidth * 8, k_PanAreaWidth * 6));
-        protected VseWindow Window { get; set; }
-        protected VseGraphView GraphView { get; private set; }
+        protected GraphViewEditorWindow Window { get; set; }
+        protected GraphView GraphView { get; private set; }
         protected TestEventHelpers Helpers { get; set; }
-        protected Store Store => Window.Store;
-        protected VSGraphModel GraphModel => (VSGraphModel)Store.GetState().CurrentGraphModel;
+        protected CommandDispatcher CommandDispatcher => Window.CommandDispatcher;
+        protected GraphModel GraphModel => (GraphModel)CommandDispatcher.State.WindowState.GraphModel;
 
         protected abstract bool CreateGraphOnStartup { get; }
         protected virtual Type CreatedGraphType => typeof(ClassStencil);
 
-        protected class TestContext
-        {
-            public List<FunctionModel> FunctionModels = new List<FunctionModel>();
-            public List<VariableDeclarationModel> VariableDeclModels = new List<VariableDeclarationModel>();
-            public List<PortModel> InputPorts = new List<PortModel>();
-            public List<PortModel> OutputPorts = new List<PortModel>();
-
-            public void Reset()
-            {
-                FunctionModels.Clear();
-                VariableDeclModels.Clear();
-                InputPorts.Clear();
-                OutputPorts.Clear();
-            }
-
-            public static TestContext Instance { get; } = new TestContext();
-        }
-
         [SetUp]
         public virtual void SetUp()
         {
-            var windowWithRect = EditorWindow.GetWindowWithRect<VseWindowTest>(k_WindowRect);
-            Window = windowWithRect;
+            Window = EditorWindow.GetWindowWithRect<GtfoWindowTest>(k_WindowRect);
             GraphView = Window.GraphView;
             Helpers = new TestEventHelpers(Window);
 
             if (CreateGraphOnStartup)
             {
-                Store.Dispatch(new CreateGraphAssetAction(CreatedGraphType, "Test", assetPath: string.Empty));
+                var graphAsset = GraphAssetCreationHelpers<TestGraphAssetModel>.CreateInMemoryGraphAsset(CreatedGraphType, "Test");
+                CommandDispatcher.Dispatch(new LoadGraphAssetCommand(graphAsset));
             }
-            TestContext.Instance.Reset();
         }
 
         [TearDown]
@@ -83,15 +69,14 @@ namespace UnityEditor.VisualScriptingTests.UI
             MouseCaptureController.ReleaseMouse();
             if (Window != null)
             {
-                TestContext.Instance.Reset();
-                GraphModel.QuickCleanup();
+                GraphModel?.QuickCleanup();
                 Window.Close();
             }
         }
 
         protected IList<GraphElement> GetGraphElements()
         {
-            return GraphView.graphElements.ToList();
+            return GraphView.GraphElements.ToList();
         }
 
         protected GraphElement GetGraphElement(int index)
@@ -99,12 +84,18 @@ namespace UnityEditor.VisualScriptingTests.UI
             return GetGraphElements()[index];
         }
 
+        protected void MarkGraphViewStateDirty()
+        {
+            using (var updater = CommandDispatcher.State.GraphViewState.UpdateScope)
+            {
+                updater.ForceCompleteUpdate();
+            }
+        }
+
         IList<IGraphElementModel> GetGraphElementModels()
         {
             return GetGraphElements()
-                .Where(x => x is IHasGraphElementModel)
-                .Cast<IHasGraphElementModel>()
-                .Select(x => x.GraphElementModel).ToList();
+                .Select(x => x.Model).ToList();
         }
 
         protected IGraphElementModel GetGraphElementModel(int index)
@@ -115,8 +106,8 @@ namespace UnityEditor.VisualScriptingTests.UI
         IList<INodeModel> GetNodeModels()
         {
             return GetGraphElements()
-                .Where(x => x is IHasGraphElementModel model && model.GraphElementModel is INodeModel)
-                .Select(x => ((IHasGraphElementModel)x).GraphElementModel)
+                .Where(x => x is IModelUI model && model.Model is INodeModel)
+                .Select(x => x.Model)
                 .Cast<INodeModel>()
                 .ToList();
         }
@@ -131,7 +122,7 @@ namespace UnityEditor.VisualScriptingTests.UI
             WaitForNextFrame,
             Done,
         }
-        protected IEnumerator TestPrereqActionPostreq(TestingMode mode, Action checkReqs, Func<int, TestPhase> doUndoableStuff, Action checkPostReqs, int framesToWait = 1)
+        protected IEnumerator TestPrereqCommandPostreq(TestingMode mode, Action checkReqs, Func<int, TestPhase> doUndoableStuff, Action checkPostReqs, int framesToWait = 1)
         {
             yield return null;
 
@@ -144,7 +135,7 @@ namespace UnityEditor.VisualScriptingTests.UI
             int currentFrame;
             switch (mode)
             {
-                case TestingMode.Action:
+                case TestingMode.Command:
                     BaseFixture.AssumePreviousTest(checkReqs);
 
                     currentFrame = 0;

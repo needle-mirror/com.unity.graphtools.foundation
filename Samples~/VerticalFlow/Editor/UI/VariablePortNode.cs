@@ -16,42 +16,42 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Vertical
 
             evt.menu.AppendAction("Input/Add Port", action =>
             {
-                CommandDispatcher.Dispatch(new AddPortCommand(Direction.Input, Orientation.Horizontal, verticalNodeModel));
+                CommandDispatcher.Dispatch(new AddPortCommand(PortDirection.Input, PortOrientation.Horizontal, verticalNodeModel));
             });
 
             evt.menu.AppendAction("Input/Add Vertical Port", action =>
             {
-                CommandDispatcher.Dispatch(new AddPortCommand(Direction.Input, Orientation.Vertical, verticalNodeModel));
+                CommandDispatcher.Dispatch(new AddPortCommand(PortDirection.Input, PortOrientation.Vertical, verticalNodeModel));
             });
 
             evt.menu.AppendAction("Input/Remove Port", action =>
             {
-                CommandDispatcher.Dispatch(new RemovePortCommand(Direction.Input, Orientation.Horizontal, verticalNodeModel));
+                CommandDispatcher.Dispatch(new RemovePortCommand(PortDirection.Input, PortOrientation.Horizontal, verticalNodeModel));
             }, a => verticalNodeModel.InputCount > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
 
             evt.menu.AppendAction("Input/Remove Vertical Port", action =>
             {
-                CommandDispatcher.Dispatch(new RemovePortCommand(Direction.Input, Orientation.Vertical, verticalNodeModel));
+                CommandDispatcher.Dispatch(new RemovePortCommand(PortDirection.Input, PortOrientation.Vertical, verticalNodeModel));
             }, a => verticalNodeModel.VerticalInputCount > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
 
             evt.menu.AppendAction("Output/Add Port", action =>
             {
-                CommandDispatcher.Dispatch(new AddPortCommand(Direction.Output, Orientation.Horizontal, verticalNodeModel));
+                CommandDispatcher.Dispatch(new AddPortCommand(PortDirection.Output, PortOrientation.Horizontal, verticalNodeModel));
             });
 
             evt.menu.AppendAction("Output/Add Vertical Port", action =>
             {
-                CommandDispatcher.Dispatch(new AddPortCommand(Direction.Output, Orientation.Vertical, verticalNodeModel));
+                CommandDispatcher.Dispatch(new AddPortCommand(PortDirection.Output, PortOrientation.Vertical, verticalNodeModel));
             });
 
             evt.menu.AppendAction("Output/Remove Port", action =>
             {
-                CommandDispatcher.Dispatch(new RemovePortCommand(Direction.Output, Orientation.Horizontal, verticalNodeModel));
+                CommandDispatcher.Dispatch(new RemovePortCommand(PortDirection.Output, PortOrientation.Horizontal, verticalNodeModel));
             }, a => verticalNodeModel.OutputCount > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
 
             evt.menu.AppendAction("Output/Remove Vertical Port", action =>
             {
-                CommandDispatcher.Dispatch(new RemovePortCommand(Direction.Output, Orientation.Vertical, verticalNodeModel));
+                CommandDispatcher.Dispatch(new RemovePortCommand(PortDirection.Output, PortOrientation.Vertical, verticalNodeModel));
             }, a => verticalNodeModel.VerticalOutputCount > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
         }
     }

@@ -1,14 +1,14 @@
 using System;
-using UnityEditor.VisualScripting.GraphViewModel;
+using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
 
-namespace UnityEditor.VisualScriptingTests
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests
 {
     [Serializable]
     class TestNodeModel : NodeModel
     {
         protected override void OnDefineNode()
         {
-            AddDataInputPort<float>("one");
+            this.AddDataInputPort<float>("one");
         }
     }
 }

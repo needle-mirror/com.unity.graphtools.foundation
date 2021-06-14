@@ -8,7 +8,7 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
     /// Base class for state observers.
     /// </summary>
     /// <typeparam name="TState">The type of the observed state.</typeparam>
-    public abstract class StateObserver<TState> : IStateObserver where TState : IState
+    public abstract class StateObserver<TState> : IInternalStateObserver, IStateObserver where TState : IState
     {
         List<(string, StateComponentVersion)> m_ObservedComponentVersions;
         List<string> m_ModifiedStateComponents;
@@ -20,14 +20,14 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
         public IEnumerable<string> ModifiedStateComponents => m_ModifiedStateComponents;
 
         /// <summary>
-        /// Initializes a new instance of the StateObserver class.
+        /// Initializes a new instance of the <see cref="StateObserver{TState}" /> class.
         /// </summary>
         /// <param name="observedStateComponents">The names of the observed state components.</param>
         protected StateObserver(params string[] observedStateComponents)
             : this(observedStateComponents, Enumerable.Empty<string>()) { }
 
         /// <summary>
-        /// Initializes a new instance of the StateObserver class.
+        /// Initializes a new instance of the <see cref="StateObserver{TState}" /> class.
         /// </summary>
         /// <param name="observedStateComponents">The names of the observed state components.</param>
         /// <param name="modifiedStateComponents">The names of the modified state components.</param>
@@ -39,14 +39,14 @@ namespace UnityEngine.GraphToolsFoundation.CommandStateObserver
         }
 
         /// <inheritdoc/>
-        public StateComponentVersion GetLastObservedComponentVersion(string componentName)
+        StateComponentVersion IInternalStateObserver.GetLastObservedComponentVersion(string componentName)
         {
             var index = m_ObservedComponentVersions.FindIndex(v => v.Item1 == componentName);
             return index >= 0 ? m_ObservedComponentVersions[index].Item2 : default;
         }
 
         /// <inheritdoc />
-        public void UpdateObservedVersion(string componentName, StateComponentVersion newVersion)
+        void IInternalStateObserver.UpdateObservedVersion(string componentName, StateComponentVersion newVersion)
         {
             var index = m_ObservedComponentVersions.FindIndex(v => v.Item1 == componentName);
             if (index >= 0)

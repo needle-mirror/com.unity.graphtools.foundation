@@ -1,10 +1,7 @@
 using System;
-using System.Runtime.CompilerServices;
 using UnityEngine;
 
-[assembly: InternalsVisibleTo("Unity.GraphTools.Foundation.Editor")]
-
-namespace UnityEditor.VisualScripting.Editor
+namespace UnityEditor.GraphToolsFoundation.Overdrive.Bridge
 {
     [Serializable]
     class TimeArea : UnityEditor.TimeArea

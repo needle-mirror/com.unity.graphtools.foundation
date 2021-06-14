@@ -1,0 +1,170 @@
+// This file is generated. Do not modify by hand.
+// XML documentation file not found. To check if public methods have XML comments,
+// make sure the XML doc file is present and located next to the scraped dll
+namespace UnityEditor.Searcher
+{
+    [JetBrains.Annotations.PublicAPI] public interface ISearcherAdapter
+    {
+        public abstract bool AddAllChildResults { get; }
+        public abstract bool HasDetailsPanel { get; }
+        public abstract float InitialSplitterDetailRatio { get; }
+        public abstract bool MultiSelectEnabled { get; }
+        public abstract string Title { get; }
+        public abstract UnityEngine.UIElements.VisualElement Bind(UnityEngine.UIElements.VisualElement target, UnityEditor.Searcher.SearcherItem item, UnityEditor.Searcher.ItemExpanderState expanderState, string text);
+        public abstract void InitDetailsPanel(UnityEngine.UIElements.VisualElement detailsPanel);
+        public abstract UnityEngine.UIElements.VisualElement MakeItem();
+        public abstract void OnSelectionChanged(System.Collections.Generic.IEnumerable<UnityEditor.Searcher.SearcherItem> items);
+    }
+
+    public enum ItemExpanderState
+    {
+        public const UnityEditor.Searcher.ItemExpanderState Collapsed = 1;
+        public const UnityEditor.Searcher.ItemExpanderState Expanded = 2;
+        public const UnityEditor.Searcher.ItemExpanderState Hidden = 0;
+        public int value__;
+    }
+
+    [JetBrains.Annotations.PublicAPI] public class Searcher
+    {
+        public UnityEditor.Searcher.ISearcherAdapter Adapter { get; }
+        public System.Comparison<UnityEditor.Searcher.SearcherItem> SortComparison { get; set; }
+        public Searcher(UnityEditor.Searcher.SearcherDatabaseBase database, string title) {}
+        public Searcher(System.Collections.Generic.IEnumerable<UnityEditor.Searcher.SearcherDatabaseBase> databases, string title, UnityEditor.Searcher.SearcherFilter filter = default(UnityEditor.Searcher.SearcherFilter)) {}
+        public Searcher(System.Collections.Generic.IEnumerable<UnityEditor.Searcher.SearcherDatabaseBase> databases, UnityEditor.Searcher.ISearcherAdapter adapter = default(UnityEditor.Searcher.ISearcherAdapter), UnityEditor.Searcher.SearcherFilter filter = default(UnityEditor.Searcher.SearcherFilter)) {}
+        public Searcher(UnityEditor.Searcher.SearcherDatabaseBase database, UnityEditor.Searcher.ISearcherAdapter adapter = default(UnityEditor.Searcher.ISearcherAdapter), UnityEditor.Searcher.SearcherFilter filter = default(UnityEditor.Searcher.SearcherFilter)) {}
+        public System.Collections.Generic.IEnumerable<UnityEditor.Searcher.SearcherItem> Search(string query);
+        [JetBrains.Annotations.PublicAPI] public class AnalyticsEvent
+        {
+            public readonly string currentSearchFieldText;
+            public readonly UnityEditor.Searcher.Searcher.AnalyticsEvent.EventType eventType;
+            public AnalyticsEvent(UnityEditor.Searcher.Searcher.AnalyticsEvent.EventType eventType, string currentSearchFieldText) {}
+            [JetBrains.Annotations.PublicAPI] public enum EventType
+            {
+                public const UnityEditor.Searcher.Searcher.AnalyticsEvent.EventType Cancelled = 2;
+                public const UnityEditor.Searcher.Searcher.AnalyticsEvent.EventType Pending = 0;
+                public const UnityEditor.Searcher.Searcher.AnalyticsEvent.EventType Picked = 1;
+                public int value__;
+            }
+        }
+    }
+
+    [JetBrains.Annotations.PublicAPI] public class SearcherAdapter : UnityEditor.Searcher.ISearcherAdapter
+    {
+        public virtual bool AddAllChildResults { get; }
+        public virtual bool HasDetailsPanel { get; }
+        public virtual float InitialSplitterDetailRatio { get; }
+        public virtual bool MultiSelectEnabled { get; }
+        public virtual string Title { get; }
+        public SearcherAdapter(string title) {}
+        public virtual UnityEngine.UIElements.VisualElement Bind(UnityEngine.UIElements.VisualElement element, UnityEditor.Searcher.SearcherItem item, UnityEditor.Searcher.ItemExpanderState expanderState, string query);
+        public virtual void InitDetailsPanel(UnityEngine.UIElements.VisualElement detailsPanel);
+        public virtual UnityEngine.UIElements.VisualElement MakeItem();
+        public virtual void OnSelectionChanged(System.Collections.Generic.IEnumerable<UnityEditor.Searcher.SearcherItem> items);
+    }
+
+    public class SearcherDatabase : UnityEditor.Searcher.SearcherDatabaseBase
+    {
+        public SearcherDatabase() {}
+        public SearcherDatabase(System.Collections.Generic.List<UnityEditor.Searcher.SearcherItem> items) {}
+        public static UnityEditor.Searcher.SearcherDatabase FromFile(string directory);
+        public virtual System.Collections.Generic.IEnumerable<UnityEditor.Searcher.SearcherItem> PerformSearch(string query, System.Collections.Generic.IReadOnlyList<UnityEditor.Searcher.SearcherItem> filteredItems);
+    }
+
+    [JetBrains.Annotations.PublicAPI] public abstract class SearcherDatabaseBase
+    {
+        protected const int k_MaxNumFilterCache = 5;
+        protected const string k_SerializedJsonFile = /SerializedDatabase.json;
+        protected const bool k_UseParallelTasks = True;
+        public UnityEditor.Searcher.SearcherFilter CurrentFilter { get; }
+        public System.Collections.Generic.IReadOnlyList<UnityEditor.Searcher.SearcherItem> IndexedItems { get; }
+        protected SearcherDatabaseBase() {}
+        protected SearcherDatabaseBase(System.Collections.Generic.List<UnityEditor.Searcher.SearcherItem> unindexedItems) {}
+        protected SearcherDatabaseBase(System.Collections.Generic.IEnumerable<UnityEditor.Searcher.SearcherItem> unindexedItems, int estimateIndexSize) {}
+        protected void AddItemToIndex(UnityEditor.Searcher.SearcherItem item, System.Collections.Generic.List<UnityEditor.Searcher.SearcherItem> indexedItems);
+        public void IndexIfNeeded();
+        public void LoadFromFile(string directory);
+        public virtual System.Collections.Generic.List<UnityEditor.Searcher.SearcherItem> PerformFilter(UnityEditor.Searcher.SearcherFilter filter, System.Collections.Generic.IReadOnlyList<UnityEditor.Searcher.SearcherItem> items);
+        public virtual System.Collections.Generic.List<UnityEditor.Searcher.SearcherItem> PerformIndex(System.Collections.Generic.IEnumerable<UnityEditor.Searcher.SearcherItem> itemsToIndex, int estimateIndexSize = -1);
+        public abstract System.Collections.Generic.IEnumerable<UnityEditor.Searcher.SearcherItem> PerformSearch(string query, System.Collections.Generic.IReadOnlyList<UnityEditor.Searcher.SearcherItem> filteredItems);
+        public System.Collections.Generic.List<UnityEditor.Searcher.SearcherItem> Search(string query);
+        [System.Obsolete(@"localMaxScore isn't used anymore, use Search(string query) instead")] public System.Collections.Generic.List<UnityEditor.Searcher.SearcherItem> Search(string query, out float localMaxScore);
+        public System.Collections.Generic.IEnumerable<UnityEditor.Searcher.SearcherItem> SearchAsEnumerable(string query);
+        public void SerializeToDirectory(string databaseDirectory);
+        public void SetCurrentFilter(UnityEditor.Searcher.SearcherFilter filter);
+    }
+
+    public abstract class SearcherFilter
+    {
+        protected SearcherFilter() {}
+        public abstract bool Match(UnityEditor.Searcher.SearcherItem item);
+    }
+
+    public class SearcherFuncFilter : UnityEditor.Searcher.SearcherFilter
+    {
+        protected System.Collections.Generic.List<System.Func<UnityEditor.Searcher.SearcherItem, bool>> m_FilterFunctions;
+        public static UnityEditor.Searcher.SearcherFuncFilter Empty { get; }
+        public SearcherFuncFilter(params System.Func<UnityEditor.Searcher.SearcherItem, bool>[] functions) {}
+        public virtual bool Match(UnityEditor.Searcher.SearcherItem item);
+        public UnityEditor.Searcher.SearcherFuncFilter WithFilter(System.Func<UnityEditor.Searcher.SearcherItem, bool> func);
+    }
+
+    [JetBrains.Annotations.PublicAPI] public class SearcherItem
+    {
+        public System.Collections.Generic.List<UnityEditor.Searcher.SearcherItem> Children { get; }
+        public int ChildrenCapacity { get; set; }
+        public bool CollapseEmptyIcon { get; set; }
+        public UnityEditor.Searcher.SearcherDatabaseBase Database { get; }
+        public int Depth { get; }
+        public bool HasChildren { get; }
+        public string Help { get; set; }
+        public UnityEngine.Texture2D Icon { get; set; }
+        public int Id { get; }
+        public virtual string Name { get; }
+        public UnityEditor.Searcher.SearcherItem Parent { get; }
+        public string Path { get; }
+        [System.Runtime.CompilerServices.TupleElementNames(Mono.Cecil.CustomAttributeArgument[])] public System.Collections.Generic.IEnumerable<System.ValueTuple<System.Collections.Generic.IEnumerable<string>, float>> SearchKeys { get; }
+        public string[] Synonyms { get; set; }
+        public object UserData { get; set; }
+        public SearcherItem(string name, string help = , System.Collections.Generic.List<UnityEditor.Searcher.SearcherItem> children = default(System.Collections.Generic.List<UnityEditor.Searcher.SearcherItem>), object userData = default(object), UnityEngine.Texture2D icon = default(UnityEngine.Texture2D), bool collapseEmptyIcon = True) {}
+        public void AddChild(UnityEditor.Searcher.SearcherItem child);
+        public virtual void Build();
+        public virtual string ToString();
+    }
+
+    [JetBrains.Annotations.PublicAPI] public static class SearcherTreeUtility
+    {
+        public static System.Collections.Generic.List<UnityEditor.Searcher.SearcherItem> CreateFromFlatList(System.Collections.Generic.List<UnityEditor.Searcher.SearcherItem> items);
+    }
+
+    [JetBrains.Annotations.PublicAPI] public class SearcherWindow : UnityEditor.EditorWindow
+    {
+        public SearcherWindow() {}
+        public static UnityEngine.Vector2 GetPositionWithAlignment(UnityEngine.Vector2 pos, UnityEngine.Vector2 size, UnityEditor.Searcher.SearcherWindow.Alignment align);
+        public static void Show(UnityEditor.EditorWindow host, UnityEditor.Searcher.Searcher searcher, System.Func<UnityEditor.Searcher.SearcherItem, bool> itemSelectedDelegate, System.Action<UnityEditor.Searcher.Searcher.AnalyticsEvent> analyticsDataDelegate, UnityEngine.Rect rect);
+        public static void Show(UnityEditor.EditorWindow host, System.Collections.Generic.IList<UnityEditor.Searcher.SearcherItem> items, string title, System.Func<UnityEditor.Searcher.SearcherItem, bool> itemSelectedDelegate, UnityEngine.Vector2 displayPosition, UnityEditor.Searcher.SearcherWindow.Alignment align = default(UnityEditor.Searcher.SearcherWindow.Alignment));
+        public static void Show(UnityEditor.EditorWindow host, UnityEditor.Searcher.Searcher searcher, System.Func<UnityEditor.Searcher.SearcherItem, bool> itemSelectedDelegate, UnityEngine.Vector2 displayPosition, System.Action<UnityEditor.Searcher.Searcher.AnalyticsEvent> analyticsDataDelegate, UnityEditor.Searcher.SearcherWindow.Alignment align = default(UnityEditor.Searcher.SearcherWindow.Alignment));
+        public static void Show(UnityEditor.EditorWindow host, System.Collections.Generic.IList<UnityEditor.Searcher.SearcherItem> items, string title, string directoryPath, System.Func<UnityEditor.Searcher.SearcherItem, bool> itemSelectedDelegate, UnityEngine.Vector2 displayPosition, UnityEditor.Searcher.SearcherWindow.Alignment align = default(UnityEditor.Searcher.SearcherWindow.Alignment));
+        public static void Show(UnityEditor.EditorWindow host, System.Collections.Generic.IList<UnityEditor.Searcher.SearcherItem> items, UnityEditor.Searcher.ISearcherAdapter adapter, System.Func<UnityEditor.Searcher.SearcherItem, bool> itemSelectedDelegate, UnityEngine.Vector2 displayPosition, System.Action<UnityEditor.Searcher.Searcher.AnalyticsEvent> analyticsDataDelegate, UnityEditor.Searcher.SearcherWindow.Alignment align = default(UnityEditor.Searcher.SearcherWindow.Alignment));
+        public static void Show(UnityEditor.EditorWindow host, System.Collections.Generic.IEnumerable<UnityEditor.Searcher.SearcherItem> items, UnityEditor.Searcher.ISearcherAdapter adapter, string directoryPath, System.Func<UnityEditor.Searcher.SearcherItem, bool> itemSelectedDelegate, UnityEngine.Vector2 displayPosition, System.Action<UnityEditor.Searcher.Searcher.AnalyticsEvent> analyticsDataDelegate, UnityEditor.Searcher.SearcherWindow.Alignment align = default(UnityEditor.Searcher.SearcherWindow.Alignment));
+        [JetBrains.Annotations.PublicAPI] public struct Alignment
+        {
+            public readonly UnityEditor.Searcher.SearcherWindow.Alignment.Horizontal horizontal;
+            public readonly UnityEditor.Searcher.SearcherWindow.Alignment.Vertical vertical;
+            public Alignment(UnityEditor.Searcher.SearcherWindow.Alignment.Vertical v, UnityEditor.Searcher.SearcherWindow.Alignment.Horizontal h) {}
+            [JetBrains.Annotations.PublicAPI] public enum Horizontal
+            {
+                public const UnityEditor.Searcher.SearcherWindow.Alignment.Horizontal Center = 1;
+                public const UnityEditor.Searcher.SearcherWindow.Alignment.Horizontal Left = 0;
+                public const UnityEditor.Searcher.SearcherWindow.Alignment.Horizontal Right = 2;
+                public int value__;
+            }
+            [JetBrains.Annotations.PublicAPI] public enum Vertical
+            {
+                public const UnityEditor.Searcher.SearcherWindow.Alignment.Vertical Bottom = 2;
+                public const UnityEditor.Searcher.SearcherWindow.Alignment.Vertical Center = 1;
+                public const UnityEditor.Searcher.SearcherWindow.Alignment.Vertical Top = 0;
+                public int value__;
+            }
+        }
+    }
+}

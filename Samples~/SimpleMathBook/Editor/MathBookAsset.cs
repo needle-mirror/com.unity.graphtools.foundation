@@ -1,7 +1,6 @@
 using System;
 using UnityEditor.Callbacks;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
-using UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook.UI;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook
 {
@@ -32,14 +31,10 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook
         public static bool OpenGraphAsset(int instanceId, int line)
         {
             var obj = EditorUtility.InstanceIDToObject(instanceId);
-            if (obj is MathBookAsset)
+            if (obj is MathBookAsset graphAssetModel)
             {
-                string path = AssetDatabase.GetAssetPath(instanceId);
-                var asset = AssetDatabase.LoadAssetAtPath<MathBookAsset>(path);
-                if (asset == null)
-                    return false;
-
                 var window = GraphViewEditorWindow.FindOrCreateGraphWindow<SimpleGraphViewWindow>();
+                window.SetCurrentSelection(graphAssetModel, GraphViewEditorWindow.OpenMode.OpenAndFocus);
                 return window != null;
             }
 

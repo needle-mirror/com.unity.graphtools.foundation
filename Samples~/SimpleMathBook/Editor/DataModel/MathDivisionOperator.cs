@@ -1,18 +1,26 @@
 using System;
+using System.Linq;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.MathBook
 {
     [Serializable]
     public class MathDivisionOperator : MathOperator
     {
-        public MathDivisionOperator()
+        public override string Title
         {
-            Title = "Divide";
+            get => "Divide";
+            set { }
         }
 
         public override float Evaluate()
         {
-            return left / right;
+            return Values.Skip(1).Aggregate(Values.FirstOrDefault(), (current, value) => current / value);
+        }
+
+        protected override void AddInputPorts()
+        {
+            for (var i = 0; i < InputPortCount; ++i)
+                this.AddDataInputPort<float>(i == 0 ? "Dividend" : "Divisor " + i);
         }
     }
 }
