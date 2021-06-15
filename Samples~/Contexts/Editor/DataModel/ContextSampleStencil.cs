@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine.GraphToolsFoundation.Overdrive;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
-using UnityEditor.Searcher;
+using UnityEditor.GraphToolsFoundation.Searcher;
 using UnityEngine;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.Samples.Contexts

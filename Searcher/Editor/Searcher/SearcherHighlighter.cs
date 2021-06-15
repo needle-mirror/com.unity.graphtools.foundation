@@ -2,7 +2,7 @@ using System;
 using System.Text.RegularExpressions;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.Searcher
+namespace UnityEditor.GraphToolsFoundation.Searcher
 {
     static class SearcherHighlighter
     {

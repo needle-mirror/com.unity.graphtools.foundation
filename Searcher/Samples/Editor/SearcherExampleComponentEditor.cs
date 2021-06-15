@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace UnityEditor.Searcher
+namespace UnityEditor.GraphToolsFoundation.Searcher
 {
     [CustomEditor(typeof(SearcherExampleComponent))]
     class SearcherExampleComponentEditor : Editor

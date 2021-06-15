@@ -1,13 +1,10 @@
 {
-    "name": "Unity.Searcher.EditorTests",
+    "name": "Unity.GraphToolsFoundation.Searcher.EditorTests",
     "references": [
-        "Unity.Searcher.Editor",
-        "Unity.Searcher.EditorSamples",
-        "Lucene.Net"
+        "Unity.GraphToolsFoundation.Searcher.Editor",
+        "Unity.GraphToolsFoundation.Searcher.EditorSamples"
     ],
-    "precompiledReferences": [
-        "Lucene.Net.dll"
-    ],
+    "precompiledReferences": [],
     "defineConstraints": [
         "UNITY_INCLUDE_TESTS"
     ],

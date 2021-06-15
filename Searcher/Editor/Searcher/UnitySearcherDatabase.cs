@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using UnityEditor.Search;
 
-namespace UnityEditor.Searcher
+namespace UnityEditor.GraphToolsFoundation.Searcher
 {
     /// <summary>
     /// Searcher Database using Unity Search as a backend

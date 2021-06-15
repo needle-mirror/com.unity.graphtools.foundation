@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using JetBrains.Annotations;
 
-namespace UnityEditor.Searcher
+namespace UnityEditor.GraphToolsFoundation.Searcher
 {
     // SearcherTreeUtility contains a helper function that takes a flat list of SearcherItems and constructs a SearcherItems tree using their names as paths.
     //
@@ -13,7 +13,7 @@ namespace UnityEditor.Searcher
     // items.Add(new SearcherItem("Fantasy/J. R. R. Tolkien/The Return of the King"));
     // items.Add(new SearcherItem("Health & Fitness/Becoming a Supple Leopard"));
     // items.Add(new SearcherItem("Some Uncategorized Book"));
-    // 
+    //
     // List<SearcherItem> itemsTree = SearcherTreeUtility.CreateFromFlatList(items);
     //
     // Will return the follow hierarchy:

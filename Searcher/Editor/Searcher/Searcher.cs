@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 
-namespace UnityEditor.Searcher
+namespace UnityEditor.GraphToolsFoundation.Searcher
 {
     [PublicAPI]
     public class Searcher

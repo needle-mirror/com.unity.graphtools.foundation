@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
-using UnityEditor.Searcher;
+using UnityEditor.GraphToolsFoundation.Searcher;
 using UnityEngine.Assertions;
 using UnityEngine.GraphToolsFoundation.Overdrive;
 

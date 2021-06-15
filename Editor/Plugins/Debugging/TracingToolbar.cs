@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using UnityEditor.Searcher;
+using UnityEditor.GraphToolsFoundation.Searcher;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;

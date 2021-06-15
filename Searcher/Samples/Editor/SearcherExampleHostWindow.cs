@@ -5,7 +5,7 @@ using UnityEngine.UIElements;
 
 // ReSharper disable StringLiteralTypo
 
-namespace UnityEditor.Searcher
+namespace UnityEditor.GraphToolsFoundation.Searcher
 {
     class SearcherExampleHostWindow : EditorWindow
     {

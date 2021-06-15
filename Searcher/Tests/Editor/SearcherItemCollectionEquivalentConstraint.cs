@@ -5,7 +5,7 @@ using System.Linq;
 using JetBrains.Annotations;
 using NUnit.Framework.Constraints;
 
-namespace UnityEditor.Searcher.Tests
+namespace UnityEditor.GraphToolsFoundation.Searcher.Tests
 {
     [PublicAPI]
     class Is : NUnit.Framework.Is

@@ -1,7 +1,7 @@
-﻿namespace UnityEditor.Searcher
+﻿namespace UnityEditor.GraphToolsFoundation.Searcher
 {
     /// <summary>
-    /// Base class to filter search databases. 
+    /// Base class to filter search databases.
     /// </summary>
     public abstract class SearcherFilter
     {

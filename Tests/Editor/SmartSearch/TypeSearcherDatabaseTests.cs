@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEditor.GraphToolsFoundation.Overdrive.BasicModel;
-using UnityEditor.Searcher;
+using UnityEditor.GraphToolsFoundation.Searcher;
 using UnityEngine;
 using UnityEngine.GraphToolsFoundation.Overdrive;
 

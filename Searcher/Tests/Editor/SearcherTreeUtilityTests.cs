@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using NUnit.Framework;
 
-namespace UnityEditor.Searcher.Tests
+namespace UnityEditor.GraphToolsFoundation.Searcher.Tests
 {
     class SearcherTreeUtilityTests
     {

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using JetBrains.Annotations;
 using UnityEngine;
 
-namespace UnityEditor.Searcher
+namespace UnityEditor.GraphToolsFoundation.Searcher
 {
     /// <summary>
     /// Searcher Database base class
@@ -36,7 +36,7 @@ namespace UnityEditor.Searcher
         protected const bool k_UseParallelTasks = true;
 
         /// <summary>
-        /// The Maximum number of filter results to cache. 
+        /// The Maximum number of filter results to cache.
         /// </summary>
         protected const int k_MaxNumFilterCache = 5;
 
@@ -145,7 +145,7 @@ namespace UnityEditor.Searcher
 
         /// <summary>
         /// Indexes database items. Get children items, get costly data if needed.
-        /// Indexed items are stored in IndexItems. 
+        /// Indexed items are stored in IndexItems.
         /// </summary>
         /// <param name="itemsToIndex">Items to index</param>
         /// <param name="estimateIndexSize">Estimate of the number of items, helps avoid reallocations.</param>
@@ -163,7 +163,7 @@ namespace UnityEditor.Searcher
         }
 
         /// <summary>
-        /// Applies a filter to a collection of items to only select some of them. 
+        /// Applies a filter to a collection of items to only select some of them.
         /// </summary>
         /// <param name="filter">The filter to apply.</param>
         /// <param name="items">The items to filter.</param>
@@ -176,7 +176,7 @@ namespace UnityEditor.Searcher
         }
 
         /// <summary>
-        /// Calls PerformFilter and cache its result per filter. 
+        /// Calls PerformFilter and cache its result per filter.
         /// </summary>
         /// <param name="filter">The filter to apply.</param>
         /// <param name="items">The items to filter.</param>

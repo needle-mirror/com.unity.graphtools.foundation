@@ -1,4 +1,4 @@
-using UnityEditor.Searcher;
+using UnityEditor.GraphToolsFoundation.Searcher;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive
 {

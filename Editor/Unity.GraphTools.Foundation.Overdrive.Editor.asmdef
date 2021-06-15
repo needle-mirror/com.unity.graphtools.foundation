@@ -2,7 +2,7 @@
     "name": "Unity.GraphTools.Foundation.Overdrive.Editor",
     "rootNamespace": "",
     "references": [
-        "Unity.Searcher.Editor",
+        "Unity.GraphToolsFoundation.Searcher.Editor",
         "Unity.Properties",
         "Unity.Properties.UI",
         "Unity.Properties.UI.Editor",
@@ -17,9 +17,7 @@
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": true,
-    "precompiledReferences": [
-        "Lucene.Net.dll"
-    ],
+    "precompiledReferences": [],
     "autoReferenced": false,
     "defineConstraints": [],
     "versionDefines": [],

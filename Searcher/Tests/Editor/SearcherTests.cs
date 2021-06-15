@@ -5,7 +5,7 @@ using UnityEngine;
 
 // ReSharper disable StringLiteralTypo
 
-namespace UnityEditor.Searcher.Tests
+namespace UnityEditor.GraphToolsFoundation.Searcher.Tests
 {
     abstract class SearcherTestsBase
     {

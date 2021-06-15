@@ -734,11 +734,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     public class DefaultSearcherDatabaseProvider : UnityEditor.GraphToolsFoundation.Overdrive.ISearcherDatabaseProvider
     {
         public DefaultSearcherDatabaseProvider(UnityEditor.GraphToolsFoundation.Overdrive.Stencil stencil) {}
-        public virtual System.Collections.Generic.List<UnityEditor.Searcher.SearcherDatabaseBase> GetDynamicSearcherDatabases(System.Collections.Generic.IEnumerable<UnityEditor.GraphToolsFoundation.Overdrive.IPortModel> portModel);
-        public virtual System.Collections.Generic.List<UnityEditor.Searcher.SearcherDatabaseBase> GetDynamicSearcherDatabases(UnityEditor.GraphToolsFoundation.Overdrive.IPortModel portModel);
-        public virtual System.Collections.Generic.List<UnityEditor.Searcher.SearcherDatabaseBase> GetGraphElementsSearcherDatabases(UnityEditor.GraphToolsFoundation.Overdrive.IGraphModel graphModel);
-        public virtual System.Collections.Generic.List<UnityEditor.Searcher.SearcherDatabaseBase> GetGraphVariablesSearcherDatabases(UnityEditor.GraphToolsFoundation.Overdrive.IGraphModel graphModel);
-        public virtual System.Collections.Generic.List<UnityEditor.Searcher.SearcherDatabaseBase> GetVariableTypesSearcherDatabases();
+        public virtual System.Collections.Generic.List<UnityEditor.GraphToolsFoundation.Searcher.SearcherDatabaseBase> GetDynamicSearcherDatabases(System.Collections.Generic.IEnumerable<UnityEditor.GraphToolsFoundation.Overdrive.IPortModel> portModel);
+        public virtual System.Collections.Generic.List<UnityEditor.GraphToolsFoundation.Searcher.SearcherDatabaseBase> GetDynamicSearcherDatabases(UnityEditor.GraphToolsFoundation.Overdrive.IPortModel portModel);
+        public virtual System.Collections.Generic.List<UnityEditor.GraphToolsFoundation.Searcher.SearcherDatabaseBase> GetGraphElementsSearcherDatabases(UnityEditor.GraphToolsFoundation.Overdrive.IGraphModel graphModel);
+        public virtual System.Collections.Generic.List<UnityEditor.GraphToolsFoundation.Searcher.SearcherDatabaseBase> GetGraphVariablesSearcherDatabases(UnityEditor.GraphToolsFoundation.Overdrive.IGraphModel graphModel);
+        public virtual System.Collections.Generic.List<UnityEditor.GraphToolsFoundation.Searcher.SearcherDatabaseBase> GetVariableTypesSearcherDatabases();
     }
 
     public class DeleteEdgeCommand : UnityEngine.GraphToolsFoundation.CommandStateObserver.ModelCommand<UnityEditor.GraphToolsFoundation.Overdrive.IEdgeModel>
@@ -1111,11 +1111,11 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     public class FindInGraphAdapter : UnityEditor.GraphToolsFoundation.Overdrive.SimpleSearcherAdapter
     {
         public FindInGraphAdapter(System.Action<UnityEditor.GraphToolsFoundation.Overdrive.FindInGraphAdapter.FindSearcherItem> onHighlightDelegate) {}
-        public virtual void OnSelectionChanged(System.Collections.Generic.IEnumerable<UnityEditor.Searcher.SearcherItem> items);
-        public class FindSearcherItem : UnityEditor.Searcher.SearcherItem
+        public virtual void OnSelectionChanged(System.Collections.Generic.IEnumerable<UnityEditor.GraphToolsFoundation.Searcher.SearcherItem> items);
+        public class FindSearcherItem : UnityEditor.GraphToolsFoundation.Searcher.SearcherItem
         {
             public UnityEditor.GraphToolsFoundation.Overdrive.INodeModel Node { get; }
-            public FindSearcherItem(UnityEditor.GraphToolsFoundation.Overdrive.INodeModel node, string title, string help = , System.Collections.Generic.List<UnityEditor.Searcher.SearcherItem> children = default(System.Collections.Generic.List<UnityEditor.Searcher.SearcherItem>)) {}
+            public FindSearcherItem(UnityEditor.GraphToolsFoundation.Overdrive.INodeModel node, string title, string help = , System.Collections.Generic.List<UnityEditor.GraphToolsFoundation.Searcher.SearcherItem> children = default(System.Collections.Generic.List<UnityEditor.GraphToolsFoundation.Searcher.SearcherItem>)) {}
         }
     }
 
@@ -1177,23 +1177,23 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public static T CreateUI<T>(UnityEditor.GraphToolsFoundation.Overdrive.IModelView view, UnityEditor.GraphToolsFoundation.Overdrive.CommandDispatcher commandDispatcher, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel model, string context) where T : class, UnityEditor.GraphToolsFoundation.Overdrive.IModelUI;
     }
 
-    public abstract class GraphElementSearcherAdapter : UnityEditor.Searcher.SearcherAdapter, UnityEditor.GraphToolsFoundation.Overdrive.IGTFSearcherAdapter, UnityEditor.Searcher.ISearcherAdapter
+    public abstract class GraphElementSearcherAdapter : UnityEditor.GraphToolsFoundation.Searcher.SearcherAdapter, UnityEditor.GraphToolsFoundation.Overdrive.IGTFSearcherAdapter, UnityEditor.GraphToolsFoundation.Searcher.ISearcherAdapter
     {
         protected UnityEngine.UIElements.VisualElement m_DetailsPanel;
         protected UnityEngine.UIElements.Label m_DetailsTitle;
         protected UnityEngine.UIElements.ScrollView m_Scrollview;
         public virtual float InitialSplitterDetailRatio { get; }
         protected GraphElementSearcherAdapter(string title) {}
-        protected virtual System.Collections.Generic.IEnumerable<UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel> CreateGraphElements(UnityEditor.Searcher.SearcherItem item);
+        protected virtual System.Collections.Generic.IEnumerable<UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel> CreateGraphElements(UnityEditor.GraphToolsFoundation.Searcher.SearcherItem item);
         public virtual void InitDetailsPanel(UnityEngine.UIElements.VisualElement detailsPanel);
-        protected virtual void OnGraphElementsCreated(UnityEditor.Searcher.SearcherItem searcherItem, System.Collections.Generic.IEnumerable<UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel> elements);
-        public virtual void OnSelectionChanged(System.Collections.Generic.IEnumerable<UnityEditor.Searcher.SearcherItem> items);
+        protected virtual void OnGraphElementsCreated(UnityEditor.GraphToolsFoundation.Searcher.SearcherItem searcherItem, System.Collections.Generic.IEnumerable<UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel> elements);
+        public virtual void OnSelectionChanged(System.Collections.Generic.IEnumerable<UnityEditor.GraphToolsFoundation.Searcher.SearcherItem> items);
         public virtual void SetInitialSplitterDetailRatio(float ratio);
     }
 
     [JetBrains.Annotations.PublicAPI] public class GraphElementSearcherDatabase
     {
-        public readonly System.Collections.Generic.List<UnityEditor.Searcher.SearcherItem> Items;
+        public readonly System.Collections.Generic.List<UnityEditor.GraphToolsFoundation.Searcher.SearcherItem> Items;
         public readonly UnityEditor.GraphToolsFoundation.Overdrive.Stencil Stencil;
         public GraphElementSearcherDatabase(UnityEditor.GraphToolsFoundation.Overdrive.Stencil stencil, UnityEditor.GraphToolsFoundation.Overdrive.IGraphModel graphModel) {}
         public UnityEditor.GraphToolsFoundation.Overdrive.GraphElementSearcherDatabase AddConstant(System.Type type);
@@ -1201,7 +1201,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public UnityEditor.GraphToolsFoundation.Overdrive.GraphElementSearcherDatabase AddGraphVariables(UnityEditor.GraphToolsFoundation.Overdrive.IGraphModel graphModel);
         public UnityEditor.GraphToolsFoundation.Overdrive.GraphElementSearcherDatabase AddNodesWithSearcherItemAttribute();
         public UnityEditor.GraphToolsFoundation.Overdrive.GraphElementSearcherDatabase AddStickyNote();
-        public UnityEditor.Searcher.SearcherDatabase Build();
+        public UnityEditor.GraphToolsFoundation.Searcher.SearcherDatabase Build();
     }
 
     [JetBrains.Annotations.MeansImplicitUse(3)] [System.AttributeUsage(4, AllowMultiple = true, Inherited = false)] public class GraphElementsExtensionMethodsCacheAttribute : System.Attribute
@@ -1221,15 +1221,15 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public GraphNodeCreationData(UnityEditor.GraphToolsFoundation.Overdrive.IGraphModel graphModel, UnityEngine.Vector2 position, UnityEditor.GraphToolsFoundation.Overdrive.SpawnFlags spawnFlags = 0, UnityEngine.GraphToolsFoundation.Overdrive.SerializableGUID guid = default(UnityEngine.GraphToolsFoundation.Overdrive.SerializableGUID)) {}
     }
 
-    public class GraphNodeModelSearcherItem : UnityEditor.Searcher.SearcherItem, UnityEditor.GraphToolsFoundation.Overdrive.ISearcherItemDataProvider
+    public class GraphNodeModelSearcherItem : UnityEditor.GraphToolsFoundation.Searcher.SearcherItem, UnityEditor.GraphToolsFoundation.Overdrive.ISearcherItemDataProvider
     {
         public System.Func<UnityEditor.GraphToolsFoundation.Overdrive.GraphNodeCreationData, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel[]> CreateElements { get; }
         public virtual UnityEditor.GraphToolsFoundation.Overdrive.ISearcherItemData Data { get; }
         public virtual string Name { get; }
-        [System.Obsolete(@"Use a constructor that provides a GraphModel to GraphNodeModelSearcherItem to allow building index. Added in 0.10.1+ (2021-06-03).")] public GraphNodeModelSearcherItem(UnityEditor.GraphToolsFoundation.Overdrive.ISearcherItemData data, System.Func<UnityEditor.GraphToolsFoundation.Overdrive.GraphNodeCreationData, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel> createElement, System.Func<string> getName, System.Collections.Generic.List<UnityEditor.Searcher.SearcherItem> children = default(System.Collections.Generic.List<UnityEditor.Searcher.SearcherItem>), string help = default(string)) {}
-        public GraphNodeModelSearcherItem(UnityEditor.GraphToolsFoundation.Overdrive.IGraphModel graphModel, UnityEditor.GraphToolsFoundation.Overdrive.ISearcherItemData data, System.Func<UnityEditor.GraphToolsFoundation.Overdrive.GraphNodeCreationData, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel> createElement, System.Func<string> getName, System.Collections.Generic.List<UnityEditor.Searcher.SearcherItem> children = default(System.Collections.Generic.List<UnityEditor.Searcher.SearcherItem>), string help = default(string)) {}
-        [System.Obsolete(@"Use a constructor that provides a GraphModel to GraphNodeModelSearcherItem to allow building index. Added in 0.10.1+ (2021-06-03).")] public GraphNodeModelSearcherItem(UnityEditor.GraphToolsFoundation.Overdrive.ISearcherItemData data, System.Func<UnityEditor.GraphToolsFoundation.Overdrive.GraphNodeCreationData, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel> createElement, string name, System.Collections.Generic.List<UnityEditor.Searcher.SearcherItem> children = default(System.Collections.Generic.List<UnityEditor.Searcher.SearcherItem>), System.Func<string> getName = default(System.Func<string>), string help = default(string)) {}
-        public GraphNodeModelSearcherItem(UnityEditor.GraphToolsFoundation.Overdrive.IGraphModel graphModel, UnityEditor.GraphToolsFoundation.Overdrive.ISearcherItemData data, System.Func<UnityEditor.GraphToolsFoundation.Overdrive.GraphNodeCreationData, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel> createElement, string name, System.Collections.Generic.List<UnityEditor.Searcher.SearcherItem> children = default(System.Collections.Generic.List<UnityEditor.Searcher.SearcherItem>), System.Func<string> getName = default(System.Func<string>), string help = default(string)) {}
+        [System.Obsolete(@"Use a constructor that provides a GraphModel to GraphNodeModelSearcherItem to allow building index. Added in 0.10.1+ (2021-06-03).")] public GraphNodeModelSearcherItem(UnityEditor.GraphToolsFoundation.Overdrive.ISearcherItemData data, System.Func<UnityEditor.GraphToolsFoundation.Overdrive.GraphNodeCreationData, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel> createElement, System.Func<string> getName, System.Collections.Generic.List<UnityEditor.GraphToolsFoundation.Searcher.SearcherItem> children = default(System.Collections.Generic.List<UnityEditor.GraphToolsFoundation.Searcher.SearcherItem>), string help = default(string)) {}
+        public GraphNodeModelSearcherItem(UnityEditor.GraphToolsFoundation.Overdrive.IGraphModel graphModel, UnityEditor.GraphToolsFoundation.Overdrive.ISearcherItemData data, System.Func<UnityEditor.GraphToolsFoundation.Overdrive.GraphNodeCreationData, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel> createElement, System.Func<string> getName, System.Collections.Generic.List<UnityEditor.GraphToolsFoundation.Searcher.SearcherItem> children = default(System.Collections.Generic.List<UnityEditor.GraphToolsFoundation.Searcher.SearcherItem>), string help = default(string)) {}
+        [System.Obsolete(@"Use a constructor that provides a GraphModel to GraphNodeModelSearcherItem to allow building index. Added in 0.10.1+ (2021-06-03).")] public GraphNodeModelSearcherItem(UnityEditor.GraphToolsFoundation.Overdrive.ISearcherItemData data, System.Func<UnityEditor.GraphToolsFoundation.Overdrive.GraphNodeCreationData, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel> createElement, string name, System.Collections.Generic.List<UnityEditor.GraphToolsFoundation.Searcher.SearcherItem> children = default(System.Collections.Generic.List<UnityEditor.GraphToolsFoundation.Searcher.SearcherItem>), System.Func<string> getName = default(System.Func<string>), string help = default(string)) {}
+        public GraphNodeModelSearcherItem(UnityEditor.GraphToolsFoundation.Overdrive.IGraphModel graphModel, UnityEditor.GraphToolsFoundation.Overdrive.ISearcherItemData data, System.Func<UnityEditor.GraphToolsFoundation.Overdrive.GraphNodeCreationData, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel> createElement, string name, System.Collections.Generic.List<UnityEditor.GraphToolsFoundation.Searcher.SearcherItem> children = default(System.Collections.Generic.List<UnityEditor.GraphToolsFoundation.Searcher.SearcherItem>), System.Func<string> getName = default(System.Func<string>), string help = default(string)) {}
         public virtual void Build();
         protected virtual void BuildItemFromNode(UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel model);
     }
@@ -1237,8 +1237,8 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
     public class GraphNodeSearcherAdapter : UnityEditor.GraphToolsFoundation.Overdrive.GraphElementSearcherAdapter
     {
         public GraphNodeSearcherAdapter(UnityEditor.GraphToolsFoundation.Overdrive.IGraphModel graphModel, string title) {}
-        public static System.Collections.Generic.IEnumerable<UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel> CreateGraphElementModels(UnityEditor.GraphToolsFoundation.Overdrive.IGraphModel mGraphModel, UnityEditor.Searcher.SearcherItem item);
-        protected virtual System.Collections.Generic.IEnumerable<UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel> CreateGraphElements(UnityEditor.Searcher.SearcherItem item);
+        public static System.Collections.Generic.IEnumerable<UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel> CreateGraphElementModels(UnityEditor.GraphToolsFoundation.Overdrive.IGraphModel mGraphModel, UnityEditor.GraphToolsFoundation.Searcher.SearcherItem item);
+        protected virtual System.Collections.Generic.IEnumerable<UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel> CreateGraphElements(UnityEditor.GraphToolsFoundation.Searcher.SearcherItem item);
     }
 
     public class GraphProcessingError
@@ -1707,7 +1707,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public abstract System.Collections.Generic.IReadOnlyList<UnityEditor.GraphToolsFoundation.Overdrive.IFrameData> AllFrames { get; }
     }
 
-    public interface IGTFSearcherAdapter : UnityEditor.Searcher.ISearcherAdapter
+    public interface IGTFSearcherAdapter : UnityEditor.GraphToolsFoundation.Searcher.ISearcherAdapter
     {
         public abstract void SetInitialSplitterDetailRatio(float ratio);
     }
@@ -1795,21 +1795,21 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
     public interface ISearcherDatabaseProvider
     {
-        public abstract System.Collections.Generic.List<UnityEditor.Searcher.SearcherDatabaseBase> GetDynamicSearcherDatabases(System.Collections.Generic.IEnumerable<UnityEditor.GraphToolsFoundation.Overdrive.IPortModel> portModel);
-        public abstract System.Collections.Generic.List<UnityEditor.Searcher.SearcherDatabaseBase> GetDynamicSearcherDatabases(UnityEditor.GraphToolsFoundation.Overdrive.IPortModel portModel);
-        public abstract System.Collections.Generic.List<UnityEditor.Searcher.SearcherDatabaseBase> GetGraphElementsSearcherDatabases(UnityEditor.GraphToolsFoundation.Overdrive.IGraphModel graphModel);
-        public abstract System.Collections.Generic.List<UnityEditor.Searcher.SearcherDatabaseBase> GetGraphVariablesSearcherDatabases(UnityEditor.GraphToolsFoundation.Overdrive.IGraphModel graphModel);
-        public abstract System.Collections.Generic.List<UnityEditor.Searcher.SearcherDatabaseBase> GetVariableTypesSearcherDatabases();
+        public abstract System.Collections.Generic.List<UnityEditor.GraphToolsFoundation.Searcher.SearcherDatabaseBase> GetDynamicSearcherDatabases(System.Collections.Generic.IEnumerable<UnityEditor.GraphToolsFoundation.Overdrive.IPortModel> portModel);
+        public abstract System.Collections.Generic.List<UnityEditor.GraphToolsFoundation.Searcher.SearcherDatabaseBase> GetDynamicSearcherDatabases(UnityEditor.GraphToolsFoundation.Overdrive.IPortModel portModel);
+        public abstract System.Collections.Generic.List<UnityEditor.GraphToolsFoundation.Searcher.SearcherDatabaseBase> GetGraphElementsSearcherDatabases(UnityEditor.GraphToolsFoundation.Overdrive.IGraphModel graphModel);
+        public abstract System.Collections.Generic.List<UnityEditor.GraphToolsFoundation.Searcher.SearcherDatabaseBase> GetGraphVariablesSearcherDatabases(UnityEditor.GraphToolsFoundation.Overdrive.IGraphModel graphModel);
+        public abstract System.Collections.Generic.List<UnityEditor.GraphToolsFoundation.Searcher.SearcherDatabaseBase> GetVariableTypesSearcherDatabases();
     }
 
     public interface ISearcherFilterProvider
     {
-        public abstract UnityEditor.Searcher.SearcherFilter GetEdgeSearcherFilter(UnityEditor.GraphToolsFoundation.Overdrive.IEdgeModel edgeModel);
-        public abstract UnityEditor.Searcher.SearcherFilter GetGraphSearcherFilter();
-        public abstract UnityEditor.Searcher.SearcherFilter GetInputToGraphSearcherFilter(System.Collections.Generic.IEnumerable<UnityEditor.GraphToolsFoundation.Overdrive.IPortModel> portModels);
-        public abstract UnityEditor.Searcher.SearcherFilter GetInputToGraphSearcherFilter(UnityEditor.GraphToolsFoundation.Overdrive.IPortModel portModel);
-        public abstract UnityEditor.Searcher.SearcherFilter GetOutputToGraphSearcherFilter(System.Collections.Generic.IEnumerable<UnityEditor.GraphToolsFoundation.Overdrive.IPortModel> portModels);
-        public abstract UnityEditor.Searcher.SearcherFilter GetOutputToGraphSearcherFilter(UnityEditor.GraphToolsFoundation.Overdrive.IPortModel portModel);
+        public abstract UnityEditor.GraphToolsFoundation.Searcher.SearcherFilter GetEdgeSearcherFilter(UnityEditor.GraphToolsFoundation.Overdrive.IEdgeModel edgeModel);
+        public abstract UnityEditor.GraphToolsFoundation.Searcher.SearcherFilter GetGraphSearcherFilter();
+        public abstract UnityEditor.GraphToolsFoundation.Searcher.SearcherFilter GetInputToGraphSearcherFilter(System.Collections.Generic.IEnumerable<UnityEditor.GraphToolsFoundation.Overdrive.IPortModel> portModels);
+        public abstract UnityEditor.GraphToolsFoundation.Searcher.SearcherFilter GetInputToGraphSearcherFilter(UnityEditor.GraphToolsFoundation.Overdrive.IPortModel portModel);
+        public abstract UnityEditor.GraphToolsFoundation.Searcher.SearcherFilter GetOutputToGraphSearcherFilter(System.Collections.Generic.IEnumerable<UnityEditor.GraphToolsFoundation.Overdrive.IPortModel> portModels);
+        public abstract UnityEditor.GraphToolsFoundation.Searcher.SearcherFilter GetOutputToGraphSearcherFilter(UnityEditor.GraphToolsFoundation.Overdrive.IPortModel portModel);
     }
 
     public interface ISearcherItemData
@@ -2467,18 +2467,18 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
     [JetBrains.Annotations.PublicAPI] [System.Runtime.CompilerServices.Extension] public static class SearcherItemCollectionExtensions
     {
-        [System.Runtime.CompilerServices.Extension] public static void AddAtPath(System.Collections.Generic.List<UnityEditor.Searcher.SearcherItem> items, UnityEditor.Searcher.SearcherItem item, string path = );
-        [JetBrains.Annotations.NotNull] [System.Runtime.CompilerServices.Extension] public static UnityEditor.Searcher.SearcherItem GetItemFromPath(System.Collections.Generic.List<UnityEditor.Searcher.SearcherItem> items, string path);
+        [System.Runtime.CompilerServices.Extension] public static void AddAtPath(System.Collections.Generic.List<UnityEditor.GraphToolsFoundation.Searcher.SearcherItem> items, UnityEditor.GraphToolsFoundation.Searcher.SearcherItem item, string path = );
+        [JetBrains.Annotations.NotNull] [System.Runtime.CompilerServices.Extension] public static UnityEditor.GraphToolsFoundation.Searcher.SearcherItem GetItemFromPath(System.Collections.Generic.List<UnityEditor.GraphToolsFoundation.Searcher.SearcherItem> items, string path);
     }
 
     [System.Runtime.CompilerServices.Extension] public static class SearcherItemExtensions
     {
-        [JetBrains.Annotations.CanBeNull] [System.Runtime.CompilerServices.Extension] public static UnityEditor.Searcher.SearcherItem Find(UnityEditor.Searcher.SearcherItem item, string name);
+        [JetBrains.Annotations.CanBeNull] [System.Runtime.CompilerServices.Extension] public static UnityEditor.GraphToolsFoundation.Searcher.SearcherItem Find(UnityEditor.GraphToolsFoundation.Searcher.SearcherItem item, string name);
     }
 
     public static class SearcherService
     {
-        public static readonly System.Comparison<UnityEditor.Searcher.SearcherItem> TypeComparison;
+        public static readonly System.Comparison<UnityEditor.GraphToolsFoundation.Searcher.SearcherItem> TypeComparison;
         public static UnityEditor.GraphToolsFoundation.Overdrive.GraphView GraphView { get; }
         public static void FindInGraph(UnityEditor.EditorWindow host, UnityEditor.GraphToolsFoundation.Overdrive.IGraphModel graph, System.Action<UnityEditor.GraphToolsFoundation.Overdrive.FindInGraphAdapter.FindSearcherItem> highlightDelegate, System.Action<UnityEditor.GraphToolsFoundation.Overdrive.FindInGraphAdapter.FindSearcherItem> selectionDelegate);
         public static void ShowEdgeNodes(UnityEditor.GraphToolsFoundation.Overdrive.Stencil stencil, UnityEditor.GraphToolsFoundation.Overdrive.GraphToolState graphToolState, UnityEditor.GraphToolsFoundation.Overdrive.IEdgeModel edgeModel, UnityEngine.Vector2 position, System.Action<UnityEditor.GraphToolsFoundation.Overdrive.GraphNodeModelSearcherItem> callback);
@@ -2486,7 +2486,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public static void ShowInputToGraphNodes(UnityEditor.GraphToolsFoundation.Overdrive.Stencil stencil, UnityEditor.GraphToolsFoundation.Overdrive.GraphToolState graphToolState, System.Collections.Generic.IEnumerable<UnityEditor.GraphToolsFoundation.Overdrive.IPortModel> portModels, UnityEngine.Vector2 position, System.Action<UnityEditor.GraphToolsFoundation.Overdrive.GraphNodeModelSearcherItem> callback);
         public static void ShowOutputToGraphNodes(UnityEditor.GraphToolsFoundation.Overdrive.Stencil stencil, UnityEditor.GraphToolsFoundation.Overdrive.GraphToolState graphToolState, System.Collections.Generic.IEnumerable<UnityEditor.GraphToolsFoundation.Overdrive.IPortModel> portModels, UnityEngine.Vector2 position, System.Action<UnityEditor.GraphToolsFoundation.Overdrive.GraphNodeModelSearcherItem> callback);
         public static void ShowOutputToGraphNodes(UnityEditor.GraphToolsFoundation.Overdrive.Stencil stencil, UnityEditor.GraphToolsFoundation.Overdrive.GraphToolState graphToolState, UnityEditor.GraphToolsFoundation.Overdrive.IPortModel portModel, UnityEngine.Vector2 position, System.Action<UnityEditor.GraphToolsFoundation.Overdrive.GraphNodeModelSearcherItem> callback);
-        public static void ShowTypes(UnityEditor.GraphToolsFoundation.Overdrive.GraphToolState graphToolState, System.Collections.Generic.List<UnityEditor.Searcher.SearcherDatabaseBase> databases, UnityEngine.Vector2 position, System.Action<UnityEngine.GraphToolsFoundation.Overdrive.TypeHandle, int> callback);
+        public static void ShowTypes(UnityEditor.GraphToolsFoundation.Overdrive.GraphToolState graphToolState, System.Collections.Generic.List<UnityEditor.GraphToolsFoundation.Searcher.SearcherDatabaseBase> databases, UnityEngine.Vector2 position, System.Action<UnityEngine.GraphToolsFoundation.Overdrive.TypeHandle, int> callback);
         public static void ShowValues(UnityEditor.GraphToolsFoundation.Overdrive.GraphToolState graphToolState, string title, System.Collections.Generic.IEnumerable<string> values, UnityEngine.Vector2 position, System.Action<string, int> callback);
         public static void ShowVariableTypes(UnityEditor.GraphToolsFoundation.Overdrive.Stencil stencil, UnityEditor.GraphToolsFoundation.Overdrive.GraphToolState graphToolState, UnityEngine.Vector2 position, System.Action<UnityEngine.GraphToolsFoundation.Overdrive.TypeHandle, int> callback);
         public static class Usage
@@ -2677,7 +2677,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public static void RegisterDefaultShortcuts<T>(string toolName, System.Func<string, bool> shortcutFilter = default(System.Func<string, bool>), bool registerNow = False) where T : UnityEditor.EditorWindow;
     }
 
-    public class SimpleSearcherAdapter : UnityEditor.Searcher.SearcherAdapter, UnityEditor.GraphToolsFoundation.Overdrive.IGTFSearcherAdapter, UnityEditor.Searcher.ISearcherAdapter
+    public class SimpleSearcherAdapter : UnityEditor.GraphToolsFoundation.Searcher.SearcherAdapter, UnityEditor.GraphToolsFoundation.Overdrive.IGTFSearcherAdapter, UnityEditor.GraphToolsFoundation.Searcher.ISearcherAdapter
     {
         public virtual bool HasDetailsPanel { get; }
         public virtual float InitialSplitterDetailRatio { get; }
@@ -2729,7 +2729,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
         public virtual System.Collections.Generic.IEnumerable<UnityEditor.GraphToolsFoundation.Overdrive.INodeModel> GetEntryPoints();
         [System.Runtime.CompilerServices.IteratorStateMachine(typeof(UnityEditor.GraphToolsFoundation.Overdrive.Stencil.<GetGraphProcessingPluginHandlers>d__24))] public virtual System.Collections.Generic.IEnumerable<UnityEditor.GraphToolsFoundation.Overdrive.IPluginHandler> GetGraphProcessingPluginHandlers(UnityEngine.GraphToolsFoundation.Overdrive.GraphProcessingOptions getGraphProcessingOptions);
         public virtual System.Collections.Generic.IEnumerable<UnityEditor.GraphToolsFoundation.Overdrive.IEdgePortalModel> GetLinkedPortals(UnityEditor.GraphToolsFoundation.Overdrive.IEdgePortalModel portalModel);
-        public virtual string GetNodeDocumentation(UnityEditor.Searcher.SearcherItem node, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel model);
+        public virtual string GetNodeDocumentation(UnityEditor.GraphToolsFoundation.Searcher.SearcherItem node, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel model);
         public virtual System.Collections.Generic.IEnumerable<UnityEditor.GraphToolsFoundation.Overdrive.IEdgePortalModel> GetPortalDependencies(UnityEditor.GraphToolsFoundation.Overdrive.IEdgePortalModel portalModel);
         public virtual bool GetPortCapacity(UnityEditor.GraphToolsFoundation.Overdrive.IPortModel portModel, out UnityEditor.GraphToolsFoundation.Overdrive.PortCapacity capacity);
         [JetBrains.Annotations.CanBeNull] public virtual UnityEditor.GraphToolsFoundation.Overdrive.IGTFSearcherAdapter GetSearcherAdapter(UnityEditor.GraphToolsFoundation.Overdrive.IGraphModel graphModel, string title, System.Collections.Generic.IEnumerable<UnityEditor.GraphToolsFoundation.Overdrive.IPortModel> contextPortModel = default(System.Collections.Generic.IEnumerable<UnityEditor.GraphToolsFoundation.Overdrive.IPortModel>));
@@ -2949,14 +2949,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
     [JetBrains.Annotations.PublicAPI] [System.Runtime.CompilerServices.Extension] public static class TypeSearcherExtensions
     {
-        [System.Runtime.CompilerServices.Extension] public static UnityEditor.Searcher.SearcherDatabase ToSearcherDatabase(System.Collections.Generic.IEnumerable<System.Type> types);
+        [System.Runtime.CompilerServices.Extension] public static UnityEditor.GraphToolsFoundation.Searcher.SearcherDatabase ToSearcherDatabase(System.Collections.Generic.IEnumerable<System.Type> types);
     }
 
-    public sealed class TypeSearcherItem : UnityEditor.Searcher.SearcherItem, UnityEditor.GraphToolsFoundation.Overdrive.ISearcherItemDataProvider
+    public sealed class TypeSearcherItem : UnityEditor.GraphToolsFoundation.Searcher.SearcherItem, UnityEditor.GraphToolsFoundation.Overdrive.ISearcherItemDataProvider
     {
         public virtual UnityEditor.GraphToolsFoundation.Overdrive.ISearcherItemData Data { get; }
         public UnityEngine.GraphToolsFoundation.Overdrive.TypeHandle Type { get; }
-        public TypeSearcherItem(UnityEngine.GraphToolsFoundation.Overdrive.TypeHandle type, string name, System.Collections.Generic.List<UnityEditor.Searcher.SearcherItem> children = default(System.Collections.Generic.List<UnityEditor.Searcher.SearcherItem>)) {}
+        public TypeSearcherItem(UnityEngine.GraphToolsFoundation.Overdrive.TypeHandle type, string name, System.Collections.Generic.List<UnityEditor.GraphToolsFoundation.Searcher.SearcherItem> children = default(System.Collections.Generic.List<UnityEditor.GraphToolsFoundation.Searcher.SearcherItem>)) {}
     }
 
     [System.Runtime.CompilerServices.IsReadOnly] public struct TypeSearcherItemData : UnityEditor.GraphToolsFoundation.Overdrive.ISearcherItemData

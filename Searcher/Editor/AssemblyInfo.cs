@@ -1,4 +1,4 @@
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("Unity.Searcher.EditorSamples")]
-[assembly: InternalsVisibleTo("Unity.Searcher.EditorTests")]
+[assembly: InternalsVisibleTo("Unity.GraphToolsFoundation.Searcher.EditorSamples")]
+[assembly: InternalsVisibleTo("Unity.GraphToolsFoundation.Searcher.EditorTests")]

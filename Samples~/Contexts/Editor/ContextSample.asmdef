@@ -5,7 +5,7 @@
         "Unity.GraphTools.Foundation.Overdrive",
         "Unity.GraphTools.Foundation.Overdrive.Model",
         "Unity.GraphTools.Foundation.Overdrive.Editor",
-        "Unity.Searcher.Editor",
+        "Unity.GraphToolsFoundation.Searcher.Editor",
         "Unity.GraphTools.Foundation.Overdrive.CommandStateObserver"
     ],
     "includePlatforms": [

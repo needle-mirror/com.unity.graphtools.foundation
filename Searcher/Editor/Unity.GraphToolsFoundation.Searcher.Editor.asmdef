@@ -1,5 +1,5 @@
 {
-    "name": "Unity.Searcher.Editor",
+    "name": "Unity.GraphToolsFoundation.Searcher.Editor",
     "rootNamespace": "",
     "references": [
         "com.unity.quicksearch"

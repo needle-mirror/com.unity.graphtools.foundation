@@ -2,7 +2,7 @@
     "name": "Unity.GraphTools.Foundation.Overdrive.Model",
     "rootNamespace": "",
     "references": [
-        "Unity.Searcher.Editor",
+        "Unity.GraphToolsFoundation.Searcher.Editor",
         "Unity.Properties",
         "Unity.Properties.UI",
         "Unity.Properties.UI.Editor",

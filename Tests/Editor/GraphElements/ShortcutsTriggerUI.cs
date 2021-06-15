@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using NUnit.Framework;
 using UnityEngine;
@@ -10,7 +9,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.Tests.GraphElements
 {
     class ShortcutsTriggerUI : GraphViewTester
     {
-        [UnityTest]
+        [UnityTest, Ignore("VladN 06-2021: Test is too unstable.")]
         public IEnumerator ShortcutRenameWorks()
         {
             GraphModel.CreateConstantNode(TypeHandle.Float, "Blah", Vector2.zero);
