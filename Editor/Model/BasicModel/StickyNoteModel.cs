@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Scripting.APIUpdating;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 {
@@ -8,6 +9,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
     /// A model that represents a sticky note in a graph.
     /// </summary>
     [Serializable]
+    [MovedFrom(false, sourceAssembly: "Unity.GraphTools.Foundation.Overdrive.Editor")]
     public class StickyNoteModel : GraphElementModel, IStickyNoteModel
     {
         [SerializeField]

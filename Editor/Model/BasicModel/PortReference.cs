@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.GraphToolsFoundation.Overdrive;
+using UnityEngine.Scripting.APIUpdating;
 using UnityEngine.Serialization;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
@@ -10,6 +11,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
     /// Reference to a port by its unique id.
     /// </summary>
     [Serializable]
+    [MovedFrom(false, sourceAssembly: "Unity.GraphTools.Foundation.Overdrive.Editor")]
     struct PortReference
     {
         [SerializeField, FormerlySerializedAs("NodeModelGuid")]

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Scripting.APIUpdating;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 {
@@ -9,6 +10,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
     /// A model that represents a placemat in a graph.
     /// </summary>
     [Serializable]
+    [MovedFrom(false, sourceAssembly: "Unity.GraphTools.Foundation.Overdrive.Editor")]
     public class PlacematModel : GraphElementModel, IPlacematModel
     {
         const string k_DefaultPlacematName = "Placemat";

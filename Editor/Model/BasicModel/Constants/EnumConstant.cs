@@ -1,5 +1,6 @@
 using System;
 using UnityEngine.GraphToolsFoundation.Overdrive;
+using UnityEngine.Scripting.APIUpdating;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 {
@@ -7,6 +8,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
     /// Constant model for enums.
     /// </summary>
     [Serializable]
+    [MovedFrom(false, sourceAssembly: "Unity.GraphTools.Foundation.Overdrive.Editor")]
     public class EnumConstant : Constant<EnumValueReference>
     {
         /// <inheritdoc />

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine.GraphToolsFoundation.Overdrive;
+using UnityEngine.Scripting.APIUpdating;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 {
@@ -9,6 +10,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
     /// A model that represents a port in a node.
     /// </summary>
     [Serializable]
+    [MovedFrom(false, sourceAssembly: "Unity.GraphTools.Foundation.Overdrive.Editor")]
     public class PortModel : GraphElementModel, IReorderableEdgesPortModel, IHasTitle
     {
         string m_UniqueId;

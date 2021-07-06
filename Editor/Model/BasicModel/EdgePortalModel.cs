@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.Scripting.APIUpdating;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 {
@@ -7,6 +8,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
     /// Base implementation for portals.
     /// </summary>
     [Serializable]
+    [MovedFrom(false, sourceAssembly: "Unity.GraphTools.Foundation.Overdrive.Editor")]
     public abstract class EdgePortalModel : NodeModel, IEdgePortalModel, IRenamable, ICloneable
     {
         [SerializeField]

@@ -2,12 +2,14 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.GraphToolsFoundation.Overdrive;
+using UnityEngine.Scripting.APIUpdating;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 {
     /// <summary>
     /// Helper class to find a suitable <see cref="IConstant"/> type for a <see cref="TypeHandle"/>.
     /// </summary>
+    [MovedFrom(false, sourceAssembly: "Unity.GraphTools.Foundation.Overdrive.Editor")]
     public static class TypeToConstantMapper
     {
         static Dictionary<TypeHandle, Type> s_TypeToConstantNodeModelTypeCache;

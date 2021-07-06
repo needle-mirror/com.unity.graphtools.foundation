@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.GraphToolsFoundation.Overdrive;
+using UnityEngine.Scripting.APIUpdating;
 using Object = UnityEngine.Object;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
@@ -31,6 +32,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
     /// A model that represents a variable declaration in a graph.
     /// </summary>
     [Serializable]
+    [MovedFrom(false, sourceAssembly: "Unity.GraphTools.Foundation.Overdrive.Editor")]
     public class VariableDeclarationModel : DeclarationModel, IVariableDeclarationModel
     {
         [SerializeField]

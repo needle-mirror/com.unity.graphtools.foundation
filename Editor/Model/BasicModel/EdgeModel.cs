@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.GraphToolsFoundation.Overdrive;
+using UnityEngine.Scripting.APIUpdating;
 using UnityEngine.Serialization;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
@@ -11,6 +12,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
     /// A model that represents an edge in a graph.
     /// </summary>
     [Serializable]
+    [MovedFrom(false, sourceAssembly: "Unity.GraphTools.Foundation.Overdrive.Editor")]
     public class EdgeModel : GraphElementModel, IEditableEdge
     {
         [SerializeField, FormerlySerializedAs("m_OutputPortReference")]

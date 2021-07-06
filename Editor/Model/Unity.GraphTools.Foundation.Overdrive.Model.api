@@ -621,12 +621,12 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 {
-    public class AnimationClipConstant : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.Constant<UnityEngine.AnimationClip>
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, , @"Unity.GraphTools.Foundation.Overdrive.Editor", )] public class AnimationClipConstant : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.Constant<UnityEngine.AnimationClip>
     {
         public AnimationClipConstant() {}
     }
 
-    public class AnyConstant : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.Constant<object>
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, , @"Unity.GraphTools.Foundation.Overdrive.Editor", )] public class AnyConstant : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.Constant<object>
     {
         public virtual System.Type Type { get; }
         public AnyConstant() {}
@@ -638,7 +638,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         public BadgeModel(UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel parentModel) {}
     }
 
-    public class BlackboardGraphModel : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.GraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IBlackboardGraphModel, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, , @"Unity.GraphTools.Foundation.Overdrive.Editor", )] public class BlackboardGraphModel : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.GraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IBlackboardGraphModel, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel
     {
         public virtual System.Collections.Generic.IEnumerable<string> SectionNames { get; }
         public virtual bool Valid { get; }
@@ -648,17 +648,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         public virtual System.Collections.Generic.IEnumerable<UnityEditor.GraphToolsFoundation.Overdrive.IVariableDeclarationModel> GetSectionRows(string sectionName);
     }
 
-    public class BooleanConstant : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.Constant<bool>
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, , @"Unity.GraphTools.Foundation.Overdrive.Editor", )] public class BooleanConstant : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.Constant<bool>
     {
         public BooleanConstant() {}
     }
 
-    public class ColorConstant : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.Constant<UnityEngine.Color>
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, , @"Unity.GraphTools.Foundation.Overdrive.Editor", )] public class ColorConstant : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.Constant<UnityEngine.Color>
     {
         public ColorConstant() {}
     }
 
-    public abstract class Constant<T> : UnityEditor.GraphToolsFoundation.Overdrive.IConstant
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, , @"Unity.GraphTools.Foundation.Overdrive.Editor", )] public abstract class Constant<T> : UnityEditor.GraphToolsFoundation.Overdrive.IConstant
     {
         [UnityEngine.SerializeField] protected T m_Value;
         public virtual object DefaultValue { get; }
@@ -669,7 +669,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         protected virtual T FromObject(object value);
     }
 
-    public sealed class ConstantNodeModel : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.NodeModel, UnityEditor.GraphToolsFoundation.Overdrive.IConstantNodeModel, UnityEditor.GraphToolsFoundation.Overdrive.IDestroyable, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IInputOutputPortsNodeModel, UnityEditor.GraphToolsFoundation.Overdrive.IMovable, UnityEditor.GraphToolsFoundation.Overdrive.INodeModel, UnityEditor.GraphToolsFoundation.Overdrive.IPortNodeModel, UnityEditor.GraphToolsFoundation.Overdrive.ISingleOutputPortNodeModel
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, , @"Unity.GraphTools.Foundation.Overdrive.Editor", )] public sealed class ConstantNodeModel : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.NodeModel, UnityEditor.GraphToolsFoundation.Overdrive.IConstantNodeModel, UnityEditor.GraphToolsFoundation.Overdrive.IDestroyable, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IInputOutputPortsNodeModel, UnityEditor.GraphToolsFoundation.Overdrive.IMovable, UnityEditor.GraphToolsFoundation.Overdrive.INodeModel, UnityEditor.GraphToolsFoundation.Overdrive.IPortNodeModel, UnityEditor.GraphToolsFoundation.Overdrive.ISingleOutputPortNodeModel
     {
         public virtual bool IsLocked { get; set; }
         public virtual object ObjectValue { get; set; }
@@ -690,14 +690,14 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         public ContextNodeModel() {}
     }
 
-    public class DataEdgePortalEntryModel : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.EdgePortalModel, UnityEditor.GraphToolsFoundation.Overdrive.IDestroyable, UnityEditor.GraphToolsFoundation.Overdrive.IEdgePortalEntryModel, UnityEditor.GraphToolsFoundation.Overdrive.IEdgePortalModel, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IHasDeclarationModel, UnityEditor.GraphToolsFoundation.Overdrive.IHasTitle, UnityEditor.GraphToolsFoundation.Overdrive.IInputOutputPortsNodeModel, UnityEditor.GraphToolsFoundation.Overdrive.IMovable, UnityEditor.GraphToolsFoundation.Overdrive.INodeModel, UnityEditor.GraphToolsFoundation.Overdrive.IPortNodeModel, UnityEditor.GraphToolsFoundation.Overdrive.ISingleInputPortNodeModel
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, , @"Unity.GraphTools.Foundation.Overdrive.Editor", )] public class DataEdgePortalEntryModel : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.EdgePortalModel, UnityEditor.GraphToolsFoundation.Overdrive.IDestroyable, UnityEditor.GraphToolsFoundation.Overdrive.IEdgePortalEntryModel, UnityEditor.GraphToolsFoundation.Overdrive.IEdgePortalModel, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IHasDeclarationModel, UnityEditor.GraphToolsFoundation.Overdrive.IHasTitle, UnityEditor.GraphToolsFoundation.Overdrive.IInputOutputPortsNodeModel, UnityEditor.GraphToolsFoundation.Overdrive.IMovable, UnityEditor.GraphToolsFoundation.Overdrive.INodeModel, UnityEditor.GraphToolsFoundation.Overdrive.IPortNodeModel, UnityEditor.GraphToolsFoundation.Overdrive.ISingleInputPortNodeModel
     {
         public virtual UnityEditor.GraphToolsFoundation.Overdrive.IPortModel InputPort { get; }
         public DataEdgePortalEntryModel() {}
         protected virtual void OnDefineNode();
     }
 
-    public class DataEdgePortalExitModel : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.EdgePortalModel, UnityEditor.GraphToolsFoundation.Overdrive.IDestroyable, UnityEditor.GraphToolsFoundation.Overdrive.IEdgePortalExitModel, UnityEditor.GraphToolsFoundation.Overdrive.IEdgePortalModel, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IHasDeclarationModel, UnityEditor.GraphToolsFoundation.Overdrive.IHasTitle, UnityEditor.GraphToolsFoundation.Overdrive.IInputOutputPortsNodeModel, UnityEditor.GraphToolsFoundation.Overdrive.IMovable, UnityEditor.GraphToolsFoundation.Overdrive.INodeModel, UnityEditor.GraphToolsFoundation.Overdrive.IPortNodeModel, UnityEditor.GraphToolsFoundation.Overdrive.ISingleOutputPortNodeModel
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, , @"Unity.GraphTools.Foundation.Overdrive.Editor", )] public class DataEdgePortalExitModel : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.EdgePortalModel, UnityEditor.GraphToolsFoundation.Overdrive.IDestroyable, UnityEditor.GraphToolsFoundation.Overdrive.IEdgePortalExitModel, UnityEditor.GraphToolsFoundation.Overdrive.IEdgePortalModel, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IHasDeclarationModel, UnityEditor.GraphToolsFoundation.Overdrive.IHasTitle, UnityEditor.GraphToolsFoundation.Overdrive.IInputOutputPortsNodeModel, UnityEditor.GraphToolsFoundation.Overdrive.IMovable, UnityEditor.GraphToolsFoundation.Overdrive.INodeModel, UnityEditor.GraphToolsFoundation.Overdrive.IPortNodeModel, UnityEditor.GraphToolsFoundation.Overdrive.ISingleOutputPortNodeModel
     {
         public virtual UnityEditor.GraphToolsFoundation.Overdrive.IPortModel OutputPort { get; }
         public DataEdgePortalExitModel() {}
@@ -705,7 +705,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         protected virtual void OnDefineNode();
     }
 
-    public class DeclarationModel : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.GraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IDeclarationModel, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IHasTitle, UnityEditor.GraphToolsFoundation.Overdrive.IRenamable
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, , @"Unity.GraphTools.Foundation.Overdrive.Editor", )] public class DeclarationModel : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.GraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IDeclarationModel, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IHasTitle, UnityEditor.GraphToolsFoundation.Overdrive.IRenamable
     {
         public virtual string DisplayTitle { get; }
         public virtual string Title { get; set; }
@@ -713,19 +713,19 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         public virtual void Rename(string newName);
     }
 
-    public class DoubleConstant : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.Constant<double>
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, , @"Unity.GraphTools.Foundation.Overdrive.Editor", )] public class DoubleConstant : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.Constant<double>
     {
         public DoubleConstant() {}
     }
 
-    public class EdgeControlPointModel : UnityEditor.GraphToolsFoundation.Overdrive.IEdgeControlPointModel
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, , @"Unity.GraphTools.Foundation.Overdrive.Editor", )] public class EdgeControlPointModel : UnityEditor.GraphToolsFoundation.Overdrive.IEdgeControlPointModel
     {
         public virtual UnityEngine.Vector2 Position { get; set; }
         public virtual float Tightness { get; set; }
         public EdgeControlPointModel() {}
     }
 
-    public class EdgeModel : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.GraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IEdgeModel, UnityEditor.GraphToolsFoundation.Overdrive.IEditableEdge, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IMovable
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, , @"Unity.GraphTools.Foundation.Overdrive.Editor", )] public class EdgeModel : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.GraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IEdgeModel, UnityEditor.GraphToolsFoundation.Overdrive.IEditableEdge, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IMovable
     {
         [UnityEngine.SerializeField] protected string m_EdgeLabel;
         public virtual System.Collections.Generic.IReadOnlyList<UnityEditor.GraphToolsFoundation.Overdrive.IEdgeControlPointModel> EdgeControlPoints { get; }
@@ -749,7 +749,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         public virtual string ToString();
     }
 
-    public abstract class EdgePortalModel : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.NodeModel, UnityEditor.GraphToolsFoundation.Overdrive.ICloneable, UnityEditor.GraphToolsFoundation.Overdrive.IDestroyable, UnityEditor.GraphToolsFoundation.Overdrive.IEdgePortalModel, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IHasDeclarationModel, UnityEditor.GraphToolsFoundation.Overdrive.IHasTitle, UnityEditor.GraphToolsFoundation.Overdrive.IMovable, UnityEditor.GraphToolsFoundation.Overdrive.INodeModel, UnityEditor.GraphToolsFoundation.Overdrive.IRenamable
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, , @"Unity.GraphTools.Foundation.Overdrive.Editor", )] public abstract class EdgePortalModel : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.NodeModel, UnityEditor.GraphToolsFoundation.Overdrive.ICloneable, UnityEditor.GraphToolsFoundation.Overdrive.IDestroyable, UnityEditor.GraphToolsFoundation.Overdrive.IEdgePortalModel, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IHasDeclarationModel, UnityEditor.GraphToolsFoundation.Overdrive.IHasTitle, UnityEditor.GraphToolsFoundation.Overdrive.IMovable, UnityEditor.GraphToolsFoundation.Overdrive.INodeModel, UnityEditor.GraphToolsFoundation.Overdrive.IRenamable
     {
         public virtual UnityEditor.GraphToolsFoundation.Overdrive.IDeclarationModel DeclarationModel { get; set; }
         public virtual int EvaluationOrder { get; protected set; }
@@ -760,7 +760,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         public virtual void Rename(string newName);
     }
 
-    public class EnumConstant : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.Constant<UnityEngine.GraphToolsFoundation.Overdrive.EnumValueReference>
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, , @"Unity.GraphTools.Foundation.Overdrive.Editor", )] public class EnumConstant : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.Constant<UnityEngine.GraphToolsFoundation.Overdrive.EnumValueReference>
     {
         public virtual object DefaultValue { get; }
         public UnityEngine.GraphToolsFoundation.Overdrive.TypeHandle EnumType { get; }
@@ -769,33 +769,33 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         protected virtual UnityEngine.GraphToolsFoundation.Overdrive.EnumValueReference FromObject(object value);
     }
 
-    public class ErrorBadgeModel : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.BadgeModel, UnityEditor.GraphToolsFoundation.Overdrive.IBadgeModel, UnityEditor.GraphToolsFoundation.Overdrive.IErrorBadgeModel, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, , @"Unity.GraphTools.Foundation.Overdrive.Editor", )] public class ErrorBadgeModel : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.BadgeModel, UnityEditor.GraphToolsFoundation.Overdrive.IBadgeModel, UnityEditor.GraphToolsFoundation.Overdrive.IErrorBadgeModel, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel
     {
         [UnityEngine.SerializeField] protected string m_ErrorMessage;
         public virtual string ErrorMessage { get; }
         public ErrorBadgeModel(UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel parentModel) {}
     }
 
-    public class ExecutionEdgePortalEntryModel : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.EdgePortalModel, UnityEditor.GraphToolsFoundation.Overdrive.IDestroyable, UnityEditor.GraphToolsFoundation.Overdrive.IEdgePortalEntryModel, UnityEditor.GraphToolsFoundation.Overdrive.IEdgePortalModel, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IHasDeclarationModel, UnityEditor.GraphToolsFoundation.Overdrive.IHasTitle, UnityEditor.GraphToolsFoundation.Overdrive.IInputOutputPortsNodeModel, UnityEditor.GraphToolsFoundation.Overdrive.IMovable, UnityEditor.GraphToolsFoundation.Overdrive.INodeModel, UnityEditor.GraphToolsFoundation.Overdrive.IPortNodeModel, UnityEditor.GraphToolsFoundation.Overdrive.ISingleInputPortNodeModel
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, , @"Unity.GraphTools.Foundation.Overdrive.Editor", )] public class ExecutionEdgePortalEntryModel : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.EdgePortalModel, UnityEditor.GraphToolsFoundation.Overdrive.IDestroyable, UnityEditor.GraphToolsFoundation.Overdrive.IEdgePortalEntryModel, UnityEditor.GraphToolsFoundation.Overdrive.IEdgePortalModel, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IHasDeclarationModel, UnityEditor.GraphToolsFoundation.Overdrive.IHasTitle, UnityEditor.GraphToolsFoundation.Overdrive.IInputOutputPortsNodeModel, UnityEditor.GraphToolsFoundation.Overdrive.IMovable, UnityEditor.GraphToolsFoundation.Overdrive.INodeModel, UnityEditor.GraphToolsFoundation.Overdrive.IPortNodeModel, UnityEditor.GraphToolsFoundation.Overdrive.ISingleInputPortNodeModel
     {
         public virtual UnityEditor.GraphToolsFoundation.Overdrive.IPortModel InputPort { get; }
         public ExecutionEdgePortalEntryModel() {}
         protected virtual void OnDefineNode();
     }
 
-    public class ExecutionEdgePortalExitModel : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.EdgePortalModel, UnityEditor.GraphToolsFoundation.Overdrive.IDestroyable, UnityEditor.GraphToolsFoundation.Overdrive.IEdgePortalExitModel, UnityEditor.GraphToolsFoundation.Overdrive.IEdgePortalModel, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IHasDeclarationModel, UnityEditor.GraphToolsFoundation.Overdrive.IHasTitle, UnityEditor.GraphToolsFoundation.Overdrive.IInputOutputPortsNodeModel, UnityEditor.GraphToolsFoundation.Overdrive.IMovable, UnityEditor.GraphToolsFoundation.Overdrive.INodeModel, UnityEditor.GraphToolsFoundation.Overdrive.IPortNodeModel, UnityEditor.GraphToolsFoundation.Overdrive.ISingleOutputPortNodeModel
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, , @"Unity.GraphTools.Foundation.Overdrive.Editor", )] public class ExecutionEdgePortalExitModel : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.EdgePortalModel, UnityEditor.GraphToolsFoundation.Overdrive.IDestroyable, UnityEditor.GraphToolsFoundation.Overdrive.IEdgePortalExitModel, UnityEditor.GraphToolsFoundation.Overdrive.IEdgePortalModel, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IHasDeclarationModel, UnityEditor.GraphToolsFoundation.Overdrive.IHasTitle, UnityEditor.GraphToolsFoundation.Overdrive.IInputOutputPortsNodeModel, UnityEditor.GraphToolsFoundation.Overdrive.IMovable, UnityEditor.GraphToolsFoundation.Overdrive.INodeModel, UnityEditor.GraphToolsFoundation.Overdrive.IPortNodeModel, UnityEditor.GraphToolsFoundation.Overdrive.ISingleOutputPortNodeModel
     {
         public virtual UnityEditor.GraphToolsFoundation.Overdrive.IPortModel OutputPort { get; }
         public ExecutionEdgePortalExitModel() {}
         protected virtual void OnDefineNode();
     }
 
-    public class FloatConstant : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.Constant<float>
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, , @"Unity.GraphTools.Foundation.Overdrive.Editor", )] public class FloatConstant : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.Constant<float>
     {
         public FloatConstant() {}
     }
 
-    public abstract class GraphElementModel : UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel, UnityEngine.ISerializationCallbackReceiver
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, , @"Unity.GraphTools.Foundation.Overdrive.Editor", )] public abstract class GraphElementModel : UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel, UnityEngine.ISerializationCallbackReceiver
     {
         [UnityEngine.HideInInspector] [UnityEngine.Serialization.FormerlySerializedAs(@"m_GraphAssetModel")] [UnityEngine.SerializeField] protected UnityEditor.GraphToolsFoundation.Overdrive.GraphAssetModel m_AssetModel;
         protected System.Collections.Generic.List<UnityEditor.GraphToolsFoundation.Overdrive.Capabilities> m_Capabilities;
@@ -821,7 +821,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         }
     }
 
-    public abstract class GraphModel : System.IDisposable, UnityEditor.GraphToolsFoundation.Overdrive.IGraphModel, UnityEngine.ISerializationCallbackReceiver
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, , @"Unity.GraphTools.Foundation.Overdrive.Editor", )] public abstract class GraphModel : System.IDisposable, UnityEditor.GraphToolsFoundation.Overdrive.IGraphModel, UnityEngine.ISerializationCallbackReceiver
     {
         public virtual UnityEditor.GraphToolsFoundation.Overdrive.IGraphAssetModel AssetModel { get; set; }
         public virtual System.Collections.Generic.IReadOnlyList<UnityEditor.GraphToolsFoundation.Overdrive.IBadgeModel> BadgeModels { get; }
@@ -902,17 +902,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         public virtual void UndoRedoPerformed();
     }
 
-    public class IntConstant : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.Constant<int>
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, , @"Unity.GraphTools.Foundation.Overdrive.Editor", )] public class IntConstant : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.Constant<int>
     {
         public IntConstant() {}
     }
 
-    public class MeshConstant : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.Constant<UnityEngine.Mesh>
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, , @"Unity.GraphTools.Foundation.Overdrive.Editor", )] public class MeshConstant : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.Constant<UnityEngine.Mesh>
     {
         public MeshConstant() {}
     }
 
-    public abstract class NodeModel : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.GraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.ICollapsible, UnityEditor.GraphToolsFoundation.Overdrive.IDestroyable, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IHasProgress, UnityEditor.GraphToolsFoundation.Overdrive.IHasTitle, UnityEditor.GraphToolsFoundation.Overdrive.IInputOutputPortsNodeModel, UnityEditor.GraphToolsFoundation.Overdrive.IMovable, UnityEditor.GraphToolsFoundation.Overdrive.INodeModel, UnityEditor.GraphToolsFoundation.Overdrive.IPortNodeModel
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, , @"Unity.GraphTools.Foundation.Overdrive.Editor", )] public abstract class NodeModel : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.GraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.ICollapsible, UnityEditor.GraphToolsFoundation.Overdrive.IDestroyable, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IHasProgress, UnityEditor.GraphToolsFoundation.Overdrive.IHasTitle, UnityEditor.GraphToolsFoundation.Overdrive.IInputOutputPortsNodeModel, UnityEditor.GraphToolsFoundation.Overdrive.IMovable, UnityEditor.GraphToolsFoundation.Overdrive.INodeModel, UnityEditor.GraphToolsFoundation.Overdrive.IPortNodeModel
     {
         protected UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.OrderedPorts m_PreviousInputs;
         protected UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.OrderedPorts m_PreviousOutputs;
@@ -972,7 +972,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         public virtual bool TryGetValue(string key, out UnityEditor.GraphToolsFoundation.Overdrive.IPortModel value);
     }
 
-    public class PlacematModel : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.GraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.ICollapsible, UnityEditor.GraphToolsFoundation.Overdrive.IDestroyable, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IHasTitle, UnityEditor.GraphToolsFoundation.Overdrive.IMovable, UnityEditor.GraphToolsFoundation.Overdrive.IPlacematModel, UnityEditor.GraphToolsFoundation.Overdrive.IRenamable, UnityEditor.GraphToolsFoundation.Overdrive.IResizable
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, , @"Unity.GraphTools.Foundation.Overdrive.Editor", )] public class PlacematModel : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.GraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.ICollapsible, UnityEditor.GraphToolsFoundation.Overdrive.IDestroyable, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IHasTitle, UnityEditor.GraphToolsFoundation.Overdrive.IMovable, UnityEditor.GraphToolsFoundation.Overdrive.IPlacematModel, UnityEditor.GraphToolsFoundation.Overdrive.IRenamable, UnityEditor.GraphToolsFoundation.Overdrive.IResizable
     {
         public virtual bool Collapsed { get; set; }
         public virtual UnityEngine.Color DefaultColor { get; }
@@ -991,7 +991,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         public virtual void Rename(string newName);
     }
 
-    public class PortModel : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.GraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IHasTitle, UnityEditor.GraphToolsFoundation.Overdrive.IPortModel, UnityEditor.GraphToolsFoundation.Overdrive.IReorderableEdgesPortModel
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, , @"Unity.GraphTools.Foundation.Overdrive.Editor", )] public class PortModel : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.GraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IHasTitle, UnityEditor.GraphToolsFoundation.Overdrive.IPortModel, UnityEditor.GraphToolsFoundation.Overdrive.IReorderableEdgesPortModel
     {
         public virtual UnityEditor.GraphToolsFoundation.Overdrive.PortCapacity Capacity { get; }
         public virtual bool CreateEmbeddedValueIfNeeded { get; }
@@ -1023,13 +1023,13 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         public virtual string ToString();
     }
 
-    public class QuaternionConstant : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.Constant<UnityEngine.Quaternion>
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, , @"Unity.GraphTools.Foundation.Overdrive.Editor", )] public class QuaternionConstant : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.Constant<UnityEngine.Quaternion>
     {
         public virtual object DefaultValue { get; }
         public QuaternionConstant() {}
     }
 
-    public class StickyNoteModel : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.GraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IDestroyable, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IHasTitle, UnityEditor.GraphToolsFoundation.Overdrive.IMovable, UnityEditor.GraphToolsFoundation.Overdrive.IRenamable, UnityEditor.GraphToolsFoundation.Overdrive.IResizable, UnityEditor.GraphToolsFoundation.Overdrive.IStickyNoteModel
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, , @"Unity.GraphTools.Foundation.Overdrive.Editor", )] public class StickyNoteModel : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.GraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IDestroyable, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IHasTitle, UnityEditor.GraphToolsFoundation.Overdrive.IMovable, UnityEditor.GraphToolsFoundation.Overdrive.IRenamable, UnityEditor.GraphToolsFoundation.Overdrive.IResizable, UnityEditor.GraphToolsFoundation.Overdrive.IStickyNoteModel
     {
         public virtual string Contents { get; set; }
         public virtual bool Destroyed { get; }
@@ -1045,34 +1045,34 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         public virtual void Rename(string newName);
     }
 
-    public class StringConstant : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.Constant<string>
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, , @"Unity.GraphTools.Foundation.Overdrive.Editor", )] public class StringConstant : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.Constant<string>
     {
         public StringConstant() {}
     }
 
-    public class Texture2DConstant : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.Constant<UnityEngine.Texture2D>
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, , @"Unity.GraphTools.Foundation.Overdrive.Editor", )] public class Texture2DConstant : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.Constant<UnityEngine.Texture2D>
     {
         public Texture2DConstant() {}
     }
 
-    public class Texture3DConstant : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.Constant<UnityEngine.Texture3D>
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, , @"Unity.GraphTools.Foundation.Overdrive.Editor", )] public class Texture3DConstant : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.Constant<UnityEngine.Texture3D>
     {
         public Texture3DConstant() {}
     }
 
-    public static class TypeToConstantMapper
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, , @"Unity.GraphTools.Foundation.Overdrive.Editor", )] public static class TypeToConstantMapper
     {
         public static System.Type GetConstantNodeType(UnityEngine.GraphToolsFoundation.Overdrive.TypeHandle typeHandle);
     }
 
-    public class ValueBadgeModel : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.BadgeModel, UnityEditor.GraphToolsFoundation.Overdrive.IBadgeModel, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IValueBadgeModel
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, , @"Unity.GraphTools.Foundation.Overdrive.Editor", )] public class ValueBadgeModel : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.BadgeModel, UnityEditor.GraphToolsFoundation.Overdrive.IBadgeModel, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IValueBadgeModel
     {
         public virtual string DisplayValue { get; }
         public virtual UnityEditor.GraphToolsFoundation.Overdrive.IPortModel ParentPortModel { get; }
         public ValueBadgeModel(UnityEditor.GraphToolsFoundation.Overdrive.IPortModel parentModel, string value) {}
     }
 
-    public class VariableDeclarationModel : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.DeclarationModel, UnityEditor.GraphToolsFoundation.Overdrive.IDeclarationModel, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IHasTitle, UnityEditor.GraphToolsFoundation.Overdrive.IVariableDeclarationModel
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, , @"Unity.GraphTools.Foundation.Overdrive.Editor", )] public class VariableDeclarationModel : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.DeclarationModel, UnityEditor.GraphToolsFoundation.Overdrive.IDeclarationModel, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IHasTitle, UnityEditor.GraphToolsFoundation.Overdrive.IVariableDeclarationModel
     {
         public UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.VariableFlags variableFlags;
         public virtual UnityEngine.GraphToolsFoundation.Overdrive.TypeHandle DataType { get; set; }
@@ -1096,7 +1096,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         public int value__;
     }
 
-    public class VariableNodeModel : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.NodeModel, UnityEditor.GraphToolsFoundation.Overdrive.ICloneable, UnityEditor.GraphToolsFoundation.Overdrive.IDestroyable, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IHasDeclarationModel, UnityEditor.GraphToolsFoundation.Overdrive.IHasTitle, UnityEditor.GraphToolsFoundation.Overdrive.IInputOutputPortsNodeModel, UnityEditor.GraphToolsFoundation.Overdrive.IMovable, UnityEditor.GraphToolsFoundation.Overdrive.INodeModel, UnityEditor.GraphToolsFoundation.Overdrive.IPortNodeModel, UnityEditor.GraphToolsFoundation.Overdrive.IRenamable, UnityEditor.GraphToolsFoundation.Overdrive.ISingleInputPortNodeModel, UnityEditor.GraphToolsFoundation.Overdrive.ISingleOutputPortNodeModel, UnityEditor.GraphToolsFoundation.Overdrive.IVariableNodeModel
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, , @"Unity.GraphTools.Foundation.Overdrive.Editor", )] public class VariableNodeModel : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.NodeModel, UnityEditor.GraphToolsFoundation.Overdrive.ICloneable, UnityEditor.GraphToolsFoundation.Overdrive.IDestroyable, UnityEditor.GraphToolsFoundation.Overdrive.IGraphElementModel, UnityEditor.GraphToolsFoundation.Overdrive.IHasDeclarationModel, UnityEditor.GraphToolsFoundation.Overdrive.IHasTitle, UnityEditor.GraphToolsFoundation.Overdrive.IInputOutputPortsNodeModel, UnityEditor.GraphToolsFoundation.Overdrive.IMovable, UnityEditor.GraphToolsFoundation.Overdrive.INodeModel, UnityEditor.GraphToolsFoundation.Overdrive.IPortNodeModel, UnityEditor.GraphToolsFoundation.Overdrive.IRenamable, UnityEditor.GraphToolsFoundation.Overdrive.ISingleInputPortNodeModel, UnityEditor.GraphToolsFoundation.Overdrive.ISingleOutputPortNodeModel, UnityEditor.GraphToolsFoundation.Overdrive.IVariableNodeModel
     {
         protected UnityEditor.GraphToolsFoundation.Overdrive.IPortModel m_MainPortModel;
         public virtual string DataTypeString { get; }
@@ -1114,17 +1114,17 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
         public virtual void UpdateTypeFromDeclaration();
     }
 
-    public class Vector2Constant : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.Constant<UnityEngine.Vector2>
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, , @"Unity.GraphTools.Foundation.Overdrive.Editor", )] public class Vector2Constant : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.Constant<UnityEngine.Vector2>
     {
         public Vector2Constant() {}
     }
 
-    public class Vector3Constant : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.Constant<UnityEngine.Vector3>
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, , @"Unity.GraphTools.Foundation.Overdrive.Editor", )] public class Vector3Constant : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.Constant<UnityEngine.Vector3>
     {
         public Vector3Constant() {}
     }
 
-    public class Vector4Constant : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.Constant<UnityEngine.Vector4>
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(false, , @"Unity.GraphTools.Foundation.Overdrive.Editor", )] public class Vector4Constant : UnityEditor.GraphToolsFoundation.Overdrive.BasicModel.Constant<UnityEngine.Vector4>
     {
         public Vector4Constant() {}
     }

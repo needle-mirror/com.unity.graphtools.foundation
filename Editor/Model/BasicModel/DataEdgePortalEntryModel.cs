@@ -8,6 +8,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
     /// Model for data entry portals.
     /// </summary>
     [Serializable]
+    [MovedFrom(false, sourceAssembly: "Unity.GraphTools.Foundation.Overdrive.Editor")]
     public class DataEdgePortalEntryModel : EdgePortalModel, IEdgePortalEntryModel
     {
         /// <inheritdoc />

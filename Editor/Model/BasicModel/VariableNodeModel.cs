@@ -1,10 +1,12 @@
 using System;
 using UnityEngine;
 using UnityEngine.GraphToolsFoundation.Overdrive;
+using UnityEngine.Scripting.APIUpdating;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 {
     [Serializable]
+    [MovedFrom(false, sourceAssembly: "Unity.GraphTools.Foundation.Overdrive.Editor")]
     public class VariableNodeModel : NodeModel, IVariableNodeModel, IRenamable, ICloneable
     {
         const string k_MainPortName = "MainPortName";

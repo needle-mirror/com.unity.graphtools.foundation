@@ -4,6 +4,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.GraphToolsFoundation.CommandStateObserver;
 using UnityEngine.GraphToolsFoundation.Overdrive;
+using UnityEngine.Scripting.APIUpdating;
 using Object = UnityEngine.Object;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
@@ -12,6 +13,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
     /// Base model that represents a node in a graph.
     /// </summary>
     [Serializable]
+    [MovedFrom(false, sourceAssembly: "Unity.GraphTools.Foundation.Overdrive.Editor")]
     public abstract class NodeModel : GraphElementModel, IInputOutputPortsNodeModel, IHasTitle, IHasProgress, ICollapsible
     {
         [SerializeField, HideInInspector]

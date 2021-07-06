@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.Scripting.APIUpdating;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 {
@@ -8,6 +9,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
     /// </summary>
     /// <typeparam name="T">The type of the value of the constant.</typeparam>
     [Serializable]
+    [MovedFrom(false, sourceAssembly: "Unity.GraphTools.Foundation.Overdrive.Editor")]
     public abstract class Constant<T> : IConstant
     {
         [SerializeField]

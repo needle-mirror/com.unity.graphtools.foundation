@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Scripting.APIUpdating;
 using UnityEngine.Serialization;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
@@ -9,6 +10,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
     /// A model that represents a declaration (e.g. a variable) in a graph.
     /// </summary>
     [Serializable]
+    [MovedFrom(false, sourceAssembly: "Unity.GraphTools.Foundation.Overdrive.Editor")]
     public class DeclarationModel : GraphElementModel, IDeclarationModel, IRenamable
     {
         [FormerlySerializedAs("name")]

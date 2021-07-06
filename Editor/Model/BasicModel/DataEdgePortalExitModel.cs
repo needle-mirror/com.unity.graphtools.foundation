@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using UnityEngine.GraphToolsFoundation.Overdrive;
+using UnityEngine.Scripting.APIUpdating;
 
 namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
 {
@@ -8,6 +9,7 @@ namespace UnityEditor.GraphToolsFoundation.Overdrive.BasicModel
     /// Model for data exit portals.
     /// </summary>
     [Serializable]
+    [MovedFrom(false, sourceAssembly: "Unity.GraphTools.Foundation.Overdrive.Editor")]
     public class DataEdgePortalExitModel : EdgePortalModel, IEdgePortalExitModel
     {
         /// <inheritdoc />
